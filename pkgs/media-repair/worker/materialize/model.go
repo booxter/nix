@@ -14,7 +14,12 @@ import (
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
-const FailureNoSupportedAudio = "no_supported_audio"
+const (
+	FailureNoSupportedAudio = "no_supported_audio"
+	FailureInvalidArchive   = "invalid_archive"
+	FailureEncryptedArchive = "encrypted_archive"
+	FailureInvalidCueSheet  = "invalid_cue_sheet"
+)
 
 const artifactIdentityDomain = "media-repair-artifact-v2\x00"
 
@@ -36,6 +41,20 @@ func (rejection *Rejection) Error() string {
 func IsNoSupportedAudio(err error) bool {
 	var rejection *Rejection
 	return errors.As(err, &rejection) && rejection.Reason == FailureNoSupportedAudio
+}
+
+func IsUnsupportedSource(err error) bool {
+	var rejection *Rejection
+	if !errors.As(err, &rejection) {
+		return false
+	}
+	switch rejection.Reason {
+	case FailureNoSupportedAudio, FailureInvalidArchive,
+		FailureEncryptedArchive, FailureInvalidCueSheet:
+		return true
+	default:
+		return false
+	}
 }
 
 const (

@@ -1,11 +1,37 @@
 package materialize
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
+
+func TestUnsupportedSourceRejections(t *testing.T) {
+	t.Parallel()
+	for _, reason := range []string{
+		FailureNoSupportedAudio,
+		FailureInvalidArchive,
+		FailureEncryptedArchive,
+		FailureInvalidCueSheet,
+	} {
+		err := fmt.Errorf("materialize source: %w", &Rejection{Reason: reason})
+		if !IsUnsupportedSource(err) {
+			t.Fatalf("reason %q was not classified as an unsupported source", reason)
+		}
+	}
+	for _, err := range []error{
+		errors.New("worker unavailable"),
+		&Rejection{Reason: "timeout"},
+		&Rejection{Reason: "fingerprint_mismatch"},
+	} {
+		if IsUnsupportedSource(err) {
+			t.Fatalf("error %q was classified as an unsupported source", err)
+		}
+	}
+}
 
 func TestRequestAndResponseRoundTrip(t *testing.T) {
 	t.Parallel()

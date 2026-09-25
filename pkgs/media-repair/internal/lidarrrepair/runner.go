@@ -206,6 +206,9 @@ func (runner *Runner) processQueue(
 	archivePath, snapshot, kind, err := findArchive(queue.OutputPath)
 	if err == nil {
 		result, processErr := runner.processArchive(ctx, queue, archivePath, snapshot, kind)
+		if materialize.IsUnsupportedSource(processErr) {
+			return false, lidarrPlanningResult{}, nil
+		}
 		return true, result, processErr
 	}
 	if !errors.Is(err, errNoArchive) {
@@ -227,7 +230,7 @@ func (runner *Runner) processQueue(
 	materialized, err := runner.worker.MaterializeDirectoryAudio(
 		ctx, queue.OutputPath, directoryWorkspaceID(queue.ID, queue.OutputPath),
 	)
-	if materialize.IsNoSupportedAudio(err) {
+	if materialize.IsUnsupportedSource(err) {
 		return false, lidarrPlanningResult{}, nil
 	}
 	if err != nil {

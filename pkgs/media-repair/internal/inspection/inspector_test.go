@@ -12,6 +12,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 const testDownloadHash = "abcdef0123456789abcdef0123456789abcdef01"
@@ -292,6 +293,28 @@ func TestInspectAllRejectsInvalidEvidenceWithoutFailingCollection(t *testing.T) 
 	if len(result.Assemblies) != 1 || !reflect.DeepEqual(result.Rejections, []Rejection{{
 		QueueID: 71,
 		Reason:  RejectionInvalidEvidence,
+	}}) {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestInspectAllRejectsUnsupportedArchiveWithoutFailingCollection(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.archives = &fakeArchiveMaterializer{
+		found: true,
+		err:   &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
+	}
+	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
+
+	result, err := inspector.InspectAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Assemblies) != 0 || !reflect.DeepEqual(result.Rejections, []Rejection{{
+		QueueID: 71,
+		Reason:  RejectionUnsupportedSource,
 	}}) {
 		t.Fatalf("result = %#v", result)
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 type RadarrReader interface {
@@ -48,7 +49,10 @@ type Selection struct {
 
 type RejectionReason string
 
-const RejectionInvalidEvidence RejectionReason = "invalid_case_evidence"
+const (
+	RejectionInvalidEvidence   RejectionReason = "invalid_case_evidence"
+	RejectionUnsupportedSource RejectionReason = "unsupported_source"
+)
 
 type Rejection struct {
 	QueueID int64
@@ -179,6 +183,13 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
 		collectionCancel()
 		if inspectErr != nil {
+			if materialize.IsUnsupportedSource(inspectErr) {
+				rejections = append(rejections, Rejection{
+					QueueID: record.ID,
+					Reason:  RejectionUnsupportedSource,
+				})
+				continue
+			}
 			var invalidEvidence *casebuilder.InvalidEvidenceError
 			if errors.As(inspectErr, &invalidEvidence) {
 				rejections = append(rejections, Rejection{

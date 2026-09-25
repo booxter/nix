@@ -73,6 +73,7 @@ type fakeWorker struct {
 	rarCalls        int
 	directoryCalls  int
 	directoryAudio  bool
+	archiveError    error
 	tarWorkspaceIDs []string
 }
 
@@ -83,6 +84,9 @@ func (fake *fakeWorker) MaterializeRARAudio(
 	_ string,
 ) (materialize.Success, error) {
 	fake.rarCalls++
+	if fake.archiveError != nil {
+		return materialize.Success{}, fake.archiveError
+	}
 	return testMaterialization(materialize.OperationMaterializeRAR, snapshot.StableFingerprint()), nil
 }
 
@@ -94,6 +98,9 @@ func (fake *fakeWorker) MaterializeTarAudio(
 ) (materialize.Success, error) {
 	fake.calls++
 	fake.tarWorkspaceIDs = append(fake.tarWorkspaceIDs, workspaceID)
+	if fake.archiveError != nil {
+		return materialize.Success{}, fake.archiveError
+	}
 	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StableFingerprint()), nil
 }
 
@@ -279,6 +286,62 @@ func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
 	}
 	if _, _, _, err := findArchive(directory); err == nil {
 		t.Fatal("ambiguous archive was accepted")
+	}
+}
+
+func TestRunnerSkipsUnsupportedArchiveAndPlansOtherQueueItems(t *testing.T) {
+	t.Parallel()
+	archiveDownload := t.TempDir()
+	if err := os.WriteFile(filepath.Join(archiveDownload, "album.rar"), []byte("not rar"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	directoryDownload := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directoryDownload, "01.flac"), []byte("audio"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	albumID, artistID := int64(3), int64(2)
+	client := &fakeLidarr{
+		queue: []lidarr.QueueRecord{
+			{
+				ID: 1, AlbumID: &albumID, ArtistID: &artistID,
+				Title:  "Unsupported archive",
+				Status: "completed", TrackedDownloadStatus: "warning",
+				DownloadID: "archive", OutputPath: archiveDownload,
+			},
+			{
+				ID: 2, AlbumID: &albumID, ArtistID: &artistID,
+				Title:  "Directory audio",
+				Status: "completed", TrackedDownloadStatus: "warning",
+				DownloadID: "directory", OutputPath: directoryDownload,
+			},
+		},
+		imports: []lidarr.ManualImport{{
+			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
+			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
+			AlbumReleaseID: 4, TrackIDs: []int64{5},
+		}},
+	}
+	worker := &fakeWorker{
+		directoryAudio: true,
+		archiveError:   &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
+	}
+	planner := &fakePlanner{}
+	store, err := NewStore(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runner, err := NewRunner(client, worker, planner, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Observed != 2 || report.Candidates != 1 || report.Planned != 1 ||
+		worker.rarCalls != 1 || worker.directoryCalls != 1 || planner.calls != 1 {
+		t.Fatalf("report=%#v worker=%#v planner calls=%d", report, worker, planner.calls)
 	}
 }
 

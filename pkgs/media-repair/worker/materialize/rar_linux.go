@@ -288,14 +288,14 @@ func reasonForRARError(err error) string {
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		return "timeout"
 	case errors.Is(err, errRAREncrypted):
-		return "encrypted_archive"
+		return FailureEncryptedArchive
 	case errors.Is(err, errRARListing):
-		return "invalid_archive"
+		return FailureInvalidArchive
 	case errors.Is(err, errRARExtract):
 		return "extract_failed"
 	case errors.Is(err, errRARContent):
-		return "invalid_archive"
+		return FailureInvalidArchive
 	default:
-		return "invalid_archive"
+		return FailureInvalidArchive
 	}
 }

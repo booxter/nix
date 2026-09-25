@@ -1034,7 +1034,7 @@ func reasonForError(err error) string {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return "timeout"
 	}
-	return "invalid_archive"
+	return FailureInvalidArchive
 }
 
 func reasonForDirectoryError(err error) string {
@@ -1060,7 +1060,7 @@ func reasonForDirectoryError(err error) string {
 	case errors.Is(err, errDirectoryChanged):
 		return "source_changed"
 	case errors.Is(err, errDirectoryCue):
-		return "invalid_cue_sheet"
+		return FailureInvalidCueSheet
 	}
 	var fileFailure *mediafile.Failure
 	if errors.As(err, &fileFailure) {
