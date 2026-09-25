@@ -29,6 +29,7 @@
           with lib.types;
           listOf (enum [
             "tar_audio_v1"
+            "rar_audio_v1"
             "directory_audio_v1"
           ]);
         default = [ ];
