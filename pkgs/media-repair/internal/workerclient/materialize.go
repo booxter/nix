@@ -14,6 +14,40 @@ func (client *Client) MaterializeTarAudio(
 	fingerprint fileidentity.Snapshot,
 	workspaceID string,
 ) (materialize.Success, error) {
+	return client.materializeArchive(
+		ctx,
+		archivePath,
+		fingerprint,
+		workspaceID,
+		materialize.OperationMaterializeTar,
+		"/v1/materialize/tar-audio",
+	)
+}
+
+func (client *Client) MaterializeTarVideo(
+	ctx context.Context,
+	archivePath string,
+	fingerprint fileidentity.Snapshot,
+	workspaceID string,
+) (materialize.Success, error) {
+	return client.materializeArchive(
+		ctx,
+		archivePath,
+		fingerprint,
+		workspaceID,
+		materialize.OperationMaterializeTarVideo,
+		"/v1/materialize/tar-video",
+	)
+}
+
+func (client *Client) materializeArchive(
+	ctx context.Context,
+	archivePath string,
+	fingerprint fileidentity.Snapshot,
+	workspaceID string,
+	operation string,
+	endpoint string,
+) (materialize.Success, error) {
 	if !client.configured() {
 		return materialize.Success{}, fmt.Errorf("worker client is not configured")
 	}
@@ -24,7 +58,7 @@ func (client *Client) MaterializeTarAudio(
 	requestID := client.nextID()
 	payload, err := materialize.EncodeRequest(materialize.Request{
 		SchemaVersion: materialize.SchemaVersion, RequestID: requestID,
-		Operation: materialize.OperationMaterializeTar, RootID: rootID,
+		Operation: operation, RootID: rootID,
 		SourceComponents: components, ExpectedFingerprint: fingerprint.StrictFingerprint(),
 		WorkspaceID: workspaceID,
 	})
@@ -32,8 +66,7 @@ func (client *Client) MaterializeTarAudio(
 		return materialize.Success{}, fmt.Errorf("construct worker materialization request: %w", err)
 	}
 	data, err := client.postWithTimeout(
-		ctx, "/v1/materialize/tar-audio", payload,
-		materialize.MaxResponseBytes, client.stageTimeout,
+		ctx, endpoint, payload, materialize.MaxResponseBytes, client.stageTimeout,
 	)
 	if err != nil {
 		return materialize.Success{}, err
@@ -42,10 +75,12 @@ func (client *Client) MaterializeTarAudio(
 	if err != nil {
 		return materialize.Success{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
-	if response.Success != nil && response.Success.RequestID == requestID {
+	if response.Success != nil && response.Success.RequestID == requestID &&
+		response.Success.Operation == operation {
 		return *response.Success, nil
 	}
-	if response.Failure != nil && response.Failure.RequestID == requestID {
+	if response.Failure != nil && response.Failure.RequestID == requestID &&
+		response.Failure.Operation == operation {
 		return materialize.Success{}, &materialize.Rejection{Reason: response.Failure.Reason}
 	}
 	return materialize.Success{}, &Failure{Kind: FailureInvalidResponse}

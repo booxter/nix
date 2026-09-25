@@ -285,6 +285,35 @@ func TestMaterializeTarAudio(t *testing.T) {
 	}
 }
 
+func TestMaterializeTarVideo(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	archive := filepath.Join(root, "release.tar")
+	writeTar(t, archive, []tarEntry{
+		{name: "Movie/cover.jpg", body: "cover"},
+		{name: "Movie/movie.mkv", body: "video"},
+	})
+	probeWorkspaceSetup(t, root)
+	prober := &fakeProber{}
+	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, prober)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := validRequest()
+	request.Operation = OperationMaterializeTarVideo
+	request.WorkspaceID = "workspace:video"
+	response := executor.Execute(context.Background(), request)
+	if response.Success == nil || response.Failure != nil ||
+		response.Success.Operation != OperationMaterializeTarVideo ||
+		len(response.Success.Artifacts) != 1 ||
+		response.Success.Artifacts[0].RelativePath != "Movie/movie.mkv" || len(prober.paths) != 1 {
+		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+	}
+}
+
 func TestMaterializeRejectsArchiveLinks(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()

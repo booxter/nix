@@ -70,6 +70,25 @@ func TestDirectoryRequestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestVideoArchiveRequestRoundTrip(t *testing.T) {
+	t.Parallel()
+	request := Request{
+		SchemaVersion: SchemaVersion, RequestID: "request:video",
+		Operation: OperationMaterializeTarVideo, RootID: "downloads",
+		SourceComponents:    []string{"Movie", "video.tar"},
+		ExpectedFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		WorkspaceID:         "workspace:video",
+	}
+	data, err := EncodeRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeRequest(data)
+	if err != nil || !reflect.DeepEqual(decoded, request) {
+		t.Fatalf("request = %#v, error = %v", decoded, err)
+	}
+}
+
 func TestArtifactIDIncludesRelativePath(t *testing.T) {
 	t.Parallel()
 	fingerprint := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

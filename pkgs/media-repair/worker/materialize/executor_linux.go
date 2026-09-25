@@ -38,6 +38,10 @@ var audioExtensions = map[string]struct{}{
 	".mp3": {}, ".ogg": {}, ".opus": {},
 }
 
+var videoExtensions = map[string]struct{}{
+	".ts": {}, ".m2ts": {}, ".mp4": {}, ".mkv": {}, ".avi": {},
+}
+
 var (
 	errNoSupportedAudio   = errors.New("source contains no supported audio")
 	errDirectoryRead      = errors.New("read source directory")
@@ -85,8 +89,18 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	fail := func(reason string) Response {
 		return Response{Status: "failed", Failure: &Failure{
 			SchemaVersion: SchemaVersion, RequestID: request.RequestID,
-			Operation: OperationMaterializeTar, Reason: reason,
+			Operation: request.Operation, Reason: reason,
 		}}
+	}
+	extensions := audioExtensions
+	mediaName := "audio"
+	switch request.Operation {
+	case OperationMaterializeTar:
+	case OperationMaterializeTarVideo:
+		extensions = videoExtensions
+		mediaName = "video"
+	default:
+		return fail("invalid_operation")
 	}
 	if err := ctx.Err(); err != nil {
 		return fail("timeout")
@@ -134,7 +148,7 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 		return fail("workspace_error")
 	}
 	artifacts, err := executor.extractAndProbe(
-		ctx, archive, partialPath, workspaceComponents, groupID,
+		ctx, archive, partialPath, workspaceComponents, groupID, extensions, mediaName,
 	)
 	if err != nil {
 		_ = os.RemoveAll(partialPath)
@@ -146,7 +160,7 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	}
 	success := Success{
 		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
-		Operation: OperationMaterializeTar, RootID: request.RootID,
+		Operation: request.Operation, RootID: request.RootID,
 		SourceFingerprint:   sourceFingerprint,
 		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
 	}
@@ -574,6 +588,8 @@ func (executor *Executor) extractAndProbe(
 	workspacePath string,
 	workspaceComponents []string,
 	groupID int,
+	extensions map[string]struct{},
+	mediaName string,
 ) ([]Artifact, error) {
 	reader := tar.NewReader(archive)
 	entries := 0
@@ -618,6 +634,7 @@ func (executor *Executor) extractAndProbe(
 			totalBytes += header.Size
 			artifact, audio, err := extractFile(
 				reader, workspacePath, workspaceComponents, name, header.Size, groupID,
+				extensions,
 			)
 			if err != nil {
 				return nil, err
@@ -629,7 +646,7 @@ func (executor *Executor) extractAndProbe(
 				ctx, filepath.Join(workspacePath, filepath.FromSlash(name)),
 			)
 			if err != nil {
-				return nil, fmt.Errorf("probe extracted audio: %w", err)
+				return nil, fmt.Errorf("probe extracted %s: %w", mediaName, err)
 			}
 			artifact.Evidence = mediaevidence.FromProbe(evidence)
 			artifacts = append(artifacts, artifact)
@@ -638,7 +655,7 @@ func (executor *Executor) extractAndProbe(
 		}
 	}
 	if len(artifacts) == 0 {
-		return nil, fmt.Errorf("archive contains no supported audio")
+		return nil, fmt.Errorf("archive contains no supported %s", mediaName)
 	}
 	sort.Slice(artifacts, func(left, right int) bool {
 		return artifacts[left].RelativePath < artifacts[right].RelativePath
@@ -653,6 +670,7 @@ func extractFile(
 	name string,
 	size int64,
 	groupID int,
+	extensions map[string]struct{},
 ) (Artifact, bool, error) {
 	destination := filepath.Join(workspacePath, filepath.FromSlash(name))
 	if err := ensureWorkspaceDirectory(filepath.Dir(destination), groupID); err != nil {
@@ -677,7 +695,7 @@ func extractFile(
 	digest := hex.EncodeToString(hash.Sum(nil))
 	fingerprint := "sha256:" + digest
 	components := append(append([]string(nil), workspaceComponents...), strings.Split(name, "/")...)
-	_, audio := audioExtensions[strings.ToLower(path.Ext(name))]
+	_, audio := extensions[strings.ToLower(path.Ext(name))]
 	return Artifact{
 		ArtifactID: ArtifactID(name, fingerprint), PathComponents: components,
 		RelativePath: name, SizeBytes: size, Fingerprint: fingerprint,

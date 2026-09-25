@@ -42,6 +42,7 @@ const (
 	SchemaVersion                       = "media-repair-worker/v1"
 	OperationMaterializeTar             = "materialize_tar_audio_v1"
 	OperationMaterializeDirectory       = "materialize_directory_audio_v1"
+	OperationMaterializeTarVideo        = "materialize_tar_video_v1"
 	MaxRequestBytes               int64 = 64 << 10
 	MaxResponseBytes                    = 8 << 20
 )
@@ -143,9 +144,7 @@ func decodeStrict(data []byte, target any) error {
 }
 
 func validateRequest(request Request) error {
-	if request.SchemaVersion != SchemaVersion ||
-		(request.Operation != OperationMaterializeTar &&
-			request.Operation != OperationMaterializeDirectory) {
+	if request.SchemaVersion != SchemaVersion || !validOperation(request.Operation) {
 		return fmt.Errorf("unsupported materialization contract")
 	}
 	if !opaqueID.MatchString(request.RequestID) || !opaqueID.MatchString(request.RootID) ||
@@ -155,7 +154,8 @@ func validateRequest(request Request) error {
 	if !validComponents(request.SourceComponents) {
 		return fmt.Errorf("invalid source path")
 	}
-	if request.Operation == OperationMaterializeTar {
+	if request.Operation == OperationMaterializeTar ||
+		request.Operation == OperationMaterializeTarVideo {
 		if !fingerprint.MatchString(request.ExpectedFingerprint) {
 			return fmt.Errorf("invalid materialization identity")
 		}
@@ -168,8 +168,7 @@ func validateRequest(request Request) error {
 func validateResponse(response Response) error {
 	if response.Status == "ok" && response.Success != nil && response.Failure == nil {
 		if response.Success.SchemaVersion != SchemaVersion ||
-			(response.Success.Operation != OperationMaterializeTar &&
-				response.Success.Operation != OperationMaterializeDirectory) ||
+			!validOperation(response.Success.Operation) ||
 			!opaqueID.MatchString(response.Success.RequestID) ||
 			!opaqueID.MatchString(response.Success.RootID) ||
 			!fingerprint.MatchString(response.Success.SourceFingerprint) ||
@@ -193,14 +192,24 @@ func validateResponse(response Response) error {
 	}
 	if response.Status == "failed" && response.Success == nil && response.Failure != nil {
 		if response.Failure.SchemaVersion != SchemaVersion ||
-			(response.Failure.Operation != OperationMaterializeTar &&
-				response.Failure.Operation != OperationMaterializeDirectory) ||
+			!validOperation(response.Failure.Operation) ||
 			!opaqueID.MatchString(response.Failure.RequestID) || response.Failure.Reason == "" {
 			return fmt.Errorf("materialization failure is incomplete")
 		}
 		return nil
 	}
 	return fmt.Errorf("materialization response must contain exactly one result")
+}
+
+func validOperation(operation string) bool {
+	switch operation {
+	case OperationMaterializeTar,
+		OperationMaterializeDirectory,
+		OperationMaterializeTarVideo:
+		return true
+	default:
+		return false
+	}
 }
 
 func validComponents(components []string) bool {
