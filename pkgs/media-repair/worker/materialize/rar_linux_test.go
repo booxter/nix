@@ -88,6 +88,7 @@ func TestMaterializeRARAudio(t *testing.T) {
 	prober := &fakeProber{}
 	executor, err := NewExecutor(
 		&fakeFiles{root: root, archive: archive}, prober, fakeRARExtractor{},
+		nil,
 	)
 	if err != nil {
 		t.Fatal(err)

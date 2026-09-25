@@ -314,6 +314,8 @@ func startTestWorker(t *testing.T, rootPath string) testWorker {
 		"--lsdvd", requiredEnvironment(t, "RADARR_REPAIR_TEST_LSDVD"),
 		"--lsar", requiredEnvironment(t, "RADARR_REPAIR_TEST_LSAR"),
 		"--unar", requiredEnvironment(t, "RADARR_REPAIR_TEST_UNAR"),
+		"--cueconvert", requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
+		"--cuebreakpoints", requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
 		"--root", "root:downloads=" + rootPath,
 		"--timeout", "10s",
 		"--join-timeout", "10s",

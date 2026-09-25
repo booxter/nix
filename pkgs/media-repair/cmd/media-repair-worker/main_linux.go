@@ -23,6 +23,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/bluraypublish"
 	"github.com/booxter/nix-config/media-repair/worker/blurayrequest"
 	"github.com/booxter/nix-config/media-repair/worker/bluraystage"
+	"github.com/booxter/nix-config/media-repair/worker/cuesheet"
 	"github.com/booxter/nix-config/media-repair/worker/dvdidentify"
 	"github.com/booxter/nix-config/media-repair/worker/dvdpublish"
 	"github.com/booxter/nix-config/media-repair/worker/dvdremux"
@@ -68,6 +69,10 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	lsdvdPath := flags.String("lsdvd", "", "absolute lsdvd executable path")
 	lsarPath := flags.String("lsar", "", "absolute lsar executable path")
 	unarPath := flags.String("unar", "", "absolute unar executable path")
+	cueconvertPath := flags.String("cueconvert", "", "absolute cueconvert executable path")
+	cuebreakpointsPath := flags.String(
+		"cuebreakpoints", "", "absolute cuebreakpoints executable path",
+	)
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
 	joinTimeout := flags.Duration(
 		"join-timeout",
@@ -156,7 +161,13 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	materializeExecutor, err := materialize.NewExecutor(rootSet, probeRunner, rarExtractor)
+	cueHandler, err := cuesheet.NewHandler(*cueconvertPath, *cuebreakpointsPath, *ffmpegPath)
+	if err != nil {
+		return err
+	}
+	materializeExecutor, err := materialize.NewExecutor(
+		rootSet, probeRunner, rarExtractor, cueHandler,
+	)
 	if err != nil {
 		return err
 	}

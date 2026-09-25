@@ -52,7 +52,7 @@ func TestMaterializeDirectoryAudio(t *testing.T) {
 	probeWorkspaceSetup(t, root)
 	files := &fakeFiles{root: root}
 	prober := &fakeProber{}
-	executor, err := NewExecutor(files, prober, nil)
+	executor, err := NewExecutor(files, prober, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestMaterializeDirectoryRejectsSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 	probeWorkspaceSetup(t, root)
-	executor, err := NewExecutor(&fakeFiles{root: root}, &fakeProber{}, nil)
+	executor, err := NewExecutor(&fakeFiles{root: root}, &fakeProber{}, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func TestMaterializeTarAudio(t *testing.T) {
 	probeWorkspaceSetup(t, root)
 	files := &fakeFiles{root: root, archive: archive}
 	prober := &fakeProber{}
-	executor, err := NewExecutor(files, prober, nil)
+	executor, err := NewExecutor(files, prober, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -298,7 +298,7 @@ func TestMaterializeTarVideo(t *testing.T) {
 	})
 	probeWorkspaceSetup(t, root)
 	prober := &fakeProber{}
-	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, prober, nil)
+	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, prober, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,7 +336,7 @@ func TestMaterializeRejectsArchiveLinks(t *testing.T) {
 		t.Fatal(err)
 	}
 	probeWorkspaceSetup(t, root)
-	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, &fakeProber{}, nil)
+	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, &fakeProber{}, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

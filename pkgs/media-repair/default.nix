@@ -1,5 +1,6 @@
 {
   buildGoModule,
+  cuetools,
   ffmpeg-full,
   goModels,
   lib,
@@ -46,8 +47,10 @@ let
       RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg-full "ffprobe";
       RADARR_REPAIR_TEST_MKVMERGE = lib.getExe' mkvtoolnixCli "mkvmerge";
       RADARR_REPAIR_TEST_LSDVD = lib.getExe' lsdvd "lsdvd";
-	  RADARR_REPAIR_TEST_LSAR = lib.getExe' unar "lsar";
-	  RADARR_REPAIR_TEST_UNAR = lib.getExe unar;
+      RADARR_REPAIR_TEST_LSAR = lib.getExe' unar "lsar";
+      RADARR_REPAIR_TEST_UNAR = lib.getExe unar;
+      RADARR_REPAIR_TEST_CUECONVERT = lib.getExe' cuetools "cueconvert";
+      RADARR_REPAIR_TEST_CUEBREAKPOINTS = lib.getExe' cuetools "cuebreakpoints";
       RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
@@ -133,7 +136,9 @@ let
           --add-flags ${lib.escapeShellArg "--lsdvd ${lib.getExe' lsdvd "lsdvd"}"} \
           --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"} \
           --add-flags ${lib.escapeShellArg "--lsar ${lib.getExe' unar "lsar"}"} \
-          --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"}
+          --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"} \
+          --add-flags ${lib.escapeShellArg "--cueconvert ${lib.getExe' cuetools "cueconvert"}"} \
+          --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"}
       '';
 
       doCheck = false;

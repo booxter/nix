@@ -19,6 +19,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
+	"github.com/booxter/nix-config/media-repair/worker/cuesheet"
 	"github.com/booxter/nix-config/media-repair/worker/mediaevidence"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"golang.org/x/sys/unix"
@@ -53,6 +54,7 @@ var (
 	errDirectoryCopy      = errors.New("copy directory audio")
 	errDirectoryProbe     = errors.New("probe directory audio")
 	errDirectoryChanged   = errors.New("source directory changed")
+	errDirectoryCue       = errors.New("invalid cue-backed audio image")
 )
 
 type Files interface {
@@ -70,10 +72,16 @@ type RARExtractor interface {
 	Extract(context.Context, *os.File, string) error
 }
 
+type CueHandler interface {
+	Inspect(context.Context, *os.File) (cuesheet.Plan, error)
+	Split(context.Context, *os.File, cuesheet.Plan, string) ([]string, error)
+}
+
 type Executor struct {
 	files  Files
 	prober Prober
 	rar    RARExtractor
+	cue    CueHandler
 }
 
 type manifest struct {
@@ -83,11 +91,11 @@ type manifest struct {
 	Success           Success `json:"success"`
 }
 
-func NewExecutor(files Files, prober Prober, rar RARExtractor) (*Executor, error) {
+func NewExecutor(files Files, prober Prober, rar RARExtractor, cue CueHandler) (*Executor, error) {
 	if files == nil || prober == nil {
 		return nil, fmt.Errorf("materialization requires media access and probing")
 	}
-	return &Executor{files: files, prober: prober, rar: rar}, nil
+	return &Executor{files: files, prober: prober, rar: rar, cue: cue}, nil
 }
 
 func (executor *Executor) ExecuteRAR(ctx context.Context, request Request) Response {
@@ -363,8 +371,16 @@ func writeManifest(
 
 type directorySource struct {
 	files       []directoryFile
+	cueFiles    []directoryFile
+	cue         *cuePlan
 	fingerprint string
 	bytes       int64
+}
+
+type cuePlan struct {
+	plan  cuesheet.Plan
+	image directoryFile
+	cue   directoryFile
 }
 
 type directoryFile struct {
@@ -525,13 +541,19 @@ func (executor *Executor) scanDirectory(
 			if fileType != unix.S_IFREG {
 				return errDirectorySpecial
 			}
-			if _, audio := audioExtensions[strings.ToLower(filepath.Ext(name))]; !audio {
+			_, audio := audioExtensions[strings.ToLower(filepath.Ext(name))]
+			isCue := cueCandidate(name)
+			if !audio && !isCue {
 				continue
 			}
 			if _, err := safeArchiveName(name, false); err != nil {
 				return errDirectoryEntry
 			}
-			if stat.Size <= 0 || stat.Size > maximumFileBytes ||
+			maximumBytes := int64(maximumFileBytes)
+			if isCue {
+				maximumBytes = cuesheet.MaximumBytes
+			}
+			if stat.Size <= 0 || stat.Size > maximumBytes ||
 				result.bytes > maximumTotalBytes-stat.Size {
 				return errDirectoryLimit
 			}
@@ -540,11 +562,16 @@ func (executor *Executor) scanDirectory(
 				MTimeNS: stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
 			}
 			result.bytes += stat.Size
-			result.files = append(result.files, directoryFile{
+			observed := directoryFile{
 				components: absolute,
 				relative:   strings.Join(relative, "/"),
 				snapshot:   snapshot,
-			})
+			}
+			if audio {
+				result.files = append(result.files, observed)
+			} else {
+				result.cueFiles = append(result.cueFiles, observed)
+			}
 		}
 		return nil
 	}
@@ -554,8 +581,68 @@ func (executor *Executor) scanDirectory(
 	if len(result.files) == 0 {
 		return directorySource{}, errNoSupportedAudio
 	}
-	result.fingerprint = directoryFingerprint(result.files)
+	plan, err := executor.readCuePlan(ctx, rootID, result.files, result.cueFiles)
+	if err != nil {
+		return directorySource{}, err
+	}
+	result.cue = plan
+	result.fingerprint = directoryFingerprint(
+		append(append([]directoryFile(nil), result.files...), result.cueFiles...),
+	)
 	return result, nil
+}
+
+func cueCandidate(name string) bool {
+	lower := strings.ToLower(name)
+	return strings.HasSuffix(lower, ".cue") || strings.HasSuffix(lower, ".cue.txt")
+}
+
+func (executor *Executor) readCuePlan(
+	ctx context.Context,
+	rootID string,
+	audioFiles []directoryFile,
+	cueFiles []directoryFile,
+) (*cuePlan, error) {
+	if len(cueFiles) == 0 {
+		return nil, nil
+	}
+	if executor.cue == nil {
+		return nil, fmt.Errorf("%w: cue handling is unavailable", errDirectoryCue)
+	}
+	var selected *cuePlan
+	for _, cueFile := range cueFiles {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		input, err := executor.files.Open(
+			rootID, cueFile.components, cueFile.snapshot.StrictFingerprint(),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", errDirectoryCue, err)
+		}
+		plan, inspectErr := executor.cue.Inspect(ctx, input)
+		verifyErr := executor.files.Verify(input, cueFile.snapshot.StrictFingerprint())
+		closeErr := input.Close()
+		if inspectErr != nil {
+			if verifyErr == nil && closeErr == nil &&
+				strings.HasSuffix(strings.ToLower(cueFile.relative), ".cue.txt") {
+				continue
+			}
+			return nil, fmt.Errorf(
+				"%w: %v", errDirectoryCue, errors.Join(inspectErr, verifyErr, closeErr),
+			)
+		}
+		if verifyErr != nil || closeErr != nil {
+			return nil, fmt.Errorf(
+				"%w: %v", errDirectoryCue, errors.Join(verifyErr, closeErr),
+			)
+		}
+		if selected != nil || len(audioFiles) != 1 {
+			return nil, fmt.Errorf("%w: ambiguous cue sources", errDirectoryCue)
+		}
+		selected = &cuePlan{plan: plan, image: audioFiles[0], cue: cueFile}
+	}
+	return selected, nil
 }
 
 func directoryFingerprint(files []directoryFile) string {
@@ -577,6 +664,11 @@ func (executor *Executor) copyAndProbeDirectory(
 	workspaceComponents []string,
 	groupID int,
 ) ([]Artifact, error) {
+	if source.cue != nil {
+		return executor.splitAndProbeDirectory(
+			ctx, request, *source.cue, workspacePath, workspaceComponents, groupID,
+		)
+	}
 	artifacts := make([]Artifact, 0, len(source.files))
 	for _, sourceFile := range source.files {
 		if err := ctx.Err(); err != nil {
@@ -608,6 +700,87 @@ func (executor *Executor) copyAndProbeDirectory(
 		artifacts = append(artifacts, artifact)
 	}
 	return artifacts, nil
+}
+
+func (executor *Executor) splitAndProbeDirectory(
+	ctx context.Context,
+	request Request,
+	plan cuePlan,
+	workspacePath string,
+	workspaceComponents []string,
+	groupID int,
+) ([]Artifact, error) {
+	image, err := executor.files.Open(
+		request.RootID, plan.image.components, plan.image.snapshot.StrictFingerprint(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", errDirectoryCopy, err)
+	}
+	defer image.Close()
+	outputs, splitErr := executor.cue.Split(ctx, image, plan.plan, workspacePath)
+	verifyErr := executor.files.Verify(image, plan.image.snapshot.StrictFingerprint())
+	if splitErr != nil || verifyErr != nil {
+		return nil, fmt.Errorf("%w: %v", errDirectoryCue, errors.Join(splitErr, verifyErr))
+	}
+	artifacts := make([]Artifact, 0, len(outputs))
+	var total int64
+	for _, name := range outputs {
+		if _, err := safeArchiveName(name, false); err != nil || strings.Contains(name, "/") {
+			return nil, fmt.Errorf("%w: unsafe split output", errDirectoryCue)
+		}
+		output := filepath.Join(workspacePath, name)
+		info, err := os.Lstat(output)
+		if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 ||
+			info.Size() <= 0 || info.Size() > maximumFileBytes ||
+			total > maximumTotalBytes-info.Size() {
+			return nil, fmt.Errorf("%w: invalid split output", errDirectoryCue)
+		}
+		total += info.Size()
+		if err := os.Chmod(output, 0o640); err != nil {
+			return nil, fmt.Errorf("%w: %v", errDirectoryCopy, err)
+		}
+		if err := os.Chown(output, -1, groupID); err != nil {
+			return nil, fmt.Errorf("%w: %v", errDirectoryCopy, err)
+		}
+		artifact, err := generatedArtifact(output, name, workspaceComponents, info.Size())
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", errDirectoryCopy, err)
+		}
+		evidence, err := executor.prober.Probe(ctx, output)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", errDirectoryProbe, err)
+		}
+		artifact.Evidence = mediaevidence.FromProbe(evidence)
+		artifacts = append(artifacts, artifact)
+	}
+	if len(artifacts) != len(plan.plan.Starts) {
+		return nil, fmt.Errorf("%w: split output count changed", errDirectoryCue)
+	}
+	return artifacts, nil
+}
+
+func generatedArtifact(
+	filename string,
+	relative string,
+	workspaceComponents []string,
+	size int64,
+) (Artifact, error) {
+	input, err := os.Open(filename)
+	if err != nil {
+		return Artifact{}, err
+	}
+	hash := sha256.New()
+	written, copyErr := io.Copy(hash, input)
+	closeErr := input.Close()
+	if copyErr != nil || closeErr != nil || written != size {
+		return Artifact{}, errors.Join(copyErr, closeErr, fmt.Errorf("short generated file"))
+	}
+	fingerprint := "sha256:" + hex.EncodeToString(hash.Sum(nil))
+	return Artifact{
+		ArtifactID:     ArtifactID(relative, fingerprint),
+		PathComponents: appendCopy(workspaceComponents, relative),
+		RelativePath:   relative, SizeBytes: size, Fingerprint: fingerprint,
+	}, nil
 }
 
 func copyDirectoryFile(
@@ -886,6 +1059,8 @@ func reasonForDirectoryError(err error) string {
 		return "probe_failed"
 	case errors.Is(err, errDirectoryChanged):
 		return "source_changed"
+	case errors.Is(err, errDirectoryCue):
+		return "invalid_cue_sheet"
 	}
 	var fileFailure *mediafile.Failure
 	if errors.As(err, &fileFailure) {
