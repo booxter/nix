@@ -9,6 +9,7 @@ let
   controller = if lidarr == null then null else lidarr.repair.controller;
   planner = config.host.mediaRepair.planner;
   worker = config.host.mediaRepair.worker;
+  review = config.host.mediaRepair.review;
   serviceName = "lidarr-repair-controller";
   killSwitchFile = "/run/lidarr-repair-disable-apply";
   rootIDs = builtins.attrNames worker.roots;
@@ -37,6 +38,7 @@ let
       ++ lib.optionals controller.apply.finalizeStaleQueue [ "--finalize-stale-queue" ]
     else
       [ ];
+  reviewDirectory = "${review.stateDirectory}/lidarr";
   command =
     if controller == null then
       ""
@@ -62,6 +64,10 @@ let
           "${toString (planner.planningTimeoutSeconds + 30)}s"
         ]
         ++ modeArguments
+        ++ lib.optionals review.enable [
+          "--review-directory"
+          reviewDirectory
+        ]
         ++ rootArguments
       );
 in
@@ -88,6 +94,8 @@ in
         interval = controller.interval;
         timerDescription = "Periodically run the Lidarr repair controller";
         timeoutStopSec = "10s";
+        readWritePaths = lib.optionals review.enable [ reviewDirectory ];
+        supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
       })
       {
         assertions = [

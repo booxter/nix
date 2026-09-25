@@ -13,6 +13,7 @@
   extraRequiredUnits ? [ ],
   readWritePaths ? [ ],
   wantedUnits ? [ ],
+  supplementaryGroups ? [ ],
 }:
 let
   requiredUnits = [
@@ -47,7 +48,8 @@ in
         "media"
         planner.clientGroup
         worker.clientGroup
-      ];
+      ]
+      ++ supplementaryGroups;
       StateDirectory = serviceName;
       StateDirectoryMode = "0700";
       TimeoutStartSec = "infinity";

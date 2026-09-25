@@ -15,6 +15,8 @@ let
     worker
     ;
   serviceName = "radarr-repair-controller";
+  review = config.host.mediaRepair.review;
+  reviewDirectory = "${review.stateDirectory}/radarr";
   killSwitchFile = "/run/radarr-repair-disable-apply";
   metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
   sabnzbdSecret = if sabnzbd == null then null else sabnzbd.authentication.secret;
@@ -87,6 +89,10 @@ let
       "${toString (worker.joinTimeoutSeconds + 30)}s"
     ]
     ++ downloadClientArguments
+    ++ lib.optionals review.enable [
+      "--review-directory"
+      reviewDirectory
+    ]
     ++ rootArguments
   );
 in
@@ -115,7 +121,8 @@ in
         timerDescription = "Periodically run the Radarr repair controller";
         timeoutStopSec = "35s";
         extraRequiredUnits = downloadClientUnits;
-        readWritePaths = [ controller.metricsDirectory ];
+        readWritePaths = [ controller.metricsDirectory ] ++ lib.optionals review.enable [ reviewDirectory ];
+        supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
         wantedUnits = [ "network-online.target" ];
       })
       {
