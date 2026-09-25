@@ -160,6 +160,18 @@
             url = "https://github.com/booxter/jellyfin/commit/3b63ec92420305d24e0fe90a452f0cdcbb624872.patch";
             hash = "sha256-X5qv8+R2s/zk411gQHyNhRaf9VRFSG+47W8Fy0N+96U=";
           })
+          # GHSA-6828-c7cx-hvqm: confine virtual-folder operations to the
+          # libraries root.
+          (prev.fetchpatch {
+            url = "https://github.com/jellyfin/jellyfin/commit/0c560b22ce73323329645b836c9910abc257ce4e.patch";
+            hash = "sha256-K/og9MDP4BNexkDGLOm346O9anqAjb13UViSAmOw2OA=";
+          })
+          # GHSA-4vx8-xhc9-qg6x: enforce remote-control permissions between
+          # user sessions.
+          (prev.fetchpatch {
+            url = "https://github.com/jellyfin/jellyfin/commit/dd7de4187879082e10b474856f705b6c5d9b963a.patch";
+            hash = "sha256-OCj4aaKaX4F/+KbCz6BAsifdYe/6BOu6y39ZgMSUKFA=";
+          })
         ];
       });
 
