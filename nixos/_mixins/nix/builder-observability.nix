@@ -23,8 +23,6 @@ in
       ];
       interval = "15s";
       onBootSec = "15s";
-      after = [ "nix-builder-cgroup-setup.service" ];
-      requires = [ "nix-builder-cgroup-setup.service" ];
     };
   };
 }

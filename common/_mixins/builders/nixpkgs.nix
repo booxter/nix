@@ -11,10 +11,14 @@ let
       lib.filterAttrs (_: builder: builtins.elem "nixpkgs" builder.uses) config.host.nix.builder-pool
     else
       { };
+  localPoolBuilders = lib.filterAttrs (_: builder: !builder.community) poolBuilders;
   builders =
     lib.mapAttrsToList (name: builder: builder // { hostName = name; }) poolBuilders
     ++ config.host.nix.nixpkgs.additional-builders;
-  builderString = lib.concatStringsSep " ; " (map formatBuilder builders);
+  localBuilders =
+    lib.mapAttrsToList (name: builder: builder // { hostName = name; }) localPoolBuilders
+    ++ config.host.nix.nixpkgs.additional-builders;
+  formatBuilders = values: lib.concatStringsSep " ; " (map formatBuilder values);
 in
 {
   options.host.nix.nixpkgs = {
@@ -27,10 +31,18 @@ in
 
     builders = lib.mkOption {
       type = lib.types.str;
-      default = builderString;
+      default = formatBuilders builders;
       readOnly = true;
       internal = true;
       description = "Complete machines-file argument for nixpkgs builds.";
+    };
+
+    local-builders = lib.mkOption {
+      type = lib.types.str;
+      default = formatBuilders localBuilders;
+      readOnly = true;
+      internal = true;
+      description = "Nixpkgs builders managed locally, excluding community builders.";
     };
   };
 }
