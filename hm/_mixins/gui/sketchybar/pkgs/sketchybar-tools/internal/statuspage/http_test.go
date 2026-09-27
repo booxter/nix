@@ -1,4 +1,4 @@
-package githubstatus
+package statuspage
 
 import "testing"
 

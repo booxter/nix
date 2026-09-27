@@ -1,4 +1,4 @@
-package githubstatus
+package statuspage
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func (fetcher HTTPSummaryFetcher) Fetch(ctx context.Context) (Summary, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	body, err := httpclient.Get(ctx, client, fetcher.config.URL, maxResponseBytes)
 	if err != nil {
-		return Summary{}, fmt.Errorf("fetch GitHub Status summary: %w", err)
+		return Summary{}, fmt.Errorf("fetch status page summary: %w", err)
 	}
 	return decodeSummary(body)
 }
@@ -61,10 +61,10 @@ func decodeSummary(body []byte) (Summary, error) {
 		Incidents  *[]json.RawMessage `json:"incidents"`
 	}
 	if err := json.Unmarshal(body, &response); err != nil {
-		return Summary{}, fmt.Errorf("decode GitHub Status response: %w", err)
+		return Summary{}, fmt.Errorf("decode status page response: %w", err)
 	}
 	if response.Status.Indicator == nil || response.Components == nil || response.Incidents == nil {
-		return Summary{}, fmt.Errorf("decode GitHub Status response: unexpected structure")
+		return Summary{}, fmt.Errorf("decode status page response: unexpected structure")
 	}
 	return Summary{
 		Indicator:  *response.Status.Indicator,

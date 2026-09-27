@@ -8,17 +8,18 @@
 }:
 let
   inherit (pkgs) lib;
-  goPluginNames = [
-    "alertmanager"
-    "clock"
-    "disk"
-    "github-status"
-    "ip_address"
-    "jellyfin"
-    "network"
-    "stock"
-    "volume"
-  ];
+  goPlugins = {
+    alertmanager = "sketchybar-alertmanager";
+    clock = "sketchybar-clock";
+    disk = "sketchybar-disk";
+    "github-status" = "sketchybar-statuspage";
+    ip_address = "sketchybar-ip-address";
+    jellyfin = "sketchybar-jellyfin";
+    network = "sketchybar-network";
+    stock = "sketchybar-stock";
+    volume = "sketchybar-volume";
+  };
+  goPluginNames = builtins.attrNames goPlugins;
   swiftPluginNames = [
     "battery"
     "spotify"
@@ -39,7 +40,8 @@ let
       ALERTMANAGER_CLIENT_KEY = alertmanager.clientKey;
     };
     "github-status" = {
-      GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/summary.json";
+      STATUSPAGE_ICON = "";
+      STATUSPAGE_URL = "https://www.githubstatus.com/api/v2/summary.json";
     };
     jellyfin = lib.optionalAttrs (jellyfin != null) {
       JELLYFIN_METRICS_URL = jellyfin.metricsUrl;
@@ -118,9 +120,9 @@ pkgs.stdenvNoCC.mkDerivation {
       makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"
     )}
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList makeExternalPluginWrapper pluginPackages)}
-    ${lib.concatMapStringsSep "\n" (
-      name: makeGoPluginWrapper name "sketchybar-${lib.replaceString "_" "-" name}"
-    ) (builtins.filter (name: builtins.elem name pluginNames) goPluginNames)}
+    ${lib.concatMapStringsSep "\n" (name: makeGoPluginWrapper name goPlugins.${name}) (
+      builtins.filter (name: builtins.elem name pluginNames) goPluginNames
+    )}
     runHook postInstall
   '';
 

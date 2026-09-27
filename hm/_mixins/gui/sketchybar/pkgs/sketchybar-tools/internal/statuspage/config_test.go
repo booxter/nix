@@ -1,11 +1,12 @@
-package githubstatus
+package statuspage
 
 import "testing"
 
 func TestConfigFromEnvironmentAppliesColorAndValidatesSettings(t *testing.T) {
 	values := map[string]string{
-		"NAME":                 "github-status",
-		"GITHUB_STATUS_URL":    "https://github-status.test/api/v2/summary.json",
+		"NAME":                 "service-status",
+		"STATUSPAGE_URL":       "https://status.test/api/v2/summary.json",
+		"STATUSPAGE_ICON":      "icon",
 		"SKETCHYBAR_BIN":       "/sketchybar",
 		"SKETCHYBAR_COLOR_RED": "red",
 	}
@@ -24,9 +25,10 @@ func TestConfigFromEnvironmentAppliesColorAndValidatesSettings(t *testing.T) {
 
 func TestConfigFromEnvironmentUsesDefaultColor(t *testing.T) {
 	values := map[string]string{
-		"NAME":              "github-status",
-		"GITHUB_STATUS_URL": "https://github-status.test/api/v2/summary.json",
-		"SKETCHYBAR_BIN":    "/sketchybar",
+		"NAME":            "service-status",
+		"STATUSPAGE_URL":  "https://status.test/api/v2/summary.json",
+		"STATUSPAGE_ICON": "icon",
+		"SKETCHYBAR_BIN":  "/sketchybar",
 	}
 	config, err := ConfigFromEnvironment(func(name string) string { return values[name] })
 	if err != nil {

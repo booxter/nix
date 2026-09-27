@@ -15,10 +15,10 @@ buildGoModule {
     "cmd/sketchybar-alertmanager"
     "cmd/sketchybar-clock"
     "cmd/sketchybar-disk"
-    "cmd/sketchybar-github-status"
     "cmd/sketchybar-ip-address"
     "cmd/sketchybar-jellyfin"
     "cmd/sketchybar-network"
+    "cmd/sketchybar-statuspage"
     "cmd/sketchybar-stock"
     "cmd/sketchybar-volume"
   ];

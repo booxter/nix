@@ -1,4 +1,4 @@
-package githubstatus
+package statuspage
 
 import "fmt"
 
@@ -7,6 +7,7 @@ const defaultRed = "0xfffb4934"
 type Config struct {
 	Name                 string
 	URL                  string
+	Icon                 string
 	Red                  string
 	SketchybarExecutable string
 }
@@ -14,7 +15,8 @@ type Config struct {
 func ConfigFromEnvironment(getenv func(string) string) (Config, error) {
 	config := Config{
 		Name:                 getenv("NAME"),
-		URL:                  getenv("GITHUB_STATUS_URL"),
+		URL:                  getenv("STATUSPAGE_URL"),
+		Icon:                 getenv("STATUSPAGE_ICON"),
 		Red:                  getenv("SKETCHYBAR_COLOR_RED"),
 		SketchybarExecutable: getenv("SKETCHYBAR_BIN"),
 	}
@@ -27,7 +29,8 @@ func ConfigFromEnvironment(getenv func(string) string) (Config, error) {
 		value string
 	}{
 		{"NAME", config.Name},
-		{"GITHUB_STATUS_URL", config.URL},
+		{"STATUSPAGE_URL", config.URL},
+		{"STATUSPAGE_ICON", config.Icon},
 		{"SKETCHYBAR_BIN", config.SketchybarExecutable},
 	}
 	for _, setting := range required {
