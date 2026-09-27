@@ -256,11 +256,11 @@ func writeAutomaticRejection(writer io.Writer, execution applyrunner.CaseResult)
 		_, err := fmt.Fprintf(
 			writer,
 			"apply=precondition_rejected case_id=%s action=%s reason=%s "+
-				"observed_at=%s checked_at=%s required_age=%s actual_age=%s\n",
+				"stable_since=%s checked_at=%s required_age=%s actual_age=%s\n",
 			execution.CaseID,
 			execution.Action,
 			rejection.Reason,
-			assessment.ObservedAt.UTC().Format(time.RFC3339Nano),
+			assessment.StableSince.UTC().Format(time.RFC3339Nano),
 			assessment.CheckedAt.UTC().Format(time.RFC3339Nano),
 			assessment.RequiredAge,
 			assessment.ActualAge,

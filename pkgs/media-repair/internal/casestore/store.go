@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
@@ -79,9 +80,7 @@ func New(root string) (*Store, error) {
 			Encode:       EncodeRecord,
 			Decode:       DecodeRecord,
 			SameIdentity: sameRadarrCaseIdentity,
-			Merge: func(_ CaseRecord, current CaseRecord) (CaseRecord, error) {
-				return current, nil
-			},
+			Merge:        mergeRadarrCaseObservation,
 		},
 	)
 	if err != nil {
@@ -113,6 +112,17 @@ func (store *Store) Put(record CaseRecord) (bool, error) {
 
 func (store *Store) Get(caseID string) (CaseRecord, bool, error) {
 	return store.cases.Get(caseID)
+}
+
+func (store *Store) StableSince(caseID string) (time.Time, error) {
+	record, found, err := store.Get(caseID)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !found {
+		return time.Time{}, fmt.Errorf("case %q is not stored", caseID)
+	}
+	return recordStableSince(record), nil
 }
 
 func (store *Store) recordPath(caseID string) (string, error) {
@@ -186,6 +196,41 @@ func sameRadarrCaseIdentity(left, right CaseRecord) (bool, error) {
 		return false, nil
 	}
 	return contracts.SameCaseIdentity(leftRequest, rightRequest)
+}
+
+func mergeRadarrCaseObservation(stored, current CaseRecord) (CaseRecord, error) {
+	storedAssembly, err := recordAssembly(stored)
+	if err != nil {
+		return CaseRecord{}, fmt.Errorf("decode stored case observation: %w", err)
+	}
+	currentAssembly, err := recordAssembly(current)
+	if err != nil {
+		return CaseRecord{}, fmt.Errorf("decode current case observation: %w", err)
+	}
+	current.Version = RecordVersionV4
+	current.StableSince = current.Snapshot.Observation.ObservedAt.UTC()
+	if casebuilder.SameCaseState(storedAssembly, currentAssembly) {
+		current.StableSince = recordStableSince(stored)
+	}
+	return current, nil
+}
+
+func recordAssembly(record CaseRecord) (casebuilder.Assembly, error) {
+	request, err := contracts.DecodeCase(record.Request)
+	if err != nil {
+		return casebuilder.Assembly{}, err
+	}
+	return casebuilder.Assembly{
+		Request: request, EncodedRequest: cloneBytes(record.Request),
+		LocalSnapshot: record.Snapshot,
+	}, nil
+}
+
+func recordStableSince(record CaseRecord) time.Time {
+	if !record.StableSince.IsZero() {
+		return record.StableSince
+	}
+	return record.Snapshot.Observation.ObservedAt.UTC()
 }
 
 func caseDigest(caseID string) (string, error) {

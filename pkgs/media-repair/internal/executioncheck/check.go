@@ -36,7 +36,7 @@ type Rejection struct {
 }
 
 type StabilizationAssessment struct {
-	ObservedAt  time.Time
+	StableSince time.Time
 	CheckedAt   time.Time
 	RequiredAge time.Duration
 	ActualAge   time.Duration
@@ -80,10 +80,15 @@ type JoinExecutionStateReader interface {
 	) (workercontracts.InspectJoinResponseV1, error)
 }
 
+type StabilityReader interface {
+	StableSince(string) (time.Time, error)
+}
+
 type Dependencies struct {
 	Cases          FreshCaseReader
 	Clock          controller.Clock
 	JoinExecutions JoinExecutionStateReader
+	Stability      StabilityReader
 	Stabilization  time.Duration
 }
 
@@ -99,6 +104,8 @@ func New(dependencies Dependencies) (*Checker, error) {
 		return nil, fmt.Errorf("execution check clock is required")
 	case dependencies.JoinExecutions == nil:
 		return nil, fmt.Errorf("join execution state reader is required")
+	case dependencies.Stability == nil:
+		return nil, fmt.Errorf("case stability reader is required")
 	case dependencies.Stabilization <= 0:
 		return nil, fmt.Errorf("stabilization interval must be positive")
 	default:
@@ -127,18 +134,25 @@ func (checker *Checker) Check(
 		return Result{}, fmt.Errorf("clock returned a zero time")
 	}
 	observation := stored.LocalSnapshot.Observation
-	if observation.Correlation.Radarr.TrackedDownloadState == "importPending" &&
-		(now.Before(observation.ObservedAt) ||
-			now.Sub(observation.ObservedAt) < checker.dependencies.Stabilization) {
-		return Result{Rejections: []Rejection{{
-			Reason: StabilizationPending,
-			Stabilization: &StabilizationAssessment{
-				ObservedAt:  observation.ObservedAt,
-				CheckedAt:   now,
-				RequiredAge: checker.dependencies.Stabilization,
-				ActualAge:   now.Sub(observation.ObservedAt),
-			},
-		}}}, nil
+	if observation.Correlation.Radarr.TrackedDownloadState == "importPending" {
+		stableSince, err := checker.dependencies.Stability.StableSince(stored.Request.CaseID)
+		if err != nil {
+			return Result{}, fmt.Errorf("read repair case stability: %w", err)
+		}
+		if stableSince.IsZero() || stableSince.Location() != time.UTC {
+			return Result{}, fmt.Errorf("repair case stability time is invalid")
+		}
+		if now.Before(stableSince) || now.Sub(stableSince) < checker.dependencies.Stabilization {
+			return Result{Rejections: []Rejection{{
+				Reason: StabilizationPending,
+				Stabilization: &StabilizationAssessment{
+					StableSince: stableSince,
+					CheckedAt:   now,
+					RequiredAge: checker.dependencies.Stabilization,
+					ActualAge:   now.Sub(stableSince),
+				},
+			}}}, nil
+		}
 	}
 
 	queueID := observation.Correlation.Radarr.ID

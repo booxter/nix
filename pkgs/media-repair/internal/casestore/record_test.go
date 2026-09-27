@@ -26,8 +26,11 @@ func TestCaseRecordRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record.Version != RecordVersionV3 {
+	if record.Version != RecordVersionV4 {
 		t.Fatalf("record version = %q", record.Version)
+	}
+	if record.StableSince != assembly.Request.ObservedAt {
+		t.Fatalf("stable since = %s", record.StableSince)
 	}
 	data, err := EncodeRecord(record)
 	if err != nil {
@@ -110,9 +113,23 @@ func TestDecodeRecordRejectsInvalidEnvelope(t *testing.T) {
 		{
 			name: "unsupported version",
 			mutate: func(record *CaseRecord) {
-				record.Version = "radarr-repair-state/v4"
+				record.Version = "radarr-repair-state/v5"
 			},
 			want: "unsupported case record version",
+		},
+		{
+			name: "missing stability time",
+			mutate: func(record *CaseRecord) {
+				record.StableSince = time.Time{}
+			},
+			want: "stability time is invalid",
+		},
+		{
+			name: "future stability time",
+			mutate: func(record *CaseRecord) {
+				record.StableSince = record.Snapshot.Observation.ObservedAt.Add(time.Second)
+			},
+			want: "stability time is invalid",
 		},
 		{
 			name: "record case ID mismatch",
