@@ -32,6 +32,12 @@ let
           url = "https://github.com/booxter/nix-1/commit/7cc467036383c9ee3abe989f5f515b1baee1147d.patch";
           hash = "sha256-Jfa3P644DWGwz6bPfYKKEUuH1dQEpVxeB6hJAbHKwEY=";
         })
+        # Enable accounting controllers for per-build cgroups after the daemon
+        # moves itself into its leaf cgroup.
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/68d4049ceaf4d37837d3c2fdfe415f48737d1f64.patch";
+          hash = "sha256-H2XyUQg8uYrhlCV7Sj7CE6Ow/uGGdLqUlK7azTtwE88=";
+        })
         # Keep SIGCHLD from writing to a self-pipe closed during daemon shutdown.
         (pkgs.fetchpatch {
           url = "https://github.com/NixOS/nix/commit/20e5b8e84cfa0718323f6d93eabd86a73ff86cc8.patch";

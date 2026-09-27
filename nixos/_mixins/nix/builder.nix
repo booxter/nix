@@ -1,12 +1,5 @@
-{
-  config,
-  lib,
-  pkgs,
-  utils,
-  ...
-}:
+{ config, lib, ... }:
 let
-  cgroupRoot = "/sys/fs/cgroup/system.slice/nix-daemon.service";
   GiB = 1024 * 1024 * 1024;
 in
 {
@@ -38,33 +31,6 @@ in
           randomEncryption.enable = true;
         }
       ];
-      systemd.services = {
-        # The upstream unit delegates its cgroup and Nix moves the daemon into a
-        # child cgroup, but neither enables the delegated controllers in the
-        # service root's cgroup.subtree_control. Enable them after that move so
-        # Nix's per-build child cgroups expose memory and I/O accounting files.
-        # Keep this separate from ExecStartPost so a metrics setup failure cannot
-        # prevent the Nix daemon from serving builds.
-        nix-builder-cgroup-setup = {
-          description = "Enable accounting controllers for Nix build cgroups";
-          after = [ "nix-daemon.service" ];
-          requires = [ "nix-daemon.service" ];
-          partOf = [ "nix-daemon.service" ];
-          wantedBy = [
-            "multi-user.target"
-            "nix-daemon.service"
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = utils.escapeSystemdExecArgs [
-              (lib.getExe' pkgs.nix-builder-metrics "nix-builder-cgroup-setup")
-              "--cgroup-root"
-              cgroupRoot
-            ];
-          };
-        };
-      };
     })
     (lib.mkIf (config.host.nix.builder != null && config.host.proxmox.guest != null) {
       boot.kernel.sysctl."vm.swappiness" = 100;
