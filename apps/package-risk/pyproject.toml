@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "package-risk"
+version = "0.1.0"
+description = "Report maintainer and vulnerability risks in Nix configuration closures"
+requires-python = ">=3.13"
+dependencies = ["httpx", "pydantic", "pygithub", "requests", "univers"]
+
+[project.scripts]
+risk = "package_risk.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+package_risk = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=package_risk --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/package_risk"]
+strict = true
