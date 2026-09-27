@@ -30,7 +30,7 @@ class ReviewOptions:
     approve: bool
     tests: bool
     cuda: bool
-    builders: str
+    builders: str | None
 
 
 def builder_systems(builders: str) -> set[str]:
@@ -61,7 +61,7 @@ def review_arguments(options: ReviewOptions) -> list[str]:
     if options.tests:
         arguments.append("--tests")
     arguments.append(f"--systems={options.systems}")
-    if options.builders:
+    if options.builders is not None:
         build_arguments = shlex.join(["--builders", options.builders])
         arguments.append(f"--build-args={build_arguments}")
     return arguments
@@ -78,6 +78,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-i", "--include-pr", action="append", default=[])
     parser.add_argument("-s", "--systems")
     parser.add_argument("-C", "--cuda", action="store_true")
+    parser.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="exclude community builders",
+    )
     parser.add_argument("pull_requests", nargs="+")
     return parser
 
@@ -90,7 +96,8 @@ def main(
 ) -> int:
     arguments = _parser().parse_args(argv)
     environ = os.environ if environment is None else environment
-    builders = environ.get("NR_BUILDERS", "")
+    configured_builders = environ.get("NR_BUILDERS", "")
+    builders = environ.get("NR_LOCAL_BUILDERS", "") if arguments.local else configured_builders
     systems = arguments.systems or " ".join(default_systems(builders))
     options = ReviewOptions(
         pull_requests=tuple(arguments.pull_requests),
@@ -100,6 +107,6 @@ def main(
         approve=arguments.approve,
         tests=arguments.tests,
         cuda=arguments.cuda,
-        builders=builders,
+        builders=builders if arguments.local or builders else None,
     )
     return (executor or NixpkgsReviewExecutor()).run(review_arguments(options))

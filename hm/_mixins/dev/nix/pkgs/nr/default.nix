@@ -1,5 +1,6 @@
 {
   builders ? "",
+  localBuilders ? "",
   lib,
   nixpkgs-reviewFull,
   python3,
@@ -27,6 +28,7 @@ pythonPackages.buildPythonApplication {
   makeWrapperArgs = [
     "--prefix PATH : ${lib.makeBinPath [ nixpkgs-reviewFull ]}"
     "--set NR_BUILDERS ${lib.escapeShellArg builders}"
+    "--set NR_LOCAL_BUILDERS ${lib.escapeShellArg localBuilders}"
   ];
 
   preCheck = ''

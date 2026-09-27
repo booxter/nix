@@ -18,12 +18,16 @@ def invoke(
     arguments: Sequence[str],
     *,
     builders: str = "",
+    local_builders: str = "",
     status: int = 0,
 ) -> tuple[int, tuple[str, ...]]:
     executor = RecordingReviewExecutor(status)
     result = main(
         arguments,
-        environment={"NR_BUILDERS": builders},
+        environment={
+            "NR_BUILDERS": builders,
+            "NR_LOCAL_BUILDERS": local_builders,
+        },
         executor=executor,
     )
     assert executor.arguments is not None
@@ -86,3 +90,21 @@ def test_omits_build_arguments_without_configured_builders() -> None:
     _, arguments = invoke(["123"])
 
     assert all(not argument.startswith("--build-args=") for argument in arguments)
+
+
+def test_local_builds_exclude_community_builders() -> None:
+    local_builders = "ssh-ng://fleet-builder x86_64-linux - 4 100 - - -"
+    _, arguments = invoke(
+        ["-l", "123"],
+        builders=(f"{local_builders} ; ssh-ng://community-builder aarch64-linux - 4 100 - - -"),
+        local_builders=local_builders,
+    )
+
+    assert "--systems=x86_64-linux aarch64-darwin" in arguments
+    build_argument = next(
+        argument for argument in arguments if argument.startswith("--build-args=")
+    )
+    assert shlex.split(build_argument.removeprefix("--build-args=")) == [
+        "--builders",
+        local_builders,
+    ]

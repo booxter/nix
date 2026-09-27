@@ -20,6 +20,7 @@ in
   config = lib.mkIf enabled {
     host.nix.external-builders = {
       darwin-builder = {
+        community = true;
         uses = [ "nixpkgs" ];
         hostName = "darwin-build-box.nix-community.org";
         protocol = "ssh-ng";
@@ -32,6 +33,7 @@ in
         supportedFeatures = [ "big-parallel" ];
       };
       remote-linux-builder = {
+        community = true;
         uses = [ "nixpkgs" ];
         hostName = "aarch64-build-box.nix-community.org";
         protocol = "ssh-ng";
@@ -50,6 +52,7 @@ in
         ];
       };
       remote-linux-x86-builder = {
+        community = true;
         uses = [ "nixpkgs" ];
         hostName = "build-box.nix-community.org";
         protocol = "ssh-ng";

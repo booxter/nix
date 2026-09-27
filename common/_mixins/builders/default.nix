@@ -27,6 +27,12 @@ let
     "nixpkgs"
   ];
   builderOptions = {
+    community = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      internal = true;
+      description = "Whether the builder is provided by the Nix community.";
+    };
     uses = lib.mkOption {
       type = lib.types.nonEmptyListOf useType;
       description = "Consumers allowed to use the builder.";
