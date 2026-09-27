@@ -12,6 +12,7 @@
     ./ip-address.nix
     ./jellyfin.nix
     ./network.nix
+    ./openai-status.nix
     ./spotify.nix
     ./stock.nix
     ./volume.nix

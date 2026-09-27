@@ -16,6 +16,7 @@ let
     ip_address = "sketchybar-ip-address";
     jellyfin = "sketchybar-jellyfin";
     network = "sketchybar-network";
+    "openai-status" = "sketchybar-statuspage";
     stock = "sketchybar-stock";
     volume = "sketchybar-volume";
   };
@@ -48,6 +49,10 @@ let
       JELLYFIN_CA_CERTIFICATE = jellyfin.caCertificate;
       JELLYFIN_CLIENT_CERTIFICATE = jellyfin.clientCertificate;
       JELLYFIN_CLIENT_KEY = jellyfin.clientKey;
+    };
+    "openai-status" = {
+      STATUSPAGE_ICON = "󰚩";
+      STATUSPAGE_URL = "https://status.openai.com/api/v2/summary.json";
     };
     stock = {
       STOCK_API_URL = "https://api.nasdaq.com/api/quote";
