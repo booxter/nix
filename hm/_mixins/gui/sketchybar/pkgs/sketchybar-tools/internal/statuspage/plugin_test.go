@@ -1,4 +1,4 @@
-package githubstatus
+package statuspage
 
 import (
 	"context"
@@ -28,14 +28,15 @@ func (bar *recordingBar) Run(arguments ...string) error {
 
 func testConfig() Config {
 	return Config{
-		Name:                 "github-status",
-		URL:                  "https://github-status.test/api/v2/summary.json",
+		Name:                 "service-status",
+		URL:                  "https://status.test/api/v2/summary.json",
+		Icon:                 "icon",
 		Red:                  defaultRed,
 		SketchybarExecutable: "/sketchybar",
 	}
 }
 
-func TestRunHidesItemWhenGitHubIsOperational(t *testing.T) {
+func TestRunHidesItemWhenServiceIsOperational(t *testing.T) {
 	bar := &recordingBar{}
 	fetcher := fakeFetcher{summary: Summary{
 		Indicator:  "none",
@@ -44,20 +45,20 @@ func TestRunHidesItemWhenGitHubIsOperational(t *testing.T) {
 	if err := Run(context.Background(), testConfig(), fetcher, bar); err != nil {
 		t.Fatalf("Run returned an error: %v", err)
 	}
-	want := [][]string{{"--set", "github-status", "drawing=off"}}
+	want := [][]string{{"--set", "service-status", "drawing=off"}}
 	if !reflect.DeepEqual(bar.calls, want) {
 		t.Fatalf("SketchyBar calls = %#v, want %#v", bar.calls, want)
 	}
 }
 
-func TestRunShowsGitHubIconForIssues(t *testing.T) {
+func TestRunShowsConfiguredIconForIssues(t *testing.T) {
 	bar := &recordingBar{}
 	fetcher := fakeFetcher{summary: Summary{Indicator: "minor"}}
 	if err := Run(context.Background(), testConfig(), fetcher, bar); err != nil {
 		t.Fatalf("Run returned an error: %v", err)
 	}
 	want := [][]string{{
-		"--set", "github-status", "drawing=on", "icon=",
+		"--set", "service-status", "drawing=on", "icon=icon",
 		"icon.color=" + defaultRed, "label.drawing=off",
 	}}
 	if !reflect.DeepEqual(bar.calls, want) {

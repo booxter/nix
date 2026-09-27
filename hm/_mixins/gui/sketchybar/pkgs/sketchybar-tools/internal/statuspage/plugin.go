@@ -1,4 +1,4 @@
-package githubstatus
+package statuspage
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func Run(ctx context.Context, config Config, fetcher SummaryFetcher, bar sketchy
 		"--set",
 		config.Name,
 		"drawing=on",
-		"icon=",
+		"icon="+config.Icon,
 		"icon.color="+config.Red,
 		"label.drawing=off",
 	)
