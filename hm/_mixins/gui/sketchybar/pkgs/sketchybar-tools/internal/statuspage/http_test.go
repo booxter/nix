@@ -10,6 +10,9 @@ func TestSummaryHasIssues(t *testing.T) {
 		"operational": {
 			body: `{"status":{"indicator":"none"},"components":[{"status":"operational"}],"incidents":[]}`,
 		},
+		"operational without incidents field": {
+			body: `{"page":{"name":"OpenAI"},"status":{"indicator":"none"},"components":[{"status":"operational"}]}`,
+		},
 		"aggregate": {
 			body:      `{"status":{"indicator":"minor"},"components":[{"status":"operational"}],"incidents":[]}`,
 			hasIssues: true,

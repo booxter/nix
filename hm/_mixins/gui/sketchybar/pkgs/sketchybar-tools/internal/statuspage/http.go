@@ -57,18 +57,18 @@ func decodeSummary(body []byte) (Summary, error) {
 		Status struct {
 			Indicator *string `json:"indicator"`
 		} `json:"status"`
-		Components *[]Component       `json:"components"`
-		Incidents  *[]json.RawMessage `json:"incidents"`
+		Components *[]Component      `json:"components"`
+		Incidents  []json.RawMessage `json:"incidents"`
 	}
 	if err := json.Unmarshal(body, &response); err != nil {
 		return Summary{}, fmt.Errorf("decode status page response: %w", err)
 	}
-	if response.Status.Indicator == nil || response.Components == nil || response.Incidents == nil {
+	if response.Status.Indicator == nil || response.Components == nil {
 		return Summary{}, fmt.Errorf("decode status page response: unexpected structure")
 	}
 	return Summary{
 		Indicator:  *response.Status.Indicator,
 		Components: *response.Components,
-		Incidents:  len(*response.Incidents),
+		Incidents:  len(response.Incidents),
 	}, nil
 }
