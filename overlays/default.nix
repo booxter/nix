@@ -28,8 +28,13 @@
         aerospace
         chatgpt
         codex
-        jiratui
         ;
+
+      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../patches/jiratui-fetch-all-projects.patch
+        ];
+      });
 
       # The repair planner's Qwen model requires Ollama features newer than
       # the release branch. Keep the base and ROCm variants on one revision.
