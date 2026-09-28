@@ -17,6 +17,7 @@ let
   serviceName = "radarr-repair-controller";
   review = config.host.mediaRepair.review;
   reviewDirectory = "${review.stateDirectory}/radarr";
+  reconsiderationDirectory = "${review.requestStateDirectory}/radarr";
   killSwitchFile = "/run/radarr-repair-disable-apply";
   metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
   sabnzbdSecret = if sabnzbd == null then null else sabnzbd.authentication.secret;
@@ -92,6 +93,8 @@ let
     ++ lib.optionals review.enable [
       "--review-directory"
       reviewDirectory
+      "--reconsideration-directory"
+      reconsiderationDirectory
     ]
     ++ rootArguments
   );
@@ -122,6 +125,7 @@ in
         timeoutStopSec = "35s";
         extraRequiredUnits = downloadClientUnits;
         readWritePaths = [ controller.metricsDirectory ] ++ lib.optionals review.enable [ reviewDirectory ];
+        readOnlyPaths = lib.optionals review.enable [ reconsiderationDirectory ];
         supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
         wantedUnits = [ "network-online.target" ];
       })

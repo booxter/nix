@@ -19,6 +19,12 @@
       readOnly = true;
       description = "Shared root containing sanitized controller review snapshots.";
     };
+    requestStateDirectory = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/var/lib/media-repair-reconsideration";
+      readOnly = true;
+      description = "Shared root containing operator reconsideration requests.";
+    };
     writerGroup = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "media-repair-review";

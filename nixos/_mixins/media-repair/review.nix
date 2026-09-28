@@ -10,6 +10,8 @@ let
   radarrController = "radarr-repair-controller";
   lidarrDirectory = "${cfg.stateDirectory}/lidarr";
   radarrDirectory = "${cfg.stateDirectory}/radarr";
+  lidarrRequests = "${cfg.requestStateDirectory}/lidarr";
+  radarrRequests = "${cfg.requestStateDirectory}/radarr";
   command = lib.escapeShellArgs [
     (lib.getExe cfg.package)
     "--listen"
@@ -18,10 +20,16 @@ let
     lidarrDirectory
     "--radarr-snapshot"
     radarrDirectory
+    "--lidarr-requests"
+    lidarrRequests
+    "--radarr-requests"
+    radarrRequests
     "--lidarr-url"
     "https://lidarr.${config.host.network.lanDomain}/activity/queue"
     "--radarr-url"
     "https://radarr.${config.host.network.lanDomain}/activity/queue"
+    "--public-url"
+    "https://repairr.${config.host.network.lanDomain}"
   ];
 in
 {
@@ -48,10 +56,13 @@ in
       "d ${cfg.stateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
       "d ${lidarrDirectory} 2750 ${lidarrController} ${cfg.writerGroup} - -"
       "d ${radarrDirectory} 2750 ${radarrController} ${cfg.writerGroup} - -"
+      "d ${cfg.requestStateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
+      "d ${lidarrRequests} 2750 ${serviceName} ${lidarrController} - -"
+      "d ${radarrRequests} 2750 ${serviceName} ${radarrController} - -"
     ];
 
     systemd.services.${serviceName} = {
-      description = "Read-only Servarr repair review inbox";
+      description = "Servarr repair review and reconsideration inbox";
       wantedBy = [ "multi-user.target" ];
       after = [ "systemd-tmpfiles-setup.service" ];
       serviceConfig = {
@@ -82,6 +93,7 @@ in
         ProtectSystem = "strict";
         ProcSubset = "pid";
         ReadOnlyPaths = [ cfg.stateDirectory ];
+        ReadWritePaths = [ cfg.requestStateDirectory ];
         RemoveIPC = true;
         RestrictAddressFamilies = [
           "AF_INET"

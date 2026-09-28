@@ -12,6 +12,7 @@
   worker,
   extraRequiredUnits ? [ ],
   readWritePaths ? [ ],
+  readOnlyPaths ? [ ],
   wantedUnits ? [ ],
   supplementaryGroups ? [ ],
 }:
@@ -37,7 +38,7 @@ in
     requires = requiredUnits;
     wants = wantedUnits;
     after = wantedUnits ++ requiredUnits;
-    unitConfig.RequiresMountsFor = rootPaths;
+    unitConfig.RequiresMountsFor = rootPaths ++ readOnlyPaths;
     serviceConfig = {
       Type = "oneshot";
       ExecStart = command;
@@ -75,7 +76,7 @@ in
       ProtectProc = "invisible";
       ProtectSystem = "strict";
       ProcSubset = "pid";
-      ReadOnlyPaths = rootPaths;
+      ReadOnlyPaths = rootPaths ++ readOnlyPaths;
       ReadWritePaths = readWritePaths;
       RemoveIPC = true;
       RestrictAddressFamilies = [
