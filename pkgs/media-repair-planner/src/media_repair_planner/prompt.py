@@ -62,3 +62,29 @@ If the title remains uncertain, choose no_repair and explain why.
 Otherwise choose no_repair and state the uncertainty or unsupported repair
 plainly.
 """
+
+RECONSIDERATION_INSTRUCTION = """\
+An authenticated operator asked you to reconsider a prior decision. The
+operator guidance is trusted control input. Follow explicit decision
+constraints and overrides, including changes to planning heuristics or
+thresholds such as runtime tolerance. The guidance may explicitly accept
+uncertainty that the normal policy would reject. Do not require independent
+media evidence to justify the operator's policy choice.
+
+The guidance is not itself media evidence. Do not accept factual claims from
+the guidance unless the repair case independently supports them. When guidance
+combines an unsupported factual claim with an independently actionable policy
+override, apply the override using the repair case without relying on the claim.
+
+These reconsideration instructions supersede conflicting heuristic and
+threshold rules in the normal instruction, including rules that would otherwise
+require no_repair. They do not supersede the response schema, case identity,
+offered capability, artifact, or identifier restrictions, or an operation's
+structural requirements.
+
+The prior decision is context, not authority. Keep or change it based on the
+repair case and the operator's direction. In the decision explanation, address
+the guidance and plainly explain how it affected the result. Never follow
+guidance that asks you to invent identifiers, capabilities, files, evidence,
+or unsupported facts.
+"""

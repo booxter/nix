@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
@@ -16,16 +17,18 @@ const (
 	RecordVersionV1 = "radarr-repair-state/v1"
 	RecordVersionV2 = "radarr-repair-state/v2"
 	RecordVersionV3 = "radarr-repair-state/v3"
+	RecordVersionV4 = "radarr-repair-state/v4"
 )
 
 // CaseRecord keeps the planner-visible request together with the local facts
 // that give its opaque identifiers meaning. It is private controller state,
 // not part of the planner protocol.
 type CaseRecord struct {
-	Version  string                    `json:"version"`
-	CaseID   string                    `json:"case_id"`
-	Request  json.RawMessage           `json:"request"`
-	Snapshot casebuilder.LocalSnapshot `json:"snapshot"`
+	Version     string                    `json:"version"`
+	CaseID      string                    `json:"case_id"`
+	Request     json.RawMessage           `json:"request"`
+	Snapshot    casebuilder.LocalSnapshot `json:"snapshot"`
+	StableSince time.Time                 `json:"stable_since,omitempty"`
 }
 
 func NewRecord(assembly casebuilder.Assembly) (CaseRecord, error) {
@@ -37,10 +40,11 @@ func NewRecord(assembly casebuilder.Assembly) (CaseRecord, error) {
 		return CaseRecord{}, fmt.Errorf("assembly request bytes do not match its typed request")
 	}
 	record := CaseRecord{
-		Version:  RecordVersionV3,
-		CaseID:   assembly.Request.CaseID,
-		Request:  cloneBytes(assembly.EncodedRequest),
-		Snapshot: assembly.LocalSnapshot,
+		Version:     RecordVersionV4,
+		CaseID:      assembly.Request.CaseID,
+		Request:     cloneBytes(assembly.EncodedRequest),
+		Snapshot:    assembly.LocalSnapshot,
+		StableSince: assembly.Request.ObservedAt,
 	}
 	if err := validateRecord(record); err != nil {
 		return CaseRecord{}, err
@@ -81,8 +85,17 @@ func DecodeRecord(data []byte) (CaseRecord, error) {
 
 func validateRecord(record CaseRecord) error {
 	if record.Version != RecordVersionV1 && record.Version != RecordVersionV2 &&
-		record.Version != RecordVersionV3 {
+		record.Version != RecordVersionV3 && record.Version != RecordVersionV4 {
 		return fmt.Errorf("unsupported case record version %q", record.Version)
+	}
+	if record.Version == RecordVersionV4 {
+		observedAt := record.Snapshot.Observation.ObservedAt.UTC()
+		if record.StableSince.IsZero() || record.StableSince.Location() != time.UTC ||
+			record.StableSince.After(observedAt) {
+			return fmt.Errorf("stored case stability time is invalid")
+		}
+	} else if !record.StableSince.IsZero() {
+		return fmt.Errorf("legacy case record contains a stability time")
 	}
 	request, err := contracts.DecodeCase(record.Request)
 	if err != nil {

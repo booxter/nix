@@ -50,7 +50,7 @@ func TestStorePutAndGet(t *testing.T) {
 	assertMode(t, filepath.Join(root, casesDirectoryName, digest+".json"), 0o600)
 }
 
-func TestStorePutRefreshesObservationTime(t *testing.T) {
+func TestStorePutRefreshesObservationWithoutResettingStability(t *testing.T) {
 	t.Parallel()
 
 	store, err := New(filepath.Join(t.TempDir(), "state"))
@@ -83,8 +83,14 @@ func TestStorePutRefreshesObservationTime(t *testing.T) {
 	if err != nil || !found {
 		t.Fatalf("get: found = %t, error = %v", found, err)
 	}
-	if !reflect.DeepEqual(stored, second) {
-		t.Fatal("second put did not refresh the observation")
+	want := second
+	want.StableSince = first.StableSince
+	if !reflect.DeepEqual(stored, want) {
+		t.Fatalf("stored = %#v, want %#v", stored, want)
+	}
+	stableSince, err := store.StableSince(first.CaseID)
+	if err != nil || stableSince != first.StableSince {
+		t.Fatalf("stable since = %s, error = %v", stableSince, err)
 	}
 }
 
@@ -101,6 +107,7 @@ func TestStorePutRefreshesDifferentLocalState(t *testing.T) {
 	}
 
 	observation := first.Snapshot.Observation
+	observation.ObservedAt = observation.ObservedAt.Add(6 * time.Hour)
 	observation.Correlation.Download.Files[0].BytesCompleted--
 	changedAssembly, err := casebuilder.Assemble(observation)
 	if err != nil {
@@ -120,6 +127,9 @@ func TestStorePutRefreshesDifferentLocalState(t *testing.T) {
 	if err != nil || !found || !reflect.DeepEqual(stored, changed) {
 		t.Fatalf("stored = %#v, found = %t, error = %v", stored, found, err)
 	}
+	if stored.StableSince != observation.ObservedAt {
+		t.Fatalf("stable since = %s, want %s", stored.StableSince, observation.ObservedAt)
+	}
 }
 
 func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
@@ -131,6 +141,7 @@ func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
 	}
 	legacy := newRecordWithMovieForTest(t, false)
 	legacy.Version = RecordVersionV1
+	legacy.StableSince = time.Time{}
 	estimate := legacy.Snapshot.Observation.ObservedAt.Add(time.Minute)
 	legacy.Snapshot.Observation.Correlation.Radarr.EstimatedCompletionTime = &estimate
 	if created, err := store.Put(legacy); err != nil || !created {
@@ -174,6 +185,7 @@ func TestStoreMatchesV2RecordWithoutRejectionCodes(t *testing.T) {
 	}
 	legacy := cloneRecord(t, current)
 	legacy.Version = RecordVersionV2
+	legacy.StableSince = time.Time{}
 	legacy.Snapshot = withoutRejectionCodes(legacy.Snapshot)
 	if created, err := store.Put(legacy); err != nil || !created {
 		t.Fatalf("legacy put: created = %t, error = %v", created, err)

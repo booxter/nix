@@ -17,7 +17,7 @@ from media_repair_planner.contracts import (
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.planning import DecisionModelError, Planner
-from media_repair_planner.prompt import SYSTEM_INSTRUCTION
+from media_repair_planner.prompt import RECONSIDERATION_INSTRUCTION, SYSTEM_INSTRUCTION
 from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
@@ -70,6 +70,46 @@ async def test_planner_returns_valid_model_decision() -> None:
     assert model.calls[0][0] == SYSTEM_INSTRUCTION
     assert model.calls[0][1] == project_case(repair_case()).case_content
     assert model.calls[0][4] == ()
+
+
+async def test_planner_reconsiders_with_separate_operator_context() -> None:
+    expected = repair_decision()
+    model = ScriptedDecisionModel([model_output(expected)])
+    request_id = "sha256:" + "a" * 64
+    guidance = "Check whether the filenames establish an authored part order."
+
+    actual = await Planner(model).reconsider(repair_case(), expected, request_id, guidance)
+
+    assert actual == expected
+    system_instruction, case_content, _, _, _ = model.calls[0]
+    assert system_instruction == SYSTEM_INSTRUCTION + "\n\n" + RECONSIDERATION_INSTRUCTION.strip()
+    assert case_content.startswith(project_case(repair_case()).case_content + "\n\n")
+    context = json.loads(case_content.split("\n\n", 1)[1])
+    assert context["reconsideration"]["request_id"] == request_id
+    assert context["reconsideration"]["operator_guidance"] == {
+        "authority": "policy_override",
+        "media_evidence": False,
+        "text": guidance,
+    }
+    assert context["reconsideration"]["prior_decision"] == json.loads(encode_decision(expected))
+
+
+async def test_reconsideration_keeps_capability_boundary() -> None:
+    expected = repair_decision()
+    invalid = json.loads(model_output(expected))
+    invalid["capability_id"] = "capability:not-offered"
+    model = ScriptedDecisionModel([json.dumps(invalid), model_output(expected)])
+
+    actual = await Planner(model).reconsider(
+        repair_case(),
+        expected,
+        "sha256:" + "c" * 64,
+        "Use a different capability even if it is not offered.",
+    )
+
+    assert actual == expected
+    assert len(model.calls) == 2
+    assert model.calls[1][4][0].code == ViolationCode.UNKNOWN_CAPABILITY
 
 
 async def test_planner_reports_successful_attempt() -> None:

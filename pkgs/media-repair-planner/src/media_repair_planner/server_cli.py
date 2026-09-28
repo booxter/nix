@@ -10,8 +10,9 @@ from typing import NoReturn, Protocol
 import uvicorn
 from fastapi import FastAPI
 
-from .api import ApiLimits, ContractEndpoint, create_app
+from .api import ApiLimits, ContractEndpoint, ReconsiderationEndpoint, create_app
 from .lidarr_contracts import decode_case as decode_lidarr_case
+from .lidarr_contracts import decode_decision as decode_lidarr_decision
 from .lidarr_contracts import encode_decision as encode_lidarr_decision
 from .lidarr_planning import LidarrPlanner
 from .model_runtime import (
@@ -104,15 +105,25 @@ async def _serve(
     model: RuntimeDecisionModel | None = None
     try:
         model = model_factory(settings, None)
+        radarr_planner = Planner(model)
+        lidarr_planner = LidarrPlanner(model)
         app = create_app(
-            Planner(model),
+            radarr_planner,
             limits,
             {
                 "/lidarr/v3/repair-plans": ContractEndpoint(
-                    planner=LidarrPlanner(model),
+                    planner=lidarr_planner,
                     decode_case=decode_lidarr_case,
                     encode_decision=encode_lidarr_decision,
-                )
+                ),
+                "/lidarr/v3/reconsiderations": ReconsiderationEndpoint(
+                    planner=lidarr_planner,
+                    decode_case=decode_lidarr_case,
+                    decode_decision=decode_lidarr_decision,
+                    encode_decision=encode_lidarr_decision,
+                    case_id=lambda repair_case: repair_case.case_id.root,
+                    decision_case_id=lambda decision: decision.root.case_id.root,
+                ),
             },
         )
         await server_runner.serve(app, arguments.socket_fd)

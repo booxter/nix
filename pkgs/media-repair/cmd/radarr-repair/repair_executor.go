@@ -45,6 +45,7 @@ func configureRepairExecutor(
 		Cases:          access.inspector,
 		Clock:          clock,
 		JoinExecutions: access.worker,
+		Stability:      store,
 		Stabilization:  stabilization,
 	})
 	if err != nil {

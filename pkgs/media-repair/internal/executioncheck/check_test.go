@@ -177,7 +177,7 @@ func TestCheckWaitsForStableImportPendingEvidence(t *testing.T) {
 			if !test.accepted {
 				assertRejected(t, result, StabilizationPending)
 				assessment := result.Rejections[0].Stabilization
-				if assessment == nil || assessment.ObservedAt != stored.Request.ObservedAt ||
+				if assessment == nil || assessment.StableSince != stored.Request.ObservedAt ||
 					assessment.CheckedAt != stored.Request.ObservedAt.Add(test.elapsed) ||
 					assessment.RequiredAge != 30*time.Minute ||
 					assessment.ActualAge != test.elapsed {
@@ -188,6 +188,36 @@ func TestCheckWaitsForStableImportPendingEvidence(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestCheckUsesPersistedStabilityInsteadOfLatestObservation(t *testing.T) {
+	t.Parallel()
+
+	firstObservedAt := executionAssembly().Request.ObservedAt
+	stored := executionAssembly()
+	stored.Request.Radarr.Failure.TrackedDownloadState = "importPending"
+	stored.LocalSnapshot.Observation.Correlation.Radarr.TrackedDownloadState = "importPending"
+	advanceObservation(&stored, 29*time.Minute)
+	fresh := stored
+	advanceObservation(&fresh, time.Minute)
+	checker, err := New(Dependencies{
+		Cases:          &fakeFreshCases{assembly: fresh},
+		Clock:          fixedClock{now: firstObservedAt.Add(30 * time.Minute)},
+		JoinExecutions: &fakeJoinExecutions{},
+		Stability:      fixedStability{stableSince: firstObservedAt},
+		Stabilization:  30 * time.Minute,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := checker.Check(context.Background(), stored, executionManualImportDecision())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Accepted() {
+		t.Fatalf("result = %#v", result)
 	}
 }
 
@@ -444,6 +474,7 @@ func newTestChecker(
 	t.Helper()
 	checker, err := New(Dependencies{
 		Cases: cases, Clock: fixedClock{now: now}, JoinExecutions: executions,
+		Stability:     fixedStability{stableSince: executionAssembly().Request.ObservedAt},
 		Stabilization: 30 * time.Minute,
 	})
 	if err != nil {
@@ -632,6 +663,14 @@ type fixedClock struct {
 
 func (clock fixedClock) Now() time.Time {
 	return clock.now
+}
+
+type fixedStability struct {
+	stableSince time.Time
+}
+
+func (stability fixedStability) StableSince(string) (time.Time, error) {
+	return stability.stableSince, nil
 }
 
 type fakeFreshCases struct {

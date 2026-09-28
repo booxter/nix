@@ -16,11 +16,14 @@ import (
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 const (
 	radarrPlanningURL       = "http://planner/v3/repair-plans"
+	radarrReconsiderURL     = "http://planner/v3/reconsiderations"
 	lidarrPlanningURL       = "http://planner/lidarr/v3/repair-plans"
+	lidarrReconsiderURL     = "http://planner/lidarr/v3/reconsiderations"
 	maxDecisionResponseSize = 64 << 10
 )
 
@@ -145,6 +148,35 @@ func (client *Client) Plan(
 	}
 	if decision.CaseID() != repairCase.CaseID {
 		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse}
+	}
+	return decision, nil
+}
+
+func (client *Client) Reconsider(
+	ctx context.Context,
+	repairCase contracts.RepairCaseV3,
+	prior contracts.RepairDecisionV3,
+	request reconsideration.Request,
+) (contracts.RepairDecisionV3, error) {
+	caseData, err := contracts.EncodeCase(repairCase)
+	if err != nil {
+		return contracts.RepairDecisionV3{}, fmt.Errorf("encode reconsideration case: %w", err)
+	}
+	decisionData, err := contracts.EncodeDecision(prior)
+	if err != nil {
+		return contracts.RepairDecisionV3{}, fmt.Errorf("encode prior decision: %w", err)
+	}
+	payload, err := encodeReconsideration(caseData, decisionData, request)
+	if err != nil {
+		return contracts.RepairDecisionV3{}, err
+	}
+	data, err := client.postPlan(ctx, radarrReconsiderURL, payload)
+	if err != nil {
+		return contracts.RepairDecisionV3{}, err
+	}
+	decision, err := contracts.DecodeDecision(data)
+	if err != nil || decision.CaseID() != repairCase.CaseID {
+		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	return decision, nil
 }

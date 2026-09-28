@@ -52,6 +52,24 @@ func item(observed lidarrrepair.QueueReview, generatedAt time.Time) (review.Item
 		item.ObservedAt = &observedAt
 		item.Subject = strings.TrimSpace(repairCase.Album.Artist + " — " + repairCase.Album.Title)
 	}
+	if observed.Reconsideration != nil {
+		priorData, err := lidarrcontracts.EncodeDecision(observed.Reconsideration.Prior)
+		if err != nil {
+			return review.Item{}, err
+		}
+		prior, err := review.ParseDecision(priorData)
+		if err != nil {
+			return review.Item{}, err
+		}
+		description := review.NewReconsideration(
+			observed.Reconsideration.Request,
+			observed.Reconsideration.Result,
+			observed.Reconsideration.Decided,
+			prior,
+		)
+		item.Reconsideration = &description
+		item.Decision = &prior
+	}
 	switch observed.Outcome {
 	case planningrunner.Deferred:
 		item.State = review.StatePlanningDeferred

@@ -8,8 +8,9 @@ import (
 )
 
 type PlannedCase struct {
-	Assembly casebuilder.Assembly
-	Decision contracts.RepairDecisionV3
+	Assembly          casebuilder.Assembly
+	Decision          contracts.RepairDecisionV3
+	ReconsiderationID string
 }
 
 func (store *Store) GetPlannedCase(caseID string) (PlannedCase, error) {
@@ -49,15 +50,12 @@ func (store *Store) GetPlannedCase(caseID string) (PlannedCase, error) {
 	if err != nil {
 		return PlannedCase{}, fmt.Errorf("decode stored planning decision: %w", err)
 	}
-	request, err := contracts.DecodeCase(caseRecord.Request)
+	assembly, err := recordAssembly(caseRecord)
 	if err != nil {
 		return PlannedCase{}, fmt.Errorf("decode stored repair case: %w", err)
 	}
 	return PlannedCase{
-		Assembly: casebuilder.Assembly{
-			Request: request, EncodedRequest: cloneBytes(caseRecord.Request),
-			LocalSnapshot: caseRecord.Snapshot,
-		},
+		Assembly: assembly,
 		Decision: decision,
 	}, nil
 }

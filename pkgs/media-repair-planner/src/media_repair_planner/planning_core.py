@@ -30,7 +30,14 @@ class DecisionGenerator[CaseT, DecisionT](Protocol):
         self,
         repair_case: CaseT,
         correction: tuple[DecisionViolation, ...],
+        context: PlanningContext | None = None,
     ) -> DecisionT: ...
+
+
+@dataclass(frozen=True)
+class PlanningContext:
+    system_instruction: str
+    user_content: str
 
 
 @dataclass(frozen=True)
@@ -63,8 +70,12 @@ class ContractPlanner[CaseT, DecisionT]:
         self._fallback = fallback
         self._case_id = case_id
 
-    async def plan(self, repair_case: CaseT) -> DecisionT:
-        outcome = await self.plan_with_outcome(repair_case)
+    async def plan(
+        self,
+        repair_case: CaseT,
+        context: PlanningContext | None = None,
+    ) -> DecisionT:
+        outcome = await self.plan_with_outcome(repair_case, context)
         if outcome.used_fallback:
             LOGGER.warning(
                 "planner used fallback case_id=%s attempts=%d errors=%s",
@@ -74,12 +85,16 @@ class ContractPlanner[CaseT, DecisionT]:
             )
         return outcome.decision
 
-    async def plan_with_outcome(self, repair_case: CaseT) -> PlanningOutcome[DecisionT]:
+    async def plan_with_outcome(
+        self,
+        repair_case: CaseT,
+        context: PlanningContext | None = None,
+    ) -> PlanningOutcome[DecisionT]:
         validated_case = self._roundtrip_case(repair_case)
         correction: tuple[DecisionViolation, ...] = ()
         attempt_errors: list[str] = []
         for attempt in range(1, ATTEMPT_LIMIT + 1):
-            decision, correction, error = await self._attempt(validated_case, correction)
+            decision, correction, error = await self._attempt(validated_case, correction, context)
             if decision is not None:
                 return PlanningOutcome(
                     decision=decision,
@@ -102,9 +117,10 @@ class ContractPlanner[CaseT, DecisionT]:
         self,
         repair_case: CaseT,
         correction: tuple[DecisionViolation, ...],
+        context: PlanningContext | None,
     ) -> tuple[DecisionT | None, tuple[DecisionViolation, ...], str | None]:
         try:
-            proposed = await self._generator.generate(repair_case, correction)
+            proposed = await self._generator.generate(repair_case, correction, context)
             decision = self._roundtrip_decision(proposed)
         except ContractError as error:
             return None, (), f"decision contract failed: {error}"

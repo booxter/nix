@@ -19,6 +19,7 @@ from .lidarr_projection import project_case
 from .lidarr_prompt import SYSTEM_INSTRUCTION
 from .lidarr_validation import validate_decision_for_case, validate_decision_object
 from .planning_core import ContractPlanner
+from .reconsideration_context import build_reconsideration_context
 from .structured_model import StructuredDecisionModel
 from .structured_planning import StructuredDecisionGenerator
 
@@ -66,4 +67,23 @@ class LidarrPlanner(ContractPlanner[LidarrRepairCaseV3, LidarrRepairDecisionV3])
             validate_decision=validate_decision_for_case,
             fallback=_fallback,
             case_id=lambda repair_case: repair_case.case_id.root,
+        )
+
+    async def reconsider(
+        self,
+        repair_case: LidarrRepairCaseV3,
+        prior_decision: LidarrRepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> LidarrRepairDecisionV3:
+        validated_prior = _roundtrip_decision(prior_decision)
+        if validated_prior.root.case_id.root != repair_case.case_id.root:
+            raise ValueError("prior decision does not match the repair case")
+        return await self.plan(
+            repair_case,
+            build_reconsideration_context(
+                request_id,
+                guidance,
+                encode_decision(validated_prior),
+            ),
         )

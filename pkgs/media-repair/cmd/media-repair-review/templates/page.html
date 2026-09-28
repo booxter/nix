@@ -37,6 +37,7 @@
           <span class="badge state-{{$entry.Item.State}}">{{stateLabel $entry.Item.State}}</span>
         </div>
         {{if $entry.Item.Subject}}<p class="subject">{{$entry.Item.Subject}}</p>{{end}}
+        {{if $.Submitted}}<p class="notice">Guidance submitted. The controller will hold the prior action while the planner reconsiders it.</p>{{end}}
         <dl>
           <dt>Queue</dt><dd>#{{$entry.Item.QueueID}} · {{$entry.Item.QueueStatus}} / {{$entry.Item.TrackedStatus}}</dd>
           <dt>Observed</dt><dd>{{formatTime $entry.Item.ObservedAt}}</dd>
@@ -56,6 +57,57 @@
         </section>
         {{else}}
         <section class="decision"><h3>No planner decision</h3><p>{{$entry.Item.Detail}}</p></section>
+        {{end}}
+        {{if $entry.Item.Reconsideration}}
+        <section class="reconsideration">
+          <h3>Reconsideration</h3>
+          {{if $entry.ReconsiderationQueued}}
+          <p><span class="badge reconsideration-waiting">Waiting for controller</span></p>
+          <p class="subject">The guidance is stored and will be picked up on the next controller run.</p>
+          {{else if eq $entry.Item.Reconsideration.State "pending"}}
+          <p><span class="badge reconsideration-waiting">Waiting for planner</span></p>
+          {{else if eq $entry.Item.Reconsideration.State "failed"}}
+          <p><span class="badge reconsideration-failed">Retry scheduled</span></p>
+          {{else}}
+          <p><span class="badge reconsideration-decided">Considered</span></p>
+          <p class="subject">The planner decision above is the reconsidered decision.</p>
+          {{end}}
+          <dl class="reconsideration-details">
+            <dt>Submitted</dt><dd>{{formatTime $entry.Item.Reconsideration.CreatedAt}}</dd>
+            {{if $entry.Item.Reconsideration.AttemptedAt}}
+            <dt>{{if eq $entry.Item.Reconsideration.State "decided"}}Considered{{else}}Last attempt{{end}}</dt><dd>{{formatTime $entry.Item.Reconsideration.AttemptedAt}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.Attempts}}
+            <dt>Attempts</dt><dd>{{$entry.Item.Reconsideration.Attempts}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.RetryAfter}}
+            <dt>Next retry</dt><dd>{{formatTime $entry.Item.Reconsideration.RetryAfter}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.Failure}}
+            <dt>Failure</dt><dd>{{$entry.Item.Reconsideration.Failure}}</dd>
+            {{end}}
+            <dt>Guidance</dt><dd class="guidance">{{$entry.Item.Reconsideration.Guidance}}</dd>
+          </dl>
+          <details>
+            <summary>Prior decision</summary>
+            <p><strong>{{$entry.Item.Reconsideration.PriorDecision.Action}}</strong>{{if $entry.Item.Reconsideration.PriorDecision.Reason}} · {{$entry.Item.Reconsideration.PriorDecision.Reason}}{{end}}</p>
+            <p>{{$entry.Item.Reconsideration.PriorDecision.Explanation}}</p>
+          </details>
+        </section>
+        {{end}}
+        {{if $entry.CanReconsider}}
+        <section class="nudge">
+          <h3>Ask the planner to reconsider</h3>
+          <p>Give the planner direction, override a planning heuristic for this case, or point out evidence to reconsider. Authenticated guidance may change planner policy, but it cannot invent media evidence, files, or capabilities. The controller will not execute the old decision while the request is pending.</p>
+          <form method="post" action="/cases/{{$entry.Item.CaseID}}/reconsider">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <label for="guidance">Guidance</label>
+            <textarea id="guidance" name="guidance" maxlength="2000" required placeholder="For example: Treat up to 30 minutes of runtime difference as acceptable for this case."></textarea>
+            <button type="submit">Reconsider decision</button>
+          </form>
+        </section>
+        {{else if and $entry.Current $entry.Item.Reconsideration}}
+        <p class="subject">A newer request can be submitted after this reconsideration finishes.</p>
         {{end}}
         <p><a class="button" href="{{$entry.QueueURL}}">Open {{serviceLabel $entry.Service}} queue</a></p>
       </article>

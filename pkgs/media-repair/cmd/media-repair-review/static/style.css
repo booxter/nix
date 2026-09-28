@@ -34,7 +34,19 @@ dl { display: grid; grid-template-columns: 150px 1fr; gap: 7px 14px; margin: 24p
 dt { color: var(--muted); }
 dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b8c5cc; }
-.decision { max-width: 78ch; margin: 24px 0; padding: 18px; border-left: 3px solid #4b8f76; background: #15191a; }
+.decision, .reconsideration, .nudge { max-width: 78ch; margin: 24px 0; padding: 18px; background: #15191a; }
+.decision { border-left: 3px solid #4b8f76; }
+.reconsideration { border-left: 3px solid #6f5631; }
+.reconsideration-waiting { color: var(--warn); border-color: #6f5631; }
+.reconsideration-failed { color: var(--bad); border-color: #763d3a; }
+.reconsideration-decided { color: var(--accent); border-color: #315d4d; }
+.reconsideration-details { grid-template-columns: 100px 1fr; margin: 16px 0; }
+.guidance { white-space: pre-wrap; }
+.nudge { border: 1px solid var(--line); border-radius: 8px; }
+.nudge label { display: block; margin: 14px 0 6px; font-weight: 650; }
+textarea { width: 100%; min-height: 120px; resize: vertical; border: 1px solid var(--line); border-radius: 7px; padding: 10px; background: #101315; color: var(--text); font: inherit; }
+button { margin-top: 10px; border: 0; border-radius: 7px; padding: 9px 13px; background: #286a53; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+.notice { max-width: 78ch; padding: 10px 13px; border: 1px solid #315d4d; border-radius: 7px; background: #16251f; }
 .button { display: inline-block; padding: 8px 12px; border-radius: 7px; background: #286a53; color: white; text-decoration: none; }
 .empty { padding: 24px; border: 1px dashed var(--line); border-radius: 9px; color: var(--muted); }
 @media (max-width: 700px) { header { padding: 0 16px; } main { padding: 24px 14px; } th:nth-child(1), td:nth-child(1), th:nth-child(5), td:nth-child(5) { display: none; } dl { grid-template-columns: 1fr; } dt { margin-top: 8px; } }

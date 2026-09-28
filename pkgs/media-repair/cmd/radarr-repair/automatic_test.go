@@ -191,7 +191,7 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 				Rejections: []executioncheck.Rejection{{
 					Reason: executioncheck.StabilizationPending,
 					Stabilization: &executioncheck.StabilizationAssessment{
-						ObservedAt: observedAt, CheckedAt: checkedAt,
+						StableSince: observedAt, CheckedAt: checkedAt,
 						RequiredAge: 15 * time.Minute, ActualAge: 12 * time.Minute,
 					},
 				}},
@@ -204,7 +204,7 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 	}
 	want := "observed=0 stored=0 superseded=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0 rejected=0\n" +
 		"apply=precondition_rejected case_id=case-1 action=manual_import_file_v1 " +
-		"reason=stabilization_pending observed_at=2026-09-14T19:03:52Z " +
+		"reason=stabilization_pending stable_since=2026-09-14T19:03:52Z " +
 		"checked_at=2026-09-14T19:15:52Z required_age=15m0s actual_age=12m0s\n"
 	if output.String() != want {
 		t.Fatalf("summary = %q, want %q", output.String(), want)

@@ -21,8 +21,12 @@ type config struct {
 	Listen         string
 	LidarrSnapshot string
 	RadarrSnapshot string
+	LidarrRequests string
+	RadarrRequests string
 	LidarrURL      string
 	RadarrURL      string
+	PublicURL      string
+	AllowedOrigins []string
 }
 
 func parseConfig(arguments []string, stderr io.Writer) (config, error) {
@@ -31,8 +35,16 @@ func parseConfig(arguments []string, stderr io.Writer) (config, error) {
 	listen := flags.String("listen", "127.0.0.1:8790", "loopback HTTP listen address")
 	lidarrSnapshot := flags.String("lidarr-snapshot", "", "Lidarr review spool directory")
 	radarrSnapshot := flags.String("radarr-snapshot", "", "Radarr review spool directory")
+	lidarrRequests := flags.String("lidarr-requests", "", "Lidarr reconsideration request directory")
+	radarrRequests := flags.String("radarr-requests", "", "Radarr reconsideration request directory")
 	lidarrURL := flags.String("lidarr-url", "", "browser-facing Lidarr queue URL")
 	radarrURL := flags.String("radarr-url", "", "browser-facing Radarr queue URL")
+	publicURL := flags.String("public-url", "", "browser-facing Repairr URL")
+	var allowedOrigins []string
+	flags.Func("allowed-origin", "additional browser-facing Repairr origin", func(value string) error {
+		allowedOrigins = append(allowedOrigins, value)
+		return nil
+	})
 	if err := flags.Parse(arguments); err != nil {
 		return config{}, err
 	}
@@ -41,7 +53,9 @@ func parseConfig(arguments []string, stderr io.Writer) (config, error) {
 	}
 	configuration := config{
 		Listen: *listen, LidarrSnapshot: *lidarrSnapshot, RadarrSnapshot: *radarrSnapshot,
-		LidarrURL: *lidarrURL, RadarrURL: *radarrURL,
+		LidarrRequests: *lidarrRequests, RadarrRequests: *radarrRequests,
+		LidarrURL: *lidarrURL, RadarrURL: *radarrURL, PublicURL: *publicURL,
+		AllowedOrigins: allowedOrigins,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return config{}, err
@@ -61,6 +75,8 @@ func validateConfig(configuration config) error {
 	for name, path := range map[string]string{
 		"Lidarr snapshot": configuration.LidarrSnapshot,
 		"Radarr snapshot": configuration.RadarrSnapshot,
+		"Lidarr request":  configuration.LidarrRequests,
+		"Radarr request":  configuration.RadarrRequests,
 	} {
 		if path == "" || !filepath.IsAbs(path) || filepath.Clean(path) != path ||
 			filepath.Dir(path) == path {
@@ -68,16 +84,34 @@ func validateConfig(configuration config) error {
 		}
 	}
 	for name, raw := range map[string]string{
-		"Lidarr": configuration.LidarrURL,
-		"Radarr": configuration.RadarrURL,
+		"Lidarr":  configuration.LidarrURL,
+		"Radarr":  configuration.RadarrURL,
+		"Repairr": configuration.PublicURL,
 	} {
 		parsed, err := url.Parse(raw)
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil ||
 			parsed.RawQuery != "" || parsed.Fragment != "" {
 			return fmt.Errorf("%s URL must be an absolute HTTPS URL without credentials", name)
 		}
+		if name == "Repairr" && parsed.Path != "" && parsed.Path != "/" {
+			return fmt.Errorf("Repairr URL must not contain a path")
+		}
+	}
+	for _, raw := range configuration.AllowedOrigins {
+		if _, err := httpsOrigin(raw); err != nil {
+			return fmt.Errorf("invalid Repairr allowed origin: %w", err)
+		}
 	}
 	return nil
+}
+
+func httpsOrigin(raw string) (string, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil ||
+		(parsed.Path != "" && parsed.Path != "/") || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", fmt.Errorf("must be an absolute HTTPS origin")
+	}
+	return parsed.Scheme + "://" + parsed.Host, nil
 }
 
 func run(ctx context.Context, arguments []string, stderr io.Writer) error {

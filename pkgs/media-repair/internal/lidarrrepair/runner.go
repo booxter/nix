@@ -2,6 +2,7 @@ package lidarrrepair
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
@@ -43,6 +45,12 @@ type Worker interface {
 
 type Planner interface {
 	PlanLidarr(context.Context, lidarrcontracts.Case) (lidarrcontracts.Decision, error)
+	ReconsiderLidarr(
+		context.Context,
+		lidarrcontracts.Case,
+		lidarrcontracts.Decision,
+		reconsideration.Request,
+	) (lidarrcontracts.Decision, error)
 }
 
 type Report struct {
@@ -57,12 +65,20 @@ type Report struct {
 }
 
 type QueueReview struct {
-	Queue     lidarr.QueueRecord
-	Candidate bool
-	Outcome   planningrunner.Outcome
-	Record    Record
-	Failure   *planningrunner.Failure
-	Detail    string
+	Queue           lidarr.QueueRecord
+	Candidate       bool
+	Outcome         planningrunner.Outcome
+	Record          Record
+	Failure         *planningrunner.Failure
+	Detail          string
+	Reconsideration *ReconsiderationReview
+}
+
+type ReconsiderationReview struct {
+	Request reconsideration.Request
+	Result  reconsideration.Result
+	Decided bool
+	Prior   lidarrcontracts.Decision
 }
 
 type Evidence struct {
@@ -86,6 +102,20 @@ type Runner struct {
 		lidarrcontracts.Decision,
 		planningrunner.Failure,
 	]
+	requests     *reconsideration.Store
+	reconsiderer *reconsideration.Processor
+}
+
+func (runner *Runner) EnableReconsideration(
+	requests *reconsideration.Store,
+	reconsiderer *reconsideration.Processor,
+) error {
+	if runner == nil || requests == nil || reconsiderer == nil {
+		return fmt.Errorf("Lidarr reconsideration dependencies are incomplete")
+	}
+	runner.requests = requests
+	runner.reconsiderer = reconsiderer
+	return nil
 }
 
 type lidarrPlanningResult = planningrunner.Result[
@@ -196,6 +226,21 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 			report.Reviews = append(report.Reviews, review)
 			continue
 		}
+		if result.Outcome == planningrunner.Decided ||
+			result.Outcome == planningrunner.AlreadyDecided {
+			reconsidered, reconsiderationReview, reconsiderErr := runner.reconsider(
+				ctx, result,
+			)
+			review.Reconsideration = reconsiderationReview
+			result = reconsidered
+			if reconsiderErr != nil {
+				review.Detail = "guided reconsideration failed"
+				report.Reviews = append(report.Reviews, review)
+				failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, reconsiderErr))
+				continue
+			}
+		}
+		review.Outcome = result.Outcome
 		switch result.Outcome {
 		case planningrunner.Decided:
 			report.Planned++
@@ -223,6 +268,44 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		report.Reviews = append(report.Reviews, review)
 	}
 	return report, errors.Join(failures...)
+}
+
+func (runner *Runner) reconsider(
+	ctx context.Context,
+	result lidarrPlanningResult,
+) (lidarrPlanningResult, *ReconsiderationReview, error) {
+	if runner.requests == nil {
+		return result, nil, nil
+	}
+	caseID := result.Planned.Decision.CaseID()
+	request, found, err := runner.requests.Latest(caseID)
+	if err != nil || !found {
+		return result, nil, err
+	}
+	prior, err := lidarrcontracts.EncodeDecision(result.Planned.Decision)
+	if err != nil {
+		return result, nil, err
+	}
+	decisionData, revision, decided, err := runner.reconsiderer.Process(
+		ctx, request, json.RawMessage(prior),
+	)
+	review := &ReconsiderationReview{
+		Request: request, Result: revision, Decided: decided, Prior: result.Planned.Decision,
+	}
+	if err != nil {
+		return result, review, err
+	}
+	if !decided {
+		result.Outcome = planningrunner.Deferred
+		result.Planned.Decision = lidarrcontracts.Decision{}
+		return result, review, nil
+	}
+	decision, err := lidarrcontracts.DecodeDecision(decisionData)
+	if err != nil {
+		return result, review, err
+	}
+	result.Planned.Decision = decision
+	return result, review, nil
 }
 
 func (runner *Runner) processQueue(

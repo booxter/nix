@@ -2,17 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"path/filepath"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/radarrreview"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
@@ -24,43 +28,45 @@ const (
 )
 
 type shadowConfig struct {
-	RadarrURL          string
-	RadarrAPIKeyFile   string
-	TransmissionURL    string
-	SABnzbdURL         string
-	SABnzbdAPIKeyFile  string
-	WorkerSocket       string
-	WorkerRoots        map[string]string
-	PlannerSocket      string
-	StateDirectory     string
-	MetricsFile        string
-	RequestTimeout     time.Duration
-	WorkerStageTimeout time.Duration
-	CollectionTimeout  time.Duration
-	PlannerTimeout     time.Duration
-	RetryInitial       time.Duration
-	RetryMaximum       time.Duration
-	ReviewDirectory    string
+	RadarrURL                string
+	RadarrAPIKeyFile         string
+	TransmissionURL          string
+	SABnzbdURL               string
+	SABnzbdAPIKeyFile        string
+	WorkerSocket             string
+	WorkerRoots              map[string]string
+	PlannerSocket            string
+	StateDirectory           string
+	MetricsFile              string
+	RequestTimeout           time.Duration
+	WorkerStageTimeout       time.Duration
+	CollectionTimeout        time.Duration
+	PlannerTimeout           time.Duration
+	RetryInitial             time.Duration
+	RetryMaximum             time.Duration
+	ReviewDirectory          string
+	ReconsiderationDirectory string
 }
 
 type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
 
 type shadowFlags struct {
-	radarrURL          *string
-	radarrAPIKeyFile   *string
-	downloadSources    downloadSourceFlags
-	workerSocket       *string
-	workerRoots        mediaroot.Mappings
-	plannerSocket      *string
-	stateDirectory     *string
-	metricsFile        *string
-	requestTimeout     *time.Duration
-	workerStageTimeout *time.Duration
-	collectionTimeout  *time.Duration
-	plannerTimeout     *time.Duration
-	retryInitial       *time.Duration
-	retryMaximum       *time.Duration
-	reviewDirectory    *string
+	radarrURL                *string
+	radarrAPIKeyFile         *string
+	downloadSources          downloadSourceFlags
+	workerSocket             *string
+	workerRoots              mediaroot.Mappings
+	plannerSocket            *string
+	stateDirectory           *string
+	metricsFile              *string
+	requestTimeout           *time.Duration
+	workerStageTimeout       *time.Duration
+	collectionTimeout        *time.Duration
+	plannerTimeout           *time.Duration
+	retryInitial             *time.Duration
+	retryMaximum             *time.Duration
+	reviewDirectory          *string
+	reconsiderationDirectory *string
 }
 
 func addShadowFlags(flags *flag.FlagSet) shadowFlags {
@@ -99,6 +105,9 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 		reviewDirectory: flags.String(
 			"review-directory", "", "optional sanitized review snapshot directory",
 		),
+		reconsiderationDirectory: flags.String(
+			"reconsideration-directory", "", "optional reconsideration request directory",
+		),
 	}
 	flags.Var(values.workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
 	return values
@@ -106,23 +115,24 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 
 func (values shadowFlags) Config() shadowConfig {
 	return shadowConfig{
-		RadarrURL:          *values.radarrURL,
-		RadarrAPIKeyFile:   *values.radarrAPIKeyFile,
-		TransmissionURL:    *values.downloadSources.transmissionURL,
-		SABnzbdURL:         *values.downloadSources.sabnzbdURL,
-		SABnzbdAPIKeyFile:  *values.downloadSources.sabnzbdAPIKeyFile,
-		WorkerSocket:       *values.workerSocket,
-		WorkerRoots:        values.workerRoots.Paths(),
-		PlannerSocket:      *values.plannerSocket,
-		StateDirectory:     *values.stateDirectory,
-		MetricsFile:        *values.metricsFile,
-		RequestTimeout:     *values.requestTimeout,
-		WorkerStageTimeout: *values.workerStageTimeout,
-		CollectionTimeout:  *values.collectionTimeout,
-		PlannerTimeout:     *values.plannerTimeout,
-		RetryInitial:       *values.retryInitial,
-		RetryMaximum:       *values.retryMaximum,
-		ReviewDirectory:    *values.reviewDirectory,
+		RadarrURL:                *values.radarrURL,
+		RadarrAPIKeyFile:         *values.radarrAPIKeyFile,
+		TransmissionURL:          *values.downloadSources.transmissionURL,
+		SABnzbdURL:               *values.downloadSources.sabnzbdURL,
+		SABnzbdAPIKeyFile:        *values.downloadSources.sabnzbdAPIKeyFile,
+		WorkerSocket:             *values.workerSocket,
+		WorkerRoots:              values.workerRoots.Paths(),
+		PlannerSocket:            *values.plannerSocket,
+		StateDirectory:           *values.stateDirectory,
+		MetricsFile:              *values.metricsFile,
+		RequestTimeout:           *values.requestTimeout,
+		WorkerStageTimeout:       *values.workerStageTimeout,
+		CollectionTimeout:        *values.collectionTimeout,
+		PlannerTimeout:           *values.plannerTimeout,
+		RetryInitial:             *values.retryInitial,
+		RetryMaximum:             *values.retryMaximum,
+		ReviewDirectory:          *values.reviewDirectory,
+		ReconsiderationDirectory: *values.reconsiderationDirectory,
 	}
 }
 
@@ -220,6 +230,13 @@ func validateShadowConfig(config shadowConfig) error {
 			return err
 		}
 	}
+	if config.ReconsiderationDirectory != "" {
+		if err := validateAbsolutePath(
+			"reconsideration directory", config.ReconsiderationDirectory, false,
+		); err != nil {
+			return err
+		}
+	}
 	if config.PlannerTimeout <= 0 {
 		return fmt.Errorf("planner timeout must be positive")
 	}
@@ -250,7 +267,7 @@ func runShadowOnce(
 		return shadowrunner.Report{}, fmt.Errorf("configure planner client: %w", err)
 	}
 	defer planner.Close()
-	runner, err := shadowrunner.New(shadowrunner.Dependencies{
+	dependencies := shadowrunner.Dependencies{
 		Cases:           inspector,
 		Store:           store,
 		Planner:         planner,
@@ -260,13 +277,70 @@ func runShadowOnce(
 			Initial: config.RetryInitial,
 			Maximum: config.RetryMaximum,
 		},
-	})
+	}
+	if config.ReconsiderationDirectory != "" {
+		requests, requestErr := reconsideration.NewStore(
+			config.ReconsiderationDirectory, reconsideration.ServiceRadarr,
+		)
+		if requestErr != nil {
+			return shadowrunner.Report{}, fmt.Errorf("configure reconsideration inbox: %w", requestErr)
+		}
+		results, resultErr := reconsideration.NewResultStore(
+			filepath.Join(config.StateDirectory, "reconsiderations"),
+			validateRadarrRevision,
+		)
+		if resultErr != nil {
+			return shadowrunner.Report{}, fmt.Errorf("configure reconsideration results: %w", resultErr)
+		}
+		processor, processorErr := reconsideration.NewProcessor(
+			results,
+			func(
+				requestContext context.Context,
+				request reconsideration.Request,
+				priorData json.RawMessage,
+			) (json.RawMessage, error) {
+				prior, decodeErr := contracts.DecodeDecision(priorData)
+				if decodeErr != nil {
+					return nil, decodeErr
+				}
+				assembly, readErr := store.GetPlannedCase(request.CaseID)
+				if readErr != nil {
+					return nil, readErr
+				}
+				decision, planErr := planner.Reconsider(
+					requestContext, assembly.Assembly.Request, prior, request,
+				)
+				if planErr != nil {
+					return nil, planErr
+				}
+				return contracts.EncodeDecision(decision)
+			},
+			time.Now,
+			planningrunner.ClassifyFailure,
+			planningrunner.Backoff{Initial: config.RetryInitial, Maximum: config.RetryMaximum},
+		)
+		if processorErr != nil {
+			return shadowrunner.Report{}, fmt.Errorf("configure reconsideration processor: %w", processorErr)
+		}
+		dependencies.Requests = requests
+		dependencies.Reconsiderer = processor
+	}
+	runner, err := shadowrunner.New(dependencies)
 	if err != nil {
 		return shadowrunner.Report{}, fmt.Errorf("configure shadow runner: %w", err)
 	}
 	report, runErr := runner.Run(ctx)
 	publishErr := publishRadarrReview(config.ReviewDirectory, report, time.Now().UTC())
 	return report, errors.Join(runErr, publishErr)
+}
+
+func validateRadarrRevision(data json.RawMessage) (string, json.RawMessage, error) {
+	decision, err := contracts.DecodeDecision(data)
+	if err != nil {
+		return "", nil, err
+	}
+	canonical, err := contracts.EncodeDecision(decision)
+	return decision.CaseID(), canonical, err
 }
 
 func publishRadarrReview(
