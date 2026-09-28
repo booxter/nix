@@ -448,7 +448,7 @@ in
       job_name = "blackbox-http";
       metrics_path = "/probe";
       params.module = [ "http_service" ];
-      scrape_interval = "5s";
+      scrape_interval = "30s";
       tls_config = prometheusMtlsTlsConfig;
       static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs "http";
       relabel_configs = blackboxProbeRelabelConfigs;
