@@ -21,6 +21,7 @@ in
     home.packages = with pkgs; [
       gpclient
       homeManagerPkgs.jinjanator
+      jiratui
       nvPkgs.nico-cli
       teleport
       vault-bin
