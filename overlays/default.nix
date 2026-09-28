@@ -24,7 +24,12 @@
       );
     in
     {
-      inherit (pkgsNixpkgsUnstable) aerospace chatgpt codex;
+      inherit (pkgsNixpkgsUnstable)
+        aerospace
+        chatgpt
+        codex
+        jiratui
+        ;
 
       # The repair planner's Qwen model requires Ollama features newer than
       # the release branch. Keep the base and ROCm variants on one revision.
