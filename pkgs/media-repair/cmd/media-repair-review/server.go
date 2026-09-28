@@ -240,7 +240,7 @@ func (app *applicationHandler) reconsiderHandler(
 	writer http.ResponseWriter,
 	request *http.Request,
 ) {
-	if _, allowed := app.allowedOrigins[request.Header.Get("Origin")]; !allowed {
+	if !app.requestOriginAllowed(request) {
 		http.Error(writer, "invalid request origin", http.StatusForbidden)
 		return
 	}
@@ -284,6 +284,19 @@ func (app *applicationHandler) reconsiderHandler(
 		return
 	}
 	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?submitted=1", http.StatusSeeOther)
+}
+
+func (app *applicationHandler) requestOriginAllowed(request *http.Request) bool {
+	fetchSite := request.Header.Get("Sec-Fetch-Site")
+	if fetchSite != "" && fetchSite != "same-origin" {
+		return false
+	}
+	origin := request.Header.Get("Origin")
+	if origin == "" || origin == "null" {
+		return fetchSite == "same-origin"
+	}
+	_, allowed := app.allowedOrigins[origin]
+	return allowed
 }
 
 func (app *applicationHandler) setCSRFCookie(writer http.ResponseWriter) {

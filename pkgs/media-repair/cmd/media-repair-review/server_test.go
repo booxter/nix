@@ -132,32 +132,33 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	}
 }
 
-func TestHandlerRejectsUnknownOrigin(t *testing.T) {
+func TestHandlerChecksRequestOrigin(t *testing.T) {
 	t.Parallel()
-	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	lidarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
-		Current:     []review.Item{questionableItem(caseID)},
-	})
-	radarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
-	})
-	configuration := handlerConfig(t, lidarr, radarr)
-	configuration.AllowedOrigins = []string{"https://repairr"}
-	handler, err := newHandler(configuration)
-	if err != nil {
-		t.Fatal(err)
+	app := &applicationHandler{allowedOrigins: map[string]struct{}{
+		"https://repairr": {},
+	}}
+	tests := []struct {
+		name      string
+		origin    string
+		fetchSite string
+		allowed   bool
+	}{
+		{name: "configured origin", origin: "https://repairr", fetchSite: "same-origin", allowed: true},
+		{name: "unknown origin", origin: "https://attacker.example", fetchSite: "same-origin"},
+		{name: "missing origin", fetchSite: "same-origin", allowed: true},
+		{name: "opaque origin", origin: "null", fetchSite: "same-origin", allowed: true},
+		{name: "cross-site request", origin: "null", fetchSite: "cross-site"},
+		{name: "missing metadata"},
 	}
-	request := httptest.NewRequest(
-		http.MethodPost, "/cases/"+caseID+"/reconsider", nil,
-	)
-	request.Header.Set("Origin", "https://attacker.example")
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusForbidden {
-		t.Fatalf("POST status=%d body=%s", response.Code, response.Body.String())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/", nil)
+			request.Header.Set("Origin", test.origin)
+			request.Header.Set("Sec-Fetch-Site", test.fetchSite)
+			if allowed := app.requestOriginAllowed(request); allowed != test.allowed {
+				t.Fatalf("allowed = %v, want %v", allowed, test.allowed)
+			}
+		})
 	}
 }
 
