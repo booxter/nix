@@ -10,6 +10,8 @@ let
   nvPkgs = import ./pkgs { inherit pkgs; };
 in
 {
+  imports = [ ./jiratui.nix ];
+
   options.host.hm.dev.nvidia.enable = lib.mkEnableOption "NVIDIA development environment";
 
   config = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {

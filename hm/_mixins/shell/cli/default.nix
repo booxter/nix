@@ -80,6 +80,19 @@ lib.mkIf config.host.hm.env.roles.developer {
     initContent = ''
       [ -f /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
 
+      ${lib.optionalString isDarwin ''
+        # macOS path_helper can move /bin ahead of the Nix profiles in login shells.
+        path=(
+          "$HOME/.priv-bin"
+          "$HOME/.nix-profile/bin"
+          "/etc/profiles/per-user/$USER/bin"
+          /run/current-system/sw/bin
+          /nix/var/nix/profiles/default/bin
+          $path
+        )
+        typeset -U path
+      ''}
+
       autoload -U compinit
       ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
       mkdir -p "$(dirname "$ZSH_COMPDUMP")"
