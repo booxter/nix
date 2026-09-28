@@ -70,10 +70,10 @@ in
 
   wanHttpProbeTargets = [
     {
-      probe = "example-http";
+      probe = "ihar-http";
       probe_protocol = "http";
-      probe_title = "Example.com HTTPS";
-      target = "https://example.com/";
+      probe_title = "ihar.dev HTTPS";
+      target = "https://ihar.dev/";
     }
   ];
 }

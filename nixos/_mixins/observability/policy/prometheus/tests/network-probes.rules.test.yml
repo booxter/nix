@@ -98,7 +98,7 @@ tests:
     input_series:
       - series: 'probe_success{job="blackbox-network-dns",instance="srvarr:vpn-dns",source="srvarr",probe="vpn-dns",probe_title="VPN DNS 10.128.0.1:53",target="10.128.0.1:53"}'
         values: "0x5"
-      - series: 'probe_success{job="blackbox-http",instance="srvarr:example-http",source="srvarr",probe="example-http",probe_title="Example.com HTTPS",target="https://example.com/"}'
+      - series: 'probe_success{job="blackbox-http",instance="srvarr:ihar-http",source="srvarr",probe="ihar-http",probe_title="ihar.dev HTTPS",target="https://ihar.dev/"}'
         values: "0x5"
     alert_rule_test:
       - eval_time: 2m
@@ -120,13 +120,13 @@ tests:
           - exp_labels:
               alertname: NetworkProbeDown
               category: network
-              instance: srvarr:example-http
+              instance: srvarr:ihar-http
               job: blackbox-http
-              probe: example-http
-              probe_title: "Example.com HTTPS"
+              probe: ihar-http
+              probe_title: "ihar.dev HTTPS"
               severity: warning
               source: srvarr
-              target: "https://example.com/"
+              target: "https://ihar.dev/"
             exp_annotations:
-              summary: "Network probe down: srvarr -> example-http"
-              description: "The blackbox-http probe from srvarr to Example.com HTTPS (https://example.com/) has been failing for 2 minutes."
+              summary: "Network probe down: srvarr -> ihar-http"
+              description: "The blackbox-http probe from srvarr to ihar.dev HTTPS (https://ihar.dev/) has been failing for 2 minutes."
