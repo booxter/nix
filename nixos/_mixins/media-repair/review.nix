@@ -12,25 +12,42 @@ let
   radarrDirectory = "${cfg.stateDirectory}/radarr";
   lidarrRequests = "${cfg.requestStateDirectory}/lidarr";
   radarrRequests = "${cfg.requestStateDirectory}/radarr";
-  command = lib.escapeShellArgs [
-    (lib.getExe cfg.package)
-    "--listen"
-    "127.0.0.1:${toString cfg.port}"
-    "--lidarr-snapshot"
-    lidarrDirectory
-    "--radarr-snapshot"
-    radarrDirectory
-    "--lidarr-requests"
-    lidarrRequests
-    "--radarr-requests"
-    radarrRequests
-    "--lidarr-url"
-    "https://lidarr.${config.host.network.lanDomain}/activity/queue"
-    "--radarr-url"
-    "https://radarr.${config.host.network.lanDomain}/activity/queue"
-    "--public-url"
-    "https://repairr.${config.host.network.lanDomain}"
-  ];
+  webService = config.host.web.services.repairr;
+  internalWeb = webService.internal;
+  localAliases = internalWeb.localAliases ++ map (alias: "${alias}.local") internalWeb.localAliases;
+  publicAliases =
+    internalWeb.publicAliases
+    ++ lib.optional (
+      webService.public != null && webService.public.serveOnOwner
+    ) webService.public.hostName;
+  allowedOrigins = map (host: "https://${host}") (
+    lib.unique ([ internalWeb.serverName ] ++ internalWeb.aliases ++ localAliases ++ publicAliases)
+  );
+  command = lib.escapeShellArgs (
+    [
+      (lib.getExe cfg.package)
+      "--listen"
+      "127.0.0.1:${toString cfg.port}"
+      "--lidarr-snapshot"
+      lidarrDirectory
+      "--radarr-snapshot"
+      radarrDirectory
+      "--lidarr-requests"
+      lidarrRequests
+      "--radarr-requests"
+      radarrRequests
+      "--lidarr-url"
+      "https://lidarr.${config.host.network.lanDomain}/activity/queue"
+      "--radarr-url"
+      "https://radarr.${config.host.network.lanDomain}/activity/queue"
+      "--public-url"
+      "https://${internalWeb.serverName}"
+    ]
+    ++ lib.concatMap (origin: [
+      "--allowed-origin"
+      origin
+    ]) allowedOrigins
+  );
 in
 {
   config = lib.mkIf cfg.enable {

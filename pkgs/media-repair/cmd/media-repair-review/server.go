@@ -30,12 +30,12 @@ type source struct {
 }
 
 type applicationHandler struct {
-	template     *template.Template
-	sources      []source
-	style        []byte
-	csrfToken    string
-	publicOrigin string
-	now          func() time.Time
+	template       *template.Template
+	sources        []source
+	style          []byte
+	csrfToken      string
+	allowedOrigins map[string]struct{}
+	now            func() time.Time
 }
 
 type itemView struct {
@@ -95,9 +95,17 @@ func newHandler(configuration config) (http.Handler, error) {
 		return nil, fmt.Errorf("generate CSRF token: %w", err)
 	}
 	csrfToken := base64.RawURLEncoding.EncodeToString(csrfBytes)
-	publicURL, err := url.Parse(configuration.PublicURL)
+	publicOrigin, err := httpsOrigin(configuration.PublicURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse Repairr public URL: %w", err)
+	}
+	allowedOrigins := map[string]struct{}{publicOrigin: {}}
+	for _, raw := range configuration.AllowedOrigins {
+		origin, err := httpsOrigin(raw)
+		if err != nil {
+			return nil, fmt.Errorf("parse Repairr allowed origin: %w", err)
+		}
+		allowedOrigins[origin] = struct{}{}
 	}
 	functions := template.FuncMap{
 		"formatTime": func(value any) string {
@@ -134,7 +142,7 @@ func newHandler(configuration config) (http.Handler, error) {
 	}
 	app := &applicationHandler{
 		template: page, style: style, csrfToken: csrfToken,
-		publicOrigin: publicURL.Scheme + "://" + publicURL.Host, now: time.Now,
+		allowedOrigins: allowedOrigins, now: time.Now,
 		sources: []source{
 			{
 				service: review.ServiceLidarr, store: lidarrStore,
@@ -232,7 +240,7 @@ func (app *applicationHandler) reconsiderHandler(
 	writer http.ResponseWriter,
 	request *http.Request,
 ) {
-	if request.Header.Get("Origin") != app.publicOrigin {
+	if _, allowed := app.allowedOrigins[request.Header.Get("Origin")]; !allowed {
 		http.Error(writer, "invalid request origin", http.StatusForbidden)
 		return
 	}

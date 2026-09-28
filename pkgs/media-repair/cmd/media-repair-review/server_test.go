@@ -94,6 +94,7 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
 	})
 	configuration := handlerConfig(t, lidarr, radarr)
+	configuration.AllowedOrigins = []string{"https://repairr"}
 	handler, err := newHandler(configuration)
 	if err != nil {
 		t.Fatal(err)
@@ -112,7 +113,7 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(values.Encode()),
 	)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	request.Header.Set("Origin", "https://repairr.example")
+	request.Header.Set("Origin", "https://repairr")
 	request.AddCookie(cookies[0])
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -128,6 +129,35 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	submitted, found, err := store.Latest(caseID)
 	if err != nil || !found || submitted.Guidance != values.Get("guidance") {
 		t.Fatalf("request=%#v found=%v err=%v", submitted, found, err)
+	}
+}
+
+func TestHandlerRejectsUnknownOrigin(t *testing.T) {
+	t.Parallel()
+	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	lidarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
+		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
+		Current:     []review.Item{questionableItem(caseID)},
+	})
+	radarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
+		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
+	})
+	configuration := handlerConfig(t, lidarr, radarr)
+	configuration.AllowedOrigins = []string{"https://repairr"}
+	handler, err := newHandler(configuration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(
+		http.MethodPost, "/cases/"+caseID+"/reconsider", nil,
+	)
+	request.Header.Set("Origin", "https://attacker.example")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("POST status=%d body=%s", response.Code, response.Body.String())
 	}
 }
 
