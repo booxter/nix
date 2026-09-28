@@ -13,6 +13,7 @@ lib.mkIf config.host.hm.env.roles.developer {
   home.shellAliases.g = "git";
 
   programs.git = {
+    lfs.enable = true;
     ignores = [ "*.swp" ];
 
     includes = [
