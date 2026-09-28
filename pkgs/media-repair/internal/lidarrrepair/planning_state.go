@@ -78,6 +78,17 @@ func (store *Store) GetDecision(caseID string) (lidarrcontracts.Decision, error)
 	return decision, nil
 }
 
+func (store *Store) GetRepairCase(caseID string) (lidarrcontracts.Case, error) {
+	record, found, err := store.cases.Get(caseID)
+	if err != nil {
+		return lidarrcontracts.Case{}, err
+	}
+	if !found {
+		return lidarrcontracts.Case{}, fmt.Errorf("case %q is not stored", caseID)
+	}
+	return lidarrcontracts.DecodeCase(record.Case)
+}
+
 func (store *Store) PutFailure(
 	caseID string,
 	failure planningrunner.Failure,

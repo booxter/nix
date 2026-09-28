@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -18,7 +19,9 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarrreview"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
@@ -29,25 +32,28 @@ const (
 	defaultRequestTimeout = 30 * time.Second
 	defaultStageTimeout   = 30 * time.Minute
 	defaultPlannerTimeout = 21 * time.Minute
+	defaultRetryInitial   = 5 * time.Minute
+	defaultRetryMaximum   = 6 * time.Hour
 )
 
 type config struct {
-	LidarrURL      string
-	APIKeyFile     string
-	StateDir       string
-	WorkerSocket   string
-	WorkerRoots    map[string]string
-	PlannerSocket  string
-	RequestLimit   time.Duration
-	StageLimit     time.Duration
-	PlannerLimit   time.Duration
-	Apply          bool
-	AllowedActions map[lidarrcontracts.DecisionAction]bool
-	AllowedSources map[lidarrrepair.SourceKind]bool
-	KillSwitchFile string
-	PollInterval   time.Duration
-	FinalizeStale  bool
-	ReviewDir      string
+	LidarrURL          string
+	APIKeyFile         string
+	StateDir           string
+	WorkerSocket       string
+	WorkerRoots        map[string]string
+	PlannerSocket      string
+	RequestLimit       time.Duration
+	StageLimit         time.Duration
+	PlannerLimit       time.Duration
+	Apply              bool
+	AllowedActions     map[lidarrcontracts.DecisionAction]bool
+	AllowedSources     map[lidarrrepair.SourceKind]bool
+	KillSwitchFile     string
+	PollInterval       time.Duration
+	FinalizeStale      bool
+	ReviewDir          string
+	ReconsiderationDir string
 }
 
 type report struct {
@@ -151,6 +157,9 @@ func (app application) run(
 	reviewDirectory := flags.String(
 		"review-directory", "", "optional sanitized review snapshot directory",
 	)
+	reconsiderationDirectory := flags.String(
+		"reconsideration-directory", "", "optional reconsideration request directory",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -164,10 +173,11 @@ func (app application) run(
 		WorkerRoots: workerRoots.Paths(), PlannerSocket: *plannerSocket,
 		RequestLimit: *timeout, StageLimit: *stageTimeout, PlannerLimit: *plannerTimeout,
 		Apply: *apply, AllowedActions: allowed.actions, AllowedSources: allowedSources.sources,
-		KillSwitchFile: *killSwitchFile,
-		PollInterval:   *pollInterval,
-		FinalizeStale:  *finalizeStale,
-		ReviewDir:      *reviewDirectory,
+		KillSwitchFile:     *killSwitchFile,
+		PollInterval:       *pollInterval,
+		FinalizeStale:      *finalizeStale,
+		ReviewDir:          *reviewDirectory,
+		ReconsiderationDir: *reconsiderationDirectory,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -211,6 +221,12 @@ func validateConfig(configuration config) error {
 		filepath.Clean(configuration.ReviewDir) != configuration.ReviewDir ||
 		filepath.Dir(configuration.ReviewDir) == configuration.ReviewDir) {
 		return fmt.Errorf("review directory must be an absolute clean path")
+	}
+	if configuration.ReconsiderationDir != "" &&
+		(!filepath.IsAbs(configuration.ReconsiderationDir) ||
+			filepath.Clean(configuration.ReconsiderationDir) != configuration.ReconsiderationDir ||
+			filepath.Dir(configuration.ReconsiderationDir) == configuration.ReconsiderationDir) {
+		return fmt.Errorf("reconsideration directory must be an absolute clean path")
 	}
 	for name, path := range map[string]string{
 		"worker socket":  configuration.WorkerSocket,
@@ -286,6 +302,57 @@ func runController(ctx context.Context, configuration config) (report, error) {
 	runner, err := lidarrrepair.NewRunner(client, worker, planner, store)
 	if err != nil {
 		return report{}, err
+	}
+	if configuration.ReconsiderationDir != "" {
+		requests, requestErr := reconsideration.NewStore(
+			configuration.ReconsiderationDir, reconsideration.ServiceLidarr,
+		)
+		if requestErr != nil {
+			return report{}, fmt.Errorf("configure reconsideration inbox: %w", requestErr)
+		}
+		results, resultErr := reconsideration.NewResultStore(
+			filepath.Join(configuration.StateDir, "reconsiderations"),
+			validateLidarrRevision,
+		)
+		if resultErr != nil {
+			return report{}, fmt.Errorf("configure reconsideration results: %w", resultErr)
+		}
+		processor, processorErr := reconsideration.NewProcessor(
+			results,
+			func(
+				requestContext context.Context,
+				request reconsideration.Request,
+				priorData json.RawMessage,
+			) (json.RawMessage, error) {
+				prior, decodeErr := lidarrcontracts.DecodeDecision(priorData)
+				if decodeErr != nil {
+					return nil, decodeErr
+				}
+				repairCase, readErr := store.GetRepairCase(request.CaseID)
+				if readErr != nil {
+					return nil, readErr
+				}
+				decision, planErr := planner.ReconsiderLidarr(
+					requestContext, repairCase, prior, request,
+				)
+				if planErr != nil {
+					return nil, planErr
+				}
+				if validateErr := lidarrrepair.ValidateDecision(repairCase, decision); validateErr != nil {
+					return nil, &planningrunner.InvalidResultError{Err: validateErr}
+				}
+				return lidarrcontracts.EncodeDecision(decision)
+			},
+			time.Now,
+			planningrunner.ClassifyFailure,
+			planningrunner.Backoff{Initial: defaultRetryInitial, Maximum: defaultRetryMaximum},
+		)
+		if processorErr != nil {
+			return report{}, fmt.Errorf("configure reconsideration processor: %w", processorErr)
+		}
+		if enableErr := runner.EnableReconsideration(requests, processor); enableErr != nil {
+			return report{}, enableErr
+		}
 	}
 	result, err := runner.Run(ctx)
 	controllerReport := report{
@@ -365,6 +432,15 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		}
 	}
 	return controllerReport, nil
+}
+
+func validateLidarrRevision(data json.RawMessage) (string, json.RawMessage, error) {
+	decision, err := lidarrcontracts.DecodeDecision(data)
+	if err != nil {
+		return "", nil, err
+	}
+	canonical, err := lidarrcontracts.EncodeDecision(decision)
+	return decision.CaseID(), canonical, err
 }
 
 func publishLidarrReview(
