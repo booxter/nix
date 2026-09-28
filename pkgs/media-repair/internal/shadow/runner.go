@@ -97,6 +97,7 @@ type ReconsiderationReview struct {
 	Request reconsideration.Request
 	Result  reconsideration.Result
 	Decided bool
+	Prior   contracts.RepairDecisionV3
 }
 
 const (
@@ -376,7 +377,7 @@ func (runner *Runner) process(
 		ctx, request, prior,
 	)
 	result.Reconsideration = &ReconsiderationReview{
-		Request: request, Result: revision, Decided: decided,
+		Request: request, Result: revision, Decided: decided, Prior: shared.Planned.Decision,
 	}
 	if reconsiderErr != nil {
 		result.Outcome = caseFailed

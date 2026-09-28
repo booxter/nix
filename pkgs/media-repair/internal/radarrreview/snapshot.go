@@ -49,6 +49,30 @@ func Snapshot(report shadowrunner.Report, generatedAt time.Time) (review.Snapsho
 		if movie := current.Assembly.LocalSnapshot.Observation.Movie; movie != nil {
 			item.Subject = strings.TrimSpace(fmt.Sprintf("%s (%d)", movie.Title, movie.Year))
 		}
+		if current.Reconsideration != nil {
+			priorData, err := contracts.EncodeDecision(current.Reconsideration.Prior)
+			if err != nil {
+				return review.Snapshot{}, err
+			}
+			prior, err := review.ParseDecision(priorData)
+			if err != nil {
+				return review.Snapshot{}, err
+			}
+			state := review.ReconsiderationPending
+			if current.Reconsideration.Decided {
+				state = review.ReconsiderationDecided
+			} else if current.Reconsideration.Result.Outcome.Failure != nil {
+				state = review.ReconsiderationFailed
+			}
+			item.Reconsideration = &review.Reconsideration{
+				RequestID:     current.Reconsideration.Request.RequestID,
+				Guidance:      current.Reconsideration.Request.Guidance,
+				CreatedAt:     current.Reconsideration.Request.CreatedAt,
+				State:         state,
+				PriorDecision: prior,
+			}
+			item.Decision = &prior
+		}
 		switch current.Outcome {
 		case planningrunner.Deferred:
 			item.State = review.StatePlanningDeferred

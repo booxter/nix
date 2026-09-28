@@ -36,6 +36,22 @@ type Decision struct {
 	EvidenceRefs []string `json:"evidence_refs"`
 }
 
+type ReconsiderationState string
+
+const (
+	ReconsiderationPending ReconsiderationState = "pending"
+	ReconsiderationFailed  ReconsiderationState = "failed"
+	ReconsiderationDecided ReconsiderationState = "decided"
+)
+
+type Reconsideration struct {
+	RequestID     string               `json:"request_id"`
+	Guidance      string               `json:"guidance"`
+	CreatedAt     time.Time            `json:"created_at"`
+	State         ReconsiderationState `json:"state"`
+	PriorDecision Decision             `json:"prior_decision"`
+}
+
 func ParseDecision(data []byte) (Decision, error) {
 	var decision Decision
 	if err := json.Unmarshal(data, &decision); err != nil {
@@ -49,20 +65,21 @@ func ParseDecision(data []byte) (Decision, error) {
 }
 
 type Item struct {
-	QueueID           int64      `json:"queue_id"`
-	Title             string     `json:"title"`
-	Subject           string     `json:"subject,omitempty"`
-	QueueStatus       string     `json:"queue_status"`
-	TrackedStatus     string     `json:"tracked_status"`
-	Protocol          string     `json:"protocol,omitempty"`
-	State             State      `json:"state"`
-	Detail            string     `json:"detail,omitempty"`
-	CaseID            string     `json:"case_id,omitempty"`
-	SourceFingerprint string     `json:"source_fingerprint,omitempty"`
-	ObservedAt        *time.Time `json:"observed_at,omitempty"`
-	LastSeenAt        time.Time  `json:"last_seen_at"`
-	NoLongerQueuedAt  *time.Time `json:"no_longer_queued_at,omitempty"`
-	Decision          *Decision  `json:"decision,omitempty"`
+	QueueID           int64            `json:"queue_id"`
+	Title             string           `json:"title"`
+	Subject           string           `json:"subject,omitempty"`
+	QueueStatus       string           `json:"queue_status"`
+	TrackedStatus     string           `json:"tracked_status"`
+	Protocol          string           `json:"protocol,omitempty"`
+	State             State            `json:"state"`
+	Detail            string           `json:"detail,omitempty"`
+	CaseID            string           `json:"case_id,omitempty"`
+	SourceFingerprint string           `json:"source_fingerprint,omitempty"`
+	ObservedAt        *time.Time       `json:"observed_at,omitempty"`
+	LastSeenAt        time.Time        `json:"last_seen_at"`
+	NoLongerQueuedAt  *time.Time       `json:"no_longer_queued_at,omitempty"`
+	Decision          *Decision        `json:"decision,omitempty"`
+	Reconsideration   *Reconsideration `json:"reconsideration,omitempty"`
 }
 
 type Snapshot struct {
@@ -120,6 +137,20 @@ func validateItem(item Item, historical bool) error {
 		if item.CaseID == "" || strings.TrimSpace(item.Decision.Action) == "" ||
 			strings.TrimSpace(item.Decision.Explanation) == "" {
 			return fmt.Errorf("decision is incomplete")
+		}
+	}
+	if item.Reconsideration != nil {
+		reconsideration := item.Reconsideration
+		if item.CaseID == "" || reconsideration.RequestID == "" ||
+			strings.TrimSpace(reconsideration.Guidance) == "" ||
+			reconsideration.CreatedAt.IsZero() ||
+			reconsideration.CreatedAt.Location() != time.UTC ||
+			(reconsideration.State != ReconsiderationPending &&
+				reconsideration.State != ReconsiderationFailed &&
+				reconsideration.State != ReconsiderationDecided) ||
+			strings.TrimSpace(reconsideration.PriorDecision.Action) == "" ||
+			strings.TrimSpace(reconsideration.PriorDecision.Explanation) == "" {
+			return fmt.Errorf("reconsideration is incomplete")
 		}
 	}
 	return nil

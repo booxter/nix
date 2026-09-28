@@ -1,14 +1,21 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/subtle"
 	"embed"
+	"encoding/base64"
 	"fmt"
 	"html/template"
+	"io"
+	"mime"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 )
 
@@ -18,20 +25,25 @@ var assets embed.FS
 type source struct {
 	service  review.Service
 	store    *review.Store
+	requests *reconsideration.Store
 	queueURL string
 }
 
 type applicationHandler struct {
-	template *template.Template
-	sources  []source
-	style    []byte
+	template     *template.Template
+	sources      []source
+	style        []byte
+	csrfToken    string
+	publicOrigin string
+	now          func() time.Time
 }
 
 type itemView struct {
-	Item     review.Item
-	Service  review.Service
-	QueueURL string
-	Current  bool
+	Item          review.Item
+	Service       review.Service
+	QueueURL      string
+	Current       bool
+	CanReconsider bool
 }
 
 type sourceStatus struct {
@@ -51,7 +63,11 @@ type pageView struct {
 	Case          *itemView
 	Sources       []sourceStatus
 	Filter        string
+	CSRFToken     string
+	Submitted     bool
 }
+
+const csrfCookieName = "repairr_csrf"
 
 func newHandler(configuration config) (http.Handler, error) {
 	lidarrStore, err := review.NewStore(configuration.LidarrSnapshot)
@@ -61,6 +77,27 @@ func newHandler(configuration config) (http.Handler, error) {
 	radarrStore, err := review.NewStore(configuration.RadarrSnapshot)
 	if err != nil {
 		return nil, fmt.Errorf("configure Radarr review source: %w", err)
+	}
+	lidarrRequests, err := reconsideration.NewStore(
+		configuration.LidarrRequests, reconsideration.ServiceLidarr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr reconsideration inbox: %w", err)
+	}
+	radarrRequests, err := reconsideration.NewStore(
+		configuration.RadarrRequests, reconsideration.ServiceRadarr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Radarr reconsideration inbox: %w", err)
+	}
+	csrfBytes := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, csrfBytes); err != nil {
+		return nil, fmt.Errorf("generate CSRF token: %w", err)
+	}
+	csrfToken := base64.RawURLEncoding.EncodeToString(csrfBytes)
+	publicURL, err := url.Parse(configuration.PublicURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse Repairr public URL: %w", err)
 	}
 	functions := template.FuncMap{
 		"formatTime": func(value any) string {
@@ -96,10 +133,17 @@ func newHandler(configuration config) (http.Handler, error) {
 		return nil, fmt.Errorf("read repair review stylesheet: %w", err)
 	}
 	app := &applicationHandler{
-		template: page, style: style,
+		template: page, style: style, csrfToken: csrfToken,
+		publicOrigin: publicURL.Scheme + "://" + publicURL.Host, now: time.Now,
 		sources: []source{
-			{service: review.ServiceLidarr, store: lidarrStore, queueURL: configuration.LidarrURL},
-			{service: review.ServiceRadarr, store: radarrStore, queueURL: configuration.RadarrURL},
+			{
+				service: review.ServiceLidarr, store: lidarrStore,
+				requests: lidarrRequests, queueURL: configuration.LidarrURL,
+			},
+			{
+				service: review.ServiceRadarr, store: radarrStore,
+				requests: radarrRequests, queueURL: configuration.RadarrURL,
+			},
 		},
 	}
 	mux := http.NewServeMux()
@@ -108,6 +152,7 @@ func newHandler(configuration config) (http.Handler, error) {
 	mux.HandleFunc("/radarr", app.pageHandler)
 	mux.HandleFunc("/history", app.pageHandler)
 	mux.HandleFunc("/cases/", app.pageHandler)
+	mux.HandleFunc("POST /cases/{caseID}/reconsider", app.reconsiderHandler)
 	mux.HandleFunc("/assets/style.css", app.styleHandler)
 	mux.HandleFunc("/-/ready", app.readyHandler)
 	return securityHeaders(mux), nil
@@ -125,6 +170,7 @@ func (app *applicationHandler) pageHandler(writer http.ResponseWriter, request *
 		return
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	app.setCSRFCookie(writer)
 	if request.Method == http.MethodHead {
 		return
 	}
@@ -135,7 +181,10 @@ func (app *applicationHandler) pageHandler(writer http.ResponseWriter, request *
 
 func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, error) {
 	snapshots, statuses := app.readSnapshots()
-	view := pageView{Title: "Repair review", Sources: statuses, Filter: request.URL.Query().Get("state")}
+	view := pageView{
+		Title: "Repair review", Sources: statuses, Filter: request.URL.Query().Get("state"),
+		CSRFToken: app.csrfToken, Submitted: request.URL.Query().Get("submitted") == "1",
+	}
 	switch request.URL.Path {
 	case "/":
 		view.Title = "Repair review"
@@ -179,6 +228,68 @@ func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, 
 	return view, http.StatusOK, nil
 }
 
+func (app *applicationHandler) reconsiderHandler(
+	writer http.ResponseWriter,
+	request *http.Request,
+) {
+	if request.Header.Get("Origin") != app.publicOrigin {
+		http.Error(writer, "invalid request origin", http.StatusForbidden)
+		return
+	}
+	mediaType, _, err := mime.ParseMediaType(request.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/x-www-form-urlencoded" {
+		http.Error(writer, "invalid form submission", http.StatusUnsupportedMediaType)
+		return
+	}
+	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
+	if err := request.ParseForm(); err != nil {
+		http.Error(writer, "invalid form submission", http.StatusBadRequest)
+		return
+	}
+	cookie, err := request.Cookie(csrfCookieName)
+	if err != nil || !sameToken(cookie.Value, app.csrfToken) ||
+		!sameToken(request.PostForm.Get("csrf_token"), app.csrfToken) {
+		http.Error(writer, "invalid CSRF token", http.StatusForbidden)
+		return
+	}
+	caseID := request.PathValue("caseID")
+	snapshots, _ := app.readSnapshots()
+	entry, source, found := findCurrentCase(app.sources, snapshots, caseID)
+	if !found || entry.Decision == nil {
+		http.Error(writer, "current decided case not found", http.StatusNotFound)
+		return
+	}
+	if entry.Reconsideration != nil && entry.Reconsideration.State != review.ReconsiderationDecided {
+		http.Error(writer, "reconsideration is already pending", http.StatusConflict)
+		return
+	}
+	guidance := request.PostForm.Get("guidance")
+	reconsiderationRequest, err := reconsideration.NewRequest(
+		reconsideration.Service(source.service), caseID, guidance, app.now().UTC(),
+	)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+	if _, err := source.requests.Submit(reconsiderationRequest); err != nil {
+		http.Error(writer, "store reconsideration request", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?submitted=1", http.StatusSeeOther)
+}
+
+func (app *applicationHandler) setCSRFCookie(writer http.ResponseWriter) {
+	http.SetCookie(writer, &http.Cookie{
+		Name: csrfCookieName, Value: app.csrfToken, Path: "/", Secure: true,
+		HttpOnly: true, SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func sameToken(left, right string) bool {
+	return len(left) == len(right) &&
+		subtle.ConstantTimeCompare([]byte(left), []byte(right)) == 1
+}
+
 func (app *applicationHandler) readSnapshots() (map[review.Service]review.Snapshot, []sourceStatus) {
 	snapshots := make(map[review.Service]review.Snapshot, len(app.sources))
 	statuses := make([]sourceStatus, 0, len(app.sources))
@@ -212,6 +323,7 @@ func currentItems(
 		for _, item := range snapshots[source.service].Current {
 			items = append(items, itemView{
 				Item: item, Service: source.service, QueueURL: source.queueURL, Current: true,
+				CanReconsider: canReconsider(item),
 			})
 		}
 	}
@@ -251,7 +363,10 @@ func findCase(
 		snapshot := snapshots[source.service]
 		for _, current := range snapshot.Current {
 			if current.CaseID == caseID {
-				return itemView{Item: current, Service: source.service, QueueURL: source.queueURL, Current: true}, true
+				return itemView{
+					Item: current, Service: source.service, QueueURL: source.queueURL,
+					Current: true, CanReconsider: canReconsider(current),
+				}, true
 			}
 		}
 		for _, historical := range snapshot.History {
@@ -261,6 +376,27 @@ func findCase(
 		}
 	}
 	return itemView{}, false
+}
+
+func findCurrentCase(
+	sources []source,
+	snapshots map[review.Service]review.Snapshot,
+	caseID string,
+) (review.Item, source, bool) {
+	for _, source := range sources {
+		for _, current := range snapshots[source.service].Current {
+			if current.CaseID == caseID {
+				return current, source, true
+			}
+		}
+	}
+	return review.Item{}, source{}, false
+}
+
+func canReconsider(item review.Item) bool {
+	return item.CaseID != "" && item.Decision != nil &&
+		(item.Reconsideration == nil ||
+			item.Reconsideration.State == review.ReconsiderationDecided)
 }
 
 func (app *applicationHandler) styleHandler(writer http.ResponseWriter, request *http.Request) {
@@ -288,7 +424,7 @@ func (*applicationHandler) readyHandler(writer http.ResponseWriter, request *htt
 
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.Header().Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+		writer.Header().Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 		writer.Header().Set("Referrer-Policy", "no-referrer")
 		writer.Header().Set("X-Content-Type-Options", "nosniff")
 		writer.Header().Set("X-Frame-Options", "DENY")

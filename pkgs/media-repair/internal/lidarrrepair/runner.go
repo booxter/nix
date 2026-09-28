@@ -78,6 +78,7 @@ type ReconsiderationReview struct {
 	Request reconsideration.Request
 	Result  reconsideration.Result
 	Decided bool
+	Prior   lidarrcontracts.Decision
 }
 
 type Evidence struct {
@@ -288,7 +289,9 @@ func (runner *Runner) reconsider(
 	decisionData, revision, decided, err := runner.reconsiderer.Process(
 		ctx, request, json.RawMessage(prior),
 	)
-	review := &ReconsiderationReview{Request: request, Result: revision, Decided: decided}
+	review := &ReconsiderationReview{
+		Request: request, Result: revision, Decided: decided, Prior: result.Planned.Decision,
+	}
 	if err != nil {
 		return result, review, err
 	}
