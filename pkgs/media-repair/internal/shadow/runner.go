@@ -2,6 +2,7 @@ package shadow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 type CaseSource interface {
@@ -37,6 +39,18 @@ type ResultStore interface {
 
 type FailureClassifier func(error) casestore.PlanningFailure
 
+type ReconsiderationRequests interface {
+	Latest(string) (reconsideration.Request, bool, error)
+}
+
+type Reconsiderer interface {
+	Process(
+		context.Context,
+		reconsideration.Request,
+		json.RawMessage,
+	) (json.RawMessage, reconsideration.Result, bool, error)
+}
+
 type Backoff planningrunner.Backoff
 
 func (backoff Backoff) delay(priorAttempts uint64) time.Duration {
@@ -50,6 +64,8 @@ type Dependencies struct {
 	Clock           controller.Clock
 	ClassifyFailure FailureClassifier
 	Backoff         Backoff
+	Requests        ReconsiderationRequests
+	Reconsiderer    Reconsiderer
 }
 
 type Report struct {
@@ -70,10 +86,17 @@ type Report struct {
 }
 
 type CaseReview struct {
-	Assembly       casebuilder.Assembly
-	Outcome        planningrunner.Outcome
-	Decision       contracts.RepairDecisionV3
-	PlannerFailure *casestore.PlanningFailure
+	Assembly        casebuilder.Assembly
+	Outcome         planningrunner.Outcome
+	Decision        contracts.RepairDecisionV3
+	PlannerFailure  *casestore.PlanningFailure
+	Reconsideration *ReconsiderationReview
+}
+
+type ReconsiderationReview struct {
+	Request reconsideration.Request
+	Result  reconsideration.Result
+	Decided bool
 }
 
 const (
@@ -153,6 +176,8 @@ func New(dependencies Dependencies) (*Runner, error) {
 		return nil, fmt.Errorf("clock is required")
 	case dependencies.ClassifyFailure == nil:
 		return nil, fmt.Errorf("planner failure classifier is required")
+	case (dependencies.Requests == nil) != (dependencies.Reconsiderer == nil):
+		return nil, fmt.Errorf("reconsideration dependencies must be configured together")
 	case dependencies.Backoff.Initial <= 0:
 		return nil, fmt.Errorf("initial planner retry delay must be positive")
 	case dependencies.Backoff.Maximum < dependencies.Backoff.Initial:
@@ -241,6 +266,7 @@ const (
 	caseAlreadyDecided
 	caseDeferred
 	caseSuperseded
+	caseReconsidering
 )
 
 type caseResult struct {
@@ -251,6 +277,8 @@ type caseResult struct {
 	Decision        contracts.RepairDecisionV3
 	PlannerFailure  *casestore.PlanningFailure
 	PlannerDuration time.Duration
+	Reconsideration *ReconsiderationReview
+	RequestID       string
 }
 
 func (report *Report) add(result caseResult) {
@@ -258,6 +286,7 @@ func (report *Report) add(result caseResult) {
 		report.Reviews = append(report.Reviews, CaseReview{
 			Assembly: result.Assembly, Outcome: planningOutcome(result.Outcome),
 			Decision: result.Decision, PlannerFailure: result.PlannerFailure,
+			Reconsideration: result.Reconsideration,
 		})
 	}
 	if result.Stored {
@@ -278,13 +307,15 @@ func (report *Report) add(result caseResult) {
 		report.Decided++
 		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
 			Assembly: result.Assembly, Decision: result.Decision,
+			ReconsiderationID: result.RequestID,
 		})
 	case caseAlreadyDecided:
 		report.AlreadyDecided++
 		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
 			Assembly: result.Assembly, Decision: result.Decision,
+			ReconsiderationID: result.RequestID,
 		})
-	case caseDeferred:
+	case caseDeferred, caseReconsidering:
 		report.Deferred++
 	case caseSuperseded:
 		report.Superseded++
@@ -301,6 +332,8 @@ func planningOutcome(outcome caseOutcome) planningrunner.Outcome {
 		return planningrunner.AlreadyDecided
 	case caseDeferred:
 		return planningrunner.Deferred
+	case caseReconsidering:
+		return planningrunner.Deferred
 	case caseSuperseded:
 		return planningrunner.Superseded
 	default:
@@ -313,7 +346,7 @@ func (runner *Runner) process(
 	assembly casebuilder.Assembly,
 ) (caseResult, error) {
 	shared, err := runner.planner.Process(ctx, assembly)
-	return caseResult{
+	result := caseResult{
 		Outcome:         sharedOutcome(shared.Outcome),
 		Stored:          shared.Stored,
 		Submitted:       shared.Submitted,
@@ -321,7 +354,47 @@ func (runner *Runner) process(
 		Decision:        shared.Planned.Decision,
 		PlannerFailure:  shared.Failure,
 		PlannerDuration: shared.PlannerDuration,
-	}, err
+	}
+	if err != nil || (shared.Outcome != planningrunner.Decided &&
+		shared.Outcome != planningrunner.AlreadyDecided) || runner.dependencies.Requests == nil {
+		return result, err
+	}
+	request, found, requestErr := runner.dependencies.Requests.Latest(assembly.Request.CaseID)
+	if requestErr != nil {
+		result.Outcome = caseFailed
+		return result, requestErr
+	}
+	if !found {
+		return result, nil
+	}
+	prior, encodeErr := contracts.EncodeDecision(shared.Planned.Decision)
+	if encodeErr != nil {
+		result.Outcome = caseFailed
+		return result, encodeErr
+	}
+	decisionData, revision, decided, reconsiderErr := runner.dependencies.Reconsiderer.Process(
+		ctx, request, prior,
+	)
+	result.Reconsideration = &ReconsiderationReview{
+		Request: request, Result: revision, Decided: decided,
+	}
+	if reconsiderErr != nil {
+		result.Outcome = caseFailed
+		return result, reconsiderErr
+	}
+	if !decided {
+		result.Outcome = caseReconsidering
+		result.Decision = contracts.RepairDecisionV3{}
+		return result, nil
+	}
+	decision, decodeErr := contracts.DecodeDecision(decisionData)
+	if decodeErr != nil {
+		result.Outcome = caseFailed
+		return result, decodeErr
+	}
+	result.Decision = decision
+	result.RequestID = request.RequestID
+	return result, nil
 }
 
 func sharedOutcome(outcome planningrunner.Outcome) caseOutcome {

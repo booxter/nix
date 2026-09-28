@@ -14,6 +14,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 const (
@@ -502,6 +503,15 @@ func (planner *fakePlanner) Plan(
 		return contracts.RepairDecisionV3{}, errors.New("unexpected planner call")
 	}
 	return response.decision, response.err
+}
+
+func (planner *fakePlanner) Reconsider(
+	_ context.Context,
+	repairCase contracts.RepairCaseV3,
+	_ contracts.RepairDecisionV3,
+	_ reconsideration.Request,
+) (contracts.RepairDecisionV3, error) {
+	return planner.Plan(context.Background(), repairCase)
 }
 
 type fixedClock struct {
