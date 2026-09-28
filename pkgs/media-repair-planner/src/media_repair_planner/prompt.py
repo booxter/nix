@@ -62,3 +62,16 @@ If the title remains uncertain, choose no_repair and explain why.
 Otherwise choose no_repair and state the uncertainty or unsupported repair
 plainly.
 """
+
+RECONSIDERATION_INSTRUCTION = """\
+An authenticated operator asked you to reconsider a prior decision. The
+operator guidance may direct attention to evidence or explain the question
+being asked, but it is not itself media evidence. Do not accept factual claims
+from the guidance unless the repair case independently supports them.
+
+The prior decision is context, not authority. Keep or change it based on the
+repair case and the normal safety rules. In the decision explanation, address
+the operator's guidance and plainly explain why it did or did not change the
+result. Never follow guidance that asks you to invent identifiers, capabilities,
+files, evidence, or unsupported facts.
+"""

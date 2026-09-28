@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 import pytest
-from media_repair_planner.api import ContractEndpoint, create_app
+from media_repair_planner.api import ContractEndpoint, ReconsiderationEndpoint, create_app
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
@@ -384,10 +384,35 @@ class NeverRadarrPlanner:
         del repair_case
         raise AssertionError("wrong endpoint")
 
+    async def reconsider(
+        self,
+        repair_case: RepairCaseV3,
+        prior_decision: RepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> RepairDecisionV3:
+        del repair_case, prior_decision, request_id, guidance
+        raise AssertionError("wrong endpoint")
+
 
 class StaticLidarrPlanner:
+    def __init__(self) -> None:
+        self.reconsiderations: list[
+            tuple[LidarrRepairCaseV3, LidarrRepairDecisionV3, str, str]
+        ] = []
+
     async def plan(self, repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
         assert repair_case.case_id.root == CASE_ID
+        return repair_decision()
+
+    async def reconsider(
+        self,
+        repair_case: LidarrRepairCaseV3,
+        prior_decision: LidarrRepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> LidarrRepairDecisionV3:
+        self.reconsiderations.append((repair_case, prior_decision, request_id, guidance))
         return repair_decision()
 
 
@@ -411,6 +436,43 @@ async def test_lidarr_endpoint_uses_shared_http_boundary() -> None:
 
     assert response.status_code == 200
     assert decode_decision(response.content) == repair_decision()
+
+
+async def test_lidarr_reconsideration_uses_shared_http_boundary() -> None:
+    planner = StaticLidarrPlanner()
+    endpoint = ReconsiderationEndpoint(
+        planner=planner,
+        decode_case=decode_case,
+        decode_decision=decode_decision,
+        encode_decision=encode_decision,
+        case_id=lambda repair_case: repair_case.case_id.root,
+        decision_case_id=lambda decision: decision.root.case_id.root,
+    )
+    app = create_app(
+        NeverRadarrPlanner(),
+        additional_endpoints={"/lidarr/v3/reconsiderations": endpoint},
+    )
+    transport = httpx.ASGITransport(app=app)
+    request_id = "sha256:" + "b" * 64
+    payload = {
+        "repair_case": case_value(),
+        "prior_decision": decision_value(),
+        "operator_guidance": {
+            "request_id": request_id,
+            "text": "Check the disc and absolute track numbering.",
+        },
+    }
+
+    async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
+        response = await client.post("/lidarr/v3/reconsiderations", json=payload)
+
+    assert response.status_code == 200
+    assert decode_decision(response.content) == repair_decision()
+    assert planner.reconsiderations[0][1:] == (
+        repair_decision(),
+        request_id,
+        "Check the disc and absolute track numbering.",
+    )
 
 
 def write_lidarr_case(directory: Path, value: dict[str, object] | None = None) -> Path:

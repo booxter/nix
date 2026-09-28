@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -15,15 +16,27 @@ from media_repair_planner.decision_models import RepairDecisionV3
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
 DECISION = decode_decision((FIXTURES / "repair-decision-join.json").read_bytes())
+REQUEST_ID = "sha256:" + "a" * 64
 
 
 class StaticPlanner:
     def __init__(self, decision: RepairDecisionV3 = DECISION) -> None:
         self.decision = decision
         self.cases: list[RepairCaseV3] = []
+        self.reconsiderations: list[tuple[RepairCaseV3, RepairDecisionV3, str, str]] = []
 
     async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
         self.cases.append(repair_case)
+        return self.decision
+
+    async def reconsider(
+        self,
+        repair_case: RepairCaseV3,
+        prior_decision: RepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> RepairDecisionV3:
+        self.reconsiderations.append((repair_case, prior_decision, request_id, guidance))
         return self.decision
 
 
@@ -37,10 +50,28 @@ class BlockingPlanner:
         await self.release.wait()
         return DECISION
 
+    async def reconsider(
+        self,
+        repair_case: RepairCaseV3,
+        prior_decision: RepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> RepairDecisionV3:
+        return await self.plan(repair_case)
+
 
 class FailingPlanner:
     async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
         raise RuntimeError("private model failure")
+
+    async def reconsider(
+        self,
+        repair_case: RepairCaseV3,
+        prior_decision: RepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> RepairDecisionV3:
+        return await self.plan(repair_case)
 
 
 def client_for(planner: Planner) -> httpx.AsyncClient:
@@ -71,6 +102,44 @@ async def test_plans_a_valid_case() -> None:
     assert response.headers["content-type"] == "application/json"
     assert decode_decision(response.content) == DECISION
     assert len(planner.cases) == 1
+
+
+async def test_reconsiders_a_valid_case_with_operator_guidance() -> None:
+    planner = StaticPlanner()
+    payload = {
+        "repair_case": json.loads(CASE_BYTES),
+        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
+        "operator_guidance": {
+            "request_id": REQUEST_ID,
+            "text": "Check whether the authored filenames establish the part order.",
+        },
+    }
+    async with client_for(planner) as client:
+        response = await client.post("/v3/reconsiderations", json=payload)
+
+    assert response.status_code == 200
+    assert decode_decision(response.content) == DECISION
+    assert len(planner.reconsiderations) == 1
+    assert planner.reconsiderations[0][1:] == (
+        DECISION,
+        REQUEST_ID,
+        "Check whether the authored filenames establish the part order.",
+    )
+
+
+async def test_rejects_invalid_reconsideration_without_calling_planner() -> None:
+    planner = StaticPlanner()
+    payload = {
+        "repair_case": json.loads(CASE_BYTES),
+        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
+        "operator_guidance": {"request_id": "invalid", "text": " private"},
+    }
+    async with client_for(planner) as client:
+        response = await client.post("/v3/reconsiderations", json=payload)
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "invalid_request"
+    assert planner.reconsiderations == []
 
 
 async def test_rejects_wrong_media_type_before_planning() -> None:

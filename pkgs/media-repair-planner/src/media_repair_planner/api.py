@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import re
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -11,20 +13,45 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 from .case_models import RepairCaseV3
-from .contracts import ContractError, decode_case, encode_decision
+from .contracts import (
+    ContractError,
+    decode_case,
+    decode_decision,
+    encode_decision,
+)
 from .decision_models import RepairDecisionV3
 
 # Keep the API bound aligned with the controller's maximum JSON document size.
 MAX_REQUEST_BYTES = 8 << 20
 PLANNING_TIMEOUT_SECONDS = 600.0
+MAXIMUM_GUIDANCE_LENGTH = 2_000
+FINGERPRINT_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 class Planner(Protocol):
     async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3: ...
 
+    async def reconsider(
+        self,
+        repair_case: RepairCaseV3,
+        prior_decision: RepairDecisionV3,
+        request_id: str,
+        guidance: str,
+    ) -> RepairDecisionV3: ...
+
 
 class TypedPlanner[CaseT, DecisionT](Protocol):
     async def plan(self, repair_case: CaseT) -> DecisionT: ...
+
+
+class TypedReconsideringPlanner[CaseT, DecisionT](TypedPlanner[CaseT, DecisionT], Protocol):
+    async def reconsider(
+        self,
+        repair_case: CaseT,
+        prior_decision: DecisionT,
+        request_id: str,
+        guidance: str,
+    ) -> DecisionT: ...
 
 
 class PreparedPlan(Protocol):
@@ -54,6 +81,77 @@ class ContractEndpoint[CaseT, DecisionT]:
     def prepare(self, payload: bytes) -> PreparedPlan:
         return ContractPlan(
             repair_case=self.decode_case(payload),
+            planner=self.planner,
+            encode_decision=self.encode_decision,
+        )
+
+
+@dataclass(frozen=True)
+class ReconsiderationPlan[CaseT, DecisionT]:
+    repair_case: CaseT
+    prior_decision: DecisionT
+    request_id: str
+    guidance: str
+    planner: TypedReconsideringPlanner[CaseT, DecisionT]
+    encode_decision: Callable[[DecisionT], bytes]
+
+    async def execute(self) -> bytes:
+        decision = await self.planner.reconsider(
+            self.repair_case,
+            self.prior_decision,
+            self.request_id,
+            self.guidance,
+        )
+        return self.encode_decision(decision)
+
+
+@dataclass(frozen=True)
+class ReconsiderationEndpoint[CaseT, DecisionT]:
+    planner: TypedReconsideringPlanner[CaseT, DecisionT]
+    decode_case: Callable[[bytes], CaseT]
+    decode_decision: Callable[[bytes], DecisionT]
+    encode_decision: Callable[[DecisionT], bytes]
+    case_id: Callable[[CaseT], str]
+    decision_case_id: Callable[[DecisionT], str]
+
+    def prepare(self, payload: bytes) -> PreparedPlan:
+        try:
+            value = json.loads(payload)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ContractError("invalid reconsideration request") from error
+        if not isinstance(value, dict) or set(value) != {
+            "repair_case",
+            "prior_decision",
+            "operator_guidance",
+        }:
+            raise ContractError("invalid reconsideration request")
+        guidance = value["operator_guidance"]
+        if not isinstance(guidance, dict) or set(guidance) != {"request_id", "text"}:
+            raise ContractError("invalid reconsideration guidance")
+        request_id = guidance["request_id"]
+        text = guidance["text"]
+        if (
+            not isinstance(request_id, str)
+            or FINGERPRINT_PATTERN.fullmatch(request_id) is None
+            or not isinstance(text, str)
+            or not text
+            or text != text.strip()
+            or len(text.encode()) > MAXIMUM_GUIDANCE_LENGTH
+            or any(ord(character) < 32 and character not in "\n\t" for character in text)
+        ):
+            raise ContractError("invalid reconsideration guidance")
+        try:
+            repair_case = self.decode_case(json.dumps(value["repair_case"]).encode())
+            prior_decision = self.decode_decision(json.dumps(value["prior_decision"]).encode())
+        except (TypeError, ValueError) as error:
+            raise ContractError("invalid reconsideration request") from error
+        if self.decision_case_id(prior_decision) != self.case_id(repair_case):
+            raise ContractError("prior decision does not match the repair case")
+        return ReconsiderationPlan(
+            repair_case=repair_case,
+            prior_decision=prior_decision,
+            request_id=request_id,
+            guidance=text,
             planner=self.planner,
             encode_decision=self.encode_decision,
         )
@@ -125,7 +223,15 @@ def _planning_endpoints(
             planner=planner,
             decode_case=decode_case,
             encode_decision=encode_decision,
-        )
+        ),
+        "/v3/reconsiderations": ReconsiderationEndpoint(
+            planner=planner,
+            decode_case=decode_case,
+            decode_decision=decode_decision,
+            encode_decision=encode_decision,
+            case_id=lambda repair_case: repair_case.case_id.root,
+            decision_case_id=lambda decision: decision.root.case_id.root,
+        ),
     }
     if additional_endpoints is not None:
         overlap = endpoints.keys() & additional_endpoints.keys()

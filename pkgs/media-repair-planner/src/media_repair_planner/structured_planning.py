@@ -6,7 +6,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel
 
 from .decision_validation_core import DecisionViolation
-from .planning_core import DecisionModelError
+from .planning_core import DecisionModelError, PlanningContext
 from .structured_decision import StructuredDecisionError, decode_structured_output
 from .structured_model import StructuredDecisionModel
 
@@ -49,11 +49,17 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
         self,
         repair_case: CaseT,
         correction: tuple[DecisionViolation, ...],
+        context: PlanningContext | None = None,
     ) -> DecisionT:
         projection = self._project_case(repair_case)
+        system_instruction = self._system_instruction
+        case_content = projection.case_content
+        if context is not None:
+            system_instruction += "\n\n" + context.system_instruction.strip()
+            case_content += "\n\n" + context.user_content.strip()
         response = await self._model.decide_json(
-            self._system_instruction,
-            projection.case_content,
+            system_instruction,
+            case_content,
             self._decision_schema(),
             self._decision_model,
             self._case_id(repair_case),
