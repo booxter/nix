@@ -58,19 +58,13 @@ func Snapshot(report shadowrunner.Report, generatedAt time.Time) (review.Snapsho
 			if err != nil {
 				return review.Snapshot{}, err
 			}
-			state := review.ReconsiderationPending
-			if current.Reconsideration.Decided {
-				state = review.ReconsiderationDecided
-			} else if current.Reconsideration.Result.Outcome.Failure != nil {
-				state = review.ReconsiderationFailed
-			}
-			item.Reconsideration = &review.Reconsideration{
-				RequestID:     current.Reconsideration.Request.RequestID,
-				Guidance:      current.Reconsideration.Request.Guidance,
-				CreatedAt:     current.Reconsideration.Request.CreatedAt,
-				State:         state,
-				PriorDecision: prior,
-			}
+			description := review.NewReconsideration(
+				current.Reconsideration.Request,
+				current.Reconsideration.Result,
+				current.Reconsideration.Decided,
+				prior,
+			)
+			item.Reconsideration = &description
 			item.Decision = &prior
 		}
 		switch current.Outcome {

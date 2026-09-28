@@ -50,6 +50,10 @@ type Reconsideration struct {
 	CreatedAt     time.Time            `json:"created_at"`
 	State         ReconsiderationState `json:"state"`
 	PriorDecision Decision             `json:"prior_decision"`
+	Attempts      uint64               `json:"attempts,omitempty"`
+	AttemptedAt   *time.Time           `json:"attempted_at,omitempty"`
+	RetryAfter    *time.Time           `json:"retry_after,omitempty"`
+	Failure       string               `json:"failure,omitempty"`
 }
 
 func ParseDecision(data []byte) (Decision, error) {
@@ -151,6 +155,20 @@ func validateItem(item Item, historical bool) error {
 			strings.TrimSpace(reconsideration.PriorDecision.Action) == "" ||
 			strings.TrimSpace(reconsideration.PriorDecision.Explanation) == "" {
 			return fmt.Errorf("reconsideration is incomplete")
+		}
+		if reconsideration.AttemptedAt != nil &&
+			(reconsideration.AttemptedAt.IsZero() || reconsideration.AttemptedAt.Location() != time.UTC) {
+			return fmt.Errorf("reconsideration attempt time is invalid")
+		}
+		if reconsideration.RetryAfter != nil &&
+			(reconsideration.RetryAfter.IsZero() || reconsideration.RetryAfter.Location() != time.UTC ||
+				reconsideration.AttemptedAt == nil ||
+				!reconsideration.RetryAfter.After(*reconsideration.AttemptedAt)) {
+			return fmt.Errorf("reconsideration retry time is invalid")
+		}
+		if reconsideration.Failure != strings.TrimSpace(reconsideration.Failure) ||
+			(reconsideration.Failure != "" && reconsideration.State != ReconsiderationFailed) {
+			return fmt.Errorf("reconsideration failure is invalid")
 		}
 	}
 	return nil

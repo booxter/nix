@@ -61,19 +61,13 @@ func item(observed lidarrrepair.QueueReview, generatedAt time.Time) (review.Item
 		if err != nil {
 			return review.Item{}, err
 		}
-		state := review.ReconsiderationPending
-		if observed.Reconsideration.Decided {
-			state = review.ReconsiderationDecided
-		} else if observed.Reconsideration.Result.Outcome.Failure != nil {
-			state = review.ReconsiderationFailed
-		}
-		item.Reconsideration = &review.Reconsideration{
-			RequestID:     observed.Reconsideration.Request.RequestID,
-			Guidance:      observed.Reconsideration.Request.Guidance,
-			CreatedAt:     observed.Reconsideration.Request.CreatedAt,
-			State:         state,
-			PriorDecision: prior,
-		}
+		description := review.NewReconsideration(
+			observed.Reconsideration.Request,
+			observed.Reconsideration.Result,
+			observed.Reconsideration.Decided,
+			prior,
+		)
+		item.Reconsideration = &description
 		item.Decision = &prior
 	}
 	switch observed.Outcome {

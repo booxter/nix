@@ -81,6 +81,49 @@ func TestReadyAndSecurityHeaders(t *testing.T) {
 	}
 }
 
+func TestHandlerShowsCompletedReconsideration(t *testing.T) {
+	t.Parallel()
+	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	createdAt := time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC)
+	attemptedAt := createdAt.Add(5 * time.Minute)
+	item := questionableItem(caseID)
+	item.Decision = &review.Decision{
+		Action: "no_repair", Reason: "insufficient_evidence",
+		Explanation: "The guidance does not establish the shorter cut.", EvidenceRefs: []string{},
+	}
+	item.Reconsideration = &review.Reconsideration{
+		RequestID: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		Guidance:  "Use the release-specific runtime.", CreatedAt: createdAt,
+		State: review.ReconsiderationDecided,
+		PriorDecision: review.Decision{
+			Action: "no_repair", Reason: "runtime_mismatch",
+			Explanation: "The offered title is too short.", EvidenceRefs: []string{},
+		},
+		Attempts: 1, AttemptedAt: &attemptedAt,
+	}
+	lidarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
+		GeneratedAt: attemptedAt, Current: []review.Item{item},
+	})
+	radarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
+		GeneratedAt: attemptedAt, Current: []review.Item{},
+	})
+	handler, err := newHandler(handlerConfig(t, lidarr, radarr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/cases/"+caseID, nil))
+	body := response.Body.String()
+	if response.Code != http.StatusOK || !strings.Contains(body, "Considered") ||
+		!strings.Contains(body, "Use the release-specific runtime.") ||
+		!strings.Contains(body, "2026-09-25 03:05 UTC") ||
+		!strings.Contains(body, "The guidance does not establish the shorter cut.") {
+		t.Fatalf("status=%d body=%s", response.Code, body)
+	}
+}
+
 func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	t.Parallel()
 	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

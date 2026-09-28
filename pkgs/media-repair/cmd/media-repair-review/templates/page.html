@@ -74,6 +74,18 @@
           {{end}}
           <dl class="reconsideration-details">
             <dt>Submitted</dt><dd>{{formatTime $entry.Item.Reconsideration.CreatedAt}}</dd>
+            {{if $entry.Item.Reconsideration.AttemptedAt}}
+            <dt>{{if eq $entry.Item.Reconsideration.State "decided"}}Considered{{else}}Last attempt{{end}}</dt><dd>{{formatTime $entry.Item.Reconsideration.AttemptedAt}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.Attempts}}
+            <dt>Attempts</dt><dd>{{$entry.Item.Reconsideration.Attempts}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.RetryAfter}}
+            <dt>Next retry</dt><dd>{{formatTime $entry.Item.Reconsideration.RetryAfter}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.Failure}}
+            <dt>Failure</dt><dd>{{$entry.Item.Reconsideration.Failure}}</dd>
+            {{end}}
             <dt>Guidance</dt><dd class="guidance">{{$entry.Item.Reconsideration.Guidance}}</dd>
           </dl>
           <details>
