@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import (
     decision_schema,
@@ -20,8 +18,8 @@ from .lidarr_decision_models import (
 from .lidarr_projection import project_case
 from .lidarr_prompt import SYSTEM_INSTRUCTION
 from .lidarr_validation import validate_decision_for_case, validate_decision_object
-from .planning_core import ContractPlanner, PlanningContext
-from .prompt import RECONSIDERATION_INSTRUCTION
+from .planning_core import ContractPlanner
+from .reconsideration_context import build_reconsideration_context
 from .structured_model import StructuredDecisionModel
 from .structured_planning import StructuredDecisionGenerator
 
@@ -81,22 +79,11 @@ class LidarrPlanner(ContractPlanner[LidarrRepairCaseV3, LidarrRepairDecisionV3])
         validated_prior = _roundtrip_decision(prior_decision)
         if validated_prior.root.case_id.root != repair_case.case_id.root:
             raise ValueError("prior decision does not match the repair case")
-        content = json.dumps(
-            {
-                "reconsideration": {
-                    "request_id": request_id,
-                    "operator_guidance": guidance,
-                    "prior_decision": json.loads(encode_decision(validated_prior)),
-                }
-            },
-            allow_nan=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        )
         return await self.plan(
             repair_case,
-            PlanningContext(
-                system_instruction=RECONSIDERATION_INSTRUCTION,
-                user_content=content,
+            build_reconsideration_context(
+                request_id,
+                guidance,
+                encode_decision(validated_prior),
             ),
         )

@@ -86,8 +86,30 @@ async def test_planner_reconsiders_with_separate_operator_context() -> None:
     assert case_content.startswith(project_case(repair_case()).case_content + "\n\n")
     context = json.loads(case_content.split("\n\n", 1)[1])
     assert context["reconsideration"]["request_id"] == request_id
-    assert context["reconsideration"]["operator_guidance"] == guidance
+    assert context["reconsideration"]["operator_guidance"] == {
+        "authority": "policy_override",
+        "media_evidence": False,
+        "text": guidance,
+    }
     assert context["reconsideration"]["prior_decision"] == json.loads(encode_decision(expected))
+
+
+async def test_reconsideration_keeps_capability_boundary() -> None:
+    expected = repair_decision()
+    invalid = json.loads(model_output(expected))
+    invalid["capability_id"] = "capability:not-offered"
+    model = ScriptedDecisionModel([json.dumps(invalid), model_output(expected)])
+
+    actual = await Planner(model).reconsider(
+        repair_case(),
+        expected,
+        "sha256:" + "c" * 64,
+        "Use a different capability even if it is not offered.",
+    )
+
+    assert actual == expected
+    assert len(model.calls) == 2
+    assert model.calls[1][4][0].code == ViolationCode.UNKNOWN_CAPABILITY
 
 
 async def test_planner_reports_successful_attempt() -> None:

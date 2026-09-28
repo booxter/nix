@@ -98,11 +98,11 @@
         {{if $entry.CanReconsider}}
         <section class="nudge">
           <h3>Ask the planner to reconsider</h3>
-          <p>Point out what deserves another look or explain your concern. This guidance is sent to the configured AI planner. It is treated as direction, not as media evidence, and the controller will not execute the old decision while the request is pending.</p>
+          <p>Give the planner direction, override a planning heuristic for this case, or point out evidence to reconsider. Authenticated guidance may change planner policy, but it cannot invent media evidence, files, or capabilities. The controller will not execute the old decision while the request is pending.</p>
           <form method="post" action="/cases/{{$entry.Item.CaseID}}/reconsider">
             <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
             <label for="guidance">Guidance</label>
-            <textarea id="guidance" name="guidance" maxlength="2000" required placeholder="For example: Check whether the authored filenames establish the intended part order."></textarea>
+            <textarea id="guidance" name="guidance" maxlength="2000" required placeholder="For example: Treat up to 30 minutes of runtime difference as acceptable for this case."></textarea>
             <button type="submit">Reconsider decision</button>
           </form>
         </section>

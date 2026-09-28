@@ -30,11 +30,13 @@ from media_repair_planner.lidarr_evaluation import (
 from media_repair_planner.lidarr_evaluation_cli import main as evaluation_main
 from media_repair_planner.lidarr_planning import LidarrPlanner
 from media_repair_planner.lidarr_projection import project_case
+from media_repair_planner.lidarr_prompt import SYSTEM_INSTRUCTION as LIDARR_SYSTEM_INSTRUCTION
 from media_repair_planner.lidarr_validation import (
     validate_decision_for_case,
     validate_decision_object,
 )
 from media_repair_planner.planning_core import PlanningOutcome
+from media_repair_planner.prompt import RECONSIDERATION_INSTRUCTION
 from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
 
@@ -209,6 +211,30 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
     assert not outcome.used_fallback
     assert model.calls[0][3] == CASE_ID
     assert model.calls[0][1] == project_case(case).case_content
+
+
+async def test_lidarr_planner_reconsiders_with_policy_override() -> None:
+    expected = repair_decision()
+    model = ScriptedModel([json.dumps(model_decision_value())])
+    request_id = "sha256:" + "b" * 64
+    guidance = "Accept a looser duration match for this release."
+
+    actual = await LidarrPlanner(model).reconsider(repair_case(), expected, request_id, guidance)
+
+    assert actual == expected
+    system_instruction, case_content, _, _, _ = model.calls[0]
+    assert (
+        system_instruction
+        == LIDARR_SYSTEM_INSTRUCTION + "\n\n" + RECONSIDERATION_INSTRUCTION.strip()
+    )
+    context = json.loads(case_content.split("\n\n", 1)[1])
+    assert context["reconsideration"]["request_id"] == request_id
+    assert context["reconsideration"]["operator_guidance"] == {
+        "authority": "policy_override",
+        "media_evidence": False,
+        "text": guidance,
+    }
+    assert context["reconsideration"]["prior_decision"] == json.loads(encode_decision(expected))
 
 
 async def test_lidarr_planner_returns_partial_mapping() -> None:
