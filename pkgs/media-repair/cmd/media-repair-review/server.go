@@ -39,11 +39,12 @@ type applicationHandler struct {
 }
 
 type itemView struct {
-	Item          review.Item
-	Service       review.Service
-	QueueURL      string
-	Current       bool
-	CanReconsider bool
+	Item                  review.Item
+	Service               review.Service
+	QueueURL              string
+	Current               bool
+	CanReconsider         bool
+	ReconsiderationQueued bool
 }
 
 type sourceStatus struct {
@@ -221,6 +222,10 @@ func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, 
 		if !found {
 			return pageView{}, http.StatusNotFound, fmt.Errorf("case not found")
 		}
+		item, mergeErr := app.withLatestReconsideration(item)
+		if mergeErr != nil {
+			return pageView{}, http.StatusInternalServerError, mergeErr
+		}
 		view.Title = "Repair case"
 		view.Case = &item
 	}
@@ -267,7 +272,12 @@ func (app *applicationHandler) reconsiderHandler(
 		http.Error(writer, "current decided case not found", http.StatusNotFound)
 		return
 	}
-	if entry.Reconsideration != nil && entry.Reconsideration.State != review.ReconsiderationDecided {
+	pending, err := reconsiderationPending(source.requests, entry)
+	if err != nil {
+		http.Error(writer, "read reconsideration requests", http.StatusInternalServerError)
+		return
+	}
+	if pending {
 		http.Error(writer, "reconsideration is already pending", http.StatusConflict)
 		return
 	}
@@ -412,6 +422,46 @@ func findCurrentCase(
 		}
 	}
 	return review.Item{}, source{}, false
+}
+
+func (app *applicationHandler) withLatestReconsideration(item itemView) (itemView, error) {
+	var requests *reconsideration.Store
+	for _, source := range app.sources {
+		if source.service == item.Service {
+			requests = source.requests
+			break
+		}
+	}
+	if requests == nil {
+		return itemView{}, fmt.Errorf("reconsideration source for %q is missing", item.Service)
+	}
+	request, found, err := requests.Latest(item.Item.CaseID)
+	if err != nil {
+		return itemView{}, fmt.Errorf("read latest reconsideration request: %w", err)
+	}
+	if !found || (item.Item.Reconsideration != nil &&
+		item.Item.Reconsideration.RequestID == request.RequestID) {
+		return item, nil
+	}
+	if item.Item.Decision == nil {
+		return itemView{}, fmt.Errorf("reconsideration request has no prior decision")
+	}
+	item.Item.Reconsideration = &review.Reconsideration{
+		RequestID: request.RequestID, Guidance: request.Guidance, CreatedAt: request.CreatedAt,
+		State: review.ReconsiderationPending, PriorDecision: *item.Item.Decision,
+	}
+	item.CanReconsider = false
+	item.ReconsiderationQueued = true
+	return item, nil
+}
+
+func reconsiderationPending(requests *reconsideration.Store, item review.Item) (bool, error) {
+	request, found, err := requests.Latest(item.CaseID)
+	if err != nil || !found {
+		return false, err
+	}
+	return item.Reconsideration == nil || item.Reconsideration.RequestID != request.RequestID ||
+		item.Reconsideration.State != review.ReconsiderationDecided, nil
 }
 
 func canReconsider(item review.Item) bool {

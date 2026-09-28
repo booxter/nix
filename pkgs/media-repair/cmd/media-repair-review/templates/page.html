@@ -60,9 +60,22 @@
         {{end}}
         {{if $entry.Item.Reconsideration}}
         <section class="reconsideration">
-          <h3>Reconsideration · {{$entry.Item.Reconsideration.State}}</h3>
-          <p class="subject">Requested {{formatTime $entry.Item.Reconsideration.CreatedAt}}</p>
-          <p>{{$entry.Item.Reconsideration.Guidance}}</p>
+          <h3>Reconsideration</h3>
+          {{if $entry.ReconsiderationQueued}}
+          <p><span class="badge reconsideration-waiting">Waiting for controller</span></p>
+          <p class="subject">The guidance is stored and will be picked up on the next controller run.</p>
+          {{else if eq $entry.Item.Reconsideration.State "pending"}}
+          <p><span class="badge reconsideration-waiting">Waiting for planner</span></p>
+          {{else if eq $entry.Item.Reconsideration.State "failed"}}
+          <p><span class="badge reconsideration-failed">Retry scheduled</span></p>
+          {{else}}
+          <p><span class="badge reconsideration-decided">Considered</span></p>
+          <p class="subject">The planner decision above is the reconsidered decision.</p>
+          {{end}}
+          <dl class="reconsideration-details">
+            <dt>Submitted</dt><dd>{{formatTime $entry.Item.Reconsideration.CreatedAt}}</dd>
+            <dt>Guidance</dt><dd class="guidance">{{$entry.Item.Reconsideration.Guidance}}</dd>
+          </dl>
           <details>
             <summary>Prior decision</summary>
             <p><strong>{{$entry.Item.Reconsideration.PriorDecision.Action}}</strong>{{if $entry.Item.Reconsideration.PriorDecision.Reason}} · {{$entry.Item.Reconsideration.PriorDecision.Reason}}{{end}}</p>

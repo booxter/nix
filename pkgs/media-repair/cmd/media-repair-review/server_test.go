@@ -130,6 +130,25 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	if err != nil || !found || submitted.Guidance != values.Get("guidance") {
 		t.Fatalf("request=%#v found=%v err=%v", submitted, found, err)
 	}
+	page = httptest.NewRecorder()
+	handler.ServeHTTP(page, httptest.NewRequest(http.MethodGet, response.Header().Get("Location"), nil))
+	body := page.Body.String()
+	if page.Code != http.StatusOK || !strings.Contains(body, "Waiting for controller") ||
+		!strings.Contains(body, values.Get("guidance")) || strings.Contains(body, "<textarea") {
+		t.Fatalf("GET after submission status=%d body=%s", page.Code, body)
+	}
+
+	request = httptest.NewRequest(
+		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(values.Encode()),
+	)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Origin", "https://repairr")
+	request.AddCookie(cookies[0])
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusConflict {
+		t.Fatalf("second POST status=%d body=%s", response.Code, response.Body.String())
+	}
 }
 
 func TestHandlerChecksRequestOrigin(t *testing.T) {
