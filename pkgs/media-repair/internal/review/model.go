@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	reconsiderationpkg "github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 const SnapshotVersion = "media-repair-review/v1"
@@ -45,15 +47,16 @@ const (
 )
 
 type Reconsideration struct {
-	RequestID     string               `json:"request_id"`
-	Guidance      string               `json:"guidance"`
-	CreatedAt     time.Time            `json:"created_at"`
-	State         ReconsiderationState `json:"state"`
-	PriorDecision Decision             `json:"prior_decision"`
-	Attempts      uint64               `json:"attempts,omitempty"`
-	AttemptedAt   *time.Time           `json:"attempted_at,omitempty"`
-	RetryAfter    *time.Time           `json:"retry_after,omitempty"`
-	Failure       string               `json:"failure,omitempty"`
+	RequestID       string                              `json:"request_id"`
+	Guidance        string                              `json:"guidance"`
+	PolicyOverrides *reconsiderationpkg.PolicyOverrides `json:"policy_overrides,omitempty"`
+	CreatedAt       time.Time                           `json:"created_at"`
+	State           ReconsiderationState                `json:"state"`
+	PriorDecision   Decision                            `json:"prior_decision"`
+	Attempts        uint64                              `json:"attempts,omitempty"`
+	AttemptedAt     *time.Time                          `json:"attempted_at,omitempty"`
+	RetryAfter      *time.Time                          `json:"retry_after,omitempty"`
+	Failure         string                              `json:"failure,omitempty"`
 }
 
 func ParseDecision(data []byte) (Decision, error) {
@@ -146,7 +149,8 @@ func validateItem(item Item, historical bool) error {
 	if item.Reconsideration != nil {
 		reconsideration := item.Reconsideration
 		if item.CaseID == "" || reconsideration.RequestID == "" ||
-			strings.TrimSpace(reconsideration.Guidance) == "" ||
+			(strings.TrimSpace(reconsideration.Guidance) == "" &&
+				reconsideration.PolicyOverrides == nil) ||
 			reconsideration.CreatedAt.IsZero() ||
 			reconsideration.CreatedAt.Location() != time.UTC ||
 			(reconsideration.State != ReconsiderationPending &&
@@ -169,6 +173,12 @@ func validateItem(item Item, historical bool) error {
 		if reconsideration.Failure != strings.TrimSpace(reconsideration.Failure) ||
 			(reconsideration.Failure != "" && reconsideration.State != ReconsiderationFailed) {
 			return fmt.Errorf("reconsideration failure is invalid")
+		}
+		if overrides := reconsideration.PolicyOverrides; overrides != nil &&
+			(overrides.MaximumRuntimeDifferenceMS <= 0 ||
+				overrides.MaximumRuntimeDifferenceMS >
+					reconsiderationpkg.MaximumRuntimeDifferenceLimitMS) {
+			return fmt.Errorf("reconsideration policy overrides are invalid")
 		}
 	}
 	return nil

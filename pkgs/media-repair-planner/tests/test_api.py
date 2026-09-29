@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from media_repair_planner.api import ApiLimits, Planner, create_app
+from media_repair_planner.api import ApiLimits, Planner, PolicyOverrides, create_app
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
@@ -23,7 +23,9 @@ class StaticPlanner:
     def __init__(self, decision: RepairDecisionV3 = DECISION) -> None:
         self.decision = decision
         self.cases: list[RepairCaseV3] = []
-        self.reconsiderations: list[tuple[RepairCaseV3, RepairDecisionV3, str, str]] = []
+        self.reconsiderations: list[
+            tuple[RepairCaseV3, RepairDecisionV3, str, str, PolicyOverrides | None]
+        ] = []
 
     async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
         self.cases.append(repair_case)
@@ -35,8 +37,11 @@ class StaticPlanner:
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3:
-        self.reconsiderations.append((repair_case, prior_decision, request_id, guidance))
+        self.reconsiderations.append(
+            (repair_case, prior_decision, request_id, guidance, policy_overrides)
+        )
         return self.decision
 
 
@@ -56,6 +61,7 @@ class BlockingPlanner:
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3:
         return await self.plan(repair_case)
 
@@ -70,6 +76,7 @@ class FailingPlanner:
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3:
         return await self.plan(repair_case)
 
@@ -124,6 +131,28 @@ async def test_reconsiders_a_valid_case_with_operator_guidance() -> None:
         DECISION,
         REQUEST_ID,
         "Check whether the authored filenames establish the part order.",
+        None,
+    )
+
+
+async def test_reconsiders_with_structured_runtime_override() -> None:
+    planner = StaticPlanner()
+    payload = {
+        "repair_case": json.loads(CASE_BYTES),
+        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
+        "operator_guidance": {
+            "request_id": REQUEST_ID,
+            "text": "",
+            "policy_overrides": {"maximum_runtime_difference_ms": 30 * 60 * 1_000},
+        },
+    }
+    async with client_for(planner) as client:
+        response = await client.post("/v3/reconsiderations", json=payload)
+
+    assert response.status_code == 200
+    assert planner.reconsiderations[0][3:] == (
+        "",
+        PolicyOverrides(maximum_runtime_difference_ms=30 * 60 * 1_000),
     )
 
 

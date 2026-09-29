@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	RequestVersion     = "media-repair-reconsideration/v1"
-	MaximumGuidanceLen = 2_000
+	RequestVersion                  = "media-repair-reconsideration/v1"
+	MaximumGuidanceLen              = 2_000
+	MaximumRuntimeDifferenceLimitMS = 60 * 60 * 1_000
 )
 
 type Service string
@@ -26,26 +27,38 @@ const (
 var fingerprintPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
 type Request struct {
-	Version   string    `json:"version"`
-	RequestID string    `json:"request_id"`
-	Service   Service   `json:"service"`
-	CaseID    string    `json:"case_id"`
-	Guidance  string    `json:"guidance"`
-	CreatedAt time.Time `json:"created_at"`
+	Version         string           `json:"version"`
+	RequestID       string           `json:"request_id"`
+	Service         Service          `json:"service"`
+	CaseID          string           `json:"case_id"`
+	Guidance        string           `json:"guidance"`
+	PolicyOverrides *PolicyOverrides `json:"policy_overrides,omitempty"`
+	CreatedAt       time.Time        `json:"created_at"`
 }
 
 type requestIdentity struct {
-	Version   string    `json:"version"`
-	Service   Service   `json:"service"`
-	CaseID    string    `json:"case_id"`
-	Guidance  string    `json:"guidance"`
-	CreatedAt time.Time `json:"created_at"`
+	Version         string           `json:"version"`
+	Service         Service          `json:"service"`
+	CaseID          string           `json:"case_id"`
+	Guidance        string           `json:"guidance"`
+	PolicyOverrides *PolicyOverrides `json:"policy_overrides,omitempty"`
+	CreatedAt       time.Time        `json:"created_at"`
 }
 
-func NewRequest(service Service, caseID, guidance string, createdAt time.Time) (Request, error) {
+type PolicyOverrides struct {
+	MaximumRuntimeDifferenceMS int64 `json:"maximum_runtime_difference_ms"`
+}
+
+func NewRequest(
+	service Service,
+	caseID, guidance string,
+	policyOverrides *PolicyOverrides,
+	createdAt time.Time,
+) (Request, error) {
 	request := Request{
 		Version: RequestVersion, Service: service, CaseID: caseID,
-		Guidance: guidance, CreatedAt: createdAt.UTC(),
+		Guidance: guidance, PolicyOverrides: clonePolicyOverrides(policyOverrides),
+		CreatedAt: createdAt.UTC(),
 	}
 	request.RequestID = calculateID(request)
 	if err := request.Validate(); err != nil {
@@ -64,13 +77,23 @@ func (request Request) Validate() error {
 	if !fingerprintPattern.MatchString(request.CaseID) {
 		return fmt.Errorf("invalid reconsideration case ID")
 	}
-	if request.Guidance == "" || request.Guidance != strings.TrimSpace(request.Guidance) ||
+	if request.Guidance != strings.TrimSpace(request.Guidance) ||
 		len(request.Guidance) > MaximumGuidanceLen {
 		return fmt.Errorf("reconsideration guidance is invalid")
 	}
 	for _, character := range request.Guidance {
 		if unicode.IsControl(character) && character != '\n' && character != '\t' {
 			return fmt.Errorf("reconsideration guidance contains control characters")
+		}
+	}
+	if request.Guidance == "" && request.PolicyOverrides == nil {
+		return fmt.Errorf("reconsideration request has no guidance or policy override")
+	}
+	if request.PolicyOverrides != nil {
+		if request.Service != ServiceRadarr ||
+			request.PolicyOverrides.MaximumRuntimeDifferenceMS <= 0 ||
+			request.PolicyOverrides.MaximumRuntimeDifferenceMS > MaximumRuntimeDifferenceLimitMS {
+			return fmt.Errorf("reconsideration policy overrides are invalid")
 		}
 	}
 	if request.CreatedAt.IsZero() || request.CreatedAt.Location() != time.UTC {
@@ -86,11 +109,20 @@ func (request Request) Validate() error {
 func calculateID(request Request) string {
 	data, err := json.Marshal(requestIdentity{
 		Version: request.Version, Service: request.Service, CaseID: request.CaseID,
-		Guidance: request.Guidance, CreatedAt: request.CreatedAt,
+		Guidance: request.Guidance, PolicyOverrides: request.PolicyOverrides,
+		CreatedAt: request.CreatedAt,
 	})
 	if err != nil {
 		panic(err)
 	}
 	digest := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(digest[:])
+}
+
+func clonePolicyOverrides(overrides *PolicyOverrides) *PolicyOverrides {
+	if overrides == nil {
+		return nil
+	}
+	cloned := *overrides
+	return &cloned
 }

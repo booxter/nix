@@ -86,7 +86,12 @@
             {{if $entry.Item.Reconsideration.Failure}}
             <dt>Failure</dt><dd>{{$entry.Item.Reconsideration.Failure}}</dd>
             {{end}}
+            {{if $entry.Item.Reconsideration.PolicyOverrides}}
+            <dt>Runtime limit</dt><dd>{{formatDurationMS $entry.Item.Reconsideration.PolicyOverrides.MaximumRuntimeDifferenceMS}}</dd>
+            {{end}}
+            {{if $entry.Item.Reconsideration.Guidance}}
             <dt>Guidance</dt><dd class="guidance">{{$entry.Item.Reconsideration.Guidance}}</dd>
+            {{end}}
           </dl>
           <details>
             <summary>Prior decision</summary>
@@ -98,12 +103,26 @@
         {{if $entry.CanReconsider}}
         <section class="nudge">
           <h3>Ask the planner to reconsider</h3>
-          <p>Give the planner direction, override a planning heuristic for this case, or point out evidence to reconsider. Authenticated guidance may change planner policy, but it cannot invent media evidence, files, or capabilities. The controller will not execute the old decision while the request is pending.</p>
+          <p>Give the planner direction or point out evidence to reconsider. The controller will not execute the old decision while the request is pending.</p>
           <form method="post" action="/cases/{{$entry.Item.CaseID}}/reconsider">
             <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            {{if eq $entry.Service "radarr"}}
+            <fieldset>
+              <legend>Case-specific authorization</legend>
+              <label class="check"><input type="checkbox" name="override_runtime_difference"> Allow a larger runtime difference for this case</label>
+              <label for="maximum-runtime-difference">Maximum difference</label>
+              <div class="duration-input"><input id="maximum-runtime-difference" name="maximum_runtime_difference_minutes" type="number" min="0.5" max="60" step="0.5" value="30"> <span>minutes</span></div>
+            </fieldset>
+            {{end}}
+            {{if eq $entry.Service "radarr"}}
+            <label for="guidance">Additional guidance <span class="optional">(optional with an authorization)</span></label>
+            <textarea id="guidance" name="guidance" maxlength="2000" placeholder="Explain what the planner should reconsider."></textarea>
+            <button type="submit">Reconsider and authorize</button>
+            {{else}}
             <label for="guidance">Guidance</label>
-            <textarea id="guidance" name="guidance" maxlength="2000" required placeholder="For example: Treat up to 30 minutes of runtime difference as acceptable for this case."></textarea>
+            <textarea id="guidance" name="guidance" maxlength="2000" required placeholder="Explain what the planner should reconsider."></textarea>
             <button type="submit">Reconsider decision</button>
+            {{end}}
           </form>
         </section>
         {{else if and $entry.Current $entry.Item.Reconsideration}}

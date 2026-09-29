@@ -6,7 +6,12 @@ from typing import Any
 
 import httpx
 import pytest
-from media_repair_planner.api import ContractEndpoint, ReconsiderationEndpoint, create_app
+from media_repair_planner.api import (
+    ContractEndpoint,
+    PolicyOverrides,
+    ReconsiderationEndpoint,
+    create_app,
+)
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
@@ -219,7 +224,9 @@ async def test_lidarr_planner_reconsiders_with_policy_override() -> None:
     request_id = "sha256:" + "b" * 64
     guidance = "Accept a looser duration match for this release."
 
-    actual = await LidarrPlanner(model).reconsider(repair_case(), expected, request_id, guidance)
+    actual = await LidarrPlanner(model).reconsider(
+        repair_case(), expected, request_id, guidance, None
+    )
 
     assert actual == expected
     system_instruction, case_content, _, _, _ = model.calls[0]
@@ -416,15 +423,16 @@ class NeverRadarrPlanner:
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3:
-        del repair_case, prior_decision, request_id, guidance
+        del repair_case, prior_decision, request_id, guidance, policy_overrides
         raise AssertionError("wrong endpoint")
 
 
 class StaticLidarrPlanner:
     def __init__(self) -> None:
         self.reconsiderations: list[
-            tuple[LidarrRepairCaseV3, LidarrRepairDecisionV3, str, str]
+            tuple[LidarrRepairCaseV3, LidarrRepairDecisionV3, str, str, PolicyOverrides | None]
         ] = []
 
     async def plan(self, repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
@@ -437,8 +445,11 @@ class StaticLidarrPlanner:
         prior_decision: LidarrRepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> LidarrRepairDecisionV3:
-        self.reconsiderations.append((repair_case, prior_decision, request_id, guidance))
+        self.reconsiderations.append(
+            (repair_case, prior_decision, request_id, guidance, policy_overrides)
+        )
         return repair_decision()
 
 
@@ -498,6 +509,7 @@ async def test_lidarr_reconsideration_uses_shared_http_boundary() -> None:
         repair_decision(),
         request_id,
         "Check the disc and absolute track numbering.",
+        None,
     )
 
 

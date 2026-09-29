@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .api import PolicyOverrides
 from .case_models import RepairCaseV3
 from .contracts import decision_schema, decode_case, decode_decision, encode_case, encode_decision
 from .decision_models import (
@@ -72,6 +73,7 @@ class Planner(ContractPlanner[RepairCaseV3, RepairDecisionV3]):
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3:
         validated_prior = _roundtrip_decision(prior_decision)
         if validated_prior.root.case_id.root != repair_case.case_id.root:
@@ -81,6 +83,7 @@ class Planner(ContractPlanner[RepairCaseV3, RepairDecisionV3]):
             build_reconsideration_context(
                 request_id,
                 guidance,
+                policy_overrides,
                 encode_decision(validated_prior),
             ),
         )

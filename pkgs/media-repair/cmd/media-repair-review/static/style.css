@@ -44,6 +44,12 @@ code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b
 .guidance { white-space: pre-wrap; }
 .nudge { border: 1px solid var(--line); border-radius: 8px; }
 .nudge label { display: block; margin: 14px 0 6px; font-weight: 650; }
+fieldset { margin: 16px 0; padding: 14px; border: 1px solid var(--line); border-radius: 7px; }
+legend { padding: 0 6px; font-weight: 650; }
+.nudge .check { display: flex; align-items: baseline; gap: 8px; font-weight: 500; }
+.duration-input { display: flex; align-items: center; gap: 8px; }
+input[type="number"] { width: 92px; border: 1px solid var(--line); border-radius: 7px; padding: 8px; background: #101315; color: var(--text); font: inherit; }
+.optional { color: var(--muted); font-weight: 400; }
 textarea { width: 100%; min-height: 120px; resize: vertical; border: 1px solid var(--line); border-radius: 7px; padding: 10px; background: #101315; color: var(--text); font: inherit; }
 button { margin-top: 10px; border: 0; border-radius: 7px; padding: 9px 13px; background: #286a53; color: white; font: inherit; font-weight: 650; cursor: pointer; }
 .notice { max-width: 78ch; padding: 10px 13px; border: 1px solid #315d4d; border-radius: 7px; background: #16251f; }

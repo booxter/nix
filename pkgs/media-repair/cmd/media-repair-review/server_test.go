@@ -194,6 +194,29 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	}
 }
 
+func TestParsePolicyOverrides(t *testing.T) {
+	t.Parallel()
+	overrides, err := parsePolicyOverrides(review.ServiceRadarr, "on", "30")
+	if err != nil || overrides == nil ||
+		overrides.MaximumRuntimeDifferenceMS != 30*60*1_000 {
+		t.Fatalf("overrides=%#v error=%v", overrides, err)
+	}
+	for _, test := range []struct {
+		service review.Service
+		enabled string
+		minutes string
+	}{
+		{service: review.ServiceLidarr, enabled: "on", minutes: "30"},
+		{service: review.ServiceRadarr, enabled: "yes", minutes: "30"},
+		{service: review.ServiceRadarr, enabled: "on", minutes: "0"},
+		{service: review.ServiceRadarr, enabled: "on", minutes: "60.5"},
+	} {
+		if _, err := parsePolicyOverrides(test.service, test.enabled, test.minutes); err == nil {
+			t.Fatalf("invalid override was accepted: %#v", test)
+		}
+	}
+}
+
 func TestHandlerChecksRequestOrigin(t *testing.T) {
 	t.Parallel()
 	app := &applicationHandler{allowedOrigins: map[string]struct{}{

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -123,6 +124,9 @@ func newHandler(configuration config) (http.Handler, error) {
 				return "—"
 			}
 			return instant.Local().Format("2006-01-02 15:04 MST")
+		},
+		"formatDurationMS": func(milliseconds int64) string {
+			return (time.Duration(milliseconds) * time.Millisecond).String()
 		},
 		"stateLabel": stateLabel,
 		"serviceLabel": func(value review.Service) string {
@@ -281,9 +285,18 @@ func (app *applicationHandler) reconsiderHandler(
 		http.Error(writer, "reconsideration is already pending", http.StatusConflict)
 		return
 	}
-	guidance := request.PostForm.Get("guidance")
+	guidance := strings.TrimSpace(request.PostForm.Get("guidance"))
+	policyOverrides, err := parsePolicyOverrides(
+		source.service,
+		request.PostForm.Get("override_runtime_difference"),
+		request.PostForm.Get("maximum_runtime_difference_minutes"),
+	)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
 	reconsiderationRequest, err := reconsideration.NewRequest(
-		reconsideration.Service(source.service), caseID, guidance, app.now().UTC(),
+		reconsideration.Service(source.service), caseID, guidance, policyOverrides, app.now().UTC(),
 	)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusUnprocessableEntity)
@@ -294,6 +307,28 @@ func (app *applicationHandler) reconsiderHandler(
 		return
 	}
 	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?submitted=1", http.StatusSeeOther)
+}
+
+func parsePolicyOverrides(
+	service review.Service,
+	enabled, maximumMinutes string,
+) (*reconsideration.PolicyOverrides, error) {
+	if enabled == "" {
+		return nil, nil
+	}
+	if enabled != "on" || service != review.ServiceRadarr {
+		return nil, fmt.Errorf("runtime policy override is invalid")
+	}
+	minutes, err := strconv.ParseFloat(maximumMinutes, 64)
+	if err != nil || minutes <= 0 {
+		return nil, fmt.Errorf("maximum runtime difference is invalid")
+	}
+	milliseconds := int64(minutes * float64(time.Minute/time.Millisecond))
+	if float64(milliseconds) != minutes*float64(time.Minute/time.Millisecond) ||
+		milliseconds > reconsideration.MaximumRuntimeDifferenceLimitMS {
+		return nil, fmt.Errorf("maximum runtime difference is invalid")
+	}
+	return &reconsideration.PolicyOverrides{MaximumRuntimeDifferenceMS: milliseconds}, nil
 }
 
 func (app *applicationHandler) requestOriginAllowed(request *http.Request) bool {
@@ -447,7 +482,8 @@ func (app *applicationHandler) withLatestReconsideration(item itemView) (itemVie
 		return itemView{}, fmt.Errorf("reconsideration request has no prior decision")
 	}
 	item.Item.Reconsideration = &review.Reconsideration{
-		RequestID: request.RequestID, Guidance: request.Guidance, CreatedAt: request.CreatedAt,
+		RequestID: request.RequestID, Guidance: request.Guidance,
+		PolicyOverrides: request.PolicyOverrides, CreatedAt: request.CreatedAt,
 		State: review.ReconsiderationPending, PriorDecision: *item.Item.Decision,
 	}
 	item.CanReconsider = false

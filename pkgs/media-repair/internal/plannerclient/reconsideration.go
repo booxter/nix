@@ -14,8 +14,9 @@ type reconsiderationEnvelope struct {
 }
 
 type reconsiderationGuidance struct {
-	RequestID string `json:"request_id"`
-	Text      string `json:"text"`
+	RequestID       string                           `json:"request_id"`
+	Text            string                           `json:"text"`
+	PolicyOverrides *reconsideration.PolicyOverrides `json:"policy_overrides,omitempty"`
 }
 
 func encodeReconsideration(
@@ -29,8 +30,9 @@ func encodeReconsideration(
 	data, err := json.Marshal(reconsiderationEnvelope{
 		RepairCase: repairCase, PriorDecision: priorDecision,
 		OperatorGuidance: reconsiderationGuidance{
-			RequestID: request.RequestID,
-			Text:      request.Guidance,
+			RequestID:       request.RequestID,
+			Text:            request.Guidance,
+			PolicyOverrides: request.PolicyOverrides,
 		},
 	})
 	if err != nil {
