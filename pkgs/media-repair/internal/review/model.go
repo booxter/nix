@@ -30,6 +30,7 @@ const (
 	StateReviewed         State = "reviewed"
 	StateRepairPlanned    State = "repair_planned"
 	StateExecutionBlocked State = "execution_blocked"
+	StateExecutionFailed  State = "execution_failed"
 	StateNoLongerQueued   State = "no_longer_queued"
 )
 
@@ -114,6 +115,7 @@ type Item struct {
 	Decision          *Decision                  `json:"decision,omitempty"`
 	Reconsideration   *Reconsideration           `json:"reconsideration,omitempty"`
 	ExecutionBlock    *ExecutionBlock            `json:"execution_block,omitempty"`
+	ExecutionFailure  string                     `json:"execution_failure,omitempty"`
 	QueueIdentity     *queueaction.QueueIdentity `json:"queue_identity,omitempty"`
 	QueueRemoval      *QueueRemoval              `json:"queue_removal,omitempty"`
 }
@@ -224,6 +226,12 @@ func validateItem(item Item, historical bool) error {
 			return fmt.Errorf("execution runtime assessment is invalid")
 		}
 	}
+	if item.ExecutionFailure != strings.TrimSpace(item.ExecutionFailure) ||
+		(item.ExecutionFailure != "" &&
+			(item.CaseID == "" || (!historical && item.State != StateExecutionFailed))) ||
+		(!historical && item.State == StateExecutionFailed && item.ExecutionFailure == "") {
+		return fmt.Errorf("execution failure is invalid")
+	}
 	if identity := item.QueueIdentity; identity != nil &&
 		(identity.QueueID != item.QueueID || !identity.Entry().Eligible()) {
 		return fmt.Errorf("queue removal identity is invalid")
@@ -252,7 +260,7 @@ func validateItem(item Item, historical bool) error {
 func validCurrentState(state State) bool {
 	switch state {
 	case StateActive, StateNotProcessed, StatePlanningDeferred, StatePlanningFailed,
-		StateReviewed, StateRepairPlanned, StateExecutionBlocked:
+		StateReviewed, StateRepairPlanned, StateExecutionBlocked, StateExecutionFailed:
 		return true
 	default:
 		return false

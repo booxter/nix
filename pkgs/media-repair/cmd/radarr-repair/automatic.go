@@ -239,7 +239,9 @@ func writeAutomaticSummary(writer io.Writer, report automaticReport) error {
 	}
 	for _, execution := range report.Apply.Executions {
 		var err error
-		if len(execution.Result.Check.Rejections) != 0 {
+		if execution.Failure != "" {
+			err = writeAutomaticFailure(writer, execution)
+		} else if len(execution.Result.Check.Rejections) != 0 {
 			err = writeAutomaticRejection(writer, execution)
 		} else {
 			err = writeAutomaticExecution(writer, execution)
@@ -249,6 +251,17 @@ func writeAutomaticSummary(writer io.Writer, report automaticReport) error {
 		}
 	}
 	return nil
+}
+
+func writeAutomaticFailure(writer io.Writer, execution applyrunner.CaseResult) error {
+	_, err := fmt.Fprintf(
+		writer,
+		"apply=failed case_id=%s action=%s error=%q\n",
+		execution.CaseID,
+		execution.Action,
+		execution.Failure,
+	)
+	return err
 }
 
 func writeAutomaticRejection(writer io.Writer, execution applyrunner.CaseResult) error {

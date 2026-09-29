@@ -33,9 +33,10 @@ type Runner struct {
 }
 
 type CaseResult struct {
-	CaseID string
-	Action contracts.DecisionAction
-	Result repairexecution.Result
+	CaseID  string
+	Action  contracts.DecisionAction
+	Result  repairexecution.Result
+	Failure string
 }
 
 type Report struct {
@@ -126,18 +127,21 @@ func (runner *Runner) Run(
 	for _, candidate := range selected {
 		report.Selected++
 		result, executeErr := runner.dependencies.Executor.ExecutePlan(ctx, candidate)
-		report.Executions = append(report.Executions, CaseResult{
+		caseResult := CaseResult{
 			CaseID: candidate.Assembly.Request.CaseID,
 			Action: candidate.Decision.Kind,
 			Result: result,
-		})
+		}
 		if executeErr != nil {
+			caseResult.Failure = executeErr.Error()
+			report.Executions = append(report.Executions, caseResult)
 			return report, fmt.Errorf(
 				"execute repair case %q: %w",
 				candidate.Assembly.Request.CaseID,
 				executeErr,
 			)
 		}
+		report.Executions = append(report.Executions, caseResult)
 		if len(result.Check.Rejections) != 0 {
 			continue
 		}

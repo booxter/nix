@@ -89,6 +89,13 @@
           {{end}}
         </section>
         {{end}}
+        {{if $entry.Item.ExecutionFailure}}
+        <section class="execution-failure">
+          <h3>Execution failed</h3>
+          <p>The controller could not prepare or continue this repair.</p>
+          <p><code>{{$entry.Item.ExecutionFailure}}</code></p>
+        </section>
+        {{end}}
         {{if $entry.Item.Reconsideration}}
         <section class="reconsideration">
           <h3>Reconsideration</h3>
@@ -188,6 +195,7 @@
         <a href="?state=reviewed">Reviewed</a>
         <a href="?state=repair_planned">Repair planned</a>
         <a href="?state=execution_blocked">Execution blocked</a>
+        <a href="?state=execution_failed">Execution failed</a>
         <a href="?state=planning_failed">Failed</a>
       </div>
       {{if .Items}}

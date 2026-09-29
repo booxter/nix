@@ -149,7 +149,7 @@ func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) 
 		}
 	}
 	for _, execution := range apply.Executions {
-		if len(execution.Result.Check.Rejections) == 0 {
+		if execution.Failure == "" && len(execution.Result.Check.Rejections) == 0 {
 			continue
 		}
 		index, found := items[execution.CaseID]
@@ -158,6 +158,12 @@ func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) 
 				"execution result refers to absent case %q",
 				execution.CaseID,
 			)
+		}
+		if execution.Failure != "" {
+			snapshot.Current[index].State = review.StateExecutionFailed
+			snapshot.Current[index].Detail = execution.Failure
+			snapshot.Current[index].ExecutionFailure = execution.Failure
+			continue
 		}
 		rejection := execution.Result.Check.Rejections[0]
 		block := executionBlock(rejection)

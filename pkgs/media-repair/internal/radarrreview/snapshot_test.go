@@ -37,15 +37,6 @@ func TestSnapshotWithApplyMarksRejectedCaseBlocked(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 9, 28, 2, 0, 0, 0, time.UTC)
 	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	decisionData, err := os.ReadFile("../../contracts/v3/examples/repair-decision-no-repair.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	decision, err := contracts.DecodeDecision(decisionData)
-	if err != nil {
-		t.Fatal(err)
-	}
-	decision.NoRepair.CaseID = caseID
 	movieRuntime := int64(148 * 60 * 1_000)
 	difference := int64(21.5 * 60 * 1_000)
 	defaultTolerance := int64(14.8 * 60 * 1_000)
@@ -65,24 +56,7 @@ func TestSnapshotWithApplyMarksRejectedCaseBlocked(t *testing.T) {
 			}},
 		}},
 	}}}
-	report := shadowrunner.Report{
-		Queue: []controller.RadarrQueueRecord{{
-			ID: 1, Title: "Cabiria.1914.DVD5-NoGroup", Status: "completed",
-			TrackedDownloadStatus: "warning",
-		}},
-		Reviews: []shadowrunner.CaseReview{{
-			Assembly: casebuilder.Assembly{
-				Request: contracts.RepairCaseV3{CaseID: caseID, ObservedAt: now},
-				LocalSnapshot: casebuilder.LocalSnapshot{
-					CaseID: caseID,
-					Observation: casebuilder.Observation{Correlation: controller.DownloadCorrelation{
-						Radarr: controller.RadarrQueueRecord{ID: 1},
-					}},
-				},
-			},
-			Outcome: planningrunner.Decided, Decision: decision,
-		}},
-	}
+	report := snapshotReport(t, now, caseID)
 	snapshot, err := SnapshotWithApply(report, apply, now)
 	if err != nil {
 		t.Fatal(err)
@@ -99,5 +73,58 @@ func TestSnapshotWithApplyMarksRejectedCaseBlocked(t *testing.T) {
 		block.Runtime.DefaultToleranceMS != defaultTolerance ||
 		block.Runtime.ActiveToleranceMS != defaultTolerance {
 		t.Fatalf("execution block = %#v", block)
+	}
+}
+
+func TestSnapshotWithApplySurfacesExecutionFailure(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 9, 28, 2, 0, 0, 0, time.UTC)
+	caseID := "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	wantFailure := "prepare DVD remux: DVD remux does not match stored case and decision"
+	snapshot, err := SnapshotWithApply(
+		snapshotReport(t, now, caseID),
+		applyrunner.Report{Executions: []applyrunner.CaseResult{{
+			CaseID: caseID, Failure: wantFailure,
+		}}},
+		now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := snapshot.Current[0]
+	if item.State != review.StateExecutionFailed || item.Detail != wantFailure ||
+		item.ExecutionFailure != wantFailure {
+		t.Fatalf("review item = %#v", item)
+	}
+}
+
+func snapshotReport(t *testing.T, now time.Time, caseID string) shadowrunner.Report {
+	t.Helper()
+	decisionData, err := os.ReadFile("../../contracts/v3/examples/repair-decision-no-repair.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision, err := contracts.DecodeDecision(decisionData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision.NoRepair.CaseID = caseID
+	return shadowrunner.Report{
+		Queue: []controller.RadarrQueueRecord{{
+			ID: 1, Title: "Cabiria.1914.DVD5-NoGroup", Status: "completed",
+			TrackedDownloadStatus: "warning",
+		}},
+		Reviews: []shadowrunner.CaseReview{{
+			Assembly: casebuilder.Assembly{
+				Request: contracts.RepairCaseV3{CaseID: caseID, ObservedAt: now},
+				LocalSnapshot: casebuilder.LocalSnapshot{
+					CaseID: caseID,
+					Observation: casebuilder.Observation{Correlation: controller.DownloadCorrelation{
+						Radarr: controller.RadarrQueueRecord{ID: 1},
+					}},
+				},
+			},
+			Outcome: planningrunner.Decided, Decision: decision,
+		}},
 	}
 }

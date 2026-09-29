@@ -684,6 +684,8 @@ func stateLabel(state review.State) string {
 		return "Repair planned"
 	case review.StateExecutionBlocked:
 		return "Execution blocked"
+	case review.StateExecutionFailed:
+		return "Execution failed"
 	case review.StateNoLongerQueued:
 		return "No longer queued"
 	default:

@@ -27,7 +27,7 @@ td small { display: block; margin-top: 3px; max-width: 46ch; }
 .badge { display: inline-block; white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 12px; }
 .state-reviewed, .state-repair_planned { color: var(--accent); border-color: #315d4d; }
 .state-not_processed, .state-planning_deferred { color: var(--warn); border-color: #6f5631; }
-.state-planning_failed, .state-execution_blocked { color: var(--bad); border-color: #763d3a; }
+.state-planning_failed, .state-execution_blocked, .state-execution_failed { color: var(--bad); border-color: #763d3a; }
 .case { padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
 .case-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
 .case-actions { display: flex; align-items: center; gap: 12px; }
@@ -37,9 +37,10 @@ dl { display: grid; grid-template-columns: 150px 1fr; gap: 7px 14px; margin: 24p
 dt { color: var(--muted); }
 dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b8c5cc; }
-.decision, .execution-block, .reconsideration, .queue-removal, .remove-confirmation, .nudge { max-width: 78ch; margin: 24px 0; padding: 18px; background: #15191a; }
+.decision, .execution-block, .execution-failure, .reconsideration, .queue-removal, .remove-confirmation, .nudge { max-width: 78ch; margin: 24px 0; padding: 18px; background: #15191a; }
 .decision { border-left: 3px solid #4b8f76; }
 .execution-block { border-left: 3px solid var(--bad); }
+.execution-failure { border-left: 3px solid var(--bad); }
 .execution-details { grid-template-columns: 120px 1fr; margin: 16px 0 0; }
 .reconsideration { border-left: 3px solid #6f5631; }
 .reconsideration-waiting { color: var(--warn); border-color: #6f5631; }

@@ -191,7 +191,8 @@ func TestRunStopsAfterExecutionFailureAndReleasesLease(t *testing.T) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
 	}
 	if report.Selected != 1 || len(report.Executions) != 1 ||
-		report.Executions[0].CaseID != "first" {
+		report.Executions[0].CaseID != "first" ||
+		report.Executions[0].Failure != wantErr.Error() {
 		t.Fatalf("report = %#v", report)
 	}
 	assertLease(t, locker, true)

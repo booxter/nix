@@ -98,6 +98,8 @@ type automaticExecutionOutcome struct {
 func automaticExecutionState(execution applyrunner.CaseResult) string {
 	result := execution.Result
 	switch {
+	case execution.Failure != "":
+		return "executor_error"
 	case len(result.Check.Rejections) != 0:
 		return "precondition_rejected"
 	case result.ManualImport != nil:
