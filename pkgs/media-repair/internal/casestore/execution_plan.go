@@ -33,7 +33,12 @@ func (store *Store) BindExecutionPlan(planned PlannedCase) error {
 	if err != nil {
 		return err
 	}
-	if !reflect.DeepEqual(base.Assembly, planned.Assembly) {
+	sameCase, err := contracts.SameCaseIdentity(base.Assembly.Request, planned.Assembly.Request)
+	if err != nil {
+		return fmt.Errorf("compare execution plan case identity: %w", err)
+	}
+	if !sameCase || planned.Assembly.Request.CaseID != base.Assembly.Request.CaseID ||
+		planned.Assembly.LocalSnapshot.CaseID != base.Assembly.Request.CaseID {
 		return fmt.Errorf("execution plan does not match the stored repair case")
 	}
 	record, err := newExecutionPlanRecord(base, planned)

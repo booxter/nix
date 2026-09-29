@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
@@ -30,16 +31,22 @@ func TestReconsideredPlanAuthorizesExecutionAgainstEffectiveDecision(t *testing.
 		t, assembly.Request.CaseID, initiallyAuthorized.CapabilityID,
 		string(initiallyAuthorized.FileID),
 	)
+	effectiveObservation := assembly.LocalSnapshot.Observation
+	effectiveObservation.ObservedAt = assembly.Request.ObservedAt.Add(time.Minute)
+	effectiveAssembly, err := casebuilder.Assemble(effectiveObservation)
+	if err != nil {
+		t.Fatal(err)
+	}
 	overrides := &reconsideration.PolicyOverrides{
 		MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
 	}
 	effective := PlannedCase{
-		Assembly: assembly, Decision: effectiveDecision,
+		Assembly: effectiveAssembly, Decision: effectiveDecision,
 		ReconsiderationID: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 		PolicyOverrides:   overrides,
 	}
 	validation := decisionpolicy.ValidateManualImportWithPolicy(
-		assembly, effectiveDecision, effective.RuntimePolicy(),
+		effectiveAssembly, effectiveDecision, effective.RuntimePolicy(),
 	)
 	if !validation.Accepted() {
 		t.Fatalf("effective validation = %#v", validation)
@@ -53,11 +60,14 @@ func TestReconsideredPlanAuthorizesExecutionAgainstEffectiveDecision(t *testing.
 		t.Fatal(err)
 	}
 	bound, err := store.GetExecutionPlan(assembly.Request.CaseID)
-	if err != nil || !reflect.DeepEqual(bound, effective) {
+	if err != nil || !reflect.DeepEqual(bound.Decision, effective.Decision) ||
+		bound.ReconsiderationID != effective.ReconsiderationID ||
+		!reflect.DeepEqual(bound.PolicyOverrides, effective.PolicyOverrides) ||
+		!bound.Assembly.Request.ObservedAt.Equal(assembly.Request.ObservedAt) {
 		t.Fatalf("GetExecutionPlan() = (%#v, %v)", bound, err)
 	}
 	prepared, changed, err := store.PrepareManualImport(
-		*validation.Authorized, 0, assembly.Request.ObservedAt.Add(time.Minute),
+		*validation.Authorized, 0, effectiveAssembly.Request.ObservedAt.Add(time.Minute),
 	)
 	if err != nil || !changed || prepared.State != ManualImportPrepared {
 		t.Fatalf("PrepareManualImport() = (%#v, %t, %v)", prepared, changed, err)
