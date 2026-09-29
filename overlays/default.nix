@@ -60,6 +60,7 @@
         };
         patches = (old.patches or [ ]) ++ [
           ../patches/jiratui-fetch-all-projects.patch
+          ../patches/jiratui-normalize-jql-expression-ids.patch
         ];
       });
 
