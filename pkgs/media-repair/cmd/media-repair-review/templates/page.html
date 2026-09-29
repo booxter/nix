@@ -34,10 +34,25 @@
       <article class="case">
         <div class="case-heading">
           <div><span class="service">{{serviceLabel $entry.Service}}</span><h2>{{$entry.Item.Title}}</h2></div>
-          <span class="badge state-{{$entry.Item.State}}">{{stateLabel $entry.Item.State}}</span>
+          <div class="case-actions">
+            <span class="badge state-{{$entry.Item.State}}">{{stateLabel $entry.Item.State}}</span>
+            {{if $entry.CanRemove}}<a class="remove-link" href="/cases/{{$entry.Item.CaseID}}/remove" aria-label="Remove {{$entry.Item.Title}} from the {{serviceLabel $entry.Service}} queue" title="Remove from queue">×</a>{{end}}
+          </div>
         </div>
         {{if $entry.Item.Subject}}<p class="subject">{{$entry.Item.Subject}}</p>{{end}}
         {{if $.Submitted}}<p class="notice">Guidance submitted. The controller will hold the prior action while the planner reconsiders it.</p>{{end}}
+        {{if $.RemovalSubmitted}}<p class="notice danger-notice">Queue removal requested. The controller will verify the live entry before removing it.</p>{{end}}
+        {{if $.ConfirmRemoval}}
+        <section class="remove-confirmation" aria-labelledby="remove-heading">
+          <h3 id="remove-heading">Remove from {{serviceLabel $entry.Service}} queue?</h3>
+          <p>This removes only the queue entry tracked by {{serviceLabel $entry.Service}}. It does not delete the download or blocklist the release.</p>
+          <form method="post" action="/cases/{{$entry.Item.CaseID}}/remove">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <button class="danger-button" type="submit">Remove from queue</button>
+            <a class="button secondary-button" href="/cases/{{$entry.Item.CaseID}}">Cancel</a>
+          </form>
+        </section>
+        {{end}}
         <dl>
           <dt>Queue</dt><dd>#{{$entry.Item.QueueID}} · {{$entry.Item.QueueStatus}} / {{$entry.Item.TrackedStatus}}</dd>
           <dt>Observed</dt><dd>{{formatTime $entry.Item.ObservedAt}}</dd>
@@ -116,7 +131,27 @@
           </details>
         </section>
         {{end}}
-        {{if $entry.CanReconsider}}
+        {{if $entry.Item.QueueRemoval}}
+        <section class="queue-removal">
+          <h3>Queue removal</h3>
+          {{if $entry.RemovalQueued}}
+          <p><span class="badge removal-waiting">Waiting for controller</span></p>
+          {{else if eq $entry.Item.QueueRemoval.State "completed"}}
+          <p><span class="badge removal-completed">Removed</span></p>
+          {{else if eq $entry.Item.QueueRemoval.State "failed"}}
+          <p><span class="badge removal-failed">Removal failed</span></p>
+          {{else}}
+          <p><span class="badge removal-waiting">Waiting for controller</span></p>
+          {{end}}
+          <dl>
+            <dt>Requested</dt><dd>{{formatTime $entry.Item.QueueRemoval.CreatedAt}}</dd>
+            {{if $entry.Item.QueueRemoval.AttemptedAt}}<dt>Last attempt</dt><dd>{{formatTime $entry.Item.QueueRemoval.AttemptedAt}}</dd>{{end}}
+            {{if $entry.Item.QueueRemoval.Attempts}}<dt>Attempts</dt><dd>{{$entry.Item.QueueRemoval.Attempts}}</dd>{{end}}
+            {{if $entry.Item.QueueRemoval.Failure}}<dt>Failure</dt><dd>{{reasonLabel $entry.Item.QueueRemoval.Failure}}</dd>{{end}}
+          </dl>
+        </section>
+        {{end}}
+        {{if and $entry.CanReconsider (not $.ConfirmRemoval)}}
         <section class="nudge">
           <h3>Ask the planner to reconsider</h3>
           <p>Give the planner direction or point out evidence to reconsider. The controller will not execute the old decision while the request is pending.</p>

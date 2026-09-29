@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 )
@@ -27,6 +28,7 @@ type source struct {
 	service  review.Service
 	store    *review.Store
 	requests *reconsideration.Store
+	actions  *queueaction.Store
 	queueURL string
 }
 
@@ -46,6 +48,8 @@ type itemView struct {
 	Current               bool
 	CanReconsider         bool
 	ReconsiderationQueued bool
+	CanRemove             bool
+	RemovalQueued         bool
 }
 
 type sourceStatus struct {
@@ -58,15 +62,17 @@ type sourceStatus struct {
 }
 
 type pageView struct {
-	Title         string
-	ActiveService review.Service
-	History       bool
-	Items         []itemView
-	Case          *itemView
-	Sources       []sourceStatus
-	Filter        string
-	CSRFToken     string
-	Submitted     bool
+	Title            string
+	ActiveService    review.Service
+	History          bool
+	Items            []itemView
+	Case             *itemView
+	Sources          []sourceStatus
+	Filter           string
+	CSRFToken        string
+	Submitted        bool
+	RemovalSubmitted bool
+	ConfirmRemoval   bool
 }
 
 const csrfCookieName = "repairr_csrf"
@@ -91,6 +97,14 @@ func newHandler(configuration config) (http.Handler, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("configure Radarr reconsideration inbox: %w", err)
+	}
+	lidarrActions, err := queueaction.NewStore(configuration.LidarrActions, queueaction.ServiceLidarr)
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr operator action inbox: %w", err)
+	}
+	radarrActions, err := queueaction.NewStore(configuration.RadarrActions, queueaction.ServiceRadarr)
+	if err != nil {
+		return nil, fmt.Errorf("configure Radarr operator action inbox: %w", err)
 	}
 	csrfBytes := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, csrfBytes); err != nil {
@@ -159,10 +173,12 @@ func newHandler(configuration config) (http.Handler, error) {
 			{
 				service: review.ServiceLidarr, store: lidarrStore,
 				requests: lidarrRequests, queueURL: configuration.LidarrURL,
+				actions: lidarrActions,
 			},
 			{
 				service: review.ServiceRadarr, store: radarrStore,
 				requests: radarrRequests, queueURL: configuration.RadarrURL,
+				actions: radarrActions,
 			},
 		},
 	}
@@ -173,6 +189,8 @@ func newHandler(configuration config) (http.Handler, error) {
 	mux.HandleFunc("/history", app.pageHandler)
 	mux.HandleFunc("/cases/", app.pageHandler)
 	mux.HandleFunc("POST /cases/{caseID}/reconsider", app.reconsiderHandler)
+	mux.HandleFunc("GET /cases/{caseID}/remove", app.confirmRemoveHandler)
+	mux.HandleFunc("POST /cases/{caseID}/remove", app.removeHandler)
 	mux.HandleFunc("/assets/style.css", app.styleHandler)
 	mux.HandleFunc("/-/ready", app.readyHandler)
 	return securityHeaders(mux), nil
@@ -204,6 +222,7 @@ func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, 
 	view := pageView{
 		Title: "Repair review", Sources: statuses, Filter: request.URL.Query().Get("state"),
 		CSRFToken: app.csrfToken, Submitted: request.URL.Query().Get("submitted") == "1",
+		RemovalSubmitted: request.URL.Query().Get("removed") == "1",
 	}
 	switch request.URL.Path {
 	case "/":
@@ -237,6 +256,10 @@ func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, 
 		if mergeErr != nil {
 			return pageView{}, http.StatusInternalServerError, mergeErr
 		}
+		item, mergeErr = app.withLatestQueueRemoval(item)
+		if mergeErr != nil {
+			return pageView{}, http.StatusInternalServerError, mergeErr
+		}
 		view.Title = "Repair case"
 		view.Case = &item
 	}
@@ -252,28 +275,92 @@ func (app *applicationHandler) buildPage(request *http.Request) (pageView, int, 
 	return view, http.StatusOK, nil
 }
 
-func (app *applicationHandler) reconsiderHandler(
-	writer http.ResponseWriter,
-	request *http.Request,
-) {
+func (app *applicationHandler) confirmRemoveHandler(writer http.ResponseWriter, request *http.Request) {
+	caseID := request.PathValue("caseID")
+	clone := request.Clone(request.Context())
+	clone.URL.Path = "/cases/" + caseID
+	view, status, err := app.buildPage(clone)
+	if err != nil {
+		http.Error(writer, err.Error(), status)
+		return
+	}
+	if view.Case == nil || !view.Case.CanRemove {
+		http.Error(writer, "current removable case not found", http.StatusNotFound)
+		return
+	}
+	view.Title = "Confirm queue removal"
+	view.ConfirmRemoval = true
+	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	app.setCSRFCookie(writer)
+	if err := app.template.Execute(writer, view); err != nil {
+		http.Error(writer, "render queue removal confirmation", http.StatusInternalServerError)
+	}
+}
+
+func (app *applicationHandler) removeHandler(writer http.ResponseWriter, request *http.Request) {
+	if err := app.validateForm(writer, request); err != nil {
+		return
+	}
+	caseID := request.PathValue("caseID")
+	snapshots, _ := app.readSnapshots()
+	entry, source, found := findCurrentCase(app.sources, snapshots, caseID)
+	if !found || entry.QueueIdentity == nil {
+		http.Error(writer, "current removable case not found", http.StatusNotFound)
+		return
+	}
+	latest, pending, err := source.actions.Latest(caseID)
+	if err != nil {
+		http.Error(writer, "read queue removal requests", http.StatusInternalServerError)
+		return
+	}
+	if pending && (entry.QueueRemoval == nil || entry.QueueRemoval.RequestID != latest.RequestID ||
+		entry.QueueRemoval.State != queueaction.StateFailed) {
+		http.Error(writer, "queue removal is already pending", http.StatusConflict)
+		return
+	}
+	action, err := queueaction.NewRequest(
+		queueaction.Service(source.service), caseID, *entry.QueueIdentity, app.now().UTC(),
+	)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+	if _, err := source.actions.Submit(action); err != nil {
+		http.Error(writer, "store queue removal request", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?removed=1", http.StatusSeeOther)
+}
+
+func (app *applicationHandler) validateForm(writer http.ResponseWriter, request *http.Request) error {
 	if !app.requestOriginAllowed(request) {
 		http.Error(writer, "invalid request origin", http.StatusForbidden)
-		return
+		return fmt.Errorf("invalid request origin")
 	}
 	mediaType, _, err := mime.ParseMediaType(request.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/x-www-form-urlencoded" {
 		http.Error(writer, "invalid form submission", http.StatusUnsupportedMediaType)
-		return
+		return fmt.Errorf("invalid form submission")
 	}
 	request.Body = http.MaxBytesReader(writer, request.Body, 8<<10)
 	if err := request.ParseForm(); err != nil {
 		http.Error(writer, "invalid form submission", http.StatusBadRequest)
-		return
+		return err
 	}
 	cookie, err := request.Cookie(csrfCookieName)
 	if err != nil || !sameToken(cookie.Value, app.csrfToken) ||
 		!sameToken(request.PostForm.Get("csrf_token"), app.csrfToken) {
 		http.Error(writer, "invalid CSRF token", http.StatusForbidden)
+		return fmt.Errorf("invalid CSRF token")
+	}
+	return nil
+}
+
+func (app *applicationHandler) reconsiderHandler(
+	writer http.ResponseWriter,
+	request *http.Request,
+) {
+	if err := app.validateForm(writer, request); err != nil {
 		return
 	}
 	caseID := request.PathValue("caseID")
@@ -397,6 +484,7 @@ func currentItems(
 			items = append(items, itemView{
 				Item: item, Service: source.service, QueueURL: source.queueURL, Current: true,
 				CanReconsider: canReconsider(item),
+				CanRemove:     canRemove(item),
 			})
 		}
 	}
@@ -439,6 +527,7 @@ func findCase(
 				return itemView{
 					Item: current, Service: source.service, QueueURL: source.queueURL,
 					Current: true, CanReconsider: canReconsider(current),
+					CanRemove: canRemove(current),
 				}, true
 			}
 		}
@@ -449,6 +538,34 @@ func findCase(
 		}
 	}
 	return itemView{}, false
+}
+
+func (app *applicationHandler) withLatestQueueRemoval(item itemView) (itemView, error) {
+	var actions *queueaction.Store
+	for _, source := range app.sources {
+		if source.service == item.Service {
+			actions = source.actions
+			break
+		}
+	}
+	if actions == nil {
+		return itemView{}, fmt.Errorf("operator action source for %q is missing", item.Service)
+	}
+	request, found, err := actions.Latest(item.Item.CaseID)
+	if err != nil {
+		return itemView{}, fmt.Errorf("read latest queue removal request: %w", err)
+	}
+	if !found || (item.Item.QueueRemoval != nil &&
+		item.Item.QueueRemoval.RequestID == request.RequestID) {
+		return item, nil
+	}
+	item.Item.QueueRemoval = &review.QueueRemoval{
+		RequestID: request.RequestID, CreatedAt: request.CreatedAt,
+	}
+	item.CanRemove = false
+	item.CanReconsider = false
+	item.RemovalQueued = true
+	return item, nil
 }
 
 func findCurrentCase(
@@ -508,9 +625,14 @@ func reconsiderationPending(requests *reconsideration.Store, item review.Item) (
 }
 
 func canReconsider(item review.Item) bool {
-	return item.CaseID != "" && item.Decision != nil &&
+	return item.CaseID != "" && item.Decision != nil && item.QueueRemoval == nil &&
 		(item.Reconsideration == nil ||
 			item.Reconsideration.State == review.ReconsiderationDecided)
+}
+
+func canRemove(item review.Item) bool {
+	return item.CaseID != "" && item.QueueIdentity != nil &&
+		(item.QueueRemoval == nil || item.QueueRemoval.State == queueaction.StateFailed)
 }
 
 func (app *applicationHandler) styleHandler(writer http.ResponseWriter, request *http.Request) {

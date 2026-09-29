@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 )
@@ -189,7 +190,62 @@ func TestHandlerRejectsCrossOriginReconsideration(t *testing.T) {
 	}
 }
 
+func TestHandlerConfirmsAndRequestsCurrentQueueRemoval(t *testing.T) {
+	t.Parallel()
+	caseID := "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+	now := time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC)
+	lidarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
+		GeneratedAt: now, Current: []review.Item{},
+	})
+	radarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
+		GeneratedAt: now, Current: []review.Item{questionableItem(caseID)},
+	})
+	configuration := handlerConfig(t, lidarr, radarr)
+	configuration.AllowedOrigins = []string{"https://repairr"}
+	handler, err := newHandler(configuration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	confirmation := httptest.NewRecorder()
+	handler.ServeHTTP(
+		confirmation,
+		httptest.NewRequest(http.MethodGet, "/cases/"+caseID+"/remove", nil),
+	)
+	cookies := confirmation.Result().Cookies()
+	if confirmation.Code != http.StatusOK || len(cookies) != 1 {
+		t.Fatalf("confirmation status=%d cookies=%v", confirmation.Code, cookies)
+	}
+	values := url.Values{"csrf_token": {cookies[0].Value}}
+	request := httptest.NewRequest(
+		http.MethodPost, "/cases/"+caseID+"/remove", strings.NewReader(values.Encode()),
+	)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Origin", "https://repairr")
+	request.AddCookie(cookies[0])
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusSeeOther {
+		t.Fatalf("POST status=%d body=%s", response.Code, response.Body.String())
+	}
+	store, err := queueaction.NewStore(configuration.RadarrActions, queueaction.ServiceRadarr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, found, err := store.Latest(caseID)
+	wanted := questionableItem(caseID).QueueIdentity
+	if err != nil || !found || stored.Action != queueaction.ActionRemoveTracking ||
+		wanted == nil || stored.Queue != *wanted {
+		t.Fatalf("request=%#v found=%t err=%v", stored, found, err)
+	}
+}
+
 func questionableItem(caseID string) review.Item {
+	identity := queueaction.QueueIdentity{
+		QueueID: 1, DownloadID: "download", SubjectID: 42,
+		Status: "completed", TrackedDownloadStatus: "warning",
+	}
 	return review.Item{
 		QueueID: 1, Title: "Artist - Album", QueueStatus: "completed",
 		TrackedStatus: "warning", State: review.StateReviewed, CaseID: caseID,
@@ -198,6 +254,7 @@ func questionableItem(caseID string) review.Item {
 			Action: "no_repair", Reason: "incomplete_release",
 			Explanation: "The release appears incomplete.", EvidenceRefs: []string{},
 		},
+		QueueIdentity: &identity,
 	}
 }
 
@@ -205,7 +262,11 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 	t.Helper()
 	lidarrRequests := filepath.Join(t.TempDir(), "lidarr-requests")
 	radarrRequests := filepath.Join(t.TempDir(), "radarr-requests")
-	for _, directory := range []string{lidarrRequests, radarrRequests} {
+	lidarrActions := filepath.Join(t.TempDir(), "lidarr-actions")
+	radarrActions := filepath.Join(t.TempDir(), "radarr-actions")
+	for _, directory := range []string{
+		lidarrRequests, radarrRequests, lidarrActions, radarrActions,
+	} {
 		if err := os.Mkdir(directory, 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -213,6 +274,7 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 	return config{
 		LidarrSnapshot: lidarr, RadarrSnapshot: radarr,
 		LidarrRequests: lidarrRequests, RadarrRequests: radarrRequests,
+		LidarrActions: lidarrActions, RadarrActions: radarrActions,
 		LidarrURL: "https://lidarr.example/activity/queue",
 		RadarrURL: "https://radarr.example/activity/queue",
 		PublicURL: "https://repairr.example",
