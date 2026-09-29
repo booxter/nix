@@ -105,7 +105,7 @@ in
                   };
             }
         ) (lib.filterAttrs (_: cache: cache.trustedPublicKey != null) server.caches)
-      ) config.host.attic.realmServers
+      ) (config.host.attic.realmServers // model.publicServers)
     );
   };
 }
