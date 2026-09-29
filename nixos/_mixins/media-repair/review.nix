@@ -12,6 +12,8 @@ let
   radarrDirectory = "${cfg.stateDirectory}/radarr";
   lidarrRequests = "${cfg.requestStateDirectory}/lidarr";
   radarrRequests = "${cfg.requestStateDirectory}/radarr";
+  lidarrActions = "${cfg.queueActionStateDirectory}/lidarr";
+  radarrActions = "${cfg.queueActionStateDirectory}/radarr";
   webService = config.host.web.services.repairr;
   internalWeb = webService.internal;
   localAliases = internalWeb.localAliases ++ map (alias: "${alias}.local") internalWeb.localAliases;
@@ -36,6 +38,10 @@ let
       lidarrRequests
       "--radarr-requests"
       radarrRequests
+      "--lidarr-actions"
+      lidarrActions
+      "--radarr-actions"
+      radarrActions
       "--lidarr-url"
       "https://lidarr.${config.host.network.lanDomain}/activity/queue"
       "--radarr-url"
@@ -76,10 +82,13 @@ in
       "d ${cfg.requestStateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
       "d ${lidarrRequests} 2750 ${serviceName} ${lidarrController} - -"
       "d ${radarrRequests} 2750 ${serviceName} ${radarrController} - -"
+      "d ${cfg.queueActionStateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
+      "d ${lidarrActions} 2750 ${serviceName} ${lidarrController} - -"
+      "d ${radarrActions} 2750 ${serviceName} ${radarrController} - -"
     ];
 
     systemd.services.${serviceName} = {
-      description = "Servarr repair review and reconsideration inbox";
+      description = "Servarr repair review and maintenance inbox";
       wantedBy = [ "multi-user.target" ];
       after = [ "systemd-tmpfiles-setup.service" ];
       serviceConfig = {
@@ -110,7 +119,10 @@ in
         ProtectSystem = "strict";
         ProcSubset = "pid";
         ReadOnlyPaths = [ cfg.stateDirectory ];
-        ReadWritePaths = [ cfg.requestStateDirectory ];
+        ReadWritePaths = [
+          cfg.requestStateDirectory
+          cfg.queueActionStateDirectory
+        ];
         RemoveIPC = true;
         RestrictAddressFamilies = [
           "AF_INET"
