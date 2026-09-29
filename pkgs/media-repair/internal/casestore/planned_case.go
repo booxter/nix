@@ -5,12 +5,14 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 type PlannedCase struct {
 	Assembly          casebuilder.Assembly
 	Decision          contracts.RepairDecisionV3
 	ReconsiderationID string
+	PolicyOverrides   *reconsideration.PolicyOverrides
 }
 
 func (store *Store) GetPlannedCase(caseID string) (PlannedCase, error) {

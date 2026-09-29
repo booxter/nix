@@ -324,6 +324,25 @@ func TestBackoffIsBounded(t *testing.T) {
 	}
 }
 
+func TestReportCarriesReconsiderationPolicyIntoPlannedCase(t *testing.T) {
+	t.Parallel()
+	caseID := testCaseID("a")
+	overrides := &reconsideration.PolicyOverrides{
+		MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
+	}
+	report := Report{}
+	report.add(caseResult{
+		Outcome: caseDecided, Assembly: testAssembly(caseID),
+		Decision: testDecision(t, caseID), RequestID: testCaseID("b"),
+		PolicyOverrides: overrides,
+	})
+	if len(report.PlannedCases) != 1 ||
+		report.PlannedCases[0].PolicyOverrides != overrides ||
+		report.PlannedCases[0].ReconsiderationID != testCaseID("b") {
+		t.Fatalf("planned cases = %#v", report.PlannedCases)
+	}
+}
+
 func TestNewRejectsIncompleteDependencies(t *testing.T) {
 	t.Parallel()
 

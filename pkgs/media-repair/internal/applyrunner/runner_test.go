@@ -338,12 +338,11 @@ type runnerExecutor struct {
 	during  func()
 }
 
-func (executor *runnerExecutor) Execute(
+func (executor *runnerExecutor) ExecutePlan(
 	_ context.Context,
-	assembly casebuilder.Assembly,
-	_ contracts.RepairDecisionV3,
+	planned casestore.PlannedCase,
 ) (repairexecution.Result, error) {
-	caseID := assembly.Request.CaseID
+	caseID := planned.Assembly.Request.CaseID
 	executor.calls = append(executor.calls, caseID)
 	if executor.during != nil {
 		executor.during()

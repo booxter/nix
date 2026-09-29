@@ -42,6 +42,28 @@ func TestValidateDVDRejectsChangedTitleAndRuntime(t *testing.T) {
 	}
 }
 
+func TestValidateDVDAcceptsAuthorizedRuntimeDifference(t *testing.T) {
+	t.Parallel()
+	assembly, decision := dvdCase()
+	runtime := 148
+	const titleDurationMS = int64(126.5 * 60 * 1_000)
+	assembly.LocalSnapshot.Observation.Movie.RuntimeMinutes = &runtime
+	assembly.LocalSnapshot.Observation.DVDTitles[0].Details.DurationMS = titleDurationMS
+	assembly.Request.Capabilities[0].DurationMS = pointer(titleDurationMS)
+
+	if validation := ValidateDVD(assembly, decision); validation.Accepted() ||
+		validation.Rejections[0] != RemuxRuntimeMismatch {
+		t.Fatalf("default policy authorized runtime difference: %#v", validation)
+	}
+	validation := ValidateDVDWithPolicy(assembly, decision, RuntimePolicy{
+		MaximumDifferenceMS: 30 * 60 * 1_000,
+	})
+	if !validation.Accepted() || validation.Authorized == nil ||
+		validation.Authorized.RuntimeToleranceMS != 30*60*1_000 {
+		t.Fatalf("override validation = %#v", validation)
+	}
+}
+
 func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV3) {
 	const caseID, capabilityID = "case:dvd", "capability:dvd"
 	navigationPath := filepath.Join("/media/movie", "VIDEO_TS", "VIDEO_TS.IFO")

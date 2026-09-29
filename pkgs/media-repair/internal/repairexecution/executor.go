@@ -13,10 +13,11 @@ import (
 )
 
 type Checker interface {
-	Check(
+	CheckWithPolicy(
 		context.Context,
 		casebuilder.Assembly,
 		contracts.RepairDecisionV3,
+		decisionpolicy.RuntimePolicy,
 	) (executioncheck.Result, error)
 }
 
@@ -110,17 +111,30 @@ func (executor *Executor) Execute(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 ) (Result, error) {
+	return executor.ExecutePlan(ctx, casestore.PlannedCase{Assembly: assembly, Decision: decision})
+}
+
+func (executor *Executor) ExecutePlan(
+	ctx context.Context,
+	planned casestore.PlannedCase,
+) (Result, error) {
 	if executor == nil {
 		return Result{}, fmt.Errorf("repair executor is not configured")
 	}
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	if result, found, err := executor.resumeExisting(ctx, assembly, decision); found || err != nil {
+	if planned.PolicyOverrides != nil && planned.ReconsiderationID == "" {
+		return Result{}, fmt.Errorf("repair policy overrides have no reconsideration identity")
+	}
+	assembly := planned.Assembly
+	decision := planned.Decision
+	policy := runtimePolicy(planned)
+	if result, found, err := executor.resumeExisting(ctx, assembly, decision, policy); found || err != nil {
 		return result, err
 	}
 
-	checked, err := executor.dependencies.Checker.Check(ctx, assembly, decision)
+	checked, err := executor.dependencies.Checker.CheckWithPolicy(ctx, assembly, decision, policy)
 	result := Result{Check: checked}
 	if err != nil {
 		return result, fmt.Errorf("check repair execution: %w", err)
@@ -140,10 +154,20 @@ func (executor *Executor) Execute(
 	return executor.executeJoin(ctx, result, assembly, *checked.Authorization.Join)
 }
 
+func runtimePolicy(planned casestore.PlannedCase) decisionpolicy.RuntimePolicy {
+	if planned.PolicyOverrides == nil {
+		return decisionpolicy.RuntimePolicy{}
+	}
+	return decisionpolicy.RuntimePolicy{
+		MaximumDifferenceMS: planned.PolicyOverrides.MaximumRuntimeDifferenceMS,
+	}
+}
+
 func (executor *Executor) resumeExisting(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
+	policy decisionpolicy.RuntimePolicy,
 ) (Result, bool, error) {
 	caseID := assembly.Request.CaseID
 	switch decision.Kind {
@@ -156,7 +180,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateManualImport(assembly, decision)
+		validation := decisionpolicy.ValidateManualImportWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored manual import is no longer authorized")
 		}
@@ -193,7 +217,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateRemux(assembly, decision)
+		validation := decisionpolicy.ValidateRemuxWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored Blu-ray remux is no longer authorized")
 		}
@@ -212,7 +236,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateDVD(assembly, decision)
+		validation := decisionpolicy.ValidateDVDWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored DVD remux is no longer authorized")
 		}

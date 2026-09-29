@@ -37,6 +37,7 @@ type AuthorizedRemux struct {
 	ExpectedDurationMS int64
 	ExpectedChapters   int64
 	ExpectedTracks     []mkvmerge.Track
+	RuntimeToleranceMS int64
 }
 
 type RemuxValidation struct {
@@ -53,6 +54,14 @@ func (validation RemuxValidation) Accepted() bool {
 func ValidateRemux(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
+) RemuxValidation {
+	return ValidateRemuxWithPolicy(assembly, decision, RuntimePolicy{})
+}
+
+func ValidateRemuxWithPolicy(
+	assembly casebuilder.Assembly,
+	decision contracts.RepairDecisionV3,
+	policy RuntimePolicy,
 ) RemuxValidation {
 	if decision.Kind != contracts.ActionRemuxBluray || decision.RemuxBluray == nil ||
 		string(decision.RemuxBluray.Action) != string(contracts.ActionRemuxBluray) {
@@ -96,7 +105,7 @@ func ValidateRemux(
 		return rejectRemux(RemuxRuntimeMissing)
 	}
 	runtime := assessManualImportRuntime(
-		playlist.Details.DurationMS, observation.Movie.RuntimeMinutes,
+		playlist.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
 	)
 	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
 		return rejectRemux(RemuxRuntimeMismatch)
@@ -124,6 +133,7 @@ func ValidateRemux(
 		ExpectedDurationMS: playlist.Details.DurationMS,
 		ExpectedChapters:   int64(playlist.Details.Chapters),
 		ExpectedTracks:     append([]mkvmerge.Track(nil), playlist.Details.Tracks...),
+		RuntimeToleranceMS: *runtime.ToleranceMS,
 	}
 	for position, clipID := range playlist.ClipFileIDs {
 		clip, ok := availableRemuxFile(files, paths, clipID)

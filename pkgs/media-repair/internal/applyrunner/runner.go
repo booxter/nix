@@ -6,17 +6,12 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/applyselection"
-	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/repairexecution"
 )
 
 type Executor interface {
-	Execute(
-		context.Context,
-		casebuilder.Assembly,
-		contracts.RepairDecisionV3,
-	) (repairexecution.Result, error)
+	ExecutePlan(context.Context, casestore.PlannedCase) (repairexecution.Result, error)
 }
 
 type Lease interface {
@@ -130,11 +125,7 @@ func (runner *Runner) Run(
 	started := 0
 	for _, candidate := range selected {
 		report.Selected++
-		result, executeErr := runner.dependencies.Executor.Execute(
-			ctx,
-			candidate.Assembly,
-			candidate.Decision,
-		)
+		result, executeErr := runner.dependencies.Executor.ExecutePlan(ctx, candidate)
 		report.Executions = append(report.Executions, CaseResult{
 			CaseID: candidate.Assembly.Request.CaseID,
 			Action: candidate.Decision.Kind,

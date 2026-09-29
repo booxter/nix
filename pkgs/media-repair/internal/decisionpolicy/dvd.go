@@ -21,6 +21,7 @@ type AuthorizedDVD struct {
 	ExpectedChapters   int
 	ExpectedTracks     []dvdvideo.Track
 	SourceBytes        int64
+	RuntimeToleranceMS int64
 }
 
 type DVDValidation struct {
@@ -39,6 +40,14 @@ func rejectDVD(reason RemuxRejectionReason) DVDValidation {
 // ValidateDVD binds the chosen title to every file in its inventoried VIDEO_TS
 // tree and checks its duration against Radarr's movie runtime.
 func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisionV3) DVDValidation {
+	return ValidateDVDWithPolicy(assembly, decision, RuntimePolicy{})
+}
+
+func ValidateDVDWithPolicy(
+	assembly casebuilder.Assembly,
+	decision contracts.RepairDecisionV3,
+	policy RuntimePolicy,
+) DVDValidation {
 	if decision.Kind != contracts.ActionRemuxDVD || decision.RemuxDVD == nil ||
 		string(decision.RemuxDVD.Action) != string(contracts.ActionRemuxDVD) {
 		return rejectDVD(RemuxWrongDecision)
@@ -90,7 +99,9 @@ func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisio
 		*observation.Movie.RuntimeMinutes <= 0 {
 		return rejectDVD(RemuxRuntimeMissing)
 	}
-	runtime := assessManualImportRuntime(title.Details.DurationMS, observation.Movie.RuntimeMinutes)
+	runtime := assessManualImportRuntime(
+		title.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
+	)
 	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
 		return rejectDVD(RemuxRuntimeMismatch)
 	}
@@ -114,6 +125,7 @@ func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisio
 		ExpectedDurationMS: title.Details.DurationMS,
 		ExpectedChapters:   title.Details.Chapters,
 		ExpectedTracks:     append([]dvdvideo.Track(nil), title.Details.Tracks...),
+		RuntimeToleranceMS: *runtime.ToleranceMS,
 		Sources:            make([]AuthorizedRemuxFile, 0, len(title.SourceFileIDs)),
 	}
 	for _, fileID := range title.SourceFileIDs {
