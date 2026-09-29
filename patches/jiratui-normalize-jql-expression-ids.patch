@@ -1,0 +1,12 @@
+diff --git a/src/jiratui/config.py b/src/jiratui/config.py
+--- a/src/jiratui/config.py
++++ b/src/jiratui/config.py
+@@ -139,7 +139,7 @@ class ApplicationConfiguration(BaseSettings):
+     """When this is `True` (default) the application will fetch the comments of a work item after a comment is
+     deleted from the list of comments. This makes the data more accurate but slower due to the extra request. When
+     this is False the list of comments is updated in place."""
+-    pre_defined_jql_expressions: dict | None = None
++    pre_defined_jql_expressions: dict[int, dict[str, str]] | None = None
+     """A dictionary with pre-define JWL expressions to use in the JQL Expression Editor. Expects a mapping from
+     user-defined IDs into a dictionary with a label and the expression.
+     E.g.:
