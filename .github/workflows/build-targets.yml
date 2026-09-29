@@ -68,16 +68,134 @@ jobs:
             };
             core.setOutput("matrix", JSON.stringify(matrix));
 
+  codex:
+    needs:
+      - format
+    name: Codex (${{ matrix.system }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-linux
+            extra_conf: |
+              extra-experimental-features = auto-allocate-uids cgroups
+              auto-allocate-uids = true
+            nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
+          - os: macos-26
+            system: aarch64-darwin
+            extra_conf: ""
+            nix_config: ""
+
+    timeout-minutes: 90
+    env:
+      NIX_CONFIG: ${{ matrix.nix_config }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+
+      - name: Free disk space
+        if: matrix.system == 'x86_64-linux'
+        uses: ./.github/actions/free-disk-space
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+        with:
+          extra-conf: ${{ matrix.extra_conf }}
+          record-built-paths: "true"
+
+      - name: Build Codex
+        shell: bash
+        run: |
+          nix build ".#packages.${{ matrix.system }}.codex" \
+            --no-link \
+            --print-build-logs \
+            --print-out-paths \
+            >>"${RUNNER_TEMP}/attic-built-paths"
+
+      - name: Upload built path manifest
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attic-built-paths-codex-${{ matrix.system }}
+          path: ${{ runner.temp }}/attic-built-paths
+          if-no-files-found: ignore
+          retention-days: 1
+
+  check:
+    needs:
+      - format
+      - codex
+    name: Regular checks (${{ matrix.system }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-linux
+            extra_conf: |
+              extra-experimental-features = auto-allocate-uids cgroups
+              auto-allocate-uids = true
+            nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
+          - os: macos-26
+            system: aarch64-darwin
+            extra_conf: ""
+            nix_config: ""
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    env:
+      NIX_CONFIG: ${{ matrix.nix_config }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+
+      - name: Free disk space
+        if: matrix.system == 'x86_64-linux'
+        uses: ./.github/actions/free-disk-space
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+        with:
+          extra-conf: ${{ matrix.extra_conf }}
+
+      - name: Run regular checks
+        run: make check
+
+  check-success:
+    name: Regular checks
+    if: ${{ always() }}
+    needs:
+      - check
+    runs-on: ubuntu-slim
+    steps:
+      - name: Check regular check results
+        run: |
+          set -euo pipefail
+
+          if [ "${{ needs.check.result }}" != "success" ]; then
+            echo "Regular check matrix result: ${{ needs.check.result }}"
+            exit 1
+          fi
+          echo "All regular checks passed."
+
   build:
     needs:
       - format
+      - codex
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.format.outputs.matrix) }}
 
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -765,6 +883,8 @@ jobs:
     if: ${{ always() }}
     needs:
       - format
+      - codex
+      - check-success
       - build
       - post-config-diffs
     runs-on: ubuntu-slim
@@ -776,6 +896,18 @@ jobs:
           if [ "${{ needs.format.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
             echo "format=${{ needs.format.result }}"
+            exit 1
+          fi
+
+          if [ "${{ needs.codex.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            echo "codex=${{ needs.codex.result }}"
+            exit 1
+          fi
+
+          if [ "${{ needs.check-success.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            echo "check-success=${{ needs.check-success.result }}"
             exit 1
           fi
 
