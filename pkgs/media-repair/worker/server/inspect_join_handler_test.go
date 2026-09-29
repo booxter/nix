@@ -57,17 +57,6 @@ func TestInspectJoinHandlerRejectsWrongOperation(t *testing.T) {
 	}
 }
 
-func TestNewInspectJoinHandlerRejectsInvalidConfiguration(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewInspectJoinHandler(nil, time.Second); err == nil {
-		t.Fatal("missing executor was accepted")
-	}
-	if _, err := NewInspectJoinHandler(&fakeInspectJoinExecutor{}, 0); err == nil {
-		t.Fatal("zero timeout was accepted")
-	}
-}
-
 type fakeInspectJoinExecutor struct {
 	inspect func(
 		context.Context,

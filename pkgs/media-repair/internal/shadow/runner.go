@@ -53,10 +53,6 @@ type Reconsiderer interface {
 
 type Backoff planningrunner.Backoff
 
-func (backoff Backoff) delay(priorAttempts uint64) time.Duration {
-	return planningrunner.Backoff(backoff).Delay(priorAttempts)
-}
-
 type Dependencies struct {
 	Cases           CaseSource
 	Store           ResultStore

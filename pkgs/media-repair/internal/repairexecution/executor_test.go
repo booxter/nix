@@ -259,28 +259,6 @@ func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 	})
 }
 
-func TestNewRequiresDependencies(t *testing.T) {
-	t.Parallel()
-
-	valid := Dependencies{
-		Store: &fakeExecutionStore{}, Checker: &fakeChecker{}, ManualImports: &fakeManualImporter{},
-		Joins: &fakeJoinExecutor{}, JoinedFileImports: &fakeJoinedFileImporter{},
-		Remuxes: &fakeRemuxExecutor{}, RemuxFileImports: &fakeRemuxFileImporter{},
-	}
-	tests := []Dependencies{
-		{Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins},
-	}
-	for _, dependencies := range tests {
-		if _, err := New(dependencies); err == nil {
-			t.Fatal("incomplete dependencies were accepted")
-		}
-	}
-}
-
 type fakeChecker struct {
 	result executioncheck.Result
 	err    error

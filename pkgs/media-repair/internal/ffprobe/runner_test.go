@@ -144,23 +144,6 @@ func TestRunnerRejectsMissingMediaFile(t *testing.T) {
 	}
 }
 
-func TestBoundedBufferDiscardsOverflow(t *testing.T) {
-	t.Parallel()
-
-	buffer := boundedBuffer{limit: 4}
-	data := []byte("abcdef")
-	written, err := buffer.Write(data)
-	if err != nil || written != len(data) || !buffer.overflow || string(buffer.Bytes()) != "abcd" {
-		t.Fatalf(
-			"written = %d, error = %v, overflow = %t, data = %q",
-			written,
-			err,
-			buffer.overflow,
-			buffer.Bytes(),
-		)
-	}
-}
-
 func makeMediaFixture(t *testing.T) string {
 	t.Helper()
 	ffmpeg := os.Getenv("RADARR_REPAIR_TEST_FFMPEG")

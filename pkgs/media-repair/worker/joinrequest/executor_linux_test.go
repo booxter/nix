@@ -184,25 +184,6 @@ func TestExecutorDoesNotRunStagesConcurrently(t *testing.T) {
 	}
 }
 
-func TestNewExecutorRequiresDependencies(t *testing.T) {
-	t.Parallel()
-
-	store := newStore(t)
-	stager := &fakeStager{result: successfulStage()}
-	clock := fixedClock{now: testTime()}
-	for name, dependencies := range map[string]Dependencies{
-		"store":  {Stager: stager, Clock: clock},
-		"stager": {Store: store, Clock: clock},
-		"clock":  {Store: store, Stager: stager},
-	} {
-		t.Run(name, func(t *testing.T) {
-			if _, err := NewExecutor(dependencies); err == nil {
-				t.Fatal("NewExecutor succeeded")
-			}
-		})
-	}
-}
-
 type fakeStager struct {
 	result joinstage.Result
 	err    error

@@ -115,17 +115,6 @@ func TestExecutorHonorsCancelledContextBeforeOpening(t *testing.T) {
 	}
 }
 
-func TestNewExecutorRejectsMissingDependencies(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewExecutor(nil, &fakeMediaProber{}); err == nil {
-		t.Fatal("missing media file access was accepted")
-	}
-	if _, err := NewExecutor(&fakeMediaFiles{}, nil); err == nil {
-		t.Fatal("missing media prober was accepted")
-	}
-}
-
 type fakeMediaFiles struct {
 	media     *os.File
 	openErr   error

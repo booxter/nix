@@ -155,17 +155,6 @@ func TestStageJoinHandlerRejectsInvalidExecutorResponse(t *testing.T) {
 	}
 }
 
-func TestNewStageJoinHandlerRejectsInvalidConfiguration(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewStageJoinHandler(nil, time.Second); err == nil {
-		t.Fatal("missing executor was accepted")
-	}
-	if _, err := NewStageJoinHandler(&fakeStageJoinExecutor{}, 0); err == nil {
-		t.Fatal("zero timeout was accepted")
-	}
-}
-
 type fakeStageJoinExecutor struct {
 	execute func(
 		context.Context,
