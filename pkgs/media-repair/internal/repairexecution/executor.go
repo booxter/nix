@@ -60,8 +60,13 @@ type ExecutionStore interface {
 	GetRemuxExecution(string) (casestore.RemuxExecution, bool, error)
 }
 
+type PlanStore interface {
+	ExecutionStore
+	BindExecutionPlan(casestore.PlannedCase) error
+}
+
 type Dependencies struct {
-	Store             ExecutionStore
+	Store             PlanStore
 	Checker           Checker
 	ManualImports     ManualImporter
 	Joins             JoinExecutor
@@ -83,7 +88,7 @@ type Result struct {
 	Resumed      bool
 }
 
-var _ ExecutionStore = (*casestore.Store)(nil)
+var _ PlanStore = (*casestore.Store)(nil)
 
 func New(dependencies Dependencies) (*Executor, error) {
 	switch {
@@ -142,6 +147,9 @@ func (executor *Executor) ExecutePlan(
 	if !checked.Accepted() {
 		return result, nil
 	}
+	if err := executor.dependencies.Store.BindExecutionPlan(planned); err != nil {
+		return result, fmt.Errorf("bind effective execution plan: %w", err)
+	}
 	if checked.Authorization.ManualImport != nil {
 		return executor.executeManualImport(ctx, result, *checked.Authorization.ManualImport)
 	}
@@ -155,12 +163,7 @@ func (executor *Executor) ExecutePlan(
 }
 
 func runtimePolicy(planned casestore.PlannedCase) decisionpolicy.RuntimePolicy {
-	if planned.PolicyOverrides == nil {
-		return decisionpolicy.RuntimePolicy{}
-	}
-	return decisionpolicy.RuntimePolicy{
-		MaximumDifferenceMS: planned.PolicyOverrides.MaximumRuntimeDifferenceMS,
-	}
+	return planned.RuntimePolicy()
 }
 
 func (executor *Executor) resumeExisting(

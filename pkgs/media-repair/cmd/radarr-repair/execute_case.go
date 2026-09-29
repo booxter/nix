@@ -174,7 +174,7 @@ func executeStoredCase(
 		return repairexecution.Result{}, fmt.Errorf("acquire repair execution lock: %w", err)
 	}
 	defer lease.Release()
-	planned, err := store.GetPlannedCase(config.CaseID)
+	planned, err := store.GetExecutionPlan(config.CaseID)
 	if err != nil {
 		return repairexecution.Result{}, fmt.Errorf("load planned repair case: %w", err)
 	}

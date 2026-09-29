@@ -58,6 +58,33 @@ func TestExecutorPassesReconsiderationPolicyToChecker(t *testing.T) {
 	}
 }
 
+func TestExecutorBindsEffectivePlanBeforeStartingRepair(t *testing.T) {
+	t.Parallel()
+	authorized := manualAuthorization()
+	store := &fakeExecutionStore{}
+	manual := &fakeManualImporter{execution: casestore.ManualImportExecution{
+		State: casestore.ManualImportImported,
+	}}
+	executor := testExecutorWithStore(
+		t, store, &fakeChecker{result: acceptedManual(authorized)}, manual,
+		&fakeJoinExecutor{}, &fakeJoinedFileImporter{},
+	)
+	planned := casestore.PlannedCase{
+		Assembly:          caseAssembly(),
+		Decision:          contracts.RepairDecisionV3{Kind: contracts.ActionManualImportFile},
+		ReconsiderationID: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		PolicyOverrides: &reconsideration.PolicyOverrides{
+			MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
+		},
+	}
+	if _, err := executor.ExecutePlan(context.Background(), planned); err != nil {
+		t.Fatal(err)
+	}
+	if store.bindCalls != 1 || !reflect.DeepEqual(store.bound, planned) || manual.calls != 1 {
+		t.Fatalf("bound=%#v bind calls=%d manual calls=%d", store.bound, store.bindCalls, manual.calls)
+	}
+}
+
 func TestExecutorRejectsPolicyWithoutReconsiderationIdentity(t *testing.T) {
 	t.Parallel()
 	checker := &fakeChecker{}
@@ -283,6 +310,14 @@ type fakeExecutionStore struct {
 	join        casestore.JoinExecution
 	joinFound   bool
 	err         error
+	bound       casestore.PlannedCase
+	bindCalls   int
+}
+
+func (store *fakeExecutionStore) BindExecutionPlan(planned casestore.PlannedCase) error {
+	store.bindCalls++
+	store.bound = planned
+	return store.err
 }
 
 func (store *fakeExecutionStore) GetManualImportExecution(
