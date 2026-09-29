@@ -2,6 +2,7 @@ package queueaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,6 +44,9 @@ func (processor *Processor) Process(
 	if found && previous.State == StateCompleted {
 		return previous, nil
 	}
+	if found && previous.Failure == "queue_identity_changed" {
+		return previous, nil
+	}
 	attemptedAt := processor.now().UTC()
 	if attemptedAt.IsZero() {
 		return Result{}, fmt.Errorf("queue action clock returned a zero time")
@@ -73,4 +77,64 @@ func (processor *Processor) Process(
 		return result, fmt.Errorf("remove queue tracking: %w", finalizeErr)
 	}
 	return result, nil
+}
+
+type Processed struct {
+	Request Request
+	Result  Result
+}
+
+func ProcessLatest(
+	ctx context.Context,
+	requests *Store,
+	processor *Processor,
+) ([]Processed, error) {
+	if requests == nil || processor == nil {
+		return nil, fmt.Errorf("queue action processing is not configured")
+	}
+	stored, err := requests.List()
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(stored))
+	processed := make([]Processed, 0, len(stored))
+	var failures []error
+	for _, request := range stored {
+		if _, found := seen[request.CaseID]; found {
+			continue
+		}
+		seen[request.CaseID] = struct{}{}
+		result, processErr := processor.Process(ctx, request)
+		processed = append(processed, Processed{Request: request, Result: result})
+		if processErr != nil {
+			failures = append(failures, fmt.Errorf("case %s: %w", request.CaseID, processErr))
+		}
+	}
+	return processed, errors.Join(failures...)
+}
+
+func LoadLatest(requests *Store, results *ResultStore) ([]Processed, error) {
+	if requests == nil || results == nil {
+		return nil, fmt.Errorf("queue action results are not configured")
+	}
+	stored, err := requests.List()
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(stored))
+	processed := make([]Processed, 0, len(stored))
+	for _, request := range stored {
+		if _, found := seen[request.CaseID]; found {
+			continue
+		}
+		seen[request.CaseID] = struct{}{}
+		result, found, err := results.Get(request)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			processed = append(processed, Processed{Request: request, Result: result})
+		}
+	}
+	return processed, nil
 }

@@ -7,6 +7,8 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
@@ -34,6 +36,17 @@ func item(observed lidarrrepair.QueueReview, generatedAt time.Time) (review.Item
 		TrackedStatus: string(observed.Queue.TrackedDownloadStatus),
 		Protocol:      string(observed.Queue.Protocol), LastSeenAt: generatedAt,
 		State: review.StateNotProcessed, Detail: observed.Detail,
+	}
+	identity := queueaction.Identity(queuefinalize.Entry{
+		QueueID: observed.Queue.ID, DownloadID: observed.Queue.DownloadID,
+		Status:                string(observed.Queue.Status),
+		TrackedDownloadStatus: string(observed.Queue.TrackedDownloadStatus),
+	})
+	if observed.Queue.AlbumID != nil && observed.Queue.ArtistID != nil {
+		identity.SubjectID = *observed.Queue.AlbumID
+	}
+	if identity.Entry().Eligible() {
+		item.QueueIdentity = &identity
 	}
 	if !observed.Candidate {
 		if item.TrackedStatus != "warning" {

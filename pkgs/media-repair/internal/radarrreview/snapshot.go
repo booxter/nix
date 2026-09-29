@@ -9,6 +9,8 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
@@ -27,6 +29,18 @@ func Snapshot(report shadowrunner.Report, generatedAt time.Time) (review.Snapsho
 			QueueID: record.ID, Title: strings.TrimSpace(record.Title),
 			QueueStatus: string(record.Status), TrackedStatus: string(record.TrackedDownloadStatus),
 			Protocol: string(record.Protocol), State: state, Detail: detail, LastSeenAt: generatedAt,
+		}
+		identity := queueaction.Identity(queuefinalize.Entry{
+			QueueID: record.ID, DownloadID: record.DownloadID,
+			Status: string(record.Status), TrackedDownloadStatus: string(record.TrackedDownloadStatus),
+		})
+		if record.MovieID != nil {
+			identity.SubjectID = *record.MovieID
+		}
+		if identity.Entry().Eligible() {
+			item := items[record.ID]
+			item.QueueIdentity = &identity
+			items[record.ID] = item
 		}
 	}
 	for _, rejection := range report.Rejections {

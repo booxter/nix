@@ -20,6 +20,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
@@ -54,6 +55,7 @@ type config struct {
 	FinalizeStale      bool
 	ReviewDir          string
 	ReconsiderationDir string
+	QueueActionDir     string
 }
 
 type report struct {
@@ -160,6 +162,9 @@ func (app application) run(
 	reconsiderationDirectory := flags.String(
 		"reconsideration-directory", "", "optional reconsideration request directory",
 	)
+	queueActionDirectory := flags.String(
+		"queue-action-directory", "", "optional operator queue action directory",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -178,6 +183,7 @@ func (app application) run(
 		FinalizeStale:      *finalizeStale,
 		ReviewDir:          *reviewDirectory,
 		ReconsiderationDir: *reconsiderationDirectory,
+		QueueActionDir:     *queueActionDirectory,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -227,6 +233,12 @@ func validateConfig(configuration config) error {
 			filepath.Clean(configuration.ReconsiderationDir) != configuration.ReconsiderationDir ||
 			filepath.Dir(configuration.ReconsiderationDir) == configuration.ReconsiderationDir) {
 		return fmt.Errorf("reconsideration directory must be an absolute clean path")
+	}
+	if configuration.QueueActionDir != "" &&
+		(!filepath.IsAbs(configuration.QueueActionDir) ||
+			filepath.Clean(configuration.QueueActionDir) != configuration.QueueActionDir ||
+			filepath.Dir(configuration.QueueActionDir) == configuration.QueueActionDir) {
+		return fmt.Errorf("queue action directory must be an absolute clean path")
 	}
 	for name, path := range map[string]string{
 		"worker socket":  configuration.WorkerSocket,
@@ -355,14 +367,34 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		}
 	}
 	result, err := runner.Run(ctx)
+	removals, removalErr := processLidarrQueueActions(ctx, configuration, client)
+	if len(removals) != 0 {
+		pending := make(map[string]struct{}, len(removals))
+		for _, removal := range removals {
+			pending[removal.Request.CaseID] = struct{}{}
+		}
+		filtered := result.PlannedCases[:0]
+		for _, planned := range result.PlannedCases {
+			caseID, caseErr := lidarrRecordCaseID(planned)
+			if caseErr != nil {
+				return report{}, caseErr
+			}
+			if _, remove := pending[caseID]; !remove {
+				filtered = append(filtered, planned)
+			}
+		}
+		result.PlannedCases = filtered
+	}
 	controllerReport := report{
 		Observed: result.Observed, Candidates: result.Candidates,
 		Planned: result.Planned, Cached: result.Cached, Deferred: result.Deferred,
 		NoRepair: result.NoRepair,
 	}
-	publishErr := publishLidarrReview(configuration.ReviewDir, result, time.Now().UTC())
-	if err != nil || publishErr != nil || !configuration.Apply {
-		return controllerReport, errors.Join(err, publishErr)
+	publishErr := publishLidarrReviewWithRemovals(
+		configuration.ReviewDir, result, removals, time.Now().UTC(),
+	)
+	if err != nil || removalErr != nil || publishErr != nil || !configuration.Apply {
+		return controllerReport, errors.Join(err, removalErr, publishErr)
 	}
 	disabled, err := applyDisabled(configuration.KillSwitchFile)
 	if err != nil {
@@ -448,12 +480,24 @@ func publishLidarrReview(
 	report lidarrrepair.Report,
 	generatedAt time.Time,
 ) error {
+	return publishLidarrReviewWithRemovals(directory, report, nil, generatedAt)
+}
+
+func publishLidarrReviewWithRemovals(
+	directory string,
+	report lidarrrepair.Report,
+	removals []queueaction.Processed,
+	generatedAt time.Time,
+) error {
 	if directory == "" {
 		return nil
 	}
 	snapshot, err := lidarrreview.Snapshot(report, generatedAt)
 	if err != nil {
 		return fmt.Errorf("build Lidarr review snapshot: %w", err)
+	}
+	if err := review.ApplyQueueRemovals(&snapshot, removals); err != nil {
+		return fmt.Errorf("add Lidarr queue removals to review snapshot: %w", err)
 	}
 	store, err := review.NewStore(directory)
 	if err != nil {
@@ -463,6 +507,59 @@ func publishLidarrReview(
 		return fmt.Errorf("publish Lidarr review snapshot: %w", err)
 	}
 	return nil
+}
+
+func processLidarrQueueActions(
+	ctx context.Context,
+	configuration config,
+	client *lidarrsource.Client,
+) ([]queueaction.Processed, error) {
+	if configuration.QueueActionDir == "" {
+		return nil, nil
+	}
+	requests, err := queueaction.NewStore(
+		configuration.QueueActionDir, queueaction.ServiceLidarr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr queue action inbox: %w", err)
+	}
+	results, err := queueaction.NewResultStore(
+		filepath.Join(configuration.StateDir, "queue-action-results"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr queue action results: %w", err)
+	}
+	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
+		Service: "Lidarr", StateDirectory: configuration.StateDir,
+		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
+			records, readErr := client.ReadQueue(ctx)
+			if readErr != nil {
+				return nil, readErr
+			}
+			entries := make([]queuefinalize.Entry, len(records))
+			for index, record := range records {
+				entries[index] = lidarrsource.FinalizationEntry(record)
+			}
+			return entries, nil
+		},
+		Remove: client.FinalizeQueue, Clock: wallClock{},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr queue action finalizer: %w", err)
+	}
+	processor, err := queueaction.NewProcessor(results, finalizer, time.Now)
+	if err != nil {
+		return nil, err
+	}
+	return queueaction.ProcessLatest(ctx, requests, processor)
+}
+
+func lidarrRecordCaseID(record lidarrrepair.Record) (string, error) {
+	repairCase, err := lidarrcontracts.DecodeCase(record.Case)
+	if err != nil {
+		return "", err
+	}
+	return repairCase.CaseID, nil
 }
 
 func finalizeLidarrQueue(

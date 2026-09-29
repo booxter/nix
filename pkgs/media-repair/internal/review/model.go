@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	reconsiderationpkg "github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
@@ -74,6 +75,16 @@ type ExecutionBlock struct {
 	Runtime        *RuntimeAssessment `json:"runtime,omitempty"`
 }
 
+type QueueRemoval struct {
+	RequestID   string            `json:"request_id"`
+	CreatedAt   time.Time         `json:"created_at"`
+	State       queueaction.State `json:"state,omitempty"`
+	Attempts    uint64            `json:"attempts,omitempty"`
+	AttemptedAt *time.Time        `json:"attempted_at,omitempty"`
+	Outcome     string            `json:"outcome,omitempty"`
+	Failure     string            `json:"failure,omitempty"`
+}
+
 func ParseDecision(data []byte) (Decision, error) {
 	var decision Decision
 	if err := json.Unmarshal(data, &decision); err != nil {
@@ -87,22 +98,24 @@ func ParseDecision(data []byte) (Decision, error) {
 }
 
 type Item struct {
-	QueueID           int64            `json:"queue_id"`
-	Title             string           `json:"title"`
-	Subject           string           `json:"subject,omitempty"`
-	QueueStatus       string           `json:"queue_status"`
-	TrackedStatus     string           `json:"tracked_status"`
-	Protocol          string           `json:"protocol,omitempty"`
-	State             State            `json:"state"`
-	Detail            string           `json:"detail,omitempty"`
-	CaseID            string           `json:"case_id,omitempty"`
-	SourceFingerprint string           `json:"source_fingerprint,omitempty"`
-	ObservedAt        *time.Time       `json:"observed_at,omitempty"`
-	LastSeenAt        time.Time        `json:"last_seen_at"`
-	NoLongerQueuedAt  *time.Time       `json:"no_longer_queued_at,omitempty"`
-	Decision          *Decision        `json:"decision,omitempty"`
-	Reconsideration   *Reconsideration `json:"reconsideration,omitempty"`
-	ExecutionBlock    *ExecutionBlock  `json:"execution_block,omitempty"`
+	QueueID           int64                      `json:"queue_id"`
+	Title             string                     `json:"title"`
+	Subject           string                     `json:"subject,omitempty"`
+	QueueStatus       string                     `json:"queue_status"`
+	TrackedStatus     string                     `json:"tracked_status"`
+	Protocol          string                     `json:"protocol,omitempty"`
+	State             State                      `json:"state"`
+	Detail            string                     `json:"detail,omitempty"`
+	CaseID            string                     `json:"case_id,omitempty"`
+	SourceFingerprint string                     `json:"source_fingerprint,omitempty"`
+	ObservedAt        *time.Time                 `json:"observed_at,omitempty"`
+	LastSeenAt        time.Time                  `json:"last_seen_at"`
+	NoLongerQueuedAt  *time.Time                 `json:"no_longer_queued_at,omitempty"`
+	Decision          *Decision                  `json:"decision,omitempty"`
+	Reconsideration   *Reconsideration           `json:"reconsideration,omitempty"`
+	ExecutionBlock    *ExecutionBlock            `json:"execution_block,omitempty"`
+	QueueIdentity     *queueaction.QueueIdentity `json:"queue_identity,omitempty"`
+	QueueRemoval      *QueueRemoval              `json:"queue_removal,omitempty"`
 }
 
 type Snapshot struct {
@@ -209,6 +222,28 @@ func validateItem(item Item, historical bool) error {
 				runtime.DifferenceMS < 0 || runtime.DefaultToleranceMS <= 0 ||
 				runtime.ActiveToleranceMS < runtime.DefaultToleranceMS) {
 			return fmt.Errorf("execution runtime assessment is invalid")
+		}
+	}
+	if identity := item.QueueIdentity; identity != nil &&
+		(identity.QueueID != item.QueueID || !identity.Entry().Eligible()) {
+		return fmt.Errorf("queue removal identity is invalid")
+	}
+	if removal := item.QueueRemoval; removal != nil {
+		if item.CaseID == "" || item.QueueIdentity == nil || removal.RequestID == "" ||
+			removal.CreatedAt.IsZero() || removal.CreatedAt.Location() != time.UTC ||
+			(removal.State != "" && removal.State != queueaction.StateCompleted &&
+				removal.State != queueaction.StateFailed) ||
+			(removal.AttemptedAt != nil &&
+				(removal.AttemptedAt.IsZero() || removal.AttemptedAt.Location() != time.UTC)) {
+			return fmt.Errorf("queue removal is invalid")
+		}
+		if removal.State == queueaction.StateCompleted &&
+			(removal.Outcome == "" || removal.Failure != "") {
+			return fmt.Errorf("completed queue removal is invalid")
+		}
+		if removal.State == queueaction.StateFailed &&
+			(removal.Failure == "" || removal.Outcome != "") {
+			return fmt.Errorf("failed queue removal is invalid")
 		}
 	}
 	return nil

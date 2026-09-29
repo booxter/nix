@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
@@ -15,6 +16,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/applyselection"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	radarrsource "github.com/booxter/nix-config/media-repair/internal/radarr"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
@@ -351,13 +353,15 @@ func runAutomaticOnce(ctx context.Context, config automaticConfig) (automaticRep
 		apply:    applyCurrentCases,
 		finalize: finalizeRadarrQueue,
 	})
-	publishErr := publishAppliedRadarrReview(
+	removals, removalErr := loadRadarrQueueActions(config.Shadow)
+	publishErr := publishAppliedRadarrReviewWithRemovals(
 		reviewDirectory,
 		report.Shadow,
 		report.Apply,
+		removals,
 		time.Now().UTC(),
 	)
-	return report, errors.Join(runErr, publishErr)
+	return report, errors.Join(runErr, removalErr, publishErr)
 }
 
 func runAutomaticWith(
@@ -440,6 +444,102 @@ func finalizeRadarrQueue(
 		return queuefinalize.Report{}, fmt.Errorf("configure Radarr queue finalizer: %w", err)
 	}
 	return finalizer.Run(ctx, candidates, 1)
+}
+
+func processRadarrQueueActions(
+	ctx context.Context,
+	config shadowConfig,
+) ([]queueaction.Processed, error) {
+	if config.QueueActionDirectory == "" {
+		return nil, nil
+	}
+	requests, results, processor, closeClient, err := configureRadarrQueueActions(config)
+	if err != nil {
+		return nil, err
+	}
+	defer closeClient()
+	_ = results
+	return queueaction.ProcessLatest(ctx, requests, processor)
+}
+
+func loadRadarrQueueActions(config shadowConfig) ([]queueaction.Processed, error) {
+	if config.QueueActionDirectory == "" {
+		return nil, nil
+	}
+	requests, err := queueaction.NewStore(
+		config.QueueActionDirectory, queueaction.ServiceRadarr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Radarr queue action inbox: %w", err)
+	}
+	results, err := queueaction.NewResultStore(
+		filepath.Join(config.StateDirectory, "queue-action-results"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure Radarr queue action results: %w", err)
+	}
+	return queueaction.LoadLatest(requests, results)
+}
+
+func configureRadarrQueueActions(
+	config shadowConfig,
+) (*queueaction.Store, *queueaction.ResultStore, *queueaction.Processor, func(), error) {
+	requests, err := queueaction.NewStore(
+		config.QueueActionDirectory, queueaction.ServiceRadarr,
+	)
+	if err != nil {
+		return nil, nil, nil, func() {}, fmt.Errorf("configure Radarr queue action inbox: %w", err)
+	}
+	results, err := queueaction.NewResultStore(
+		filepath.Join(config.StateDirectory, "queue-action-results"),
+	)
+	if err != nil {
+		return nil, nil, nil, func() {}, fmt.Errorf("configure Radarr queue action results: %w", err)
+	}
+	apiKey, err := servarr.ReadAPIKey("Radarr", config.RadarrAPIKeyFile)
+	if err != nil {
+		return nil, nil, nil, func() {}, err
+	}
+	transport, err := servarr.DirectHTTPTransport()
+	if err != nil {
+		return nil, nil, nil, func() {}, err
+	}
+	httpClient := &http.Client{
+		Transport: transport, Timeout: config.RequestTimeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	client, err := radarrsource.New(config.RadarrURL, apiKey, httpClient)
+	if err != nil {
+		transport.CloseIdleConnections()
+		return nil, nil, nil, func() {}, fmt.Errorf("configure Radarr queue action client: %w", err)
+	}
+	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
+		Service: "Radarr", StateDirectory: config.StateDirectory,
+		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
+			records, readErr := client.ReadQueue(ctx)
+			if readErr != nil {
+				return nil, readErr
+			}
+			entries := make([]queuefinalize.Entry, len(records))
+			for index, record := range records {
+				entries[index] = radarrsource.FinalizationEntry(record)
+			}
+			return entries, nil
+		},
+		Remove: client.FinalizeQueue, Clock: wallClock{},
+	})
+	if err != nil {
+		transport.CloseIdleConnections()
+		return nil, nil, nil, func() {}, fmt.Errorf("configure Radarr queue action finalizer: %w", err)
+	}
+	processor, err := queueaction.NewProcessor(results, finalizer, time.Now)
+	if err != nil {
+		transport.CloseIdleConnections()
+		return nil, nil, nil, func() {}, err
+	}
+	return requests, results, processor, transport.CloseIdleConnections, nil
 }
 
 type filesystemApplyGuard struct{}

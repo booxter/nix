@@ -16,6 +16,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/radarrreview"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
@@ -47,6 +48,7 @@ type shadowConfig struct {
 	RetryMaximum             time.Duration
 	ReviewDirectory          string
 	ReconsiderationDirectory string
+	QueueActionDirectory     string
 }
 
 type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
@@ -68,6 +70,7 @@ type shadowFlags struct {
 	retryMaximum             *time.Duration
 	reviewDirectory          *string
 	reconsiderationDirectory *string
+	queueActionDirectory     *string
 }
 
 func addShadowFlags(flags *flag.FlagSet) shadowFlags {
@@ -109,6 +112,9 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 		reconsiderationDirectory: flags.String(
 			"reconsideration-directory", "", "optional reconsideration request directory",
 		),
+		queueActionDirectory: flags.String(
+			"queue-action-directory", "", "optional operator queue action directory",
+		),
 	}
 	flags.Var(values.workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
 	return values
@@ -134,6 +140,7 @@ func (values shadowFlags) Config() shadowConfig {
 		RetryMaximum:             *values.retryMaximum,
 		ReviewDirectory:          *values.reviewDirectory,
 		ReconsiderationDirectory: *values.reconsiderationDirectory,
+		QueueActionDirectory:     *values.queueActionDirectory,
 	}
 }
 
@@ -238,6 +245,13 @@ func validateShadowConfig(config shadowConfig) error {
 			return err
 		}
 	}
+	if config.QueueActionDirectory != "" {
+		if err := validateAbsolutePath(
+			"queue action directory", config.QueueActionDirectory, false,
+		); err != nil {
+			return err
+		}
+	}
 	if config.PlannerTimeout <= 0 {
 		return fmt.Errorf("planner timeout must be positive")
 	}
@@ -331,8 +345,24 @@ func runShadowOnce(
 		return shadowrunner.Report{}, fmt.Errorf("configure shadow runner: %w", err)
 	}
 	report, runErr := runner.Run(ctx)
-	publishErr := publishRadarrReview(config.ReviewDirectory, report, time.Now().UTC())
-	return report, errors.Join(runErr, publishErr)
+	removals, removalErr := processRadarrQueueActions(ctx, config)
+	if len(removals) != 0 {
+		pending := make(map[string]struct{}, len(removals))
+		for _, removal := range removals {
+			pending[removal.Request.CaseID] = struct{}{}
+		}
+		filtered := report.PlannedCases[:0]
+		for _, planned := range report.PlannedCases {
+			if _, remove := pending[planned.Assembly.Request.CaseID]; !remove {
+				filtered = append(filtered, planned)
+			}
+		}
+		report.PlannedCases = filtered
+	}
+	publishErr := publishRadarrReviewWithRemovals(
+		config.ReviewDirectory, report, removals, time.Now().UTC(),
+	)
+	return report, errors.Join(runErr, removalErr, publishErr)
 }
 
 func validateRadarrRevision(data json.RawMessage) (string, json.RawMessage, error) {
@@ -349,12 +379,24 @@ func publishRadarrReview(
 	report shadowrunner.Report,
 	generatedAt time.Time,
 ) error {
+	return publishRadarrReviewWithRemovals(directory, report, nil, generatedAt)
+}
+
+func publishRadarrReviewWithRemovals(
+	directory string,
+	report shadowrunner.Report,
+	removals []queueaction.Processed,
+	generatedAt time.Time,
+) error {
 	if directory == "" {
 		return nil
 	}
 	snapshot, err := radarrreview.Snapshot(report, generatedAt)
 	if err != nil {
 		return fmt.Errorf("build Radarr review snapshot: %w", err)
+	}
+	if err := review.ApplyQueueRemovals(&snapshot, removals); err != nil {
+		return fmt.Errorf("add Radarr queue removals to review snapshot: %w", err)
 	}
 	store, err := review.NewStore(directory)
 	if err != nil {
@@ -372,12 +414,25 @@ func publishAppliedRadarrReview(
 	applyReport applyrunner.Report,
 	generatedAt time.Time,
 ) error {
+	return publishAppliedRadarrReviewWithRemovals(directory, shadowReport, applyReport, nil, generatedAt)
+}
+
+func publishAppliedRadarrReviewWithRemovals(
+	directory string,
+	shadowReport shadowrunner.Report,
+	applyReport applyrunner.Report,
+	removals []queueaction.Processed,
+	generatedAt time.Time,
+) error {
 	if directory == "" {
 		return nil
 	}
 	snapshot, err := radarrreview.SnapshotWithApply(shadowReport, applyReport, generatedAt)
 	if err != nil {
 		return fmt.Errorf("build applied Radarr review snapshot: %w", err)
+	}
+	if err := review.ApplyQueueRemovals(&snapshot, removals); err != nil {
+		return fmt.Errorf("add Radarr queue removals to applied review snapshot: %w", err)
 	}
 	store, err := review.NewStore(directory)
 	if err != nil {
