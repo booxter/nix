@@ -6,7 +6,11 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/applyrunner"
+	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
@@ -25,6 +29,18 @@ func Snapshot(report shadowrunner.Report, generatedAt time.Time) (review.Snapsho
 			QueueID: record.ID, Title: strings.TrimSpace(record.Title),
 			QueueStatus: string(record.Status), TrackedStatus: string(record.TrackedDownloadStatus),
 			Protocol: string(record.Protocol), State: state, Detail: detail, LastSeenAt: generatedAt,
+		}
+		identity := queueaction.Identity(queuefinalize.Entry{
+			QueueID: record.ID, DownloadID: record.DownloadID,
+			Status: string(record.Status), TrackedDownloadStatus: string(record.TrackedDownloadStatus),
+		})
+		if record.MovieID != nil {
+			identity.SubjectID = *record.MovieID
+		}
+		if identity.Entry().Eligible() {
+			item := items[record.ID]
+			item.QueueIdentity = &identity
+			items[record.ID] = item
 		}
 	}
 	for _, rejection := range report.Rejections {
@@ -108,4 +124,75 @@ func Snapshot(report shadowrunner.Report, generatedAt time.Time) (review.Snapsho
 	}
 	review.Sort(&snapshot)
 	return snapshot, snapshot.Validate()
+}
+
+func SnapshotWithApply(
+	report shadowrunner.Report,
+	apply applyrunner.Report,
+	generatedAt time.Time,
+) (review.Snapshot, error) {
+	snapshot, err := Snapshot(report, generatedAt)
+	if err != nil {
+		return review.Snapshot{}, err
+	}
+	if err := applyExecutionResults(&snapshot, apply); err != nil {
+		return review.Snapshot{}, err
+	}
+	return snapshot, snapshot.Validate()
+}
+
+func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) error {
+	items := make(map[string]int, len(snapshot.Current))
+	for index := range snapshot.Current {
+		if snapshot.Current[index].CaseID != "" {
+			items[snapshot.Current[index].CaseID] = index
+		}
+	}
+	for _, execution := range apply.Executions {
+		if execution.Failure == "" && len(execution.Result.Check.Rejections) == 0 {
+			continue
+		}
+		index, found := items[execution.CaseID]
+		if !found {
+			return fmt.Errorf(
+				"execution result refers to absent case %q",
+				execution.CaseID,
+			)
+		}
+		if execution.Failure != "" {
+			snapshot.Current[index].State = review.StateExecutionFailed
+			snapshot.Current[index].Detail = execution.Failure
+			snapshot.Current[index].ExecutionFailure = execution.Failure
+			continue
+		}
+		rejection := execution.Result.Check.Rejections[0]
+		block := executionBlock(rejection)
+		snapshot.Current[index].State = review.StateExecutionBlocked
+		snapshot.Current[index].Detail = block.Reason
+		if block.DecisionReason != "" {
+			snapshot.Current[index].Detail += ": " + block.DecisionReason
+		}
+		snapshot.Current[index].ExecutionBlock = &block
+	}
+	return nil
+}
+
+func executionBlock(rejection executioncheck.Rejection) review.ExecutionBlock {
+	block := review.ExecutionBlock{
+		Reason:         string(rejection.Reason),
+		DecisionReason: rejection.DecisionReason,
+	}
+	runtime := rejection.Runtime
+	if runtime == nil || runtime.MovieRuntimeMS == nil || runtime.DifferenceMS == nil ||
+		runtime.DefaultToleranceMS == nil || runtime.ToleranceMS == nil {
+		return block
+	}
+	block.Runtime = &review.RuntimeAssessment{
+		CandidateDurationMS: runtime.FileDurationMS,
+		MovieRuntimeMS:      *runtime.MovieRuntimeMS,
+		DifferenceMS:        *runtime.DifferenceMS,
+		DefaultToleranceMS:  *runtime.DefaultToleranceMS,
+		ActiveToleranceMS:   *runtime.ToleranceMS,
+	}
+	return block
 }

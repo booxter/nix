@@ -80,8 +80,51 @@ func TestRequestValidation(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			if _, err := NewRequest(test.service, test.caseID, test.guidance, now); err == nil {
+			if _, err := NewRequest(test.service, test.caseID, test.guidance, nil, now); err == nil {
 				t.Fatal("invalid request was accepted")
+			}
+		})
+	}
+}
+
+func TestRequestAcceptsStructuredRuntimeOverride(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 9, 28, 1, 0, 0, 0, time.UTC)
+	overrides := &PolicyOverrides{MaximumRuntimeDifferenceMS: 30 * 60 * 1_000}
+	request, err := NewRequest(ServiceRadarr, testCaseID, "", overrides, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if request.PolicyOverrides == overrides ||
+		request.PolicyOverrides.MaximumRuntimeDifferenceMS != 30*60*1_000 {
+		t.Fatalf("policy overrides = %#v", request.PolicyOverrides)
+	}
+	overrides.MaximumRuntimeDifferenceMS = 0
+	if err := request.Validate(); err != nil {
+		t.Fatalf("request retained caller-owned policy: %v", err)
+	}
+}
+
+func TestRequestRejectsInvalidRuntimeOverride(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 9, 28, 1, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name    string
+		service Service
+		maximum int64
+	}{
+		{name: "Lidarr", service: ServiceLidarr, maximum: 30 * 60 * 1_000},
+		{name: "zero", service: ServiceRadarr},
+		{name: "too large", service: ServiceRadarr, maximum: MaximumRuntimeDifferenceLimitMS + 1},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := NewRequest(test.service, testCaseID, "", &PolicyOverrides{
+				MaximumRuntimeDifferenceMS: test.maximum,
+			}, now)
+			if err == nil {
+				t.Fatal("invalid policy override was accepted")
 			}
 		})
 	}
@@ -89,7 +132,7 @@ func TestRequestValidation(t *testing.T) {
 
 func testRequest(t *testing.T, guidance string, createdAt time.Time) Request {
 	t.Helper()
-	request, err := NewRequest(ServiceRadarr, testCaseID, guidance, createdAt)
+	request, err := NewRequest(ServiceRadarr, testCaseID, guidance, nil, createdAt)
 	if err != nil {
 		t.Fatal(err)
 	}

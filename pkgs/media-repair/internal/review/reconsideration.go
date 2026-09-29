@@ -19,7 +19,8 @@ func NewReconsideration(
 		state = ReconsiderationFailed
 	}
 	description := Reconsideration{
-		RequestID: request.RequestID, Guidance: request.Guidance, CreatedAt: request.CreatedAt,
+		RequestID: request.RequestID, Guidance: request.Guidance,
+		PolicyOverrides: request.PolicyOverrides, CreatedAt: request.CreatedAt,
 		State: state, PriorDecision: prior, Attempts: result.Outcome.Attempts,
 		AttemptedAt: optionalTime(result.Outcome.AttemptedAt),
 		RetryAfter:  optionalTimePointer(result.Outcome.RetryAfter),

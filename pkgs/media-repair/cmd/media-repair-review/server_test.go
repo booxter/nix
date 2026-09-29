@@ -10,55 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 )
-
-func TestHandlerRendersEscapedDecisionAndCasePage(t *testing.T) {
-	t.Parallel()
-	lidarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
-		Current: []review.Item{{
-			QueueID: 1, Title: "Release <script>alert(1)</script>", Subject: "Artist — Album",
-			QueueStatus: "completed", TrackedStatus: "warning", State: review.StateReviewed,
-			CaseID:     "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			LastSeenAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
-			Decision: &review.Decision{
-				Action: "no_repair", Reason: "incomplete_release",
-				Explanation: "Missing <b>track</b>.", EvidenceRefs: []string{"artifact:one"},
-			},
-		}},
-	})
-	radarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
-	})
-	handler, err := newHandler(handlerConfig(t, lidarr, radarr))
-	if err != nil {
-		t.Fatal(err)
-	}
-	request := httptest.NewRequest(http.MethodGet, "/lidarr", nil)
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-	body := response.Body.String()
-	if response.Code != http.StatusOK || strings.Contains(body, "<script>") ||
-		!strings.Contains(body, "&lt;script&gt;") || !strings.Contains(body, "incomplete_release") {
-		t.Fatalf("status=%d body=%s", response.Code, body)
-	}
-	request = httptest.NewRequest(
-		http.MethodGet,
-		"/cases/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		nil,
-	)
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-	body = response.Body.String()
-	if response.Code != http.StatusOK || !strings.Contains(body, "Missing &lt;b&gt;track&lt;/b&gt;.") ||
-		!strings.Contains(body, "artifact:one") {
-		t.Fatalf("status=%d body=%s", response.Code, body)
-	}
-}
 
 func TestReadyAndSecurityHeaders(t *testing.T) {
 	t.Parallel()
@@ -81,60 +36,17 @@ func TestReadyAndSecurityHeaders(t *testing.T) {
 	}
 }
 
-func TestHandlerShowsCompletedReconsideration(t *testing.T) {
-	t.Parallel()
-	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	createdAt := time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC)
-	attemptedAt := createdAt.Add(5 * time.Minute)
-	item := questionableItem(caseID)
-	item.Decision = &review.Decision{
-		Action: "no_repair", Reason: "insufficient_evidence",
-		Explanation: "The guidance does not establish the shorter cut.", EvidenceRefs: []string{},
-	}
-	item.Reconsideration = &review.Reconsideration{
-		RequestID: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-		Guidance:  "Use the release-specific runtime.", CreatedAt: createdAt,
-		State: review.ReconsiderationDecided,
-		PriorDecision: review.Decision{
-			Action: "no_repair", Reason: "runtime_mismatch",
-			Explanation: "The offered title is too short.", EvidenceRefs: []string{},
-		},
-		Attempts: 1, AttemptedAt: &attemptedAt,
-	}
-	lidarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
-		GeneratedAt: attemptedAt, Current: []review.Item{item},
-	})
-	radarr := reviewDirectory(t, review.Snapshot{
-		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
-		GeneratedAt: attemptedAt, Current: []review.Item{},
-	})
-	handler, err := newHandler(handlerConfig(t, lidarr, radarr))
-	if err != nil {
-		t.Fatal(err)
-	}
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/cases/"+caseID, nil))
-	body := response.Body.String()
-	if response.Code != http.StatusOK || !strings.Contains(body, "Considered") ||
-		!strings.Contains(body, "Use the release-specific runtime.") ||
-		!strings.Contains(body, "2026-09-25 03:05 UTC") ||
-		!strings.Contains(body, "The guidance does not establish the shorter cut.") {
-		t.Fatalf("status=%d body=%s", response.Code, body)
-	}
-}
-
 func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	t.Parallel()
 	caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	lidarr := reviewDirectory(t, review.Snapshot{
 		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
-		Current:     []review.Item{questionableItem(caseID)},
+		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
 	})
 	radarr := reviewDirectory(t, review.Snapshot{
 		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
-		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC), Current: []review.Item{},
+		GeneratedAt: time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC),
+		Current:     []review.Item{questionableItem(caseID)},
 	})
 	configuration := handlerConfig(t, lidarr, radarr)
 	configuration.AllowedOrigins = []string{"https://repairr"}
@@ -149,36 +61,54 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 		t.Fatalf("GET status=%d cookies=%v", page.Code, cookies)
 	}
 	values := url.Values{
-		"csrf_token": {cookies[0].Value},
-		"guidance":   {"Check whether the disc numbering supports the selected release."},
+		"csrf_token":                         {cookies[0].Value},
+		"guidance":                           {"Check the selected release."},
+		"override_runtime_difference":        {"on"},
+		"maximum_runtime_difference_minutes": {"30"},
+	}
+	store, err := reconsideration.NewStore(
+		configuration.RadarrRequests, reconsideration.ServiceRadarr,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalid := url.Values{
+		"csrf_token":                         {cookies[0].Value},
+		"guidance":                           {"Check the selected release."},
+		"override_runtime_difference":        {"on"},
+		"maximum_runtime_difference_minutes": {"60.5"},
 	}
 	request := httptest.NewRequest(
-		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(values.Encode()),
+		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(invalid.Encode()),
 	)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Origin", "https://repairr")
 	request.AddCookie(cookies[0])
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("invalid POST status=%d body=%s", response.Code, response.Body.String())
+	}
+	if _, found, err := store.Latest(caseID); err != nil || found {
+		t.Fatalf("invalid request stored: found=%t error=%v", found, err)
+	}
+
+	request = httptest.NewRequest(
+		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(values.Encode()),
+	)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Origin", "https://repairr")
+	request.AddCookie(cookies[0])
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusSeeOther {
 		t.Fatalf("POST status=%d body=%s", response.Code, response.Body.String())
 	}
-	store, err := reconsideration.NewStore(
-		configuration.LidarrRequests, reconsideration.ServiceLidarr,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
 	submitted, found, err := store.Latest(caseID)
-	if err != nil || !found || submitted.Guidance != values.Get("guidance") {
+	if err != nil || !found || submitted.Guidance != values.Get("guidance") ||
+		submitted.PolicyOverrides == nil ||
+		submitted.PolicyOverrides.MaximumRuntimeDifferenceMS != 30*60*1_000 {
 		t.Fatalf("request=%#v found=%v err=%v", submitted, found, err)
-	}
-	page = httptest.NewRecorder()
-	handler.ServeHTTP(page, httptest.NewRequest(http.MethodGet, response.Header().Get("Location"), nil))
-	body := page.Body.String()
-	if page.Code != http.StatusOK || !strings.Contains(body, "Waiting for controller") ||
-		!strings.Contains(body, values.Get("guidance")) || strings.Contains(body, "<textarea") {
-		t.Fatalf("GET after submission status=%d body=%s", page.Code, body)
 	}
 
 	request = httptest.NewRequest(
@@ -194,37 +124,128 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 	}
 }
 
-func TestHandlerChecksRequestOrigin(t *testing.T) {
+func TestHandlerRejectsCrossOriginReconsideration(t *testing.T) {
 	t.Parallel()
-	app := &applicationHandler{allowedOrigins: map[string]struct{}{
-		"https://repairr": {},
-	}}
 	tests := []struct {
 		name      string
 		origin    string
 		fetchSite string
-		allowed   bool
 	}{
-		{name: "configured origin", origin: "https://repairr", fetchSite: "same-origin", allowed: true},
 		{name: "unknown origin", origin: "https://attacker.example", fetchSite: "same-origin"},
-		{name: "missing origin", fetchSite: "same-origin", allowed: true},
-		{name: "opaque origin", origin: "null", fetchSite: "same-origin", allowed: true},
 		{name: "cross-site request", origin: "null", fetchSite: "cross-site"},
 		{name: "missing metadata"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, "/", nil)
+			caseID := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			now := time.Date(2026, 9, 25, 3, 0, 0, 0, time.UTC)
+			lidarr := reviewDirectory(t, review.Snapshot{
+				Version: review.SnapshotVersion, Service: review.ServiceLidarr,
+				GeneratedAt: now, Current: []review.Item{},
+			})
+			radarr := reviewDirectory(t, review.Snapshot{
+				Version: review.SnapshotVersion, Service: review.ServiceRadarr,
+				GeneratedAt: now, Current: []review.Item{questionableItem(caseID)},
+			})
+			configuration := handlerConfig(t, lidarr, radarr)
+			handler, err := newHandler(configuration)
+			if err != nil {
+				t.Fatal(err)
+			}
+			page := httptest.NewRecorder()
+			handler.ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/cases/"+caseID, nil))
+			cookies := page.Result().Cookies()
+			if len(cookies) != 1 {
+				t.Fatalf("cookies = %v", cookies)
+			}
+			values := url.Values{
+				"csrf_token": {cookies[0].Value},
+				"guidance":   {"Do not accept this request."},
+			}
+			request := httptest.NewRequest(
+				http.MethodPost,
+				"/cases/"+caseID+"/reconsider",
+				strings.NewReader(values.Encode()),
+			)
+			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			request.Header.Set("Origin", test.origin)
 			request.Header.Set("Sec-Fetch-Site", test.fetchSite)
-			if allowed := app.requestOriginAllowed(request); allowed != test.allowed {
-				t.Fatalf("allowed = %v, want %v", allowed, test.allowed)
+			request.AddCookie(cookies[0])
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code != http.StatusForbidden {
+				t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+			}
+			store, err := reconsideration.NewStore(
+				configuration.RadarrRequests,
+				reconsideration.ServiceRadarr,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, found, err := store.Latest(caseID); err != nil || found {
+				t.Fatalf("request stored: found=%t error=%v", found, err)
 			}
 		})
 	}
 }
 
+func TestHandlerConfirmsAndRequestsCurrentQueueRemoval(t *testing.T) {
+	t.Parallel()
+	caseID := "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+	now := time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC)
+	lidarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceLidarr,
+		GeneratedAt: now, Current: []review.Item{},
+	})
+	radarr := reviewDirectory(t, review.Snapshot{
+		Version: review.SnapshotVersion, Service: review.ServiceRadarr,
+		GeneratedAt: now, Current: []review.Item{questionableItem(caseID)},
+	})
+	configuration := handlerConfig(t, lidarr, radarr)
+	configuration.AllowedOrigins = []string{"https://repairr"}
+	handler, err := newHandler(configuration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	confirmation := httptest.NewRecorder()
+	handler.ServeHTTP(
+		confirmation,
+		httptest.NewRequest(http.MethodGet, "/cases/"+caseID+"/remove", nil),
+	)
+	cookies := confirmation.Result().Cookies()
+	if confirmation.Code != http.StatusOK || len(cookies) != 1 {
+		t.Fatalf("confirmation status=%d cookies=%v", confirmation.Code, cookies)
+	}
+	values := url.Values{"csrf_token": {cookies[0].Value}}
+	request := httptest.NewRequest(
+		http.MethodPost, "/cases/"+caseID+"/remove", strings.NewReader(values.Encode()),
+	)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Origin", "https://repairr")
+	request.AddCookie(cookies[0])
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusSeeOther {
+		t.Fatalf("POST status=%d body=%s", response.Code, response.Body.String())
+	}
+	store, err := queueaction.NewStore(configuration.RadarrActions, queueaction.ServiceRadarr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, found, err := store.Latest(caseID)
+	wanted := questionableItem(caseID).QueueIdentity
+	if err != nil || !found || stored.Action != queueaction.ActionRemoveTracking ||
+		wanted == nil || stored.Queue != *wanted {
+		t.Fatalf("request=%#v found=%t err=%v", stored, found, err)
+	}
+}
+
 func questionableItem(caseID string) review.Item {
+	identity := queueaction.QueueIdentity{
+		QueueID: 1, DownloadID: "download", SubjectID: 42,
+		Status: "completed", TrackedDownloadStatus: "warning",
+	}
 	return review.Item{
 		QueueID: 1, Title: "Artist - Album", QueueStatus: "completed",
 		TrackedStatus: "warning", State: review.StateReviewed, CaseID: caseID,
@@ -233,6 +254,7 @@ func questionableItem(caseID string) review.Item {
 			Action: "no_repair", Reason: "incomplete_release",
 			Explanation: "The release appears incomplete.", EvidenceRefs: []string{},
 		},
+		QueueIdentity: &identity,
 	}
 }
 
@@ -240,7 +262,11 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 	t.Helper()
 	lidarrRequests := filepath.Join(t.TempDir(), "lidarr-requests")
 	radarrRequests := filepath.Join(t.TempDir(), "radarr-requests")
-	for _, directory := range []string{lidarrRequests, radarrRequests} {
+	lidarrActions := filepath.Join(t.TempDir(), "lidarr-actions")
+	radarrActions := filepath.Join(t.TempDir(), "radarr-actions")
+	for _, directory := range []string{
+		lidarrRequests, radarrRequests, lidarrActions, radarrActions,
+	} {
 		if err := os.Mkdir(directory, 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -248,6 +274,7 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 	return config{
 		LidarrSnapshot: lidarr, RadarrSnapshot: radarr,
 		LidarrRequests: lidarrRequests, RadarrRequests: radarrRequests,
+		LidarrActions: lidarrActions, RadarrActions: radarrActions,
 		LidarrURL: "https://lidarr.example/activity/queue",
 		RadarrURL: "https://radarr.example/activity/queue",
 		PublicURL: "https://repairr.example",

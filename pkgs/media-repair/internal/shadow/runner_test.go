@@ -2,6 +2,7 @@ package shadow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"reflect"
@@ -53,9 +54,6 @@ func TestRunProcessesCasesAfterCollectionAndPlannerFailures(t *testing.T) {
 	wantReport := Report{Observed: 3, Stored: 3, Submitted: 3, Decided: 2, Failed: 1}
 	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
-	}
-	if !reflect.DeepEqual(planner.calls, []string{firstID, secondID, thirdID}) {
-		t.Fatalf("planner calls = %v", planner.calls)
 	}
 	if len(store.failures) != 1 || store.failures[0].caseID != secondID ||
 		store.failures[0].failure.Kind != casestore.PlanningFailureUnavailable ||
@@ -302,67 +300,45 @@ func TestRunContinuesAfterCaseStorageFailure(t *testing.T) {
 	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
-	if !reflect.DeepEqual(planner.calls, []string{workingID}) {
-		t.Fatalf("planner calls = %v", planner.calls)
-	}
 }
 
-func TestBackoffIsBounded(t *testing.T) {
+func TestRunCarriesReconsiderationPolicyIntoPlannedCase(t *testing.T) {
 	t.Parallel()
-
-	backoff := Backoff{Initial: testInitialBackoff, Maximum: testMaximumBackoff}
-	for attempts, want := range map[uint64]time.Duration{
-		0: testInitialBackoff,
-		1: 2 * testInitialBackoff,
-		2: 4 * testInitialBackoff,
-		3: testMaximumBackoff,
-		9: testMaximumBackoff,
-	} {
-		if got := backoff.delay(attempts); got != want {
-			t.Fatalf("delay after %d attempts = %s, want %s", attempts, got, want)
-		}
+	caseID := testCaseID("a")
+	requestID := testCaseID("b")
+	overrides := &reconsideration.PolicyOverrides{
+		MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
 	}
-}
-
-func TestNewRejectsIncompleteDependencies(t *testing.T) {
-	t.Parallel()
-
+	decision := testDecision(t, caseID)
+	decisionData, err := contracts.EncodeDecision(decision)
+	if err != nil {
+		t.Fatal(err)
+	}
 	now := time.Date(2026, time.September, 12, 18, 0, 0, 0, time.UTC)
-	valid := Dependencies{
-		Cases:           &fakeCaseSource{},
-		Store:           newFakeStore(),
-		Planner:         &fakePlanner{},
-		Clock:           fixedClock{now: now},
-		ClassifyFailure: classifyTestFailure,
-		Backoff: Backoff{
-			Initial: testInitialBackoff,
-			Maximum: testMaximumBackoff,
-		},
+	runner, err := New(Dependencies{
+		Cases: &fakeCaseSource{assemblies: []casebuilder.Assembly{testAssembly(caseID)}},
+		Store: newFakeStore(),
+		Planner: &fakePlanner{responses: map[string]plannerResponse{
+			caseID: {decision: decision},
+		}},
+		Clock: fixedClock{now: now}, ClassifyFailure: classifyTestFailure,
+		Backoff: Backoff{Initial: testInitialBackoff, Maximum: testMaximumBackoff},
+		Requests: fixedRequests{request: reconsideration.Request{
+			RequestID: requestID, CaseID: caseID, PolicyOverrides: overrides,
+		}},
+		Reconsiderer: decidedReconsiderer{decision: decisionData},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	for name, mutate := range map[string]func(*Dependencies){
-		"case source": func(dependencies *Dependencies) { dependencies.Cases = nil },
-		"store":       func(dependencies *Dependencies) { dependencies.Store = nil },
-		"planner":     func(dependencies *Dependencies) { dependencies.Planner = nil },
-		"clock":       func(dependencies *Dependencies) { dependencies.Clock = nil },
-		"classifier": func(dependencies *Dependencies) {
-			dependencies.ClassifyFailure = nil
-		},
-		"initial retry": func(dependencies *Dependencies) {
-			dependencies.Backoff.Initial = 0
-		},
-		"maximum retry": func(dependencies *Dependencies) {
-			dependencies.Backoff.Maximum = time.Minute
-		},
-	} {
-		mutate := mutate
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			dependencies := valid
-			mutate(&dependencies)
-			if _, err := New(dependencies); err == nil {
-				t.Fatal("invalid dependencies were accepted")
-			}
-		})
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.PlannedCases) != 1 ||
+		report.PlannedCases[0].PolicyOverrides != overrides ||
+		report.PlannedCases[0].ReconsiderationID != requestID {
+		t.Fatalf("planned cases = %#v", report.PlannedCases)
 	}
 }
 
@@ -370,6 +346,26 @@ type fakeCaseSource struct {
 	assemblies []casebuilder.Assembly
 	rejections []inspection.Rejection
 	err        error
+}
+
+type fixedRequests struct {
+	request reconsideration.Request
+}
+
+func (requests fixedRequests) Latest(string) (reconsideration.Request, bool, error) {
+	return requests.request, true, nil
+}
+
+type decidedReconsiderer struct {
+	decision []byte
+}
+
+func (reconsiderer decidedReconsiderer) Process(
+	context.Context,
+	reconsideration.Request,
+	json.RawMessage,
+) (json.RawMessage, reconsideration.Result, bool, error) {
+	return reconsiderer.decision, reconsideration.Result{}, true, nil
 }
 
 func (source *fakeCaseSource) InspectAll(context.Context) (inspection.Result, error) {

@@ -63,11 +63,13 @@ func (store *Store) PrepareDVD(
 		return RemuxExecution{}, false, err
 	}
 	defer unlock(lock)
-	planned, err := store.GetPlannedCase(authorized.CaseID)
+	planned, err := store.GetExecutionPlan(authorized.CaseID)
 	if err != nil {
 		return RemuxExecution{}, false, err
 	}
-	validation := decisionpolicy.ValidateDVD(planned.Assembly, planned.Decision)
+	validation := decisionpolicy.ValidateDVDWithPolicy(
+		planned.Assembly, planned.Decision, planned.RuntimePolicy(),
+	)
 	if !validation.Accepted() || !reflect.DeepEqual(*validation.Authorized, authorized) {
 		return RemuxExecution{}, false, fmt.Errorf("DVD remux does not match stored case and decision")
 	}

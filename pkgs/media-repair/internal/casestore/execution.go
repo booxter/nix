@@ -318,11 +318,13 @@ func (store *Store) updateManualImportExecution(
 func (store *Store) validateManualImportAuthorization(
 	authorized decisionpolicy.AuthorizedManualImport,
 ) error {
-	planned, err := store.GetPlannedCase(authorized.CaseID)
+	planned, err := store.GetExecutionPlan(authorized.CaseID)
 	if err != nil {
 		return err
 	}
-	validation := decisionpolicy.ValidateManualImport(planned.Assembly, planned.Decision)
+	validation := decisionpolicy.ValidateManualImportWithPolicy(
+		planned.Assembly, planned.Decision, planned.RuntimePolicy(),
+	)
 	if !validation.Accepted() || validation.Authorized == nil ||
 		!reflect.DeepEqual(*validation.Authorized, authorized) {
 		return fmt.Errorf("manual import authorization does not match stored case and decision")

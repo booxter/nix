@@ -13,10 +13,11 @@ import (
 )
 
 type Checker interface {
-	Check(
+	CheckWithPolicy(
 		context.Context,
 		casebuilder.Assembly,
 		contracts.RepairDecisionV3,
+		decisionpolicy.RuntimePolicy,
 	) (executioncheck.Result, error)
 }
 
@@ -59,8 +60,13 @@ type ExecutionStore interface {
 	GetRemuxExecution(string) (casestore.RemuxExecution, bool, error)
 }
 
+type PlanStore interface {
+	ExecutionStore
+	BindExecutionPlan(casestore.PlannedCase) error
+}
+
 type Dependencies struct {
-	Store             ExecutionStore
+	Store             PlanStore
 	Checker           Checker
 	ManualImports     ManualImporter
 	Joins             JoinExecutor
@@ -82,7 +88,7 @@ type Result struct {
 	Resumed      bool
 }
 
-var _ ExecutionStore = (*casestore.Store)(nil)
+var _ PlanStore = (*casestore.Store)(nil)
 
 func New(dependencies Dependencies) (*Executor, error) {
 	switch {
@@ -110,23 +116,39 @@ func (executor *Executor) Execute(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 ) (Result, error) {
+	return executor.ExecutePlan(ctx, casestore.PlannedCase{Assembly: assembly, Decision: decision})
+}
+
+func (executor *Executor) ExecutePlan(
+	ctx context.Context,
+	planned casestore.PlannedCase,
+) (Result, error) {
 	if executor == nil {
 		return Result{}, fmt.Errorf("repair executor is not configured")
 	}
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	if result, found, err := executor.resumeExisting(ctx, assembly, decision); found || err != nil {
+	if planned.PolicyOverrides != nil && planned.ReconsiderationID == "" {
+		return Result{}, fmt.Errorf("repair policy overrides have no reconsideration identity")
+	}
+	assembly := planned.Assembly
+	decision := planned.Decision
+	policy := runtimePolicy(planned)
+	if result, found, err := executor.resumeExisting(ctx, assembly, decision, policy); found || err != nil {
 		return result, err
 	}
 
-	checked, err := executor.dependencies.Checker.Check(ctx, assembly, decision)
+	checked, err := executor.dependencies.Checker.CheckWithPolicy(ctx, assembly, decision, policy)
 	result := Result{Check: checked}
 	if err != nil {
 		return result, fmt.Errorf("check repair execution: %w", err)
 	}
 	if !checked.Accepted() {
 		return result, nil
+	}
+	if err := executor.dependencies.Store.BindExecutionPlan(planned); err != nil {
+		return result, fmt.Errorf("bind effective execution plan: %w", err)
 	}
 	if checked.Authorization.ManualImport != nil {
 		return executor.executeManualImport(ctx, result, *checked.Authorization.ManualImport)
@@ -140,10 +162,15 @@ func (executor *Executor) Execute(
 	return executor.executeJoin(ctx, result, assembly, *checked.Authorization.Join)
 }
 
+func runtimePolicy(planned casestore.PlannedCase) decisionpolicy.RuntimePolicy {
+	return planned.RuntimePolicy()
+}
+
 func (executor *Executor) resumeExisting(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
+	policy decisionpolicy.RuntimePolicy,
 ) (Result, bool, error) {
 	caseID := assembly.Request.CaseID
 	switch decision.Kind {
@@ -156,7 +183,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateManualImport(assembly, decision)
+		validation := decisionpolicy.ValidateManualImportWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored manual import is no longer authorized")
 		}
@@ -193,7 +220,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateRemux(assembly, decision)
+		validation := decisionpolicy.ValidateRemuxWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored Blu-ray remux is no longer authorized")
 		}
@@ -212,7 +239,7 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
-		validation := decisionpolicy.ValidateDVD(assembly, decision)
+		validation := decisionpolicy.ValidateDVDWithPolicy(assembly, decision, policy)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored DVD remux is no longer authorized")
 		}

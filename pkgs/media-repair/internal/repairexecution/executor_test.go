@@ -12,6 +12,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
+	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 )
 
 func TestExecutorReturnsPreconditionRejectionWithoutMutation(t *testing.T) {
@@ -32,6 +33,72 @@ func TestExecutorReturnsPreconditionRejectionWithoutMutation(t *testing.T) {
 	if result.Check.Accepted() || len(result.Check.Rejections) != 1 ||
 		manual.calls != 0 || joins.calls != 0 || imports.calls != 0 {
 		t.Fatalf("result = %#v, calls = %d/%d/%d", result, manual.calls, joins.calls, imports.calls)
+	}
+}
+
+func TestExecutorPassesReconsiderationPolicyToChecker(t *testing.T) {
+	t.Parallel()
+	checker := &fakeChecker{result: executioncheck.Result{
+		Rejections: []executioncheck.Rejection{{Reason: executioncheck.DecisionRejected}},
+	}}
+	executor := testExecutor(
+		t, checker, &fakeManualImporter{}, &fakeJoinExecutor{}, &fakeJoinedFileImporter{},
+	)
+	_, err := executor.ExecutePlan(context.Background(), casestore.PlannedCase{
+		Assembly: caseAssembly(), ReconsiderationID: "sha256:request",
+		PolicyOverrides: &reconsideration.PolicyOverrides{
+			MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if checker.policy.MaximumDifferenceMS != 30*60*1_000 {
+		t.Fatalf("runtime policy = %#v", checker.policy)
+	}
+}
+
+func TestExecutorBindsEffectivePlanBeforeStartingRepair(t *testing.T) {
+	t.Parallel()
+	authorized := manualAuthorization()
+	store := &fakeExecutionStore{}
+	manual := &fakeManualImporter{execution: casestore.ManualImportExecution{
+		State: casestore.ManualImportImported,
+	}}
+	executor := testExecutorWithStore(
+		t, store, &fakeChecker{result: acceptedManual(authorized)}, manual,
+		&fakeJoinExecutor{}, &fakeJoinedFileImporter{},
+	)
+	planned := casestore.PlannedCase{
+		Assembly:          caseAssembly(),
+		Decision:          contracts.RepairDecisionV3{Kind: contracts.ActionManualImportFile},
+		ReconsiderationID: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		PolicyOverrides: &reconsideration.PolicyOverrides{
+			MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
+		},
+	}
+	if _, err := executor.ExecutePlan(context.Background(), planned); err != nil {
+		t.Fatal(err)
+	}
+	if store.bindCalls != 1 || !reflect.DeepEqual(store.bound, planned) || manual.calls != 1 {
+		t.Fatalf("bound=%#v bind calls=%d manual calls=%d", store.bound, store.bindCalls, manual.calls)
+	}
+}
+
+func TestExecutorRejectsPolicyWithoutReconsiderationIdentity(t *testing.T) {
+	t.Parallel()
+	checker := &fakeChecker{}
+	executor := testExecutor(
+		t, checker, &fakeManualImporter{}, &fakeJoinExecutor{}, &fakeJoinedFileImporter{},
+	)
+	_, err := executor.ExecutePlan(context.Background(), casestore.PlannedCase{
+		Assembly: caseAssembly(),
+		PolicyOverrides: &reconsideration.PolicyOverrides{
+			MaximumRuntimeDifferenceMS: 30 * 60 * 1_000,
+		},
+	})
+	if err == nil || checker.calls != 0 {
+		t.Fatalf("error=%v checker calls=%d", err, checker.calls)
 	}
 }
 
@@ -219,40 +286,21 @@ func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 	})
 }
 
-func TestNewRequiresDependencies(t *testing.T) {
-	t.Parallel()
-
-	valid := Dependencies{
-		Store: &fakeExecutionStore{}, Checker: &fakeChecker{}, ManualImports: &fakeManualImporter{},
-		Joins: &fakeJoinExecutor{}, JoinedFileImports: &fakeJoinedFileImporter{},
-		Remuxes: &fakeRemuxExecutor{}, RemuxFileImports: &fakeRemuxFileImporter{},
-	}
-	tests := []Dependencies{
-		{Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, JoinedFileImports: valid.JoinedFileImports},
-		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins},
-	}
-	for _, dependencies := range tests {
-		if _, err := New(dependencies); err == nil {
-			t.Fatal("incomplete dependencies were accepted")
-		}
-	}
-}
-
 type fakeChecker struct {
 	result executioncheck.Result
 	err    error
 	calls  int
+	policy decisionpolicy.RuntimePolicy
 }
 
-func (checker *fakeChecker) Check(
-	context.Context,
-	casebuilder.Assembly,
-	contracts.RepairDecisionV3,
+func (checker *fakeChecker) CheckWithPolicy(
+	_ context.Context,
+	_ casebuilder.Assembly,
+	_ contracts.RepairDecisionV3,
+	policy decisionpolicy.RuntimePolicy,
 ) (executioncheck.Result, error) {
 	checker.calls++
+	checker.policy = policy
 	return checker.result, checker.err
 }
 
@@ -262,6 +310,14 @@ type fakeExecutionStore struct {
 	join        casestore.JoinExecution
 	joinFound   bool
 	err         error
+	bound       casestore.PlannedCase
+	bindCalls   int
+}
+
+func (store *fakeExecutionStore) BindExecutionPlan(planned casestore.PlannedCase) error {
+	store.bindCalls++
+	store.bound = planned
+	return store.err
 }
 
 func (store *fakeExecutionStore) GetManualImportExecution(
@@ -384,7 +440,7 @@ func testExecutor(
 
 func testExecutorWithStore(
 	t *testing.T,
-	store ExecutionStore,
+	store PlanStore,
 	checker Checker,
 	manual ManualImporter,
 	joins JoinExecutor,

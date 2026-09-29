@@ -16,19 +16,21 @@ import (
 )
 
 const (
-	casesDirectoryName     = "cases"
-	planningDirectoryName  = "planning"
-	executionDirectoryName = "executions"
-	lockFileName           = ".lock"
+	casesDirectoryName         = "cases"
+	planningDirectoryName      = "planning"
+	executionPlanDirectoryName = "execution-plans"
+	executionDirectoryName     = "executions"
+	lockFileName               = ".lock"
 )
 
 type Store struct {
-	root         string
-	casesDir     string
-	planningDir  string
-	executionDir string
-	cases        *planningstate.CaseStore[CaseRecord]
-	results      *planningstate.ResultStore
+	root             string
+	casesDir         string
+	planningDir      string
+	executionPlanDir string
+	executionDir     string
+	cases            *planningstate.CaseStore[CaseRecord]
+	results          *planningstate.ResultStore
 }
 
 func (store *Store) PutAssembly(assembly casebuilder.Assembly) (bool, error) {
@@ -54,6 +56,10 @@ func New(root string) (*Store, error) {
 	if err := ensurePrivateDirectory(planningDir); err != nil {
 		return nil, fmt.Errorf("prepare planning records directory: %w", err)
 	}
+	executionPlanDir := filepath.Join(root, executionPlanDirectoryName)
+	if err := ensurePrivateDirectory(executionPlanDir); err != nil {
+		return nil, fmt.Errorf("prepare execution plan directory: %w", err)
+	}
 	executionDir := filepath.Join(root, executionDirectoryName)
 	if err := ensurePrivateDirectory(executionDir); err != nil {
 		return nil, fmt.Errorf("prepare execution records directory: %w", err)
@@ -63,7 +69,7 @@ func New(root string) (*Store, error) {
 	}
 	store := &Store{
 		root: root, casesDir: casesDir, planningDir: planningDir,
-		executionDir: executionDir,
+		executionPlanDir: executionPlanDir, executionDir: executionDir,
 	}
 	lock := func() (func(), error) {
 		stateLock, lockErr := store.lock()

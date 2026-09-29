@@ -53,10 +53,6 @@ type Reconsiderer interface {
 
 type Backoff planningrunner.Backoff
 
-func (backoff Backoff) delay(priorAttempts uint64) time.Duration {
-	return planningrunner.Backoff(backoff).Delay(priorAttempts)
-}
-
 type Dependencies struct {
 	Cases           CaseSource
 	Store           ResultStore
@@ -280,6 +276,7 @@ type caseResult struct {
 	PlannerDuration time.Duration
 	Reconsideration *ReconsiderationReview
 	RequestID       string
+	PolicyOverrides *reconsideration.PolicyOverrides
 }
 
 func (report *Report) add(result caseResult) {
@@ -308,13 +305,13 @@ func (report *Report) add(result caseResult) {
 		report.Decided++
 		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
 			Assembly: result.Assembly, Decision: result.Decision,
-			ReconsiderationID: result.RequestID,
+			ReconsiderationID: result.RequestID, PolicyOverrides: result.PolicyOverrides,
 		})
 	case caseAlreadyDecided:
 		report.AlreadyDecided++
 		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
 			Assembly: result.Assembly, Decision: result.Decision,
-			ReconsiderationID: result.RequestID,
+			ReconsiderationID: result.RequestID, PolicyOverrides: result.PolicyOverrides,
 		})
 	case caseDeferred, caseReconsidering:
 		report.Deferred++
@@ -395,6 +392,7 @@ func (runner *Runner) process(
 	}
 	result.Decision = decision
 	result.RequestID = request.RequestID
+	result.PolicyOverrides = request.PolicyOverrides
 	return result, nil
 }
 

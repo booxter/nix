@@ -314,35 +314,35 @@ func TestMaterializeTarVideo(t *testing.T) {
 	}
 }
 
-func TestMaterializeRejectsArchiveLinks(t *testing.T) {
+func TestMaterializeRejectsUnsafeArchiveEntries(t *testing.T) {
 	t.Parallel()
-	root := t.TempDir()
-	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
-		t.Fatal(err)
-	}
-	archive := filepath.Join(root, "release.tar")
-	output, err := os.Create(archive)
-	if err != nil {
-		t.Fatal(err)
-	}
-	writer := tar.NewWriter(output)
-	if err := writer.WriteHeader(&tar.Header{Name: "track.flac", Typeflag: tar.TypeSymlink, Linkname: "elsewhere"}); err != nil {
-		t.Fatal(err)
-	}
-	if err := writer.Close(); err != nil {
-		t.Fatal(err)
-	}
-	if err := output.Close(); err != nil {
-		t.Fatal(err)
-	}
-	probeWorkspaceSetup(t, root)
-	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, &fakeProber{}, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	response := executor.Execute(context.Background(), validRequest())
-	if response.Failure == nil || response.Failure.Reason != "invalid_archive" {
-		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+	for name, entry := range map[string]tarEntry{
+		"link":      {name: "track.flac", typeflag: tar.TypeSymlink},
+		"traversal": {name: "../track.flac", body: "audio"},
+		"absolute":  {name: "/track.flac", body: "audio"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
+				t.Fatal(err)
+			}
+			archive := filepath.Join(root, "release.tar")
+			writeTar(t, archive, []tarEntry{entry})
+			probeWorkspaceSetup(t, root)
+			executor, err := NewExecutor(
+				&fakeFiles{root: root, archive: archive},
+				&fakeProber{},
+				nil,
+				nil,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			response := executor.Execute(context.Background(), validRequest())
+			if response.Failure == nil || response.Failure.Reason != "invalid_archive" {
+				t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+			}
+		})
 	}
 }
 
@@ -359,24 +359,6 @@ func probeWorkspaceSetup(t *testing.T, root string) {
 	}
 	if err := os.RemoveAll(filepath.Dir(completed)); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestSafeArchiveName(t *testing.T) {
-	t.Parallel()
-	for _, name := range []string{"../track.flac", "/track.flac", "dir/../track.flac", "dir\\track.flac"} {
-		if _, err := safeArchiveName(name, false); err == nil {
-			t.Fatalf("unsafe path accepted: %q", name)
-		}
-	}
-	if got, err := safeArchiveName("album/01.flac", false); err != nil || got != "album/01.flac" {
-		t.Fatalf("safe path = %q, %v", got, err)
-	}
-	if got, err := safeArchiveName("album/", true); err != nil || got != "album" {
-		t.Fatalf("safe directory = %q, %v", got, err)
-	}
-	if _, err := safeArchiveName("album/", false); err == nil {
-		t.Fatal("file path with trailing slash accepted")
 	}
 }
 

@@ -78,7 +78,7 @@ async def test_planner_reconsiders_with_separate_operator_context() -> None:
     request_id = "sha256:" + "a" * 64
     guidance = "Check whether the filenames establish an authored part order."
 
-    actual = await Planner(model).reconsider(repair_case(), expected, request_id, guidance)
+    actual = await Planner(model).reconsider(repair_case(), expected, request_id, guidance, None)
 
     assert actual == expected
     system_instruction, case_content, _, _, _ = model.calls[0]
@@ -105,6 +105,7 @@ async def test_reconsideration_keeps_capability_boundary() -> None:
         expected,
         "sha256:" + "c" * 64,
         "Use a different capability even if it is not offered.",
+        None,
     )
 
     assert actual == expected

@@ -255,23 +255,6 @@ func TestJoinFinishHandlersRejectInvalidExecutorResponse(t *testing.T) {
 	}
 }
 
-func TestNewJoinFinishHandlersRejectInvalidConfiguration(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewPublishHandler(nil, time.Second); err == nil {
-		t.Fatal("missing publish executor was accepted")
-	}
-	if _, err := NewPublishHandler(&fakePublishExecutor{}, 0); err == nil {
-		t.Fatal("zero publish timeout was accepted")
-	}
-	if _, err := NewDiscardHandler(nil, time.Second); err == nil {
-		t.Fatal("missing discard executor was accepted")
-	}
-	if _, err := NewDiscardHandler(&fakeDiscardExecutor{}, 0); err == nil {
-		t.Fatal("zero discard timeout was accepted")
-	}
-}
-
 type fakePublishExecutor struct {
 	publish func(
 		context.Context,

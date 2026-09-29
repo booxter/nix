@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .api import PolicyOverrides
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import (
     decision_schema,
@@ -75,6 +76,7 @@ class LidarrPlanner(ContractPlanner[LidarrRepairCaseV3, LidarrRepairDecisionV3])
         prior_decision: LidarrRepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> LidarrRepairDecisionV3:
         validated_prior = _roundtrip_decision(prior_decision)
         if validated_prior.root.case_id.root != repair_case.case_id.root:
@@ -84,6 +86,7 @@ class LidarrPlanner(ContractPlanner[LidarrRepairCaseV3, LidarrRepairDecisionV3])
             build_reconsideration_context(
                 request_id,
                 guidance,
+                policy_overrides,
                 encode_decision(validated_prior),
             ),
         )

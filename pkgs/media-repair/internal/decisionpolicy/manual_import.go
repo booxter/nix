@@ -8,6 +8,10 @@ import (
 
 const minimumRuntimeToleranceMS int64 = 5 * 60 * 1_000
 
+type RuntimePolicy struct {
+	MaximumDifferenceMS int64
+}
+
 type ManualImportRejectionReason string
 
 const (
@@ -35,10 +39,11 @@ type ManualImportRejection struct {
 }
 
 type ManualImportRuntimeAssessment struct {
-	FileDurationMS int64
-	MovieRuntimeMS *int64
-	DifferenceMS   *int64
-	ToleranceMS    *int64
+	FileDurationMS     int64
+	MovieRuntimeMS     *int64
+	DifferenceMS       *int64
+	DefaultToleranceMS *int64
+	ToleranceMS        *int64
 }
 
 type AuthorizedManualImport struct {
@@ -49,6 +54,7 @@ type AuthorizedManualImport struct {
 	ImportMode          controller.RadarrImportMode
 	File                controller.RadarrManualImportCommandFile
 	ProbeDurationMS     int64
+	RuntimeToleranceMS  int64
 }
 
 type ManualImportValidation struct {
@@ -64,6 +70,14 @@ func (validation ManualImportValidation) Accepted() bool {
 func ValidateManualImport(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
+) ManualImportValidation {
+	return ValidateManualImportWithPolicy(assembly, decision, RuntimePolicy{})
+}
+
+func ValidateManualImportWithPolicy(
+	assembly casebuilder.Assembly,
+	decision contracts.RepairDecisionV3,
+	policy RuntimePolicy,
 ) ManualImportValidation {
 	validation := ManualImportValidation{Rejections: make([]ManualImportRejection, 0)}
 	if decision.Kind != contracts.ActionManualImportFile || decision.ManualImportFile == nil ||
@@ -145,6 +159,7 @@ func ValidateManualImport(
 	validation.Runtime = assessManualImportRuntime(
 		*duration.EffectiveMS,
 		movieRuntime(observation.Movie),
+		policy,
 	)
 	if validation.Runtime.DifferenceMS != nil &&
 		*validation.Runtime.DifferenceMS > *validation.Runtime.ToleranceMS {
@@ -162,6 +177,7 @@ func ValidateManualImport(
 		ImportMode:          binding.ImportMode,
 		File:                cloneManualImportCommand(binding.File),
 		ProbeDurationMS:     *duration.EffectiveMS,
+		RuntimeToleranceMS:  runtimeTolerance(validation.Runtime),
 	}
 	return validation
 }
@@ -197,6 +213,7 @@ func movieRuntime(movie *controller.RadarrMovie) *int {
 func assessManualImportRuntime(
 	fileDurationMS int64,
 	movieRuntimeMinutes *int,
+	policy RuntimePolicy,
 ) *ManualImportRuntimeAssessment {
 	assessment := &ManualImportRuntimeAssessment{FileDurationMS: fileDurationMS}
 	if movieRuntimeMinutes == nil {
@@ -207,14 +224,26 @@ func assessManualImportRuntime(
 	if fileDurationMS > movieDurationMS {
 		differenceMS = fileDurationMS - movieDurationMS
 	}
-	toleranceMS := movieDurationMS / 10
-	if toleranceMS < minimumRuntimeToleranceMS {
-		toleranceMS = minimumRuntimeToleranceMS
+	defaultToleranceMS := movieDurationMS / 10
+	if defaultToleranceMS < minimumRuntimeToleranceMS {
+		defaultToleranceMS = minimumRuntimeToleranceMS
+	}
+	toleranceMS := defaultToleranceMS
+	if policy.MaximumDifferenceMS > toleranceMS {
+		toleranceMS = policy.MaximumDifferenceMS
 	}
 	assessment.MovieRuntimeMS = &movieDurationMS
 	assessment.DifferenceMS = &differenceMS
+	assessment.DefaultToleranceMS = &defaultToleranceMS
 	assessment.ToleranceMS = &toleranceMS
 	return assessment
+}
+
+func runtimeTolerance(assessment *ManualImportRuntimeAssessment) int64 {
+	if assessment == nil || assessment.ToleranceMS == nil {
+		return 0
+	}
+	return *assessment.ToleranceMS
 }
 
 func cloneManualImportCommand(

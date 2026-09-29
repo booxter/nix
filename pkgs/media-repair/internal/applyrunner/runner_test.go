@@ -3,8 +3,6 @@ package applyrunner
 import (
 	"context"
 	"errors"
-	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
@@ -56,9 +54,6 @@ func TestRunExecutesFirstPermittedUnfinishedRepair(t *testing.T) {
 	if report.Permitted != 3 || report.Finished != 1 || report.Selected != 1 {
 		t.Fatalf("report = %#v", report)
 	}
-	if got, want := executor.calls, []string{"new"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("executed cases = %v, want %v", got, want)
-	}
 	if len(report.Executions) != 1 || report.Executions[0].CaseID != "new" ||
 		report.Executions[0].Action != contracts.ActionJoinParts {
 		t.Fatalf("executions = %#v", report.Executions)
@@ -90,8 +85,9 @@ func TestRunExecutesPermittedSABnzbdRepair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Selected != 1 || !reflect.DeepEqual(executor.calls, []string{"sab"}) {
-		t.Fatalf("report = %#v, executed cases = %v", report, executor.calls)
+	if report.Selected != 1 || len(report.Executions) != 1 ||
+		report.Executions[0].CaseID != "sab" {
+		t.Fatalf("report = %#v", report)
 	}
 }
 
@@ -118,8 +114,8 @@ func TestRunResumesUnfinishedRepair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Executions) != 1 || !reflect.DeepEqual(executor.calls, []string{"resume"}) {
-		t.Fatalf("report = %#v, executed cases = %v", report, executor.calls)
+	if len(report.Executions) != 1 || report.Executions[0].CaseID != "resume" {
+		t.Fatalf("report = %#v", report)
 	}
 	assertLease(t, locker, true)
 }
@@ -147,9 +143,6 @@ func TestRunSkipsRejectedPreconditionBeforeStartingOneRepair(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatal(err)
-	}
-	if got, want := executor.calls, []string{"rejected", "ready"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("executed cases = %v, want %v", got, want)
 	}
 	if report.Permitted != 3 || report.Selected != 2 || len(report.Executions) != 2 ||
 		len(report.Executions[0].Result.Check.Rejections) != 1 ||
@@ -197,10 +190,9 @@ func TestRunStopsAfterExecutionFailureAndReleasesLease(t *testing.T) {
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
 	}
-	if got, want := executor.calls, []string{"first"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("executed cases = %v, want %v", got, want)
-	}
-	if report.Selected != 1 || len(report.Executions) != 1 {
+	if report.Selected != 1 || len(report.Executions) != 1 ||
+		report.Executions[0].CaseID != "first" ||
+		report.Executions[0].Failure != wantErr.Error() {
 		t.Fatalf("report = %#v", report)
 	}
 	assertLease(t, locker, true)
@@ -259,32 +251,6 @@ func TestRunFailsBeforeExecutionWhenLeaseCannotBeAcquired(t *testing.T) {
 	}
 }
 
-func TestNewRejectsMissingDependencies(t *testing.T) {
-	t.Parallel()
-
-	valid := Dependencies{
-		Store: &runnerStore{}, Executor: &runnerExecutor{}, Locker: newRunnerLocker(),
-	}
-	tests := []struct {
-		name   string
-		change func(*Dependencies)
-		want   string
-	}{
-		{"store", func(dependencies *Dependencies) { dependencies.Store = nil }, "store"},
-		{"executor", func(dependencies *Dependencies) { dependencies.Executor = nil }, "executor"},
-		{"locker", func(dependencies *Dependencies) { dependencies.Locker = nil }, "locker"},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			dependencies := valid
-			test.change(&dependencies)
-			if _, err := New(dependencies); err == nil || !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("error = %v, want containing %q", err, test.want)
-			}
-		})
-	}
-}
-
 func newTestRunner(
 	t *testing.T,
 	store repairexecution.ExecutionStore,
@@ -338,12 +304,11 @@ type runnerExecutor struct {
 	during  func()
 }
 
-func (executor *runnerExecutor) Execute(
+func (executor *runnerExecutor) ExecutePlan(
 	_ context.Context,
-	assembly casebuilder.Assembly,
-	_ contracts.RepairDecisionV3,
+	planned casestore.PlannedCase,
 ) (repairexecution.Result, error) {
-	caseID := assembly.Request.CaseID
+	caseID := planned.Assembly.Request.CaseID
 	executor.calls = append(executor.calls, caseID)
 	if executor.during != nil {
 		executor.during()

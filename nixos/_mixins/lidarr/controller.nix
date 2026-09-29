@@ -40,6 +40,7 @@ let
       [ ];
   reviewDirectory = "${review.stateDirectory}/lidarr";
   reconsiderationDirectory = "${review.requestStateDirectory}/lidarr";
+  queueActionDirectory = "${review.queueActionStateDirectory}/lidarr";
   command =
     if controller == null then
       ""
@@ -70,6 +71,8 @@ let
           reviewDirectory
           "--reconsideration-directory"
           reconsiderationDirectory
+          "--queue-action-directory"
+          queueActionDirectory
         ]
         ++ rootArguments
       );
@@ -98,7 +101,10 @@ in
         timerDescription = "Periodically run the Lidarr repair controller";
         timeoutStopSec = "10s";
         readWritePaths = lib.optionals review.enable [ reviewDirectory ];
-        readOnlyPaths = lib.optionals review.enable [ reconsiderationDirectory ];
+        readOnlyPaths = lib.optionals review.enable [
+          reconsiderationDirectory
+          queueActionDirectory
+        ];
         supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
       })
       {

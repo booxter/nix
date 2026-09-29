@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from .api import PolicyOverrides
 from .planning_core import PlanningContext
 from .prompt import RECONSIDERATION_INSTRUCTION
 
@@ -9,6 +10,7 @@ from .prompt import RECONSIDERATION_INSTRUCTION
 def build_reconsideration_context(
     request_id: str,
     guidance: str,
+    policy_overrides: PolicyOverrides | None,
     prior_decision: bytes,
 ) -> PlanningContext:
     content = json.dumps(
@@ -20,6 +22,15 @@ def build_reconsideration_context(
                     "media_evidence": False,
                     "text": guidance,
                 },
+                "policy_overrides": (
+                    {
+                        "maximum_runtime_difference_ms": (
+                            policy_overrides.maximum_runtime_difference_ms
+                        )
+                    }
+                    if policy_overrides is not None
+                    else None
+                ),
                 "prior_decision": json.loads(prior_decision),
             }
         },

@@ -211,6 +211,27 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 	}
 }
 
+func TestAutomaticSummaryReportsExecutionFailure(t *testing.T) {
+	t.Parallel()
+
+	report := automaticReport{
+		ShadowSucceeded: true,
+		Apply: applyrunner.Report{Executions: []applyrunner.CaseResult{{
+			CaseID: "case-1", Action: contracts.ActionRemuxDVD,
+			Failure: "prepare DVD remux: stored decision does not match",
+		}}},
+	}
+	var output bytes.Buffer
+	if err := writeAutomaticSummary(&output, report); err != nil {
+		t.Fatal(err)
+	}
+	want := "observed=0 stored=0 superseded=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0 rejected=0\n" +
+		"apply=failed case_id=case-1 action=remux_dvd_v1 error=\"prepare DVD remux: stored decision does not match\"\n"
+	if output.String() != want {
+		t.Fatalf("summary = %q, want %q", output.String(), want)
+	}
+}
+
 func TestAutomaticSummaryReportsRejectionAndFollowingImport(t *testing.T) {
 	t.Parallel()
 

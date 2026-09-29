@@ -2,7 +2,7 @@
 {
 
   review = {
-    enable = lib.mkEnableOption "read-only Servarr repair review inbox";
+    enable = lib.mkEnableOption "Servarr repair review and maintenance inbox";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.media-repair-review;
@@ -24,6 +24,12 @@
       default = "/var/lib/media-repair-reconsideration";
       readOnly = true;
       description = "Shared root containing operator reconsideration requests.";
+    };
+    queueActionStateDirectory = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/var/lib/media-repair-actions";
+      readOnly = true;
+      description = "Shared root containing operator queue action requests.";
     };
     writerGroup = lib.mkOption {
       type = lib.types.nonEmptyStr;

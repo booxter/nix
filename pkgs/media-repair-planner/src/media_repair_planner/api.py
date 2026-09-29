@@ -25,7 +25,13 @@ from .decision_models import RepairDecisionV3
 MAX_REQUEST_BYTES = 8 << 20
 PLANNING_TIMEOUT_SECONDS = 600.0
 MAXIMUM_GUIDANCE_LENGTH = 2_000
+MAXIMUM_RUNTIME_DIFFERENCE_MS = 60 * 60 * 1_000
 FINGERPRINT_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+
+@dataclass(frozen=True)
+class PolicyOverrides:
+    maximum_runtime_difference_ms: int
 
 
 class Planner(Protocol):
@@ -37,6 +43,7 @@ class Planner(Protocol):
         prior_decision: RepairDecisionV3,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> RepairDecisionV3: ...
 
 
@@ -51,6 +58,7 @@ class TypedReconsideringPlanner[CaseT, DecisionT](TypedPlanner[CaseT, DecisionT]
         prior_decision: DecisionT,
         request_id: str,
         guidance: str,
+        policy_overrides: PolicyOverrides | None,
     ) -> DecisionT: ...
 
 
@@ -92,6 +100,7 @@ class ReconsiderationPlan[CaseT, DecisionT]:
     prior_decision: DecisionT
     request_id: str
     guidance: str
+    policy_overrides: PolicyOverrides | None
     planner: TypedReconsideringPlanner[CaseT, DecisionT]
     encode_decision: Callable[[DecisionT], bytes]
 
@@ -101,6 +110,7 @@ class ReconsiderationPlan[CaseT, DecisionT]:
             self.prior_decision,
             self.request_id,
             self.guidance,
+            self.policy_overrides,
         )
         return self.encode_decision(decision)
 
@@ -126,18 +136,23 @@ class ReconsiderationEndpoint[CaseT, DecisionT]:
         }:
             raise ContractError("invalid reconsideration request")
         guidance = value["operator_guidance"]
-        if not isinstance(guidance, dict) or set(guidance) != {"request_id", "text"}:
+        if (
+            not isinstance(guidance, dict)
+            or not {"request_id", "text"}.issubset(guidance)
+            or not set(guidance).issubset({"request_id", "text", "policy_overrides"})
+        ):
             raise ContractError("invalid reconsideration guidance")
         request_id = guidance["request_id"]
         text = guidance["text"]
+        policy_overrides = _decode_policy_overrides(guidance.get("policy_overrides"))
         if (
             not isinstance(request_id, str)
             or FINGERPRINT_PATTERN.fullmatch(request_id) is None
             or not isinstance(text, str)
-            or not text
             or text != text.strip()
             or len(text.encode()) > MAXIMUM_GUIDANCE_LENGTH
             or any(ord(character) < 32 and character not in "\n\t" for character in text)
+            or (not text and policy_overrides is None)
         ):
             raise ContractError("invalid reconsideration guidance")
         try:
@@ -152,9 +167,26 @@ class ReconsiderationEndpoint[CaseT, DecisionT]:
             prior_decision=prior_decision,
             request_id=request_id,
             guidance=text,
+            policy_overrides=policy_overrides,
             planner=self.planner,
             encode_decision=self.encode_decision,
         )
+
+
+def _decode_policy_overrides(value: object) -> PolicyOverrides | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != {"maximum_runtime_difference_ms"}:
+        raise ContractError("invalid reconsideration policy overrides")
+    maximum = value["maximum_runtime_difference_ms"]
+    if (
+        not isinstance(maximum, int)
+        or isinstance(maximum, bool)
+        or maximum <= 0
+        or maximum > MAXIMUM_RUNTIME_DIFFERENCE_MS
+    ):
+        raise ContractError("invalid reconsideration policy overrides")
+    return PolicyOverrides(maximum_runtime_difference_ms=maximum)
 
 
 class ErrorCode(StrEnum):

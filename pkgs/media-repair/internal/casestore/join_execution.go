@@ -378,7 +378,7 @@ func (store *Store) updateJoinExecution(
 }
 
 func (store *Store) validateJoinAuthorization(authorized decisionpolicy.AuthorizedJoin) error {
-	planned, err := store.GetPlannedCase(authorized.CaseID)
+	planned, err := store.GetExecutionPlan(authorized.CaseID)
 	if err != nil {
 		return err
 	}

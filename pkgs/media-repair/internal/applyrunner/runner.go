@@ -6,17 +6,12 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/applyselection"
-	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/repairexecution"
 )
 
 type Executor interface {
-	Execute(
-		context.Context,
-		casebuilder.Assembly,
-		contracts.RepairDecisionV3,
-	) (repairexecution.Result, error)
+	ExecutePlan(context.Context, casestore.PlannedCase) (repairexecution.Result, error)
 }
 
 type Lease interface {
@@ -38,9 +33,10 @@ type Runner struct {
 }
 
 type CaseResult struct {
-	CaseID string
-	Action contracts.DecisionAction
-	Result repairexecution.Result
+	CaseID  string
+	Action  contracts.DecisionAction
+	Result  repairexecution.Result
+	Failure string
 }
 
 type Report struct {
@@ -130,23 +126,22 @@ func (runner *Runner) Run(
 	started := 0
 	for _, candidate := range selected {
 		report.Selected++
-		result, executeErr := runner.dependencies.Executor.Execute(
-			ctx,
-			candidate.Assembly,
-			candidate.Decision,
-		)
-		report.Executions = append(report.Executions, CaseResult{
+		result, executeErr := runner.dependencies.Executor.ExecutePlan(ctx, candidate)
+		caseResult := CaseResult{
 			CaseID: candidate.Assembly.Request.CaseID,
 			Action: candidate.Decision.Kind,
 			Result: result,
-		})
+		}
 		if executeErr != nil {
+			caseResult.Failure = executeErr.Error()
+			report.Executions = append(report.Executions, caseResult)
 			return report, fmt.Errorf(
 				"execute repair case %q: %w",
 				candidate.Assembly.Request.CaseID,
 				executeErr,
 			)
 		}
+		report.Executions = append(report.Executions, caseResult)
 		if len(result.Check.Rejections) != 0 {
 			continue
 		}

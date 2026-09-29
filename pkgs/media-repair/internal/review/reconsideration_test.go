@@ -17,6 +17,7 @@ func TestNewReconsiderationDescribesFailedAttempt(t *testing.T) {
 		reconsideration.ServiceRadarr,
 		"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		"Check the release-specific runtime.",
+		nil,
 		createdAt,
 	)
 	if err != nil {

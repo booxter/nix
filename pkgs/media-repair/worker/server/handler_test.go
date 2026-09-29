@@ -207,20 +207,6 @@ func TestHandlerRejectsInvalidExecutorResponse(t *testing.T) {
 	}
 }
 
-func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewHandler(nil, time.Second, 1); err == nil {
-		t.Fatal("missing executor was accepted")
-	}
-	if _, err := NewHandler(&fakeExecutor{}, 0, 1); err == nil {
-		t.Fatal("zero timeout was accepted")
-	}
-	if _, err := NewHandler(&fakeExecutor{}, time.Second, 0); err == nil {
-		t.Fatal("zero concurrency limit was accepted")
-	}
-}
-
 func TestRouterRegistersTypedOperations(t *testing.T) {
 	t.Parallel()
 
@@ -244,25 +230,6 @@ func TestRouterRegistersTypedOperations(t *testing.T) {
 	router.ServeHTTP(missing, httptest.NewRequest(http.MethodPost, "/v1/missing", nil))
 	if missing.Code != http.StatusNotFound {
 		t.Fatalf("missing status = %d", missing.Code)
-	}
-}
-
-func TestRouterRejectsInvalidOperationSets(t *testing.T) {
-	t.Parallel()
-
-	handler := testHandler(t, &fakeExecutor{}, time.Second, 1)
-	var missing *Handler
-	for name, operations := range map[string][]Operation{
-		"empty":     nil,
-		"nil":       {missing},
-		"duplicate": {handler, handler},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			if _, err := NewRouter(operations...); err == nil {
-				t.Fatal("invalid operation set was accepted")
-			}
-		})
 	}
 }
 

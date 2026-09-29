@@ -135,6 +135,16 @@ func (configured *configuredRepairExecutor) Execute(
 	return configured.executor.Execute(ctx, assembly, decision)
 }
 
+func (configured *configuredRepairExecutor) ExecutePlan(
+	ctx context.Context,
+	planned casestore.PlannedCase,
+) (repairexecution.Result, error) {
+	if configured == nil || configured.executor == nil {
+		return repairexecution.Result{}, fmt.Errorf("repair executor is not configured")
+	}
+	return configured.executor.ExecutePlan(ctx, planned)
+}
+
 func (configured *configuredRepairExecutor) Close() {
 	if configured == nil {
 		return

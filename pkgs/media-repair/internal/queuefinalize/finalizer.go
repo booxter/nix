@@ -62,6 +62,14 @@ type Report struct {
 	Reconciled int
 }
 
+type Outcome string
+
+const (
+	OutcomeFinalized       Outcome = "finalized"
+	OutcomeAlreadyAbsent   Outcome = "already_absent"
+	OutcomeIdentityChanged Outcome = "identity_changed"
+)
+
 type Finalizer struct {
 	service string
 	read    func(context.Context) ([]Entry, error)
@@ -99,17 +107,55 @@ func (finalizer *Finalizer) Run(
 			return Report{}, fmt.Errorf("queue finalization candidate is ineligible")
 		}
 	}
+	report, _, err := finalizer.run(ctx, candidates, limit)
+	return report, err
+}
+
+// Finalize removes one exactly identified queue entry. An absent entry is a
+// successful, idempotent outcome; a live entry with the same numeric ID but a
+// different identity is reported without being removed.
+func (finalizer *Finalizer) Finalize(ctx context.Context, candidate Entry) (Outcome, error) {
+	if finalizer == nil || finalizer.store == nil {
+		return "", fmt.Errorf("queue finalizer is not configured")
+	}
+	if !candidate.Eligible() {
+		return "", fmt.Errorf("queue finalization candidate is ineligible")
+	}
+	_, outcomes, err := finalizer.run(ctx, []Entry{candidate}, 1)
+	if err != nil {
+		return "", err
+	}
+	outcome, found := outcomes[candidate.QueueID]
+	if !found {
+		return "", fmt.Errorf("queue finalization produced no outcome")
+	}
+	return outcome, nil
+}
+
+func (finalizer *Finalizer) run(
+	ctx context.Context,
+	candidates []Entry,
+	limit int,
+) (Report, map[int64]Outcome, error) {
+	if finalizer == nil || finalizer.store == nil || limit <= 0 {
+		return Report{}, nil, fmt.Errorf("queue finalizer is not configured")
+	}
+	for _, candidate := range candidates {
+		if !candidate.Eligible() {
+			return Report{}, nil, fmt.Errorf("queue finalization candidate is ineligible")
+		}
+	}
 	current, err := finalizer.read(ctx)
 	if err != nil {
-		return Report{}, fmt.Errorf("refresh %s queue before finalization: %w", finalizer.service, err)
+		return Report{}, nil, fmt.Errorf("refresh %s queue before finalization: %w", finalizer.service, err)
 	}
 	byID := make(map[int64]Entry, len(current))
 	for _, entry := range current {
 		if entry.QueueID <= 0 {
-			return Report{}, fmt.Errorf("%s queue contains an invalid record", finalizer.service)
+			return Report{}, nil, fmt.Errorf("%s queue contains an invalid record", finalizer.service)
 		}
 		if _, duplicate := byID[entry.QueueID]; duplicate {
-			return Report{}, fmt.Errorf(
+			return Report{}, nil, fmt.Errorf(
 				"%s queue contains duplicate record ID %d", finalizer.service, entry.QueueID,
 			)
 		}
@@ -117,9 +163,10 @@ func (finalizer *Finalizer) Run(
 	}
 
 	report := Report{}
+	outcomes := make(map[int64]Outcome, len(candidates))
 	records, err := finalizer.store.list()
 	if err != nil {
-		return report, err
+		return report, outcomes, err
 	}
 	for _, record := range records {
 		if record.State != Prepared {
@@ -129,7 +176,7 @@ func (finalizer *Finalizer) Run(
 			continue
 		}
 		if err := finalizer.store.complete(record.Entry, finalizer.now()); err != nil {
-			return report, err
+			return report, outcomes, err
 		}
 		report.Reconciled++
 	}
@@ -143,23 +190,29 @@ func (finalizer *Finalizer) Run(
 			break
 		}
 		observed, present := byID[candidate.QueueID]
-		if !present || observed != candidate || !observed.Eligible() {
+		if !present {
+			outcomes[candidate.QueueID] = OutcomeAlreadyAbsent
+			continue
+		}
+		if observed != candidate || !observed.Eligible() {
+			outcomes[candidate.QueueID] = OutcomeIdentityChanged
 			continue
 		}
 		if err := finalizer.store.prepare(candidate, finalizer.now()); err != nil {
-			return report, err
+			return report, outcomes, err
 		}
 		if err := finalizer.remove(ctx, candidate.QueueID); err != nil {
-			return report, fmt.Errorf(
+			return report, outcomes, fmt.Errorf(
 				"finalize %s queue record %d: %w", finalizer.service, candidate.QueueID, err,
 			)
 		}
 		if err := finalizer.store.complete(candidate, finalizer.now()); err != nil {
-			return report, err
+			return report, outcomes, err
 		}
 		report.Finalized++
+		outcomes[candidate.QueueID] = OutcomeFinalized
 	}
-	return report, nil
+	return report, outcomes, nil
 }
 
 func (finalizer *Finalizer) now() time.Time {

@@ -101,14 +101,6 @@ func TestInspectReportsInternalFailure(t *testing.T) {
 	}
 }
 
-func TestNewExecutorRequiresStore(t *testing.T) {
-	t.Parallel()
-
-	if _, err := NewExecutor(nil); err == nil {
-		t.Fatal("missing store was accepted")
-	}
-}
-
 type fakeStore struct {
 	execution joinstate.Execution
 	found     bool

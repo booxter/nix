@@ -188,7 +188,7 @@ let
       '';
 
       meta = common.meta // {
-        description = "Read-only review inbox for Servarr repair decisions";
+        description = "Operator review and maintenance inbox for Servarr repairs";
         mainProgram = "media-repair-review";
       };
     }
