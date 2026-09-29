@@ -440,7 +440,7 @@ func testExecutor(
 
 func testExecutorWithStore(
 	t *testing.T,
-	store ExecutionStore,
+	store PlanStore,
 	checker Checker,
 	manual ManualImporter,
 	joins JoinExecutor,
