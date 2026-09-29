@@ -10,4 +10,5 @@ runs:
         android: true
         dotnet: true
         haskell: true
+        swap-storage: false
         tool-cache: false

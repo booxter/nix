@@ -27,9 +27,20 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
-        codex
-        jiratui
         ;
+
+      codex = pkgsNixpkgsUnstable.codex.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # https://github.com/openai/codex/issues/47390
+          ../patches/codex-show-full-patches.patch
+        ];
+      });
+
+      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../patches/jiratui-fetch-all-projects.patch
+        ];
+      });
 
       # The repair planner's Qwen model requires Ollama features newer than
       # the release branch. Keep the base and ROCm variants on one revision.

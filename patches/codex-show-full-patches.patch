@@ -1,0 +1,23 @@
+diff --git a/tui/src/history_cell/patches.rs b/tui/src/history_cell/patches.rs
+--- a/tui/src/history_cell/patches.rs
++++ b/tui/src/history_cell/patches.rs
+@@ -29,14 +29,13 @@
+     }
+ 
+     fn compact_hyperlink_lines(&self, width: u16) -> Vec<HyperlinkLine> {
+-        crate::diff_render::create_diff_preview_with_links(
+-            &self.changes,
+-            &self.cwd,
+-            usize::from(width),
+-            super::activity_preview::DETAIL_PREVIEW_LINES,
+-        )
++        self.display_hyperlink_lines(width)
+     }
+ 
++    fn has_hidden_activity_details(&self, _width: u16) -> bool {
++        false
++    }
++
+     fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
+         visible_lines(self.display_hyperlink_lines(width))
+     }
