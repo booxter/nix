@@ -28,6 +28,7 @@ const (
 	StatePlanningFailed   State = "planning_failed"
 	StateReviewed         State = "reviewed"
 	StateRepairPlanned    State = "repair_planned"
+	StateExecutionBlocked State = "execution_blocked"
 	StateNoLongerQueued   State = "no_longer_queued"
 )
 
@@ -59,6 +60,20 @@ type Reconsideration struct {
 	Failure         string                              `json:"failure,omitempty"`
 }
 
+type RuntimeAssessment struct {
+	CandidateDurationMS int64 `json:"candidate_duration_ms"`
+	MovieRuntimeMS      int64 `json:"movie_runtime_ms"`
+	DifferenceMS        int64 `json:"difference_ms"`
+	DefaultToleranceMS  int64 `json:"default_tolerance_ms"`
+	ActiveToleranceMS   int64 `json:"active_tolerance_ms"`
+}
+
+type ExecutionBlock struct {
+	Reason         string             `json:"reason"`
+	DecisionReason string             `json:"decision_reason,omitempty"`
+	Runtime        *RuntimeAssessment `json:"runtime,omitempty"`
+}
+
 func ParseDecision(data []byte) (Decision, error) {
 	var decision Decision
 	if err := json.Unmarshal(data, &decision); err != nil {
@@ -87,6 +102,7 @@ type Item struct {
 	NoLongerQueuedAt  *time.Time       `json:"no_longer_queued_at,omitempty"`
 	Decision          *Decision        `json:"decision,omitempty"`
 	Reconsideration   *Reconsideration `json:"reconsideration,omitempty"`
+	ExecutionBlock    *ExecutionBlock  `json:"execution_block,omitempty"`
 }
 
 type Snapshot struct {
@@ -181,13 +197,27 @@ func validateItem(item Item, historical bool) error {
 			return fmt.Errorf("reconsideration policy overrides are invalid")
 		}
 	}
+	if block := item.ExecutionBlock; block != nil {
+		if item.CaseID == "" || strings.TrimSpace(block.Reason) == "" ||
+			block.Reason != strings.TrimSpace(block.Reason) ||
+			block.DecisionReason != strings.TrimSpace(block.DecisionReason) ||
+			(!historical && item.State != StateExecutionBlocked) {
+			return fmt.Errorf("execution block is invalid")
+		}
+		if runtime := block.Runtime; runtime != nil &&
+			(runtime.CandidateDurationMS <= 0 || runtime.MovieRuntimeMS <= 0 ||
+				runtime.DifferenceMS < 0 || runtime.DefaultToleranceMS <= 0 ||
+				runtime.ActiveToleranceMS < runtime.DefaultToleranceMS) {
+			return fmt.Errorf("execution runtime assessment is invalid")
+		}
+	}
 	return nil
 }
 
 func validCurrentState(state State) bool {
 	switch state {
 	case StateActive, StateNotProcessed, StatePlanningDeferred, StatePlanningFailed,
-		StateReviewed, StateRepairPlanned:
+		StateReviewed, StateRepairPlanned, StateExecutionBlocked:
 		return true
 	default:
 		return false

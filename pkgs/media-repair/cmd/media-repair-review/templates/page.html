@@ -58,6 +58,22 @@
         {{else}}
         <section class="decision"><h3>No planner decision</h3><p>{{$entry.Item.Detail}}</p></section>
         {{end}}
+        {{if $entry.Item.ExecutionBlock}}
+        <section class="execution-block">
+          <h3>Execution blocked</h3>
+          <p><strong>{{reasonLabel $entry.Item.ExecutionBlock.Reason}}</strong>{{if $entry.Item.ExecutionBlock.DecisionReason}} · {{reasonLabel $entry.Item.ExecutionBlock.DecisionReason}}{{end}}</p>
+          <p>The controller did not start this repair because its execution precondition failed.</p>
+          {{if $entry.Item.ExecutionBlock.Runtime}}
+          <dl class="execution-details">
+            <dt>Selected runtime</dt><dd>{{formatDurationMS $entry.Item.ExecutionBlock.Runtime.CandidateDurationMS}}</dd>
+            <dt>Movie runtime</dt><dd>{{formatDurationMS $entry.Item.ExecutionBlock.Runtime.MovieRuntimeMS}}</dd>
+            <dt>Difference</dt><dd>{{formatDurationMS $entry.Item.ExecutionBlock.Runtime.DifferenceMS}}</dd>
+            <dt>Default limit</dt><dd>{{formatDurationMS $entry.Item.ExecutionBlock.Runtime.DefaultToleranceMS}}</dd>
+            <dt>Active limit</dt><dd>{{formatDurationMS $entry.Item.ExecutionBlock.Runtime.ActiveToleranceMS}}</dd>
+          </dl>
+          {{end}}
+        </section>
+        {{end}}
         {{if $entry.Item.Reconsideration}}
         <section class="reconsideration">
           <h3>Reconsideration</h3>
@@ -136,6 +152,7 @@
         <a href="?state=not_processed">Not processed</a>
         <a href="?state=reviewed">Reviewed</a>
         <a href="?state=repair_planned">Repair planned</a>
+        <a href="?state=execution_blocked">Execution blocked</a>
         <a href="?state=planning_failed">Failed</a>
       </div>
       {{if .Items}}

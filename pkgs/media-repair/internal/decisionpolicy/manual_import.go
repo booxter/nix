@@ -39,10 +39,11 @@ type ManualImportRejection struct {
 }
 
 type ManualImportRuntimeAssessment struct {
-	FileDurationMS int64
-	MovieRuntimeMS *int64
-	DifferenceMS   *int64
-	ToleranceMS    *int64
+	FileDurationMS     int64
+	MovieRuntimeMS     *int64
+	DifferenceMS       *int64
+	DefaultToleranceMS *int64
+	ToleranceMS        *int64
 }
 
 type AuthorizedManualImport struct {
@@ -223,15 +224,17 @@ func assessManualImportRuntime(
 	if fileDurationMS > movieDurationMS {
 		differenceMS = fileDurationMS - movieDurationMS
 	}
-	toleranceMS := movieDurationMS / 10
-	if toleranceMS < minimumRuntimeToleranceMS {
-		toleranceMS = minimumRuntimeToleranceMS
+	defaultToleranceMS := movieDurationMS / 10
+	if defaultToleranceMS < minimumRuntimeToleranceMS {
+		defaultToleranceMS = minimumRuntimeToleranceMS
 	}
+	toleranceMS := defaultToleranceMS
 	if policy.MaximumDifferenceMS > toleranceMS {
 		toleranceMS = policy.MaximumDifferenceMS
 	}
 	assessment.MovieRuntimeMS = &movieDurationMS
 	assessment.DifferenceMS = &differenceMS
+	assessment.DefaultToleranceMS = &defaultToleranceMS
 	assessment.ToleranceMS = &toleranceMS
 	return assessment
 }

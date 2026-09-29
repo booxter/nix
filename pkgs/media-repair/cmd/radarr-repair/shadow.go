@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
@@ -361,6 +362,29 @@ func publishRadarrReview(
 	}
 	if err := store.Publish(snapshot); err != nil {
 		return fmt.Errorf("publish Radarr review snapshot: %w", err)
+	}
+	return nil
+}
+
+func publishAppliedRadarrReview(
+	directory string,
+	shadowReport shadowrunner.Report,
+	applyReport applyrunner.Report,
+	generatedAt time.Time,
+) error {
+	if directory == "" {
+		return nil
+	}
+	snapshot, err := radarrreview.SnapshotWithApply(shadowReport, applyReport, generatedAt)
+	if err != nil {
+		return fmt.Errorf("build applied Radarr review snapshot: %w", err)
+	}
+	store, err := review.NewStore(directory)
+	if err != nil {
+		return fmt.Errorf("configure Radarr review store: %w", err)
+	}
+	if err := store.Publish(snapshot); err != nil {
+		return fmt.Errorf("publish applied Radarr review snapshot: %w", err)
 	}
 	return nil
 }

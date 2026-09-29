@@ -33,6 +33,7 @@ type Rejection struct {
 	Reason         RejectionReason
 	DecisionReason string
 	Stabilization  *StabilizationAssessment
+	Runtime        *decisionpolicy.ManualImportRuntimeAssessment
 }
 
 type StabilizationAssessment struct {
@@ -134,9 +135,9 @@ func (checker *Checker) CheckWithPolicy(
 		return Result{}, err
 	}
 
-	storedAuthorization, decisionReason, ok := authorize(stored, decision, policy)
+	storedAuthorization, decisionReason, runtime, ok := authorize(stored, decision, policy)
 	if !ok {
-		return rejectedDecision(DecisionRejected, decisionReason), nil
+		return rejectedDecision(DecisionRejected, decisionReason, runtime), nil
 	}
 	now := checker.dependencies.Clock.Now().UTC()
 	if now.IsZero() {
@@ -179,9 +180,9 @@ func (checker *Checker) CheckWithPolicy(
 	if fresh.Request.CaseID != stored.Request.CaseID {
 		return rejected(CaseChanged), nil
 	}
-	freshAuthorization, decisionReason, ok := authorize(fresh, decision, policy)
+	freshAuthorization, decisionReason, runtime, ok := authorize(fresh, decision, policy)
 	if !ok {
-		return rejectedDecision(AuthorizationChanged, decisionReason), nil
+		return rejectedDecision(AuthorizationChanged, decisionReason, runtime), nil
 	}
 	if reason, unsafe := replacementRejection(fresh, freshAuthorization); unsafe {
 		return rejected(reason), nil
@@ -221,50 +222,54 @@ func authorize(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 	policy decisionpolicy.RuntimePolicy,
-) (Authorization, string, bool) {
+) (Authorization, string, *decisionpolicy.ManualImportRuntimeAssessment, bool) {
 	switch decision.Kind {
 	case contracts.ActionJoinParts:
 		validation := decisionpolicy.ValidateJoin(assembly, decision)
 		if validation.Accepted() {
-			return Authorization{Join: validation.Authorized}, "", true
+			return Authorization{Join: validation.Authorized}, "", nil, true
 		}
 		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0].Reason), false
+			return Authorization{}, string(validation.Rejections[0].Reason), nil, false
 		}
 	case contracts.ActionManualImportFile:
 		validation := decisionpolicy.ValidateManualImportWithPolicy(assembly, decision, policy)
 		if validation.Accepted() {
-			return Authorization{ManualImport: validation.Authorized}, "", true
+			return Authorization{ManualImport: validation.Authorized}, "", validation.Runtime, true
 		}
 		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0].Reason), false
+			return Authorization{}, string(validation.Rejections[0].Reason), validation.Runtime, false
 		}
 	case contracts.ActionRemuxBluray:
 		validation := decisionpolicy.ValidateRemuxWithPolicy(assembly, decision, policy)
 		if validation.Accepted() {
-			return Authorization{Remux: validation.Authorized}, "", true
+			return Authorization{Remux: validation.Authorized}, "", validation.Runtime, true
 		}
 		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0]), false
+			return Authorization{}, string(validation.Rejections[0]), validation.Runtime, false
 		}
 	case contracts.ActionRemuxDVD:
 		validation := decisionpolicy.ValidateDVDWithPolicy(assembly, decision, policy)
 		if validation.Accepted() {
-			return Authorization{DVD: validation.Authorized}, "", true
+			return Authorization{DVD: validation.Authorized}, "", validation.Runtime, true
 		}
 		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0]), false
+			return Authorization{}, string(validation.Rejections[0]), validation.Runtime, false
 		}
 	}
-	return Authorization{}, "", false
+	return Authorization{}, "", nil, false
 }
 
 func rejected(reason RejectionReason) Result {
 	return Result{Rejections: []Rejection{{Reason: reason}}}
 }
 
-func rejectedDecision(reason RejectionReason, decisionReason string) Result {
+func rejectedDecision(
+	reason RejectionReason,
+	decisionReason string,
+	runtime *decisionpolicy.ManualImportRuntimeAssessment,
+) Result {
 	return Result{Rejections: []Rejection{{
-		Reason: reason, DecisionReason: decisionReason,
+		Reason: reason, DecisionReason: decisionReason, Runtime: runtime,
 	}}}
 }

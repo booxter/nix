@@ -128,6 +128,13 @@ func newHandler(configuration config) (http.Handler, error) {
 		"formatDurationMS": func(milliseconds int64) string {
 			return (time.Duration(milliseconds) * time.Millisecond).String()
 		},
+		"reasonLabel": func(value string) string {
+			label := strings.ReplaceAll(value, "_", " ")
+			if label == "" {
+				return label
+			}
+			return strings.ToUpper(label[:1]) + label[1:]
+		},
 		"stateLabel": stateLabel,
 		"serviceLabel": func(value review.Service) string {
 			if value == review.ServiceLidarr {
@@ -553,6 +560,8 @@ func stateLabel(state review.State) string {
 		return "Reviewed"
 	case review.StateRepairPlanned:
 		return "Repair planned"
+	case review.StateExecutionBlocked:
+		return "Execution blocked"
 	case review.StateNoLongerQueued:
 		return "No longer queued"
 	default:

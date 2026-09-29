@@ -27,6 +27,7 @@ type AuthorizedDVD struct {
 type DVDValidation struct {
 	Authorized *AuthorizedDVD
 	Rejections []RemuxRejectionReason
+	Runtime    *ManualImportRuntimeAssessment
 }
 
 func (validation DVDValidation) Accepted() bool {
@@ -103,7 +104,7 @@ func ValidateDVDWithPolicy(
 		title.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
 	)
 	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
-		return rejectDVD(RemuxRuntimeMismatch)
+		return DVDValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
 	}
 	files := indexFiles(observation.Inventory)
 	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
@@ -142,5 +143,5 @@ func ValidateDVDWithPolicy(
 	}) {
 		return rejectDVD(RemuxFileUnavailable)
 	}
-	return DVDValidation{Authorized: authorized}
+	return DVDValidation{Authorized: authorized, Runtime: runtime}
 }

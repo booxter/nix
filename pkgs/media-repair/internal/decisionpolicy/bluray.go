@@ -43,6 +43,7 @@ type AuthorizedRemux struct {
 type RemuxValidation struct {
 	Authorized *AuthorizedRemux
 	Rejections []RemuxRejectionReason
+	Runtime    *ManualImportRuntimeAssessment
 }
 
 func (validation RemuxValidation) Accepted() bool {
@@ -108,7 +109,7 @@ func ValidateRemuxWithPolicy(
 		playlist.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
 	)
 	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
-		return rejectRemux(RemuxRuntimeMismatch)
+		return RemuxValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
 	}
 	files := indexFiles(observation.Inventory)
 	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
@@ -147,7 +148,7 @@ func ValidateRemuxWithPolicy(
 		authorized.Clips = append(authorized.Clips, clip)
 		authorized.SourceBytes += clip.Fingerprint.SizeBytes
 	}
-	return RemuxValidation{Authorized: authorized}
+	return RemuxValidation{Authorized: authorized, Runtime: runtime}
 }
 
 func availableRemuxFile(

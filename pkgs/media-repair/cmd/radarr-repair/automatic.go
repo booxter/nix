@@ -343,12 +343,21 @@ func writeAutomaticExecution(writer io.Writer, execution applyrunner.CaseResult)
 }
 
 func runAutomaticOnce(ctx context.Context, config automaticConfig) (automaticReport, error) {
-	return runAutomaticWith(ctx, config, automaticDependencies{
+	reviewDirectory := config.Shadow.ReviewDirectory
+	config.Shadow.ReviewDirectory = ""
+	report, runErr := runAutomaticWith(ctx, config, automaticDependencies{
 		shadow:   runShadowOnce,
 		guard:    filesystemApplyGuard{},
 		apply:    applyCurrentCases,
 		finalize: finalizeRadarrQueue,
 	})
+	publishErr := publishAppliedRadarrReview(
+		reviewDirectory,
+		report.Shadow,
+		report.Apply,
+		time.Now().UTC(),
+	)
+	return report, errors.Join(runErr, publishErr)
 }
 
 func runAutomaticWith(
