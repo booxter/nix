@@ -26,6 +26,12 @@ in
     xdg.configFile."jiratui/config.yaml".source = yamlFormat.generate "jiratui-config.yaml" {
       jira_api_base_url = "https://nvidia.atlassian.net";
       jira_api_username = config.host.hm.email;
+      pre_defined_jql_expressions = {
+        "1" = {
+          label = "Assigned to me, not Done";
+          expression = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC";
+        };
+      };
     };
   };
 }
