@@ -11,6 +11,9 @@ files without splitting things too far. Comment sparingly to explain
 nonobvious choices. Do not recount old code in comments unless that history
 helps prevent a mistake.
 
+Use `apply_patch` for manual edits to tracked text files; do not rewrite them
+with scripts or shell redirects.
+
 Split distinct changes into logical commits. Keep messages brief and useful
 without stating the obvious. Include historical context when it explains why.
 Follow repo existing commit message style. Never bypass commit-message

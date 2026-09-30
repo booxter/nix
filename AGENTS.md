@@ -27,6 +27,8 @@ Scope: whole repository.
   Unrelated dirty files may be human edits or another agent working in parallel.
   Do not try to repair, revert, or normalize unrelated dirty paths.
 - Prefer flake apps/repo scripts over ad hoc commands. Check `--help` when unsure.
+- If `nix run .#<app>` is blocked by sandbox permissions, retry it with approval.
+  Never switch tools silently. Stop after a failed secret edit.
 - Prefer dependencies and packages already available from nixpkgs before adding
   local package definitions or vendored sources.
 - Do not trim unchanged context from vendored patches. Patches should carry
