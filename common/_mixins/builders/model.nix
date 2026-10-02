@@ -4,9 +4,7 @@
   lib,
 }:
 let
-  username = config.host.username;
-  identityFileName = config.host.nix.builderClient.sshIdentityFileName;
-  identityFile = "${config.users.users.${username}.home}/.ssh/${identityFileName}";
+  client = config.host.nix.builderClient;
   toBuilder = _name: builder: {
     inherit (builder)
       hostName
@@ -17,8 +15,8 @@ let
       uses
       ;
     protocol = "ssh-ng";
-    sshKey = identityFile;
-    sshUser = username;
+    sshKey = client.sshIdentityFile;
+    sshUser = client.sshUser;
     systems = [ builder.system ] ++ lib.optional (builder.system == "x86_64-linux") "i686-linux";
   };
   candidates = lib.mapAttrs toBuilder (

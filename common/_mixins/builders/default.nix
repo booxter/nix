@@ -24,7 +24,12 @@ let
   };
   useType = lib.types.enum [
     "build"
+    "ci"
     "nixpkgs"
+  ];
+  buildUseType = lib.types.enum [
+    "build"
+    "ci"
   ];
   builderOptions = {
     community = lib.mkOption {
@@ -123,10 +128,26 @@ let
     };
   };
   clientType = lib.types.submodule {
-    options.sshIdentityFileName = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = if config.host.realm == "home" then "id_ed25519" else "jgwxhwdl4x-nix-builder";
-      description = "SSH identity file name used to authenticate to builders in this realm.";
+    options = {
+      buildUse = lib.mkOption {
+        type = buildUseType;
+        default = "build";
+        description = "Builder use selected for ordinary Nix builds.";
+      };
+
+      sshIdentityFile = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "${config.users.users.${config.host.username}.home}/.ssh/${
+          if config.host.realm == "home" then "id_ed25519" else "jgwxhwdl4x-nix-builder"
+        }";
+        description = "SSH identity file used by the Nix daemon to authenticate to builders.";
+      };
+
+      sshUser = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = config.host.username;
+        description = "SSH user used by the Nix daemon to authenticate to builders.";
+      };
     };
   };
   externalBuilderType = lib.types.submodule {
