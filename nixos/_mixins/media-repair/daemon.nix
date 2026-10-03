@@ -146,6 +146,7 @@ in
           "AF_UNIX"
           "AF_INET"
           "AF_INET6"
+          "AF_NETLINK" # Bubblewrap initializes loopback in its network namespace.
         ];
         RestrictRealtime = true;
         SystemCallArchitectures = "native";
