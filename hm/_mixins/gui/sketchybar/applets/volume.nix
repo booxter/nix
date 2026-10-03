@@ -17,6 +17,7 @@ in
     script = ''
       sketchybar --add item volume ${cfg.position} \
                  --set volume script="$PLUGIN_DIR/volume.sh" \
+                              icon.font="JetBrainsMono Nerd Font:Regular:14.0" \
                  --subscribe volume volume_change
     '';
   };

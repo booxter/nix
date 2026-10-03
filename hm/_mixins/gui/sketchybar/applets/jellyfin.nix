@@ -80,6 +80,7 @@ in
       sketchybar --add item jellyfin.dashboard popup.jellyfin \
                  --set jellyfin.dashboard updates=off \
                                          icon="󰈹" \
+                                         icon.font="JetBrainsMono Nerd Font:Regular:14.0" \
                                          icon.padding_left=8 \
                                          icon.padding_right=4 \
                                          label="Open Grafana" \
