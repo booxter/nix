@@ -1,0 +1,65 @@
+diff --git a/shelfmark/download/clients/__init__.py b/shelfmark/download/clients/__init__.py
+index 453749c..c7c2731 100644
+--- a/shelfmark/download/clients/__init__.py
++++ b/shelfmark/download/clients/__init__.py
+@@ -89,12 +89,17 @@ def with_retry(
+                     delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
+                     # Add jitter to prevent thundering herd
+                     delay += _RNG.uniform(0, delay * jitter)
++                    error_message = str(last_exception)
++                    if args:
++                        error_redactor = getattr(args[0], "_redact_error", None)
++                        if callable(error_redactor):
++                            error_message = error_redactor(last_exception)
+                     _logger.debug(
+                         "Retry %s/%s for %s after %.1fs (error: %s)",
+                         attempt,
+                         max_attempts,
+                         func.__name__,
+                         delay,
+-                        last_exception,
++                        error_message,
+                     )
+                     time.sleep(delay)
+diff --git a/shelfmark/download/clients/sabnzbd.py b/shelfmark/download/clients/sabnzbd.py
+index db3ca1e..087627e 100644
+--- a/shelfmark/download/clients/sabnzbd.py
++++ b/shelfmark/download/clients/sabnzbd.py
+@@ -155,6 +155,24 @@ class SABnzbdClient(DownloadClient):
+         api_key = config_text(config.get("SABNZBD_API_KEY", ""))
+         return client == "sabnzbd" and bool(url) and bool(api_key)
+-
++
+-    @with_retry()
++    def _redact_error(self, error: Exception) -> str:
++        """Remove the SABnzbd API key from request exception messages."""
++        return str(error).replace(self.api_key, "[REDACTED]")
++
+     def _api_call(self, mode: str, params: dict[str, _SabnzbdRequestParam] | None = None) -> Any:
++        """Make a retried API call without exposing credentials to callers."""
++        try:
++            return self._api_call_with_retry(mode, params)
++        except _SABNZBD_CLIENT_ERRORS as error:
++            message = self._redact_error(error)
++            if isinstance(error, requests.exceptions.ConnectionError):
++                raise requests.exceptions.ConnectionError(message) from None
++            if isinstance(error, requests.exceptions.Timeout):
++                raise requests.exceptions.Timeout(message) from None
++            raise RuntimeError(message) from None
++
++    @with_retry()
++    def _api_call_with_retry(
++        self, mode: str, params: dict[str, _SabnzbdRequestParam] | None = None
++    ) -> Any:
+         """Make an API call to SABnzbd.
+@@ -366,7 +384,9 @@ class SABnzbdClient(DownloadClient):
+                 logger.info("Skipping SABnzbd addfile prefetch for untrusted NZB URL")
+                 nzo_id = ""
+         except _SABNZBD_CLIENT_ERRORS as e:
+-            logger.warning("SABnzbd addfile failed, falling back to addurl: %s", e)
++            logger.warning(
++                "SABnzbd addfile failed, falling back to addurl: %s", self._redact_error(e)
++            )
+         else:
+             if nzo_id:
+                 return nzo_id
