@@ -11,6 +11,10 @@ in
   system.stateVersion = "25.11";
 
   host = {
+    attic.publishCaches.beast = [
+      "default"
+      "github"
+    ];
     network.macAddress = "bc:24:11:7f:01:17";
     nix.builderClient = {
       buildUse = "ci";

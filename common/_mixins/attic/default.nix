@@ -80,15 +80,19 @@ in
     description = "Attic servers discovered in this host's realm.";
   };
 
-  options.host.attic.publisher = lib.mkOption {
-    type = lib.types.bool;
-    default = config.host.nix.builderClient != null;
-    description = "Whether this host publishes completed builds to its realm Attic caches.";
+  options.host.attic.publishCaches = lib.mkOption {
+    type = with lib.types; attrsOf (nonEmptyListOf nonEmptyStr);
+    default =
+      if config.host.nix.builderClient == null then
+        { }
+      else
+        lib.mapAttrs (_: server: [ server.defaultCache ]) model.realmServers;
+    description = "Attic caches receiving completed builds, grouped by server name.";
   };
 
   config = {
     environment.systemPackages = lib.optional (
-      config.host.attic.publisher && config.host.attic.realmServers != { }
+      config.host.attic.publishCaches != { }
     ) pkgs.attic-client;
 
     host.nix.caches = lib.mergeAttrsList (
