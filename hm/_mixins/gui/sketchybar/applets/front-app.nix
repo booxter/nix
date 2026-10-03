@@ -16,7 +16,7 @@ in
     plugins = [ "front_app" ];
     script = ''
       sketchybar --add item chevron ${cfg.position} \
-                 --set chevron icon=􀁖 label.drawing=off \
+                 --set chevron icon=󰅂 label.drawing=off \
                  --add item front_app ${cfg.position} \
                  --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
                  --subscribe front_app front_app_switched

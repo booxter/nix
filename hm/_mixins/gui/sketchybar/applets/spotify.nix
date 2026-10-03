@@ -34,14 +34,14 @@ in
                                     label.max_chars=20 \
                                     scroll_texts=on \
                  --add item spotify.back popup.spotify.name \
-                 --set spotify.back icon=􀊎 \
+                 --set spotify.back icon=󰒮 \
                                     icon.padding_left=5 \
                                     icon.padding_right=5 \
                                     script="$PLUGIN_DIR/spotify.sh" \
                                     label.drawing=off \
                  --subscribe spotify.back mouse.clicked \
                  --add item spotify.play popup.spotify.name \
-                 --set spotify.play icon=􀊔 \
+                 --set spotify.play icon=󰐎 \
                                     icon.padding_left=5 \
                                     icon.padding_right=5 \
                                     updates=on \
@@ -49,14 +49,14 @@ in
                                     script="$PLUGIN_DIR/spotify.sh" \
                  --subscribe spotify.play mouse.clicked spotify_change \
                  --add item spotify.next popup.spotify.name \
-                 --set spotify.next icon=􀊐 \
+                 --set spotify.next icon=󰒭 \
                                     icon.padding_left=5 \
                                     icon.padding_right=10 \
                                     label.drawing=off \
                                     script="$PLUGIN_DIR/spotify.sh" \
                  --subscribe spotify.next mouse.clicked \
                  --add item spotify.shuffle popup.spotify.name \
-                 --set spotify.shuffle icon=􀊝 \
+                 --set spotify.shuffle icon=󰒝 \
                                        icon.highlight_color="$GREEN" \
                                        icon.padding_left=5 \
                                        icon.padding_right=5 \
@@ -64,7 +64,7 @@ in
                                        script="$PLUGIN_DIR/spotify.sh" \
                  --subscribe spotify.shuffle mouse.clicked \
                  --add item spotify.repeat popup.spotify.name \
-                 --set spotify.repeat icon=􀊞 \
+                 --set spotify.repeat icon=󰑖 \
                                       icon.highlight_color="$GREEN" \
                                       icon.padding_left=5 \
                                       icon.padding_right=5 \

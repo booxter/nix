@@ -76,7 +76,6 @@ in
       sketchybar --add item alertmanager.grafana popup.alertmanager \
                  --set alertmanager.grafana updates=off \
                                             icon="󰈹" \
-                                            icon.font="JetBrainsMono Nerd Font:Regular:14.0" \
                                             icon.padding_left=8 \
                                             icon.padding_right=4 \
                                             label="Open Grafana" \

@@ -3,9 +3,9 @@ package networkstatus
 import "github.com/booxter/nix-config/sketchybar-tools/internal/sketchybar"
 
 const (
-	vpnIcon          = "􀎠"
-	connectedIcon    = "􀙇"
-	disconnectedIcon = "􀇿"
+	vpnIcon          = "󰖂"
+	connectedIcon    = "󰖩"
+	disconnectedIcon = "󰘥"
 )
 
 func Run(config Config, provider InterfaceProvider, bar sketchybar.Runner) error {

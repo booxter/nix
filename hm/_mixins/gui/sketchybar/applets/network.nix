@@ -31,7 +31,7 @@ in
                                       padding_right=2 \
                                       background.border_width=0 \
                                       background.height=24 \
-                                      icon=⇡ \
+                                      icon=󰁝 \
                                       icon.color="$YELLOW" \
                                       label.color="$YELLOW" \
                      --add item network.down ${cfg.position} \
@@ -41,7 +41,7 @@ in
                                         padding_right=2 \
                                         background.border_width=0 \
                                         background.height=24 \
-                                        icon=⇣ \
+                                        icon=󰁅 \
                                         icon.color="$GREEN" \
                                         label.color="$GREEN"
         '';

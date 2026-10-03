@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	upIcon          = "􀁧"
-	downIcon        = "􀁩"
-	unavailableIcon = "􀇿"
+	upIcon          = "󰳡"
+	downIcon        = "󰳛"
+	unavailableIcon = "󰘥"
 )
 
 type QuoteFetcher interface {

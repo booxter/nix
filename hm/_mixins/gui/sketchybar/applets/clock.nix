@@ -16,7 +16,7 @@ in
     plugins = [ "clock" ];
     script = ''
       sketchybar --add item clock ${cfg.position} \
-                 --set clock update_freq=10 icon=􀐫 script="$PLUGIN_DIR/clock.sh"
+                 --set clock update_freq=10 icon=󰅐 script="$PLUGIN_DIR/clock.sh"
     '';
   };
 }

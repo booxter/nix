@@ -40,11 +40,11 @@ private func expectEqual<T: Equatable>(
 
 do {
   for (percentage, icon) in [
-    (100, "􀛨"),
-    (89, "􀺸"),
-    (59, "􀺶"),
-    (29, "􀛩"),
-    (9, "􀛪"),
+    (100, "󰁹"),
+    (89, "󰂁"),
+    (59, "󰁾"),
+    (29, "󰁻"),
+    (9, "󰂎"),
   ] {
     let bar = RecordingSketchyBar()
     let applet = BatteryApplet(
@@ -70,7 +70,7 @@ do {
   ).update(itemName: "battery")
   try expectEqual(
     externalPowerBar.calls[0][2],
-    "icon=􀋦",
+    "icon=󰂄",
     "external power icon"
   )
 
