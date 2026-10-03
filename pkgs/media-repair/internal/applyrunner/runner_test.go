@@ -58,6 +58,12 @@ func TestRunExecutesFirstPermittedUnfinishedRepair(t *testing.T) {
 		report.Executions[0].Action != contracts.ActionJoinParts {
 		t.Fatalf("executions = %#v", report.Executions)
 	}
+	if len(report.FinishedExecutions) != 1 ||
+		report.FinishedExecutions[0].CaseID != "finished" ||
+		report.FinishedExecutions[0].Result.Join == nil ||
+		report.FinishedExecutions[0].Result.Join.State != casestore.JoinFailed {
+		t.Fatalf("finished executions = %#v", report.FinishedExecutions)
+	}
 	assertLease(t, locker, true)
 }
 

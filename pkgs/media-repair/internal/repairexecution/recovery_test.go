@@ -145,6 +145,39 @@ func TestExecutorRejectsStoredJoinForDifferentAuthorization(t *testing.T) {
 	}
 }
 
+func TestExecutorRechecksLegacyDiscardedJoin(t *testing.T) {
+	t.Parallel()
+
+	assembly, decision, authorized := joinRecoveryScenario(t)
+	legacy := storedJoin(t, casestore.JoinDiscarded, authorized)
+	legacy.Version = casestore.JoinExecutionVersionV2
+	legacy.ExecutionID = "execution:legacy"
+	checker := &fakeChecker{result: executioncheck.Result{
+		Rejections: []executioncheck.Rejection{{Reason: executioncheck.DecisionRejected}},
+	}}
+	joins := &fakeJoinExecutor{}
+	executor := testExecutorWithStore(
+		t,
+		&fakeExecutionStore{join: legacy, joinFound: true},
+		checker,
+		&fakeManualImporter{},
+		joins,
+		&fakeJoinedFileImporter{},
+	)
+
+	result, err := executor.Execute(context.Background(), assembly, decision)
+	if err != nil || result.Resumed || result.Check.Accepted() ||
+		checker.calls != 1 || joins.calls != 0 {
+		t.Fatalf(
+			"result = %#v, error = %v, checker calls = %d, join calls = %d",
+			result,
+			err,
+			checker.calls,
+			joins.calls,
+		)
+	}
+}
+
 func TestExecutorStopsWhenExecutionStoreFails(t *testing.T) {
 	t.Parallel()
 
@@ -204,7 +237,8 @@ func storedJoin(
 		t.Fatal(err)
 	}
 	return casestore.JoinExecution{
-		ExecutionID: executionID, Authorization: authorized, State: state,
+		Version: casestore.JoinExecutionVersionV2, ExecutionID: executionID,
+		Authorization: authorized, State: state,
 	}
 }
 

@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	JoinExecutionVersionV2 = "radarr-repair-join/v2"
-	joinExecutionDomain    = "radarr-repair-join-execution-v1\x00"
+	JoinExecutionVersionV2    = "radarr-repair-join/v2"
+	legacyJoinExecutionDomain = "radarr-repair-join-execution-v1\x00"
+	joinExecutionDomain       = "radarr-repair-join-execution-v2\x00"
 )
 
 type JoinExecutionState string
@@ -146,13 +147,15 @@ func (store *Store) PrepareJoin(
 		return JoinExecution{}, false, err
 	}
 	if found {
-		if reflect.DeepEqual(previous.Authorization, authorized) {
+		if !reflect.DeepEqual(previous.Authorization, authorized) {
+			return JoinExecution{}, false, fmt.Errorf(
+				"case %q is already bound to a different join",
+				authorized.CaseID,
+			)
+		}
+		if !JoinExecutionNeedsRecheck(previous) {
 			return previous, false, nil
 		}
-		return JoinExecution{}, false, fmt.Errorf(
-			"case %q is already bound to a different join",
-			authorized.CaseID,
-		)
 	}
 	executionID, err := JoinExecutionID(authorized)
 	if err != nil {
@@ -427,7 +430,11 @@ func validateJoinExecution(record JoinExecution) error {
 	if err != nil {
 		return err
 	}
-	if record.ExecutionID != executionID {
+	legacyExecutionID, err := legacyJoinExecutionID(record.Authorization)
+	if err != nil {
+		return err
+	}
+	if record.ExecutionID != executionID && record.ExecutionID != legacyExecutionID {
 		return fmt.Errorf("join execution ID does not match its authorization")
 	}
 	if record.PreparedAt.IsZero() || record.UpdatedAt.IsZero() ||
@@ -638,12 +645,46 @@ func repeatedJoinFailure[T interface {
 }
 
 func JoinExecutionID(authorized decisionpolicy.AuthorizedJoin) (string, error) {
+	return joinExecutionID(joinExecutionDomain, authorized)
+}
+
+func JoinExecutionMatchesAuthorization(
+	record JoinExecution,
+	authorized decisionpolicy.AuthorizedJoin,
+) (bool, error) {
+	executionID, err := JoinExecutionID(authorized)
+	if err != nil {
+		return false, err
+	}
+	if record.ExecutionID == executionID {
+		return true, nil
+	}
+	legacyExecutionID, err := legacyJoinExecutionID(authorized)
+	if err != nil {
+		return false, err
+	}
+	return record.ExecutionID == legacyExecutionID, nil
+}
+
+func JoinExecutionNeedsRecheck(record JoinExecution) bool {
+	if record.State != JoinDiscarded {
+		return false
+	}
+	executionID, err := JoinExecutionID(record.Authorization)
+	return err == nil && record.ExecutionID != executionID
+}
+
+func legacyJoinExecutionID(authorized decisionpolicy.AuthorizedJoin) (string, error) {
+	return joinExecutionID(legacyJoinExecutionDomain, authorized)
+}
+
+func joinExecutionID(domain string, authorized decisionpolicy.AuthorizedJoin) (string, error) {
 	data, err := json.Marshal(authorized)
 	if err != nil {
 		return "", fmt.Errorf("encode join execution identity: %w", err)
 	}
 	digest := sha256.New()
-	_, _ = digest.Write([]byte(joinExecutionDomain))
+	_, _ = digest.Write([]byte(domain))
 	_, _ = digest.Write(data)
 	return "execution:" + hex.EncodeToString(digest.Sum(nil)), nil
 }

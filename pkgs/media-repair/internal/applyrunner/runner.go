@@ -40,10 +40,11 @@ type CaseResult struct {
 }
 
 type Report struct {
-	Permitted  int
-	Finished   int
-	Selected   int
-	Executions []CaseResult
+	Permitted          int
+	Finished           int
+	Selected           int
+	Executions         []CaseResult
+	FinishedExecutions []CaseResult
 }
 
 func New(dependencies Dependencies) (*Runner, error) {
@@ -82,7 +83,10 @@ func (runner *Runner) Run(
 			continue
 		}
 		report.Permitted++
-		progress, err := repairexecution.ClassifyProgress(runner.dependencies.Store, candidate)
+		progress, stored, err := repairexecution.InspectProgress(
+			runner.dependencies.Store,
+			candidate,
+		)
 		if err != nil {
 			return report, fmt.Errorf(
 				"classify repair case %q: %w",
@@ -95,6 +99,11 @@ func (runner *Runner) Run(
 			unfinished = append(unfinished, candidate)
 		case repairexecution.ProgressFinished:
 			report.Finished++
+			report.FinishedExecutions = append(report.FinishedExecutions, CaseResult{
+				CaseID: candidate.Assembly.Request.CaseID,
+				Action: candidate.Decision.Kind,
+				Result: stored,
+			})
 		default:
 			return report, fmt.Errorf(
 				"permitted repair case %q is not executable",

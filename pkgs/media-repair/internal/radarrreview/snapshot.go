@@ -7,6 +7,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/applyrunner"
+	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/queueaction"
@@ -148,8 +149,13 @@ func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) 
 			items[snapshot.Current[index].CaseID] = index
 		}
 	}
-	for _, execution := range apply.Executions {
-		if execution.Failure == "" && len(execution.Result.Check.Rejections) == 0 {
+	results := make([]applyrunner.CaseResult, 0, len(apply.Executions)+len(apply.FinishedExecutions))
+	results = append(results, apply.Executions...)
+	results = append(results, apply.FinishedExecutions...)
+	for _, execution := range results {
+		failure := storedExecutionFailure(execution)
+		block, blocked := storedExecutionBlock(execution)
+		if failure == "" && !blocked {
 			continue
 		}
 		index, found := items[execution.CaseID]
@@ -159,14 +165,12 @@ func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) 
 				execution.CaseID,
 			)
 		}
-		if execution.Failure != "" {
+		if failure != "" {
 			snapshot.Current[index].State = review.StateExecutionFailed
-			snapshot.Current[index].Detail = execution.Failure
-			snapshot.Current[index].ExecutionFailure = execution.Failure
+			snapshot.Current[index].Detail = failure
+			snapshot.Current[index].ExecutionFailure = failure
 			continue
 		}
-		rejection := execution.Result.Check.Rejections[0]
-		block := executionBlock(rejection)
 		snapshot.Current[index].State = review.StateExecutionBlocked
 		snapshot.Current[index].Detail = block.Reason
 		if block.DecisionReason != "" {
@@ -175,6 +179,58 @@ func applyExecutionResults(snapshot *review.Snapshot, apply applyrunner.Report) 
 		snapshot.Current[index].ExecutionBlock = &block
 	}
 	return nil
+}
+
+func storedExecutionFailure(execution applyrunner.CaseResult) string {
+	if execution.Failure != "" {
+		return execution.Failure
+	}
+	if join := execution.Result.Join; join != nil {
+		switch join.State {
+		case casestore.JoinFailed:
+			if join.Failure != nil {
+				return fmt.Sprintf("join %s failed: %s", join.Failure.Operation, join.Failure.Reason)
+			}
+			return "join failed"
+		case casestore.JoinImportFailed:
+			return "joined-file import failed"
+		}
+	}
+	if remux := execution.Result.Remux; remux != nil {
+		switch remux.State {
+		case casestore.RemuxFailed:
+			if remux.Failure != nil {
+				return fmt.Sprintf("remux %s failed: %s", remux.Failure.Operation, remux.Failure.Reason)
+			}
+			return "remux failed"
+		case casestore.RemuxImportFailed:
+			return "remux import failed"
+		}
+	}
+	if manual := execution.Result.ManualImport; manual != nil &&
+		manual.State == casestore.ManualImportFailed {
+		return "manual import failed"
+	}
+	return ""
+}
+
+func storedExecutionBlock(execution applyrunner.CaseResult) (review.ExecutionBlock, bool) {
+	if len(execution.Result.Check.Rejections) != 0 {
+		return executionBlock(execution.Result.Check.Rejections[0]), true
+	}
+	join := execution.Result.Join
+	if join == nil || join.State != casestore.JoinDiscarded || join.Stage == nil ||
+		len(join.Stage.Rejections) == 0 {
+		return review.ExecutionBlock{}, false
+	}
+	reasons := make([]string, len(join.Stage.Rejections))
+	for index, reason := range join.Stage.Rejections {
+		reasons[index] = string(reason)
+	}
+	return review.ExecutionBlock{
+		Reason:         "staged_artifact_rejected",
+		DecisionReason: strings.Join(reasons, ", "),
+	}, true
 }
 
 func executionBlock(rejection executioncheck.Rejection) review.ExecutionBlock {

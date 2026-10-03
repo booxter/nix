@@ -8,9 +8,11 @@ import (
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
+	"github.com/booxter/nix-config/media-repair/internal/joinverification"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/repairexecution"
 	"github.com/booxter/nix-config/media-repair/internal/review"
@@ -94,6 +96,34 @@ func TestSnapshotWithApplySurfacesExecutionFailure(t *testing.T) {
 	item := snapshot.Current[0]
 	if item.State != review.StateExecutionFailed || item.Detail != wantFailure ||
 		item.ExecutionFailure != wantFailure {
+		t.Fatalf("review item = %#v", item)
+	}
+}
+
+func TestSnapshotWithApplyKeepsStoredDiscardReason(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 9, 28, 2, 0, 0, 0, time.UTC)
+	caseID := "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+	snapshot, err := SnapshotWithApply(
+		snapshotReport(t, now, caseID),
+		applyrunner.Report{FinishedExecutions: []applyrunner.CaseResult{{
+			CaseID: caseID,
+			Result: repairexecution.Result{Join: &casestore.JoinExecution{
+				State: casestore.JoinDiscarded,
+				Stage: &casestore.JoinStage{Rejections: []joinverification.RejectionReason{
+					joinverification.StreamLayoutMismatch,
+				}},
+			}},
+		}}},
+		now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := snapshot.Current[0]
+	if item.State != review.StateExecutionBlocked || item.ExecutionBlock == nil ||
+		item.ExecutionBlock.Reason != "staged_artifact_rejected" ||
+		item.ExecutionBlock.DecisionReason != "stream_layout_mismatch" {
 		t.Fatalf("review item = %#v", item)
 	}
 }

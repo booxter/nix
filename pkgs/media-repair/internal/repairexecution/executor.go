@@ -198,15 +198,21 @@ func (executor *Executor) resumeExisting(
 		if !found {
 			return Result{}, false, nil
 		}
+		if casestore.JoinExecutionNeedsRecheck(execution) {
+			return Result{}, false, nil
+		}
 		validation := decisionpolicy.ValidateJoin(assembly, decision)
 		if !validation.Accepted() {
 			return result, true, fmt.Errorf("stored join is no longer authorized")
 		}
-		executionID, err := casestore.JoinExecutionID(*validation.Authorized)
+		matches, err := casestore.JoinExecutionMatchesAuthorization(
+			execution,
+			*validation.Authorized,
+		)
 		if err != nil {
 			return result, true, fmt.Errorf("identify authorized join: %w", err)
 		}
-		if execution.ExecutionID != executionID {
+		if !matches {
 			return result, true, fmt.Errorf("stored join does not match the authorized join")
 		}
 		resumed, err := executor.resumeJoin(ctx, result, assembly, *validation.Authorized)

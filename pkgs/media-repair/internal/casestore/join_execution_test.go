@@ -25,7 +25,8 @@ func TestStoreJoinExecutionPublishesVerifiedArtifact(t *testing.T) {
 	store, authorized := newJoinExecutionStore(t)
 	preparedAt := time.Date(2026, time.September, 13, 18, 0, 0, 0, time.UTC)
 	prepared, changed, err := store.PrepareJoin(authorized, preparedAt)
-	if err != nil || !changed || prepared.State != JoinPrepared ||
+	if err != nil || !changed || prepared.Version != JoinExecutionVersionV2 ||
+		prepared.State != JoinPrepared ||
 		!strings.HasPrefix(prepared.ExecutionID, "execution:") {
 		t.Fatalf("prepare: changed = %t, record = %#v, error = %v", changed, prepared, err)
 	}
@@ -123,6 +124,58 @@ func TestStoreJoinExecutionDiscardsRejectedArtifact(t *testing.T) {
 	)
 	if err != nil || !changed || discarded.State != JoinDiscarded {
 		t.Fatalf("discard: changed = %t, record = %#v, error = %v", changed, discarded, err)
+	}
+}
+
+func TestStoreJoinExecutionRechecksLegacyDiscard(t *testing.T) {
+	t.Parallel()
+
+	store, authorized := newJoinExecutionStore(t)
+	preparedAt := time.Date(2026, time.September, 13, 19, 0, 0, 0, time.UTC)
+	prepared, _, err := store.PrepareJoin(authorized, preparedAt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, response := successfulJoinStage(prepared, "request:stage:1")
+	duration := authorized.ExpectedDurationMS + authorized.DurationToleranceMS + 1
+	response.Success.Evidence.Format.DurationMS = &duration
+	if _, _, err := store.RecordJoinStage(
+		authorized,
+		request,
+		response,
+		preparedAt.Add(time.Minute),
+	); err != nil {
+		t.Fatal(err)
+	}
+	discarded, _, err := store.RecordJoinDiscard(
+		authorized.CaseID,
+		discardSuccess("request:discard:1"),
+		preparedAt.Add(2*time.Minute),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	legacyID, err := legacyJoinExecutionID(authorized)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := discarded
+	legacy.Version = JoinExecutionVersionV2
+	legacy.ExecutionID = legacyID
+	path, err := store.executionPath(authorized.CaseID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.writeJoinExecution(path, legacy); err != nil {
+		t.Fatal(err)
+	}
+
+	reprepared, changed, err := store.PrepareJoin(authorized, preparedAt.Add(3*time.Minute))
+	if err != nil || !changed || reprepared.Version != JoinExecutionVersionV2 ||
+		reprepared.State != JoinPrepared || reprepared.ExecutionID == legacy.ExecutionID ||
+		reprepared.Stage != nil || reprepared.Artifact != nil {
+		t.Fatalf("reprepare: changed = %t, record = %#v, error = %v", changed, reprepared, err)
 	}
 }
 

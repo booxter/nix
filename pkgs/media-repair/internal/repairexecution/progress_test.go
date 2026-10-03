@@ -77,7 +77,15 @@ func TestClassifyJoinProgress(t *testing.T) {
 	for _, test := range tests {
 		t.Run(string(test.state), func(t *testing.T) {
 			t.Parallel()
-			store := &progressStore{join: &casestore.JoinExecution{State: test.state}}
+			execution := casestore.JoinExecution{State: test.state}
+			if test.state == casestore.JoinDiscarded {
+				var err error
+				execution.ExecutionID, err = casestore.JoinExecutionID(execution.Authorization)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			store := &progressStore{join: &execution}
 			progress, err := ClassifyProgress(
 				store,
 				progressCase(contracts.ActionJoinParts, executionCaseID),
@@ -86,6 +94,23 @@ func TestClassifyJoinProgress(t *testing.T) {
 				t.Fatalf("progress = %v, error = %v, want %v", progress, err, test.want)
 			}
 		})
+	}
+}
+
+func TestClassifyLegacyDiscardForRecheck(t *testing.T) {
+	t.Parallel()
+
+	store := &progressStore{join: &casestore.JoinExecution{
+		Version:     casestore.JoinExecutionVersionV2,
+		ExecutionID: "execution:legacy",
+		State:       casestore.JoinDiscarded,
+	}}
+	progress, err := ClassifyProgress(
+		store,
+		progressCase(contracts.ActionJoinParts, executionCaseID),
+	)
+	if err != nil || progress != ProgressNotStarted {
+		t.Fatalf("progress = %v, error = %v", progress, err)
 	}
 }
 
