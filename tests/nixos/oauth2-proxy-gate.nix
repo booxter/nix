@@ -71,5 +71,5 @@ pkgs.testers.runNixOSTest {
     SERVER_NAME = ${builtins.toJSON serverName}
     TEST_PKI = ${builtins.toJSON "${testPki}"}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

@@ -151,5 +151,5 @@ pkgs.testers.runNixOSTest {
     PEER_IPERF_PORTS = ${builtins.toJSON peerIperfPorts}
     SHAPER_IPERF_PORTS = ${builtins.toJSON shaperIperfPorts}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

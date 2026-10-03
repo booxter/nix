@@ -144,5 +144,5 @@ pkgs.testers.runNixOSTest {
     S3_ACCESS_KEY = ${builtins.toJSON s3AccessKey}
     S3_SECRET_KEY = ${builtins.toJSON s3SecretKey}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

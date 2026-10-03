@@ -85,5 +85,5 @@ pkgs.testers.runNixOSTest {
   testScript = ''
     UPDATED_SYSTEM = "/run/current-system/specialisation/updated"
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }
