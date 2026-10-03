@@ -370,7 +370,7 @@
         displayName = "Repairr";
         health = {
           frontend.path = "/oauth2/sign_in";
-          backend.path = "/-/ready";
+          backend.path = "/health";
         };
         dashboard = {
           icon = "sh:maintainerr";

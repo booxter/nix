@@ -52,6 +52,10 @@ in
 
   media-repair-worker = mediaRepair.worker;
 
+  media-repair-helper = mediaRepair.helper;
+
+  repairr = mediaRepair.daemon;
+
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
     inherit atomicFileWrites;
   };

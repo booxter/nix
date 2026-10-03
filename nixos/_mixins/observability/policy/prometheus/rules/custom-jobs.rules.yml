@@ -56,42 +56,33 @@ groups:
         annotations:
           summary: "Houndarr status collection failed on srvarr"
           description: "The Houndarr operational status endpoint has been unavailable or invalid for 5 minutes."
-      - alert: RadarrRepairShadowRunFailing
-        expr: host_observability_radarr_repair_shadow_run_success{job="node-mtls",instance="srvarr"} < 1
-        for: 30m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr repair shadow runs failing on srvarr"
-          description: "The Radarr repair controller has reported unsuccessful shadow runs for 30 minutes."
-      - alert: RadarrRepairApplyRunFailing
-        expr: host_observability_radarr_repair_apply_run_success{job="node-mtls",instance="srvarr"} < 1
-        for: 30m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr repair apply runs failing on srvarr"
-          description: "The Radarr repair controller has reported unsuccessful apply runs for 30 minutes."
-      - alert: RadarrRepairApplyMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/radarr-repair/radarr-repair.prom"}) > 2700
+      - alert: RepairrQueueObservationStale
+        expr: time() - repairr_queue_observed_timestamp_seconds{job="node-mtls",instance="srvarr"} > 3600
         for: 15m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr repair metrics stale on srvarr"
-          description: "The Radarr repair controller metrics have not been refreshed for more than one hour."
-      - alert: RadarrRepairPublishedArtifactStuck
-        expr: host_observability_radarr_repair_apply_executions{job="node-mtls",instance="srvarr",action=~"join_parts_v1|remux_bluray_v1",state="artifact_published"} > 0
+          summary: "Repairr queue observation stale on srvarr"
+          description: "Repairr has not completed a queue observation for {{ $labels.service }} in over one hour."
+      - alert: RepairrMetricsStale
+        expr: time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/repairr/repairr.prom"} > 120
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Repairr metrics stale on srvarr"
+          description: "The Repairr daemon has not refreshed its metrics for over seven minutes."
+      - alert: RepairrImportStuck
+        expr: repairr_jobs{job="node-mtls",instance="srvarr",state="importing"} > 0
         for: 30m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr repair artifact stuck on srvarr"
-          description: "A media artifact has remained published without a confirmed Radarr import for 30 minutes."
+          summary: "Repairr import stuck on srvarr"
+          description: "Repairr has been waiting for an import confirmation from {{ $labels.service }} for 30 minutes."
       - alert: HoundarrStatusMetricsStale
         expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
         for: 5m

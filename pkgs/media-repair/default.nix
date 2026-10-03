@@ -38,6 +38,54 @@ let
     };
   };
 
+  wrapMediaTools = binary: ''
+    wrapProgram "$out/bin/${binary}" \
+      --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg-full "ffprobe"}"} \
+      --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe' ffmpeg-full "ffmpeg"}"} \
+      --add-flags ${lib.escapeShellArg "--lsdvd ${lib.getExe' lsdvd "lsdvd"}"} \
+      --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"} \
+      --add-flags ${lib.escapeShellArg "--lsar ${lib.getExe' unar "lsar"}"} \
+      --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"} \
+      --add-flags ${lib.escapeShellArg "--cueconvert ${lib.getExe' cuetools "cueconvert"}"} \
+      --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"} \
+      --add-flags ${lib.escapeShellArg "--wvunpack ${lib.getExe' wavpack "wvunpack"}"}
+  '';
+
+  daemon = buildGoModule (
+    common
+    // {
+      pname = "repairr";
+      subPackages = [
+        "cmd/repairr"
+        "cmd/repairr-migrate"
+      ];
+      checkPhase = ''
+        runHook preCheck
+        go test -race ./cmd/repairr ./internal/jobs ./internal/repair ./internal/repairui ./internal/statemigration
+        runHook postCheck
+      '';
+      meta = common.meta // {
+        description = "Media repair controller and operator inbox";
+        mainProgram = "repairr";
+      };
+    }
+  );
+
+  helper = buildGoModule (
+    common
+    // {
+      pname = "media-repair-helper";
+      subPackages = [ "cmd/media-repair-helper" ];
+      nativeBuildInputs = [ makeWrapper ];
+      postInstall = wrapMediaTools "media-repair-helper";
+      doCheck = false;
+      meta = common.meta // {
+        description = "Stateless media repair operations";
+        mainProgram = "media-repair-helper";
+      };
+    }
+  );
+
   controller = buildGoModule (
     common
     // {
@@ -132,18 +180,7 @@ let
       subPackages = [ "cmd/media-repair-worker" ];
 
       nativeBuildInputs = [ makeWrapper ];
-      postInstall = ''
-        wrapProgram "$out/bin/media-repair-worker" \
-          --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg-full "ffprobe"}"} \
-          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe' ffmpeg-full "ffmpeg"}"} \
-          --add-flags ${lib.escapeShellArg "--lsdvd ${lib.getExe' lsdvd "lsdvd"}"} \
-          --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"} \
-          --add-flags ${lib.escapeShellArg "--lsar ${lib.getExe' unar "lsar"}"} \
-          --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"} \
-          --add-flags ${lib.escapeShellArg "--cueconvert ${lib.getExe' cuetools "cueconvert"}"} \
-          --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"} \
-          --add-flags ${lib.escapeShellArg "--wvunpack ${lib.getExe' wavpack "wvunpack"}"}
-      '';
+      postInstall = wrapMediaTools "media-repair-worker";
 
       doCheck = false;
       doInstallCheck = true;
@@ -197,6 +234,8 @@ in
 {
   inherit
     controller
+    daemon
+    helper
     lidarrController
     review
     worker
