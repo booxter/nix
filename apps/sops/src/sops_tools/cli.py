@@ -262,7 +262,7 @@ def bootstrap_main(
             current.runtime,
             SecretRepository(current.runtime.repo_root, realm),
             current.backend_factory.create(environment, current.runtime.repo_root / ".sops.yaml"),
-            CommandRuntimeKeyProvider(runner, current.runtime.repo_root),
+            CommandRuntimeKeyProvider(runner),
             CommandOperatorRecipientProvider(current.runtime, runner, AgeRecipientResolver(runner)),
         )
         if args.seed:

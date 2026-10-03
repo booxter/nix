@@ -12,7 +12,6 @@ from atomic_file_writes import write_text_atomic
 
 from .age import AgeRecipientResolver
 from .errors import ToolError
-from .flake import archive_flake_source
 from .model import JsonValue, deep_merge
 from .policy import SopsPolicy
 from .process import ProcessRunner
@@ -38,7 +37,6 @@ class OperatorRecipientProvider(Protocol):
 @dataclass(frozen=True)
 class CommandRuntimeKeyProvider:
     runner: ProcessRunner
-    repo_root: Path
 
     def recipient(self, host: str, user: str, *, local: bool) -> str:
         if local:
@@ -65,24 +63,16 @@ class CommandRuntimeKeyProvider:
         ).strip()
 
     def _remote_recipient(self, target: str) -> str:
-        source = self._archive_source()
-        self.runner.run(["nix", "copy", "--to", f"ssh://{target}", str(source)])
         remote_root = self.runner.run(["ssh", target, "id", "-u"]).strip() == "0"
         privilege = [] if remote_root else ["sudo", "-H"]
-        # OpenSSH has no remote argv protocol. This fixed command contains no
-        # user input; the source path is a validated Nix store path.
+        # OpenSSH has no remote argv protocol. Keep this command fixed and
+        # return only the public recipient, never the private runtime key.
         command = shlex.join(
             [
                 *privilege,
-                "nix",
-                "shell",
-                "-L",
-                "--show-trace",
-                f"{source}#sops-bootstrap",
-                "--command",
-                "sops-runtime-key",
-                "--age-keygen",
-                "age-keygen",
+                "/run/current-system/sw/bin/sed",
+                "-n",
+                "s/^# public key: //p",
                 str(_RUNTIME_KEY),
             ]
         )
@@ -95,9 +85,6 @@ class CommandRuntimeKeyProvider:
         if not recipients or not recipients[-1]:
             raise ToolError(f"Failed to read age public key from remote host: {target}")
         return recipients[-1]
-
-    def _archive_source(self) -> Path:
-        return archive_flake_source(self.runner, self.repo_root)
 
     @staticmethod
     def _executable(name: str) -> str:
