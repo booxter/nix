@@ -263,6 +263,10 @@
           passthru = old.passthru // {
             inherit frontend;
           };
+          postPatch = (old.postPatch or "") + ''
+            PYTHONPYCACHEPREFIX="$TMPDIR/shelfmark-pycache" \
+              ${pkgsNixpkgsUnstable.python314}/bin/python -m compileall -q shelfmark
+          '';
           patchFlags = [
             "-p1"
             "-l"
@@ -292,10 +296,10 @@
             # Shelfmark's stall canceller for direct downloads, but do not
             # auto-cancel torrent jobs.
             ../patches/shelfmark-disable-torrent-stall-cancel.patch
+            ../patches/shelfmark-retry-transmission-connectivity.patch
             ../patches/shelfmark-add-download-poll-debug-state.patch
             ../patches/shelfmark-add-download-diagnostic-signal.patch
             ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
-            ../patches/shelfmark-retry-transmission-connectivity.patch
             ../patches/shelfmark-redact-sabnzbd-api-key.patch
           ];
         });
