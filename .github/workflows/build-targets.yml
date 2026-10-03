@@ -24,7 +24,9 @@ jobs:
     name: Format check
     runs-on: nix-ci
     outputs:
-      matrix: ${{ steps.build_matrix.outputs.matrix }}
+      build_matrix: ${{ steps.ci_matrices.outputs.build_matrix }}
+      check_batch_matrix: ${{ steps.ci_matrices.outputs.check_batch_matrix }}
+      nixos_test_matrix: ${{ steps.ci_matrices.outputs.nixos_test_matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,19 +52,36 @@ jobs:
           targets="$(nix eval --json .#lib.ciTargets)"
           printf 'targets=%s\n' "${targets}" >>"${GITHUB_OUTPUT}"
 
-      - name: Compute build matrix
-        id: build_matrix
+      - name: Resolve CI checks
+        id: ci_checks
+        shell: bash
+        run: |
+          checks="$(nix eval --json .#lib.ciChecks)"
+          printf 'checks=%s\n' "${checks}" >>"${GITHUB_OUTPUT}"
+
+      - name: Compute CI matrices
+        id: ci_matrices
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          CI_CHECKS: ${{ steps.ci_checks.outputs.checks }}
           CI_TARGETS: ${{ steps.ci_targets.outputs.targets }}
         with:
           script: |
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
+            const checks = JSON.parse(process.env.CI_CHECKS);
             const buildTargets = JSON.parse(process.env.CI_TARGETS).buildTargets;
-            const matrix = {
+            const buildMatrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
-            core.setOutput("matrix", JSON.stringify(matrix));
+            const checkBatchMatrix = {
+              include: targetInventory.toCheckBatchMatrixEntries(checks)
+            };
+            const nixosTestMatrix = {
+              include: targetInventory.toNixosTestMatrixEntries(checks)
+            };
+            core.setOutput("build_matrix", JSON.stringify(buildMatrix));
+            core.setOutput("check_batch_matrix", JSON.stringify(checkBatchMatrix));
+            core.setOutput("nixos_test_matrix", JSON.stringify(nixosTestMatrix));
 
   codex:
     needs:
@@ -89,19 +108,14 @@ jobs:
       - name: Build Codex
         run: nix build ".#packages.${{ matrix.system }}.codex" --no-link --print-build-logs
 
-  check:
+  check_batch:
     needs:
       - format
       - codex
-    name: Regular checks (${{ matrix.system }})
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: nix-ci
-            system: x86_64-linux
-          - os: nix-ci-darwin
-            system: aarch64-darwin
+      matrix: ${{ fromJson(needs.format.outputs.check_batch_matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     steps:
@@ -110,22 +124,46 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Run regular checks
-        run: make check
+      - name: Run batched checks
+        run: ${{ matrix.cmd }}
+
+  nixos_test:
+    needs:
+      - format
+      - codex
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJson(needs.format.outputs.nixos_test_matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+
+      - name: Run NixOS test
+        run: ${{ matrix.cmd }}
 
   check-success:
     name: Regular checks
     if: ${{ always() }}
     needs:
-      - check
+      - check_batch
+      - nixos_test
     runs-on: nix-ci
     steps:
       - name: Check regular check results
         run: |
           set -euo pipefail
 
-          if [ "${{ needs.check.result }}" != "success" ]; then
-            echo "Regular check matrix result: ${{ needs.check.result }}"
+          batch_result="${{ needs.check_batch.result }}"
+          nixos_test_result="${{ needs.nixos_test.result }}"
+          if [ "${batch_result}" != "success" ] || [ "${nixos_test_result}" != "success" ]; then
+            echo "Batched checks: ${batch_result}"
+            echo "NixOS tests: ${nixos_test_result}"
             exit 1
           fi
           echo "All regular checks passed."
@@ -138,7 +176,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.format.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.format.outputs.build_matrix) }}
 
     timeout-minutes: 90
 
@@ -370,7 +408,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          BUILD_MATRIX: ${{ needs.format.outputs.matrix }}
+          BUILD_MATRIX: ${{ needs.format.outputs.build_matrix }}
           HEAD_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
