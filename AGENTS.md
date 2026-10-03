@@ -129,6 +129,8 @@ nix run .#deploy -- --branch <branch> <host>
   committed and pushed before deploy. Default branch: `master`.
 - Use `--dry-run` for SSH/disk checks and `--test` for NixOS dry activation.
 - Use `--local` to deploy from local checkout (includes origin/master changes).
+- Deploy the full current branch with the normal upstream merge. Do not use
+  `--no-merge` or isolate deployment changes in a worktree unless explicitly asked.
 - Related apps: `prox-deploy` for Proxmox VMs, `vm` for local VM variants,
   `diff` for generated config comparisons.
 
