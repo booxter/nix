@@ -7,9 +7,13 @@ asks. Before posting to web, show user exact contents and get confirmation.
 Treat coding as a craft. Make focused, surgical changes, but refactor and
 extract shared code when it improves clarity. Write for human readers: use
 plain words, helpful newlines, and smaller functions, helpers, modules, or
-files without splitting things too far. Comment sparingly to explain
-nonobvious choices. Do not recount old code in comments unless that history
-helps prevent a mistake.
+files without splitting things too far. Write readable code from the first
+edit. Separate logical steps with blank lines; never compress branches,
+loops, or error handling onto one line. Extract distinct responsibilities
+into named functions. Explain nonobvious decisions and invariants in
+comments. Review readability before committing; formatting alone is not
+enough. Do not recount old code in comments unless that history helps
+prevent a mistake.
 
 Use `apply_patch` for manual edits to tracked text files; do not rewrite them
 with scripts or shell redirects.
