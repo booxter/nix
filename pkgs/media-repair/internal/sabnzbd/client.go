@@ -66,7 +66,7 @@ func New(
 	}
 	return &Client{
 		endpoint: parsed.JoinPath("api"),
-		apiKey: apiKey, httpClient: httpClient, requestTimeout: requestTimeout,
+		apiKey:   apiKey, httpClient: httpClient, requestTimeout: requestTimeout,
 	}, nil
 }
 
