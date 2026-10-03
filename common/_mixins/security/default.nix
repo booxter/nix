@@ -7,6 +7,7 @@
 }:
 let
   operatorIdentity = config.host.security.secrets.operator.ageIdentity;
+  homeRealm = config.host.realm == "home";
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
   realmsByHost = lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
@@ -51,7 +52,10 @@ in
         }
       ];
 
-      sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+      sops.age = {
+        keyFile = if homeRealm then null else "/var/lib/sops-nix/key.txt";
+        sshKeyPaths = lib.optionals homeRealm [ "/etc/ssh/ssh_host_ed25519_key" ];
+      };
       sops.defaultSopsFile =
         ../../../secrets + "/${config.host.realm}/${config.networking.hostName}.yaml";
     }

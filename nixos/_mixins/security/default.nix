@@ -12,7 +12,7 @@ in
   config = lib.mkMerge [
     {
       security.sudo.wheelNeedsPassword = lib.mkDefault (config.host.realm != "home");
-      sops.age.generateKey = true;
+      sops.age.generateKey = config.host.realm != "home";
     }
     (lib.mkIf useYubiAgeIdentity {
       services.pcscd.enable = true;
