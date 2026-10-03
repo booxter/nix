@@ -61,6 +61,7 @@ in
 
     ICON_BASE_FONT="JetBrainsMono Nerd Font"
     ICON_FONT="$ICON_BASE_FONT:Regular:14.0"
+    ICON_Y_OFFSET=1
     LABEL_BASE_FONT="MesloLGS Nerd Font Propo"
     LABEL_FONT="$LABEL_BASE_FONT:Regular:14.0"
     LABEL_HIGHLIGHT_FONT="$LABEL_BASE_FONT:ExtraBold:14.0"
