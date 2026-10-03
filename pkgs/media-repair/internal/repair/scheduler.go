@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -32,14 +33,15 @@ type Service interface {
 }
 
 type Scheduler struct {
-	Store    *jobs.Store
-	Service  Service
-	Name     jobs.Service
-	Now      func() time.Time
-	Interval time.Duration
-	Wake     <-chan struct{}
-	Disabled func() (bool, error)
-	Log      *slog.Logger
+	Store           *jobs.Store
+	Service         Service
+	Name            jobs.Service
+	Now             func() time.Time
+	Interval        time.Duration
+	Wake            <-chan struct{}
+	Disabled        func() (bool, error)
+	Log             *slog.Logger
+	LastObservation atomic.Int64
 }
 
 func (scheduler *Scheduler) Run(ctx context.Context) {
@@ -67,6 +69,8 @@ func (scheduler *Scheduler) Run(ctx context.Context) {
 		if !now.Before(nextObservation) {
 			if err := scheduler.observe(ctx); err != nil {
 				scheduler.Log.Error("observe queue", "service", scheduler.Name, "error", err)
+			} else {
+				scheduler.LastObservation.Store(scheduler.Now().Unix())
 			}
 			nextObservation = now.Add(scheduler.Interval)
 		}
@@ -131,6 +135,9 @@ func (scheduler *Scheduler) advance(ctx context.Context) error {
 func (scheduler *Scheduler) advanceJob(ctx context.Context, engine Engine, job jobs.Job, disabled bool) error {
 	if job.State == jobs.Importing || job.State == jobs.Running {
 		return engine.Run(ctx, job.ID)
+	}
+	if !job.InQueue {
+		return nil
 	}
 	if scheduler.Now().Before(job.RetryAt) {
 		return nil

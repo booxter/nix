@@ -5,9 +5,9 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
-// replacementRejection checks Radarr's current assessment of only the files
+// ReplacementRejection checks Radarr's current assessment of only the files
 // selected by the authorized action. The planner does not decide upgrade policy.
-func replacementRejection(
+func ReplacementRejection(
 	assembly casebuilder.Assembly,
 	authorization Authorization,
 ) (RejectionReason, bool) {

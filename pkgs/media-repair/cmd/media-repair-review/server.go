@@ -18,11 +18,12 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
+	"github.com/booxter/nix-config/media-repair/internal/repairui"
 	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/internal/wake"
 )
 
-//go:embed templates/page.html static/style.css
+//go:embed templates/page.html
 var assets embed.FS
 
 type source struct {
@@ -172,10 +173,7 @@ func newHandler(configuration config) (http.Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse repair review template: %w", err)
 	}
-	style, err := assets.ReadFile("static/style.css")
-	if err != nil {
-		return nil, fmt.Errorf("read repair review stylesheet: %w", err)
-	}
+	style := []byte(repairui.Style)
 	app := &applicationHandler{
 		template: page, style: style, csrfToken: csrfToken,
 		allowedOrigins: allowedOrigins, now: time.Now,

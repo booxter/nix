@@ -135,7 +135,7 @@ func (checker *Checker) CheckWithPolicy(
 		return Result{}, err
 	}
 
-	storedAuthorization, decisionReason, runtime, ok := authorize(stored, decision, policy)
+	storedAuthorization, decisionReason, runtime, ok := Authorize(stored, decision, policy)
 	if !ok {
 		return rejectedDecision(DecisionRejected, decisionReason, runtime), nil
 	}
@@ -180,11 +180,11 @@ func (checker *Checker) CheckWithPolicy(
 	if fresh.Request.CaseID != stored.Request.CaseID {
 		return rejected(CaseChanged), nil
 	}
-	freshAuthorization, decisionReason, runtime, ok := authorize(fresh, decision, policy)
+	freshAuthorization, decisionReason, runtime, ok := Authorize(fresh, decision, policy)
 	if !ok {
 		return rejectedDecision(AuthorizationChanged, decisionReason, runtime), nil
 	}
-	if reason, unsafe := replacementRejection(fresh, freshAuthorization); unsafe {
+	if reason, unsafe := ReplacementRejection(fresh, freshAuthorization); unsafe {
 		return rejected(reason), nil
 	}
 	if !reflect.DeepEqual(freshAuthorization, storedAuthorization) {
@@ -218,7 +218,7 @@ func (checker *Checker) CheckWithPolicy(
 	return Result{Authorization: freshAuthorization, Rejections: []Rejection{}}, nil
 }
 
-func authorize(
+func Authorize(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 	policy decisionpolicy.RuntimePolicy,

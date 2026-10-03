@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Repairr</a>
+    <nav aria-label="Primary">
+      <a href="/lidarr"{{if eq .Service "lidarr"}} aria-current="page"{{end}}>Lidarr</a>
+      <a href="/radarr"{{if eq .Service "radarr"}} aria-current="page"{{end}}>Radarr</a>
+      <a href="/history"{{if .History}} aria-current="page"{{end}}>History</a>
+    </nav>
+  </header>
+  <main>
+    <h1>{{.Title}}</h1>
+    {{if .Selected}}
+    {{$entry := .Selected}}
+    <article class="case">
+      <div class="case-heading">
+        <div><span class="service">{{$entry.Job.Service}}</span><h2>{{$entry.Job.Title}}</h2></div>
+        <div class="case-actions">
+          <span class="badge">{{$entry.Job.State}}</span>
+          {{if $entry.CanAct}}<a class="remove-link" href="/jobs/{{$entry.Job.ID}}/remove" title="Remove from queue">×</a>{{end}}
+        </div>
+      </div>
+      <dl>
+        <dt>Job</dt><dd>#{{$entry.Job.ID}}</dd>
+        <dt>Queue</dt><dd>#{{$entry.Job.QueueID}}</dd>
+        <dt>Updated</dt><dd>{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</dd>
+      </dl>
+      {{if $entry.Job.CollectionError}}<p class="notice danger-notice">{{$entry.Job.CollectionError}}</p>{{end}}
+      {{if $entry.Job.Reason}}<p class="notice">{{$entry.Job.Reason}}</p>{{end}}
+      {{if $entry.Job.PendingAction}}<p class="notice">Requested: {{$entry.Job.PendingAction}}</p>{{end}}
+
+      {{if .ConfirmRemoval}}
+      <section class="remove-confirmation">
+        <h3>Remove from {{$entry.Job.Service}} queue?</h3>
+        <p>This removes queue tracking only. The download and media files are retained; the release is not blocklisted.</p>
+        <form method="post" action="/jobs/{{$entry.Job.ID}}/remove">
+          <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+          <button class="danger-button" type="submit">Remove from queue</button>
+          <a class="button secondary-button" href="/jobs/{{$entry.Job.ID}}">Cancel</a>
+        </form>
+      </section>
+      {{end}}
+
+      {{if $entry.Decision.Action}}
+      <section class="decision">
+        <h3>Planner decision</h3>
+        <p><strong>{{$entry.Decision.Action}}</strong> · {{$entry.Decision.Reason}}</p>
+        <p>{{$entry.Decision.Explanation}}</p>
+      </section>
+      {{end}}
+
+      {{if and $entry.CanAct (not .ConfirmRemoval) (ne $entry.Job.State "imported")}}
+      <section class="nudge">
+        <h3>Ask the planner to reconsider</h3>
+        <form method="post" action="/jobs/{{$entry.Job.ID}}/reconsider">
+          <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+          <label for="guidance">Guidance</label>
+          <textarea id="guidance" name="guidance" maxlength="2000">{{$entry.Job.Guidance}}</textarea>
+          {{if eq $entry.Job.Service "radarr"}}
+          <fieldset>
+            <legend>Job-specific authorization</legend>
+            <label class="check"><input type="checkbox" name="override_runtime_difference"> Allow a larger runtime difference</label>
+            <label for="runtime">Maximum difference in minutes</label>
+            <input id="runtime" name="runtime_minutes" type="number" min="1" max="60" value="15">
+          </fieldset>
+          {{end}}
+          <button type="submit">Reconsider</button>
+        </form>
+      </section>
+      {{end}}
+
+      {{range .Attempts}}
+      <section class="decision">
+        <h3>Attempt {{.Number}} · {{.State}}</h3>
+        <p>{{.Reason}}</p>
+        {{if .CommandID}}<p>Import command #{{.CommandID}}</p>{{end}}
+        {{if .OutputPath}}<p><code>{{.OutputPath}}</code></p>{{end}}
+        {{if .ImportReceipt}}<details><summary>Import confirmation</summary><pre>{{printf "%s" .ImportReceipt}}</pre></details>{{end}}
+      </section>
+      {{end}}
+      <p><a class="button" href="{{.QueueURL}}">Open {{$entry.Job.Service}} queue</a></p>
+    </article>
+    {{else}}
+    <div class="filters" aria-label="State filters">
+      <a href="?">All</a>
+      <a href="?state=observed">Not processed</a>
+      <a href="?state=blocked">Reviewed / blocked</a>
+      <a href="?state=ready">Repair planned</a>
+      <a href="?state=running">Repairing</a>
+      <a href="?state=importing">Importing</a>
+      <a href="?state=failed">Failed</a>
+    </div>
+    {{if .Items}}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Service</th><th>Release</th><th>State</th><th>Decision</th><th>Updated</th></tr></thead>
+        <tbody>
+          {{range .Items}}
+          <tr>
+            <td><span class="service">{{.Job.Service}}</span></td>
+            <td><a href="/jobs/{{.Job.ID}}">{{.Job.Title}}</a></td>
+            <td><span class="badge">{{.Job.State}}</span>{{if .Job.PendingAction}}<small>Requested: {{.Job.PendingAction}}</small>{{end}}<small>{{.Job.Reason}}</small><small>{{.Job.CollectionError}}</small></td>
+            <td><strong>{{.Decision.Action}}</strong><small>{{.Decision.Reason}}</small></td>
+            <td>{{.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}<p class="empty">No entries match this view.</p>{{end}}
+    {{end}}
+  </main>
+</body>
+</html>
