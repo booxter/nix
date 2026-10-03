@@ -296,7 +296,13 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 	compareRequiredField(&comparison, StreamFieldKind, reference.Kind, candidate.Kind)
 	compareRequiredField(&comparison, StreamFieldCodecName, reference.CodecName, candidate.CodecName)
 	compareOptionalField(&comparison, StreamFieldProfile, reference.Profile, candidate.Profile)
-	compareRequiredField(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
+
+	// Parts are stream-copy remuxed to a common time base before concat.
+	// Timestamp units may differ; missing timing metadata still blocks repair.
+	if reference.TimeBase == nil || candidate.TimeBase == nil {
+		compareRequiredField(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
+	}
+
 	if reference.Kind == nil || candidate.Kind == nil || *reference.Kind != *candidate.Kind {
 		return comparison
 	}
@@ -342,11 +348,6 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 }
 
 func compareMuxedStream(reference ProbeStream, candidate ProbeStream) streamComparison {
-	// FFmpeg may choose a different time base for the output container and
-	// rescale every packet timestamp to match it.
-	if reference.TimeBase != nil && candidate.TimeBase != nil {
-		reference.TimeBase = candidate.TimeBase
-	}
 	// avg_frame_rate is derived from the complete muxed stream and can differ
 	// slightly from the rate reported for each input part.
 	if reference.AverageRate != nil && candidate.AverageRate != nil &&

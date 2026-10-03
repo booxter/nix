@@ -84,7 +84,7 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		})
 	}
 
-	joiner, err := mediajoin.NewRunner(worker.FFmpeg, worker.Timeout)
+	joiner, err := mediajoin.NewRunner(worker.FFmpeg, worker.Timeout, worker.Prober)
 	if err != nil {
 		return mediaoperation.Output{}, err
 	}

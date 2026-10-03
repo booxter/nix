@@ -182,10 +182,10 @@ func TestRunnerHonorsCancellationAndTimeout(t *testing.T) {
 func TestRunnerRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewRunner("ffmpeg", time.Second); err == nil {
+	if _, err := NewRunner("ffmpeg", time.Second, nil); err == nil {
 		t.Fatal("relative ffmpeg path was accepted")
 	}
-	if _, err := NewRunner("/nix/store/ffmpeg", 0); err == nil {
+	if _, err := NewRunner("/nix/store/ffmpeg", 0, nil); err == nil {
 		t.Fatal("zero timeout was accepted")
 	}
 	if _, err := (*Runner)(nil).Join(
@@ -369,7 +369,11 @@ func openTestFile(t *testing.T, path string, flags int) *os.File {
 
 func testRunner(t *testing.T, timeout time.Duration) *Runner {
 	t.Helper()
-	runner, err := NewRunner(toolPath(t, "ffmpeg"), timeout)
+	prober, err := ffprobe.NewRunner(toolPath(t, "ffprobe"), 10*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runner, err := NewRunner(toolPath(t, "ffmpeg"), timeout, prober)
 	if err != nil {
 		t.Fatal(err)
 	}

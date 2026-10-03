@@ -30,16 +30,17 @@ func TestExecutorStagesRealMultipartMedia(t *testing.T) {
 	makeMediaPart(t, secondPath, "blue")
 	execution := preparedExecution(t, rootPath, []string{"second.mkv", "first.mkv"})
 	rootSet := newRootSet(t, rootPath)
-	joiner, err := mediajoin.NewRunner(
-		toolPath(t, "ffmpeg"),
+	prober, err := ffprobe.NewRunner(
+		toolPath(t, "ffprobe"),
 		10*time.Second,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	prober, err := ffprobe.NewRunner(
-		toolPath(t, "ffprobe"),
+	joiner, err := mediajoin.NewRunner(
+		toolPath(t, "ffmpeg"),
 		10*time.Second,
+		prober,
 	)
 	if err != nil {
 		t.Fatal(err)
