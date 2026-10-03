@@ -1,6 +1,7 @@
 package statemigration
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -13,8 +14,87 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
+	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
+
+func TestReviewRestorationKeepsEachJobsEvidenceAndHistory(t *testing.T) {
+	root := t.TempDir()
+	at := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	first := writeImportedAlbum(t, root, "first", 42, at.Add(time.Hour))
+	writeImportedAlbum(t, root, "second", 43, at)
+	writeRecord(t, filepath.Join(root, "media-repair-review/lidarr/snapshot.json"), review.Snapshot{
+		Current: []review.Item{first},
+	})
+
+	batch, err := Convert(root, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	ctx := context.Background()
+	if err := store.Import(ctx, batch); err != nil {
+		t.Fatal(err)
+	}
+
+	listed, err := store.List(ctx, jobs.Lidarr)
+	if err != nil || len(listed) != 2 {
+		t.Fatalf("converted jobs: %+v, %v", listed, err)
+	}
+	for _, job := range listed {
+		name := map[int64]string{42: "first", 43: "second"}[job.QueueID]
+		if name == "" || job.DownloadID != name || job.SourceFingerprint != "sha256:"+name {
+			t.Fatalf("job identity changed: %+v", job)
+		}
+		var evidence lidarrrepair.Record
+		if err := json.Unmarshal(job.Evidence, &evidence); err != nil || evidence.SourcePath != name {
+			t.Fatalf("job %d acquired another album's evidence: %+v, %v", job.QueueID, evidence, err)
+		}
+
+		attempts, err := store.Attempts(ctx, job.ID)
+		if err != nil || len(attempts) != 1 {
+			t.Fatalf("job %d lost import history: %+v, %v", job.QueueID, attempts, err)
+		}
+		var receipt []lidarr.ImportedTrack
+		if err := json.Unmarshal(attempts[0].ImportReceipt, &receipt); err != nil ||
+			len(receipt) != 1 || receipt[0].HistoryID != job.QueueID {
+			t.Fatalf("job %d acquired another album's receipt: %+v, %v", job.QueueID, receipt, err)
+		}
+	}
+}
+
+func writeImportedAlbum(t *testing.T, root, name string, queueID int64, at time.Time) review.Item {
+	t.Helper()
+	caseID := "sha256:" + name
+	caseData, err := json.Marshal(lidarrcontracts.Case{
+		CaseID: caseID, ObservedAt: at,
+		Queue: lidarrcontracts.Queue{QueueID: queueID, Title: name},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeRecord(t, filepath.Join(root, "lidarr-repair-controller/cases", name+".json"), lidarrCase{
+		CaseID: caseID,
+		Record: lidarrrepair.Record{
+			QueueID: queueID, Case: caseData, SourcePath: name,
+			Bindings: []lidarrrepair.ImportBinding{{DownloadID: name}},
+		},
+	})
+	writeRecord(t, filepath.Join(root, "lidarr-repair-controller/imports", name+".json"), lidarrrepair.ImportExecution{
+		CaseID: caseID, QueueID: queueID, State: lidarrrepair.Imported,
+		PreparedAt: at, UpdatedAt: at,
+		Tracks:        []lidarrrepair.ImportExecutionTrack{{TrackID: 1, DownloadID: name}},
+		Confirmations: []lidarr.ImportedTrack{{HistoryID: queueID}},
+	})
+	return review.Item{
+		QueueID: queueID, CaseID: caseID, Title: name,
+		QueueIdentity: &queueaction.QueueIdentity{QueueID: queueID, DownloadID: name},
+	}
+}
 
 func writeRecord(t *testing.T, path string, record any) {
 	t.Helper()

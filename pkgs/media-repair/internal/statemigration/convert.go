@@ -3,6 +3,7 @@ package statemigration
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -64,6 +65,8 @@ func Convert(root string, mediaRoots map[string]string) ([]jobs.MigratedJob, err
 }
 
 func groupCases(cases []convertedCase) map[jobs.QueueKey]*jobs.MigratedJob {
+	// Review restoration holds pointers into the original slice.
+	cases = slices.Clone(cases)
 	sort.Slice(cases, func(i, j int) bool {
 		return cases[i].job.UpdatedAt.Before(cases[j].job.UpdatedAt)
 	})
