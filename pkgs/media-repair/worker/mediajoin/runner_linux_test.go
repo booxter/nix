@@ -271,7 +271,7 @@ func makeJoinPart(
 	}
 	switch container {
 	case workercontracts.OutputContainerAVI:
-		arguments = append(arguments, "-c:v", "mpeg4", "-vtag", "XVID", "-q:v", "2")
+		arguments = append(arguments, "-c:v", "mpeg4", "-bf", "2", "-vtag", "XVID", "-q:v", "2")
 		if audioStreams > 0 {
 			arguments = append(arguments, "-c:a", "mp3")
 		}

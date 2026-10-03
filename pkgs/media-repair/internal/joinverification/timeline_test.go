@@ -18,7 +18,7 @@ func TestTimelineRejectsMissingPacketsAndChangedTiming(t *testing.T) {
 		"missing packet": {0: {source[0][0]}},
 		"extra packet":   {0: {source[0][0], source[0][1], source[0][1]}},
 		"missing timestamp": {0: {
-			source[0][0], {PTS: math.NaN(), DTS: .04, Duration: .04},
+			source[0][0], {PTS: math.NaN(), DTS: math.NaN(), Duration: .04},
 		}},
 		"stretched presentation": {0: {
 			source[0][0], {PTS: .08, DTS: .04, Duration: .04},

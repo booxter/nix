@@ -41,10 +41,10 @@ func ValidateTimeline(parts []ffprobe.Timeline, output ffprobe.Timeline) error {
 			}
 
 			if math.IsNaN(offset) {
-				offset = joined[start].PTS - source[0].PTS
+				offset = packetOffset(source[0], joined[start])
 			}
 			if math.IsNaN(offset) {
-				return fmt.Errorf("part %d stream %d: missing presentation timestamp", partIndex+1, stream)
+				return fmt.Errorf("part %d stream %d: missing packet timestamps", partIndex+1, stream)
 			}
 
 			first, last, err := validateStreamTiming(source, joined[start:start+len(source)], offset)
@@ -73,7 +73,7 @@ func ValidateTimeline(parts []ffprobe.Timeline, output ffprobe.Timeline) error {
 }
 
 func validateStreamTiming(source, joined []ffprobe.Packet, partOffset float64) (float64, float64, error) {
-	offset := joined[0].PTS - source[0].PTS
+	offset := packetOffset(source[0], joined[0])
 	startTolerance := timingTolerance
 	if !math.IsNaN(source[0].Duration) {
 		startTolerance = math.Max(startTolerance, source[0].Duration)
@@ -88,7 +88,7 @@ func validateStreamTiming(source, joined []ffprobe.Packet, partOffset float64) (
 	first, last := math.Inf(1), math.Inf(-1)
 	for index, packet := range source {
 		actual := joined[index]
-		if math.IsNaN(packet.PTS) || math.IsNaN(actual.PTS) ||
+		if math.IsNaN(packetOffset(packet, actual)) ||
 			!sameTime(packet.PTS+offset, actual.PTS) || !sameTime(packet.DTS+offset, actual.DTS) {
 			return 0, 0, fmt.Errorf("packet %d: timestamp changed (source %.6f, output %.6f, offset %.6f)",
 				index, packet.PTS, actual.PTS, offset)
@@ -100,8 +100,13 @@ func validateStreamTiming(source, joined []ffprobe.Packet, partOffset float64) (
 				index, packet.Duration, actual.Duration)
 		}
 
-		first = math.Min(first, actual.PTS)
-		end := actual.PTS
+		// AVI may omit PTS for reordered frames; DTS still carries timing.
+		timestamp := actual.PTS
+		if math.IsNaN(timestamp) {
+			timestamp = actual.DTS
+		}
+		first = math.Min(first, timestamp)
+		end := timestamp
 		if !math.IsNaN(actual.Duration) {
 			end += actual.Duration
 		}
@@ -111,7 +116,14 @@ func validateStreamTiming(source, joined []ffprobe.Packet, partOffset float64) (
 }
 
 func sameTime(expected, actual float64) bool {
-	// Some containers omit DTS or duration. Presentation timestamps remain
-	// mandatory above; absent optional values cannot establish a mismatch.
+	// Missing values cannot establish a mismatch. Each packet must still
+	// have a shared presentation or decode timestamp, checked above.
 	return math.IsNaN(expected) || math.IsNaN(actual) || math.Abs(expected-actual) <= timingTolerance+1e-9
+}
+
+func packetOffset(source, output ffprobe.Packet) float64 {
+	if !math.IsNaN(source.PTS) && !math.IsNaN(output.PTS) {
+		return output.PTS - source.PTS
+	}
+	return output.DTS - source.DTS
 }
