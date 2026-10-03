@@ -164,6 +164,7 @@ in
     ./assertions.nix
     ./community
     ./build.nix
+    ./ci.nix
     ./nixpkgs.nix
     ./ssh.nix
   ];
