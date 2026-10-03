@@ -74,35 +74,9 @@ jobs:
             core.setOutput("check_batch_matrix", JSON.stringify(checkBatchMatrix));
             core.setOutput("nixos_test_matrix", JSON.stringify(nixosTestMatrix));
 
-  codex:
-    needs:
-      - format
-    name: Codex (${{ matrix.system }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: nix-ci
-            system: x86_64-linux
-          - os: nix-ci
-            system: aarch64-darwin
-
-    timeout-minutes: 90
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
-      - name: Build Codex
-        run: nix build ".#packages.${{ matrix.system }}.codex" --no-link --print-build-logs
-
   check_batch:
     needs:
       - format
-      - codex
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -121,7 +95,6 @@ jobs:
   nixos_test:
     needs:
       - format
-      - codex
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -162,7 +135,6 @@ jobs:
   build:
     needs:
       - format
-      - codex
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -829,7 +801,6 @@ jobs:
     if: ${{ always() }}
     needs:
       - format
-      - codex
       - check-success
       - build
       - post-config-diffs
@@ -842,12 +813,6 @@ jobs:
           if [ "${{ needs.format.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
             echo "format=${{ needs.format.result }}"
-            exit 1
-          fi
-
-          if [ "${{ needs.codex.result }}" != "success" ]; then
-            echo "One or more CI jobs failed."
-            echo "codex=${{ needs.codex.result }}"
             exit 1
           fi
 
