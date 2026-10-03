@@ -24,7 +24,7 @@ let
 
       endpoint = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        description = "Host-local API endpoint for service integrations.";
+        description = "Host-local service endpoint used by integrations.";
       };
 
       authentication = {
