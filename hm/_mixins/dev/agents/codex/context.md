@@ -18,6 +18,8 @@ prevent a mistake.
 Prefer less code and obvious code. Implement only what is clearly needed;
 do not add speculative features or special handling for hypothetical cases.
 Keep the solution minimal without sacrificing readability or correctness.
+As a rule of thumb, patches should ideally remove more code than they add,
+without losing important functionality.
 
 Test behavior, not implementation details. Remove implementation-detail
 tests when encountered; never add them.
