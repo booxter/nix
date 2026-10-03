@@ -53,8 +53,8 @@ func TestMixedTimeBasesPreserveEveryScene(t *testing.T) {
 		timelines = append(timelines, timeline)
 	}
 
-	// Reproduce the historical failure: a mixed-time-base middle scene can
-	// collapse while later scenes restore a plausible total duration.
+	// A mixed-time-base middle scene can collapse while later scenes restore
+	// a plausible total duration.
 	for _, part := range parts {
 		if _, err := part.Seek(0, io.SeekStart); err != nil {
 			t.Fatal(err)
