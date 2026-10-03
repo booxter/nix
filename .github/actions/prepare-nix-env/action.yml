@@ -1,35 +1,8 @@
 name: Prepare Nix environment
-description: Install Determinate Nix and configure binary caches.
-inputs:
-  extra-conf:
-    description: Additional nix.conf entries passed to the Nix installer.
-    required: false
-    default: ""
-  record-built-paths:
-    description: Record successfully built store paths for later publication.
-    required: false
-    default: "false"
+description: Use the system Nix installation or install it on GitHub-hosted runners.
 runs:
   using: composite
   steps:
-    - name: Prepare built path recorder
-      if: inputs.record-built-paths == 'true'
-      shell: bash
-      run: |
-        set -euo pipefail
-
-        : >"${RUNNER_TEMP}/attic-built-paths"
-        cat >"${RUNNER_TEMP}/record-built-paths" <<'EOF'
-        #!/usr/bin/env bash
-        set -u
-        set -f
-
-        hook_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-        # shellcheck disable=SC2153 # Nix supplies OUT_PATHS to post-build hooks.
-        printf '%s\n' ${OUT_PATHS} >>"${hook_directory}/attic-built-paths"
-        EOF
-        chmod 0755 "${RUNNER_TEMP}/record-built-paths"
-
     - name: Install Determinate Nix
       if: runner.environment == 'github-hosted'
       uses: DeterminateSystems/determinate-nix-action@4eea0b33e3d1f02ecfe37cf16e7204c424009606 # v3
@@ -41,12 +14,6 @@ runs:
           ${{ runner.os == 'macOS' && 'sandbox = relaxed' || '' }}
           extra-substituters = https://cache.saumon.network/proxmox-nixos
           extra-trusted-public-keys = proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=
-          ${{ inputs.record-built-paths == 'true' && format('post-build-hook = {0}/record-built-paths', runner.temp) || '' }}
-          ${{ inputs.extra-conf }}
-
-    - name: Setup FlakeHub Cache
-      if: runner.environment == 'github-hosted'
-      uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1
 
     - name: Verify required Nix daemon settings
       shell: bash
