@@ -135,9 +135,7 @@ in
         ProtectControlGroups = true;
         ProtectHome = true;
         ProtectHostname = true;
-        ProtectKernelLogs = true;
         ProtectKernelModules = true;
-        ProtectKernelTunables = true;
         ProtectProc = "invisible";
         ProtectSystem = "strict";
         ReadWritePaths = rootPaths ++ [ "/var/lib/prometheus-node-exporter-textfile/repairr" ];
