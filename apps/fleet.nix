@@ -17,6 +17,18 @@ let
   darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
   nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
   fleetHosts = nixosHosts // darwinHosts;
+  deploymentCaches = pkgs.lib.mapAttrs' (
+    serverName: server:
+    let
+      cacheName = server.defaultCache;
+      cache = server.caches.${cacheName};
+      endpoint = cache.endpoint or server.endpoint;
+    in
+    pkgs.lib.nameValuePair server.realm {
+      pushTarget = "${serverName}:${cacheName}";
+      storeUri = "${endpoint}/${cacheName}";
+    }
+  ) fleetInventory.atticServers;
   realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   tokenHosts = pkgs.lib.mapAttrs (_: host: { inherit (host) realm system; }) fleetHosts;
   appPackages = import ./packages.nix {
@@ -31,6 +43,7 @@ let
     darwin = pkgs.lib.mapAttrs (
       _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
     ) darwinHosts;
+    inherit deploymentCaches;
     lanDnsServer = lan.gateway.address;
     lanDomain = fleetConfiguration.config.host.network.lanDomain;
     nixos = pkgs.lib.mapAttrs (

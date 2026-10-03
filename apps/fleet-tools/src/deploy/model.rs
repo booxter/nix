@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::{ArgGroup, Parser};
 
 use crate::deploy_remote::DeployAction;
-use crate::Host;
+use crate::{DeploymentCache, Host};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -143,10 +143,20 @@ pub(super) trait Backend {
         source: &Path,
         request: &ActivationRequest,
     ) -> Result<()>;
+    fn activate_remote_prebuilt(
+        &mut self,
+        target: &DeploymentTarget,
+        cache: &DeploymentCache,
+        helper: &Path,
+        system: &Path,
+        request: &ActivationRequest,
+    ) -> Result<()>;
     fn build_helper(&mut self, source: &Path, platform: &str) -> Result<PathBuf>;
+    fn build_system(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf>;
     fn disko(&mut self, request: &DiskoRequest) -> Result<()>;
     fn ensure_local_space(&mut self, min_free_gib: u64, gc_headroom_gib: u64) -> Result<()>;
     fn hostname(&self) -> Result<String>;
+    fn publish(&mut self, cache: &DeploymentCache, paths: &[PathBuf]) -> Result<()>;
     fn select(&mut self, candidates: &[String]) -> Result<Vec<String>>;
     fn stage_source(&mut self, source: &SourceSelection, cwd: &Path) -> Result<StagedSource>;
     fn terminal_available(&self) -> bool;

@@ -6,7 +6,8 @@ use std::process::ExitCode;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use fleet_tools::deploy_remote::{
-    activate_darwin, askpass, deploy, DeployAction, DeployRequest, SystemBackend,
+    activate, activate_darwin, askpass, deploy, prepare, DeployAction, DeployRequest,
+    PrebuiltRequest, PrepareRequest, SystemBackend,
 };
 
 #[derive(Debug, Parser)]
@@ -18,6 +19,22 @@ struct Arguments {
 
 #[derive(Debug, Subcommand)]
 enum FleetCommand {
+    Activate {
+        #[arg(long, value_enum)]
+        action: DeployAction,
+        #[arg(long)]
+        config_name: String,
+        #[arg(long)]
+        expected_runtime_host: String,
+        #[arg(long, default_value_t = 5)]
+        gc_headroom_gib: u64,
+        #[arg(long, default_value_t = 30)]
+        min_free_gib: u64,
+        #[arg(long)]
+        no_inhibit: bool,
+        #[arg(long)]
+        system_config: PathBuf,
+    },
     Deploy {
         #[arg(long, value_enum)]
         action: DeployAction,
@@ -33,6 +50,16 @@ enum FleetCommand {
         no_inhibit: bool,
         #[arg(long)]
         source: PathBuf,
+    },
+    Prepare {
+        #[arg(long)]
+        config_name: String,
+        #[arg(long)]
+        expected_runtime_host: String,
+        #[arg(long, default_value_t = 5)]
+        gc_headroom_gib: u64,
+        #[arg(long, default_value_t = 30)]
+        min_free_gib: u64,
     },
     #[command(hide = true)]
     ActivateDarwin {
@@ -56,6 +83,26 @@ fn main() -> ExitCode {
 fn execute(arguments: Arguments) -> Result<()> {
     let mut backend = SystemBackend;
     match arguments.command {
+        FleetCommand::Activate {
+            action,
+            config_name,
+            expected_runtime_host,
+            gc_headroom_gib,
+            min_free_gib,
+            no_inhibit,
+            system_config,
+        } => activate(
+            &mut backend,
+            &PrebuiltRequest {
+                action,
+                config_name,
+                expected_runtime_host,
+                gc_headroom_gib,
+                min_free_gib,
+                no_inhibit,
+                system_config,
+            },
+        ),
         FleetCommand::Deploy {
             action,
             config_name,
@@ -74,6 +121,20 @@ fn execute(arguments: Arguments) -> Result<()> {
                 min_free_gib,
                 no_inhibit,
                 source,
+            },
+        ),
+        FleetCommand::Prepare {
+            config_name,
+            expected_runtime_host,
+            gc_headroom_gib,
+            min_free_gib,
+        } => prepare(
+            &mut backend,
+            &PrepareRequest {
+                config_name,
+                expected_runtime_host,
+                gc_headroom_gib,
+                min_free_gib,
             },
         ),
         FleetCommand::ActivateDarwin { system_config } => {

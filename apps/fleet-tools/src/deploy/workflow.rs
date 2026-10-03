@@ -1,12 +1,13 @@
 use std::collections::BTreeSet;
 use std::env;
 use std::io::Write;
+use std::path::Path;
 use std::time::Instant;
 
 use anyhow::{anyhow, bail, Result};
 
 use crate::deploy_remote::DeployAction;
-use crate::HostInventory;
+use crate::{DeploymentCache, HostInventory};
 
 use super::{
     ActivationRequest, Backend, DeployArgs, DeploymentTarget, DiskoRequest, HostKind,
@@ -100,6 +101,8 @@ pub(super) fn run_with_backend(
                 Ok(helper) => backend.activate_local(&helper, &source.store_path, &request),
                 Err(error) => Err(error),
             }
+        } else if let Some(cache) = inventory.deployment_caches.get(&target.host.realm) {
+            build_and_activate_remote(backend, target, cache, &source.store_path, &request)
         } else {
             backend.activate_remote(target, &source.store_path, &request)
         };
@@ -133,6 +136,19 @@ pub(super) fn run_with_backend(
         )?;
         Ok(false)
     }
+}
+
+fn build_and_activate_remote(
+    backend: &mut impl Backend,
+    target: &DeploymentTarget,
+    cache: &DeploymentCache,
+    source: &Path,
+    request: &ActivationRequest,
+) -> Result<()> {
+    let helper = backend.build_helper(source, &target.host.platform)?;
+    let system = backend.build_system(source, target)?;
+    backend.publish(cache, &[helper.clone(), system.clone()])?;
+    backend.activate_remote_prebuilt(target, cache, &helper, &system, request)
 }
 
 fn select_targets(

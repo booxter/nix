@@ -84,10 +84,9 @@ Scope: whole repository.
   concatenation or hand-written serialization templates.
 - Declare and wrap external runtime executables; build inputs alone do not put
   programs on the installed runtime `PATH`.
-- Assume Nix on managed machines. For remote helpers, copy only a
-  content-addressed flake source and build on the target. Do not copy unsigned
-  local build outputs into signature-enforcing target stores, use `scp`, or run
-  host-architecture executables remotely.
+- Assume Nix on managed machines. Use repository apps for managed-host
+  deployments; do not manually recreate their build, transfer, or trust
+  handling.
 
 ## Security
 
