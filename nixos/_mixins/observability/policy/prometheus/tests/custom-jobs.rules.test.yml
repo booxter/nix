@@ -148,7 +148,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_textfile_mtime_seconds{instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom"}'
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy/adaptive-upload-policy.prom"}'
         values: "0x31"
     alert_rule_test:
       - eval_time: 15m
@@ -159,7 +159,7 @@ tests:
           - exp_labels:
               alertname: AdaptiveUploadPolicyMetricsStale
               category: automation
-              file: /var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom
+              file: /var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy/adaptive-upload-policy.prom
               instance: srvarr
               severity: warning
             exp_annotations:
@@ -210,7 +210,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}'
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status-collector/houndarr-status.prom"}'
         values: "0x31"
     alert_rule_test:
       - eval_time: 15m
@@ -221,7 +221,7 @@ tests:
           - exp_labels:
               alertname: HoundarrStatusMetricsStale
               category: media
-              file: /var/lib/prometheus-node-exporter-textfile/houndarr-status.prom
+              file: /var/lib/prometheus-node-exporter-textfile/houndarr-status-collector/houndarr-status.prom
               instance: srvarr
               job: node-mtls
               severity: warning

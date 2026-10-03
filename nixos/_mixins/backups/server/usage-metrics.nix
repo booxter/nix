@@ -19,6 +19,7 @@ let
     server
     ;
   enabled = b2Offloads != { };
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile/restic-cloud-usage";
   resticTools = pkgs.callPackage ../pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -42,13 +43,16 @@ let
     "--state-file"
     "/var/lib/restic-cloud-usage-metrics/state.json"
     "--metrics-file"
-    "/var/lib/prometheus-node-exporter-textfile/restic-cloud-usage.prom"
+    "${textfileDir}/restic-cloud-usage.prom"
     "--restic-cache-dir"
     "/var/lib/restic-cloud-usage-metrics/restic-cache"
   ];
 in
 {
   config = lib.mkIf (server != null && enabled) {
+    host.observability.nodeExporter.textfile.directories.restic-cloud-usage = textfileDir;
+    systemd.tmpfiles.rules = [ "d ${textfileDir} 0755 root root - -" ];
+
     systemd.services.restic-cloud-usage-export = {
       description = "Export Restic cloud and B2 usage metrics";
       wants = dependencyUnits;

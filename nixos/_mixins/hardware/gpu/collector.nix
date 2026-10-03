@@ -7,7 +7,8 @@
 let
   cfg = config.host.hardware.gpu.collector;
   metricsPackage = pkgs.callPackage ./amdgpu-metrics { };
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.amdgpu-metrics.directory;
 in
 {
   config = lib.mkIf cfg.enable {

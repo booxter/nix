@@ -5,7 +5,8 @@
 }:
 let
   cfg = config.host.houndarr;
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.houndarr-status-collector.directory;
   metricsFile = "${textfileDir}/houndarr-status.prom";
   command = [
     (lib.getExe' cfg.toolsPackage "houndarr-status-collector")

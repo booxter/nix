@@ -30,7 +30,7 @@ let
     upper = formatClock policy.allowedWindow.end;
   };
   metricsEnabled = config.host.observability.enable;
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile/auto-upgrade";
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
     inherit (cfg) holds;
@@ -129,6 +129,8 @@ in
     })
 
     (lib.mkIf metricsEnabled {
+      host.observability.nodeExporter.textfile.directories.auto-upgrade = textfileDir;
+
       # Update immediately on switch so adding or removing a hold changes alert
       # suppression without waiting for the next hourly timer tick.
       system.activationScripts.nixosUpgradeHoldMetrics.text = writeHoldMetrics;
@@ -157,6 +159,8 @@ in
 
       systemd.tmpfiles.rules = [
         "d ${textfileDir} 0755 root root - -"
+        # Preserve the last upgrade result until the next successful upgrade.
+        "C- ${textfileDir}/nixos-upgrade.prom 0644 root root - /var/lib/prometheus-node-exporter-textfile/nixos-upgrade.prom"
         "z ${textfileDir}/nixos-upgrade.prom 0644 root root - -"
       ];
     })

@@ -7,11 +7,17 @@
 let
   cfg = config.host.observability;
   producers = cfg.nodeExporter.textfile.periodicProducers;
-  textfileDir = cfg.nodeExporter.textfile.directories.default;
   producerType = lib.types.submodule (
-    { config, ... }:
+    { config, name, ... }:
     {
       options = {
+        directory = lib.mkOption {
+          type = lib.types.str;
+          readOnly = true;
+          default = "/var/lib/prometheus-node-exporter-textfile/${name}";
+          description = "Private output directory, scraped only while this producer is configured.";
+        };
+
         command = lib.mkOption {
           type = with lib.types; nonEmptyListOf str;
           description = "Command and arguments used to produce Prometheus metrics.";
@@ -91,7 +97,7 @@ let
       PrivateTmp = true;
       ProtectHome = true;
       ProtectSystem = "strict";
-      ReadWritePaths = [ textfileDir ];
+      ReadWritePaths = [ producer.directory ];
       RestrictAddressFamilies = producer.addressFamilies;
       RestrictRealtime = true;
       LockPersonality = true;
@@ -122,6 +128,14 @@ in
   };
 
   config = lib.mkIf (producers != { }) {
+    host.observability.nodeExporter.textfile.directories = lib.mapAttrs (
+      _: producer: producer.directory
+    ) producers;
+
+    systemd.tmpfiles.rules = lib.mapAttrsToList (
+      _: producer: "d ${producer.directory} 0755 root root - -"
+    ) producers;
+
     assertions = [
       {
         assertion = cfg.enable;

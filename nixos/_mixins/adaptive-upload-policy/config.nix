@@ -165,9 +165,11 @@ in
           inherit group;
         };
 
+        host.observability.nodeExporter.textfile.directories.adaptive-upload-policy = metricsDirectory;
+
         systemd.tmpfiles.rules = [
           "d ${stateDir} 0750 ${user} ${group} -"
-          "z ${metricsDirectory} 0775 root ${group} - -"
+          "d ${metricsDirectory} 0755 ${user} ${group} - -"
         ];
 
         systemd.services = {

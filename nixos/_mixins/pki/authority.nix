@@ -13,8 +13,11 @@ let
   caPort = authority.port;
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
-  statusMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-certs.prom";
-  rotationMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-rotation.prom";
+  statusMetricsDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.pki-status-export.directory;
+  rotationMetricsDir = "/var/lib/prometheus-node-exporter-textfile/pki-rotation";
+  statusMetricsPath = "${statusMetricsDir}/pki-certs.prom";
+  rotationMetricsPath = "${rotationMetricsDir}/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
   realmsByHost = lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
@@ -100,6 +103,7 @@ in
     };
 
     host.observability = lib.mkIf enabled {
+      nodeExporter.textfile.directories.pki-rotation = rotationMetricsDir;
       nodeExporter.textfile.periodicProducers.pki-status-export = {
         description = "Export internal PKI status metrics for node exporter";
         command = [
@@ -120,6 +124,10 @@ in
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf enabled [ caPort ];
+
+    systemd.tmpfiles.rules = lib.mkIf enabled [
+      "d ${rotationMetricsDir} 0755 root root - -"
+    ];
 
     environment.systemPackages = lib.mkIf enabled [
       pkiRotation

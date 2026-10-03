@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.observability;
-  textfileDir = cfg.nodeExporter.textfile.directories.default;
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile/systemd-expectations";
   withSuffix =
     suffix: units:
     lib.mapAttrs' (
@@ -106,6 +106,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    host.observability.nodeExporter.textfile.directories.systemd-expectations = textfileDir;
+
     # This unit runs only while switching configurations. Inspecting its
     # unitConfig also recurses through the tmpfiles rules generated below.
     host.observability.systemd.excludedUnits = [ "systemd-tmpfiles-resetup.service" ];

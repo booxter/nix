@@ -6,7 +6,8 @@
 }:
 let
   cfg = config.host.ollama;
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.ollama-metrics.directory;
   ollamaMetrics = pkgs.callPackage ./metrics { };
 in
 {

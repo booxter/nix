@@ -30,7 +30,7 @@ groups:
           summary: "Adaptive upload controller exporter failed on srvarr"
           description: "The adaptive upload controller on srvarr has been unable to fetch Jellyfin exporter state successfully for 10 minutes."
       - alert: AdaptiveUploadPolicyMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom"}) > 600
+        expr: (time() - node_textfile_mtime_seconds{instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy/adaptive-upload-policy.prom"}) > 600
         for: 5m
         labels:
           severity: warning
@@ -84,7 +84,7 @@ groups:
           summary: "Repairr import stuck on srvarr"
           description: "Repairr has been waiting for an import confirmation from {{ $labels.service }} for 30 minutes."
       - alert: HoundarrStatusMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status-collector/houndarr-status.prom"}) > 600
         for: 5m
         labels:
           severity: warning
