@@ -16,24 +16,22 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
   actions: read
   pull-requests: read
 
 jobs:
   format:
     name: Format check
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     outputs:
-      matrix: ${{ steps.build_matrix.outputs.matrix }}
+      build_matrix: ${{ steps.ci_matrices.outputs.build_matrix }}
+      check_batch_matrix: ${{ steps.ci_matrices.outputs.check_batch_matrix }}
+      nixos_test_matrix: ${{ steps.ci_matrices.outputs.nixos_test_matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Format
         run: nix fmt .
@@ -47,26 +45,34 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve CI targets
-        id: ci_targets
+      - name: Resolve CI inventory
+        id: ci_inventory
         shell: bash
         run: |
-          targets="$(nix eval --json .#lib.ciTargets)"
-          printf 'targets=%s\n' "${targets}" >>"${GITHUB_OUTPUT}"
+          inventory="$(nix eval --json .#lib.ci)"
+          printf 'inventory=%s\n' "${inventory}" >>"${GITHUB_OUTPUT}"
 
-      - name: Compute build matrix
-        id: build_matrix
+      - name: Compute CI matrices
+        id: ci_matrices
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          CI_TARGETS: ${{ steps.ci_targets.outputs.targets }}
+          CI_INVENTORY: ${{ steps.ci_inventory.outputs.inventory }}
         with:
           script: |
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const buildTargets = JSON.parse(process.env.CI_TARGETS).buildTargets;
-            const matrix = {
-              include: targetInventory.toBuildMatrixEntries(buildTargets)
+            const inventory = JSON.parse(process.env.CI_INVENTORY);
+            const buildMatrix = {
+              include: targetInventory.toBuildMatrixEntries(inventory.buildTargets)
             };
-            core.setOutput("matrix", JSON.stringify(matrix));
+            const checkBatchMatrix = {
+              include: targetInventory.toCheckBatchMatrixEntries(inventory.checks)
+            };
+            const nixosTestMatrix = {
+              include: targetInventory.toNixosTestMatrixEntries(inventory.checks)
+            };
+            core.setOutput("build_matrix", JSON.stringify(buildMatrix));
+            core.setOutput("check_batch_matrix", JSON.stringify(checkBatchMatrix));
+            core.setOutput("nixos_test_matrix", JSON.stringify(nixosTestMatrix));
 
   codex:
     needs:
@@ -77,20 +83,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: nix-ci
             system: x86_64-linux
-            extra_conf: |
-              extra-experimental-features = auto-allocate-uids cgroups
-              auto-allocate-uids = true
-            nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
-          - os: macos-26
+          - os: nix-ci
             system: aarch64-darwin
-            extra_conf: ""
-            nix_config: ""
 
     timeout-minutes: 90
-    env:
-      NIX_CONFIG: ${{ matrix.nix_config }}
 
     steps:
       - name: Checkout
@@ -98,89 +96,65 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Free disk space
-        if: matrix.system == 'x86_64-linux'
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-        with:
-          extra-conf: ${{ matrix.extra_conf }}
-          record-built-paths: "true"
-
       - name: Build Codex
-        shell: bash
-        run: |
-          nix build ".#packages.${{ matrix.system }}.codex" \
-            --no-link \
-            --print-build-logs \
-            --print-out-paths \
-            >>"${RUNNER_TEMP}/attic-built-paths"
+        run: nix build ".#packages.${{ matrix.system }}.codex" --no-link --print-build-logs
 
-      - name: Upload built path manifest
-        if: ${{ always() }}
-        continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: attic-built-paths-codex-${{ matrix.system }}
-          path: ${{ runner.temp }}/attic-built-paths
-          if-no-files-found: ignore
-          retention-days: 1
-
-  check:
+  check_batch:
     needs:
       - format
       - codex
-    name: Regular checks (${{ matrix.system }})
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            system: x86_64-linux
-            extra_conf: |
-              extra-experimental-features = auto-allocate-uids cgroups
-              auto-allocate-uids = true
-            nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
-          - os: macos-26
-            system: aarch64-darwin
-            extra_conf: ""
-            nix_config: ""
+      matrix: ${{ fromJson(needs.format.outputs.check_batch_matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
-    env:
-      NIX_CONFIG: ${{ matrix.nix_config }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Free disk space
-        if: matrix.system == 'x86_64-linux'
-        uses: ./.github/actions/free-disk-space
+      - name: Run batched checks
+        run: ${{ matrix.cmd }}
 
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
+  nixos_test:
+    needs:
+      - format
+      - codex
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJson(needs.format.outputs.nixos_test_matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          extra-conf: ${{ matrix.extra_conf }}
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Run regular checks
-        run: make check
+      - name: Run NixOS test
+        run: ${{ matrix.cmd }}
 
   check-success:
     name: Regular checks
     if: ${{ always() }}
     needs:
-      - check
-    runs-on: ubuntu-slim
+      - check_batch
+      - nixos_test
+    runs-on: nix-ci
     steps:
       - name: Check regular check results
         run: |
           set -euo pipefail
 
-          if [ "${{ needs.check.result }}" != "success" ]; then
-            echo "Regular check matrix result: ${{ needs.check.result }}"
+          batch_result="${{ needs.check_batch.result }}"
+          nixos_test_result="${{ needs.nixos_test.result }}"
+          if [ "${batch_result}" != "success" ] || [ "${nixos_test_result}" != "success" ]; then
+            echo "Batched checks: ${batch_result}"
+            echo "NixOS tests: ${nixos_test_result}"
             exit 1
           fi
           echo "All regular checks passed."
@@ -193,7 +167,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.format.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.format.outputs.build_matrix) }}
 
     timeout-minutes: 90
 
@@ -204,26 +178,8 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
           fetch-depth: 0
 
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-        with:
-          record-built-paths: "true"
-
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
-
-      - name: Record target outputs
-        shell: bash
-        env:
-          TARGET_ATTR: ${{ matrix.attr }}
-        run: |
-          nix build ".#${TARGET_ATTR}" \
-            --no-link \
-            --print-out-paths \
-            >>"${RUNNER_TEMP}/attic-built-paths"
 
       - name: Resolve checked-out revision
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
@@ -411,16 +367,6 @@ jobs:
           path: diff-output/*
           if-no-files-found: warn
 
-      - name: Upload built path manifest
-        if: ${{ always() }}
-        continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: attic-built-paths-${{ strategy.job-index }}
-          path: ${{ runner.temp }}/attic-built-paths
-          if-no-files-found: ignore
-          retention-days: 1
-
   post-config-diffs:
     name: post config diffs
     needs:
@@ -433,7 +379,7 @@ jobs:
         needs.format.result == 'success' &&
         needs.build.result == 'success'
       }}
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     continue-on-error: true
     permissions:
       actions: read
@@ -453,7 +399,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          BUILD_MATRIX: ${{ needs.format.outputs.matrix }}
+          BUILD_MATRIX: ${{ needs.format.outputs.build_matrix }}
           HEAD_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -887,7 +833,7 @@ jobs:
       - check-success
       - build
       - post-config-diffs
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     steps:
       - name: Check job results
         run: |
@@ -917,114 +863,3 @@ jobs:
             exit 1
           fi
           echo "All CI jobs passed."
-
-  publish-attic:
-    name: publish Attic cache
-    needs:
-      - ci-success
-    if: ${{ always() && !cancelled() }}
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    env:
-      ATTIC_TOKEN: ${{ secrets.ATTIC_GITHUB_TOKEN }}
-    steps:
-      - name: Check publication credentials
-        id: credentials
-        shell: bash
-        run: |
-          if [ -n "${ATTIC_TOKEN}" ]; then
-            echo 'available=true' >>"${GITHUB_OUTPUT}"
-          else
-            echo 'Attic credentials are unavailable; skipping publication.'
-            echo 'available=false' >>"${GITHUB_OUTPUT}"
-          fi
-
-      - name: Download built path manifests
-        if: steps.credentials.outputs.available == 'true'
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: attic-built-paths-*
-          path: ${{ runner.temp }}/attic-built-path-manifests
-
-      - name: Checkout
-        if: steps.credentials.outputs.available == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
-      - name: Prepare Nix environment
-        if: steps.credentials.outputs.available == 'true'
-        uses: ./.github/actions/prepare-nix-env
-
-      - name: Publish to Attic
-        if: steps.credentials.outputs.available == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          manifest_directory="${RUNNER_TEMP}/attic-built-path-manifests"
-          manifests="${RUNNER_TEMP}/attic-built-path-manifests.txt"
-          paths="${RUNNER_TEMP}/attic-built-paths"
-          available_paths="${RUNNER_TEMP}/attic-available-paths"
-          # Stream paths from FlakeHub through Attic without storing their
-          # closures in the runner's local Nix store.
-          source_store="https://cache.flakehub.com"
-          if [ ! -d "${manifest_directory}" ]; then
-            echo 'No built path manifests were uploaded; skipping publication.'
-            exit 0
-          fi
-          find "${manifest_directory}" -type f -print0 \
-            | xargs -0 cat \
-            | sort -u >"${manifests}"
-          while IFS= read -r path; do
-            if [[ "${path}" =~ ^/nix/store/[0-9a-z]{32}-[^[:space:]]+$ ]]; then
-              printf '%s\n' "${path}"
-            fi
-          done <"${manifests}" >"${paths}"
-
-          if [ ! -s "${paths}" ]; then
-            echo 'No built paths were recorded; skipping publication.'
-            exit 0
-          fi
-
-          while IFS= read -r path; do
-            if nix path-info \
-              --store "${source_store}" \
-              "${path}" >/dev/null 2>&1; then
-              printf '%s\n' "${path}"
-            fi
-          done <"${paths}" >"${available_paths}"
-
-          if [ ! -s "${available_paths}" ]; then
-            echo 'None of the recorded paths are available from FlakeHub.'
-            exit 0
-          fi
-
-          attic_package="$(
-            nix build \
-              --inputs-from . \
-              --no-link \
-              --print-out-paths \
-              nixpkgs#attic-client
-          )"
-          attic_home="${RUNNER_TEMP}/attic-home"
-          mkdir -p "${attic_home}"
-          HOME="${attic_home}" \
-            XDG_CONFIG_HOME="${attic_home}/.config" \
-            "${attic_package}/bin/attic" login \
-            github \
-            https://cache.ihar.dev \
-            "${ATTIC_TOKEN}"
-          HOME="${attic_home}" \
-            XDG_CONFIG_HOME="${attic_home}/.config" \
-            NIX_REMOTE="${source_store}" \
-            "${attic_package}/bin/attic" push \
-            --jobs 5 \
-            --stdin \
-            github:github \
-            <"${available_paths}"

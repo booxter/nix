@@ -33,6 +33,10 @@ let
         type = lib.types.attrsOf (
           lib.types.submodule {
             options = {
+              authenticated = lib.mkOption {
+                type = lib.types.bool;
+                description = "Whether cache reads require an authentication token.";
+              };
               cacheName = lib.mkOption {
                 type = lib.types.nonEmptyStr;
                 description = "Attic cache name.";
@@ -43,7 +47,7 @@ let
               };
               public = lib.mkOption {
                 type = lib.types.bool;
-                description = "Whether anonymous cache reads are allowed.";
+                description = "Whether the cache is advertised outside its host realm.";
               };
               trustedPublicKey = lib.mkOption {
                 type = lib.types.nullOr lib.types.nonEmptyStr;
@@ -76,8 +80,20 @@ in
     description = "Attic servers discovered in this host's realm.";
   };
 
+  options.host.attic.publishCaches = lib.mkOption {
+    type = with lib.types; attrsOf (nonEmptyListOf nonEmptyStr);
+    default =
+      if config.host.nix.builderClient == null then
+        { }
+      else
+        lib.mapAttrs (_: server: [ server.defaultCache ]) model.realmServers;
+    description = "Attic caches receiving completed builds, grouped by server name.";
+  };
+
   config = {
-    environment.systemPackages = lib.optional (config.host.attic.realmServers != { }) pkgs.attic-client;
+    environment.systemPackages = lib.optional (
+      config.host.attic.publishCaches != { }
+    ) pkgs.attic-client;
 
     host.nix.caches = lib.mergeAttrsList (
       lib.mapAttrsToList (

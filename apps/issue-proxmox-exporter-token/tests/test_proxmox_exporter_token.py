@@ -296,7 +296,7 @@ def test_remote_issuer_copies_source_and_builds_on_target():
         "flake",
         "archive",
         "--json",
-        "path:/repo",
+        "/repo",
     ]
     assert runner.calls[1][0] == [
         "nix",

@@ -1,6 +1,10 @@
-{ config, ... }:
+{ config, lib, ... }:
 let
   localServer = config.host.attic.realmServers.${config.networking.hostName} or null;
+  servers = config.host.attic.realmServers;
+  publishCaches = config.host.attic.publishCaches;
+  publishServerNames = builtins.attrNames publishCaches;
+  knownPublishServerNames = builtins.filter (name: builtins.hasAttr name servers) publishServerNames;
 in
 {
   assertions = [
@@ -21,9 +25,28 @@ in
     }
     {
       assertion = builtins.all (server: builtins.hasAttr server.defaultCache server.caches) (
-        builtins.attrValues config.host.attic.realmServers
+        builtins.attrValues servers
       );
       message = "Each Attic server default cache must exist in its cache set";
+    }
+    {
+      assertion = builtins.all (name: builtins.hasAttr name servers) publishServerNames;
+      message = "Attic publish targets must reference a realm server";
+    }
+    {
+      assertion = builtins.all (
+        serverName:
+        builtins.all (cacheName: builtins.hasAttr cacheName servers.${serverName}.caches) (
+          publishCaches.${serverName}
+        )
+      ) knownPublishServerNames;
+      message = "Attic publish targets must reference caches on their selected server";
+    }
+    {
+      assertion = builtins.all (
+        cacheNames: builtins.length cacheNames == builtins.length (lib.unique cacheNames)
+      ) (builtins.attrValues publishCaches);
+      message = "Attic publish targets must not contain duplicate cache names";
     }
   ];
 }

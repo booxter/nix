@@ -119,5 +119,5 @@ pkgs.testers.runNixOSTest {
     LIDARR_API_KEY = ${builtins.toJSON lidarrApiKey}
     LIDARR_URL = "http://127.0.0.1:8686"
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

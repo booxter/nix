@@ -11,6 +11,11 @@ let
     "uid-range"
   ];
   regularLinuxFeatures = (lib.remove "big-parallel" baseFeatures) ++ linuxFeatures;
+  ciUses = [
+    "build"
+    "ci"
+    "nixpkgs"
+  ];
   builder =
     {
       hostName,
@@ -41,16 +46,19 @@ in
     hostName = "builder1";
     maxJobs = 2;
     supportedFeatures = regularLinuxFeatures;
+    uses = ciUses;
   };
   builder2 = builder {
     hostName = "builder2";
     maxJobs = 2;
     supportedFeatures = regularLinuxFeatures;
+    uses = ciUses;
   };
   builder3 = builder {
     hostName = "builder3";
     maxJobs = 2;
     supportedFeatures = regularLinuxFeatures;
+    uses = ciUses;
   };
   frame = builder {
     hostName = "frame";
@@ -59,6 +67,7 @@ in
   mmini = builder {
     hostName = "mmini";
     system = "aarch64-darwin";
+    uses = ciUses;
   };
   nvws = builder {
     hostName = "nvws.local";

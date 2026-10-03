@@ -16,7 +16,7 @@ def test_archive_flake_source_returns_validated_store_path() -> None:
         "flake",
         "archive",
         "--json",
-        "path:/repo",
+        "/repo",
     ]
 
 

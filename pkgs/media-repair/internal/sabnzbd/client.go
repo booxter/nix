@@ -38,7 +38,7 @@ type Client struct {
 // completed output. Keep this bounded read adapter local until one exposes the
 // required data without discarding it.
 func New(
-	endpoint, apiKey string,
+	baseURL, apiKey string,
 	requestTimeout time.Duration,
 	httpClient *http.Client,
 ) (*Client, error) {
@@ -51,21 +51,22 @@ func New(
 	if apiKey == "" || strings.TrimSpace(apiKey) != apiKey || strings.ContainsRune(apiKey, '\x00') {
 		return nil, fmt.Errorf("SABnzbd API key is invalid")
 	}
-	parsed, err := url.Parse(endpoint)
+	parsed, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse SABnzbd URL: %w", err)
+		return nil, fmt.Errorf("parse SABnzbd base URL: %w", err)
 	}
 	if !parsed.IsAbs() || parsed.Host == "" {
-		return nil, fmt.Errorf("SABnzbd URL must be absolute")
+		return nil, fmt.Errorf("SABnzbd base URL must be absolute")
 	}
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
-		return nil, fmt.Errorf("SABnzbd URL must not contain credentials, query, or fragment")
+		return nil, fmt.Errorf("SABnzbd base URL must not contain credentials, query, or fragment")
 	}
 	if parsed.Scheme != "https" && (parsed.Scheme != "http" || !isLoopbackHost(parsed.Hostname())) {
-		return nil, fmt.Errorf("SABnzbd URL must use HTTPS or loopback HTTP")
+		return nil, fmt.Errorf("SABnzbd base URL must use HTTPS or loopback HTTP")
 	}
 	return &Client{
-		endpoint: parsed, apiKey: apiKey, httpClient: httpClient, requestTimeout: requestTimeout,
+		endpoint: parsed.JoinPath("api"),
+		apiKey:   apiKey, httpClient: httpClient, requestTimeout: requestTimeout,
 	}, nil
 }
 

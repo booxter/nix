@@ -232,6 +232,8 @@
           ../patches/shelfmark-add-download-poll-debug-state.patch
           ../patches/shelfmark-add-download-diagnostic-signal.patch
           ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
+          ../patches/shelfmark-retry-transmission-connectivity.patch
+          ../patches/shelfmark-redact-sabnzbd-api-key.patch
         ];
       });
     }

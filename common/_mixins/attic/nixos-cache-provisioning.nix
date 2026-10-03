@@ -50,7 +50,7 @@ let
         "cache"
         "configure"
         cacheName
-        (if cache.public then "--public" else "--private")
+        (if cache.authenticated then "--private" else "--public")
       ]
       ++ cacheSettingsArgs
       ++ upstreamCacheArgs

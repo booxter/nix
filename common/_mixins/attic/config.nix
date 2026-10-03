@@ -6,7 +6,17 @@
 }:
 let
   servers = config.host.attic.realmServers;
-  serverNames = builtins.attrNames servers;
+  publishCaches = config.host.attic.publishCaches;
+  publishingServers = lib.filterAttrs (name: _: builtins.hasAttr name publishCaches) servers;
+  publishingServerNames = builtins.attrNames publishingServers;
+  authenticatedHosts = lib.unique (
+    builtins.concatMap (
+      server:
+      map (cache: endpointHost cache.endpoint) (
+        builtins.attrValues (lib.filterAttrs (_: cache: cache.authenticated) server.caches)
+      )
+    ) (builtins.attrValues publishingServers)
+  );
   rootDir = if pkgs.stdenv.isDarwin then "/private/var/root" else "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   endpointHost =
@@ -19,15 +29,20 @@ let
     else
       builtins.elemAt match 0;
   clientConfig = (pkgs.formats.toml { }).generate "attic-client-config.toml" {
-    default-server = builtins.head serverNames;
+    default-server = builtins.head publishingServerNames;
     servers = lib.mapAttrs (_: server: {
       inherit (server) endpoint;
       token = config.sops.placeholder."attic/token";
-    }) servers;
+    }) publishingServers;
   };
-  pushCommands = lib.mapAttrsToList (name: server: ''
-    ${lib.getExe pkgs.attic-client} push --jobs 1 ${lib.escapeShellArg "${name}:${server.defaultCache}"} $OUT_PATHS || true
-  '') servers;
+  pushCommands = lib.concatLists (
+    lib.mapAttrsToList (
+      serverName: cacheNames:
+      map (cacheName: ''
+        ${lib.getExe pkgs.attic-client} push --jobs 1 ${lib.escapeShellArg "${serverName}:${cacheName}"} $OUT_PATHS || true
+      '') cacheNames
+    ) publishCaches
+  );
   postBuildHook = pkgs.writeShellScript "attic-push-hook" ''
     set -eu
     set -f
@@ -41,13 +56,15 @@ let
   '';
 in
 {
-  config = lib.mkIf (servers != { }) {
-    host.nix.netrcMachines = lib.mapAttrs' (
-      _: server:
-      lib.nameValuePair (endpointHost server.endpoint) {
-        password = config.sops.placeholder."attic/token";
-      }
-    ) servers;
+  config = lib.mkIf (publishCaches != { }) {
+    host.nix.netrcMachines = lib.listToAttrs (
+      map (hostName: {
+        name = hostName;
+        value = {
+          password = config.sops.placeholder."attic/token";
+        };
+      }) authenticatedHosts
+    );
 
     nix.settings.post-build-hook = postBuildHook;
 

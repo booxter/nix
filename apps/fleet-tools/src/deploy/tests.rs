@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Result};
 use clap::Parser;
 
-use crate::{Host, HostInventory};
+use crate::deploy_remote::DeployAction;
+use crate::{DeploymentCache, Host, HostInventory};
 
 use super::run_with_backend as run;
 use super::*;
@@ -17,12 +18,15 @@ struct FakeBackend {
     ensure_calls: usize,
     fail_hosts: BTreeSet<String>,
     hostname: String,
+    prebuilt_activations: Vec<String>,
     selected_candidates: Vec<String>,
     selection: Vec<String>,
     selection_canceled: bool,
     source_requests: Vec<SourceSelection>,
     stage_calls: usize,
+    system_builds: Vec<String>,
     terminal: bool,
+    publishes: Vec<(DeploymentCache, Vec<PathBuf>)>,
 }
 
 impl Backend for FakeBackend {
@@ -54,9 +58,34 @@ impl Backend for FakeBackend {
         Ok(())
     }
 
+    fn activate_remote_prebuilt(
+        &mut self,
+        _target: &DeploymentTarget,
+        _cache: &DeploymentCache,
+        _helper: &Path,
+        _system: &Path,
+        request: &ActivationRequest,
+    ) -> Result<()> {
+        self.prebuilt_activations.push(request.config_name.clone());
+        self.activations
+            .push((request.config_name.clone(), request.clone(), false));
+        if self.fail_hosts.contains(&request.config_name) {
+            bail!("injected activation failure");
+        }
+        Ok(())
+    }
+
     fn build_helper(&mut self, _source: &Path, platform: &str) -> Result<PathBuf> {
         self.builds.push(platform.to_owned());
         Ok(PathBuf::from(format!("/nix/store/helper-{platform}")))
+    }
+
+    fn build_system(&mut self, _source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
+        self.system_builds.push(target.config_name.clone());
+        Ok(PathBuf::from(format!(
+            "/nix/store/system-{}",
+            target.config_name
+        )))
     }
 
     fn disko(&mut self, request: &DiskoRequest) -> Result<()> {
@@ -71,6 +100,11 @@ impl Backend for FakeBackend {
 
     fn hostname(&self) -> Result<String> {
         Ok(self.hostname.clone())
+    }
+
+    fn publish(&mut self, cache: &DeploymentCache, paths: &[PathBuf]) -> Result<()> {
+        self.publishes.push((cache.clone(), paths.to_vec()));
+        Ok(())
     }
 
     fn select(&mut self, candidates: &[String]) -> Result<Vec<String>> {
@@ -118,6 +152,13 @@ fn inventory() -> HostInventory {
         darwin: BTreeMap::from([(
             "mair".to_owned(),
             host("mair", "aarch64-darwin", "mair", "home"),
+        )]),
+        deployment_caches: BTreeMap::from([(
+            "home".to_owned(),
+            DeploymentCache {
+                push_target: "beast:default".to_owned(),
+                store_uri: "https://cache.example.test/default".to_owned(),
+            },
         )]),
         lan_dns_server: "192.0.2.53".to_owned(),
         lan_domain: "example.test".to_owned(),
@@ -243,7 +284,7 @@ fn explicit_aliases_skip_mode_filtering() {
 }
 
 #[test]
-fn deployment_stages_requested_source_and_builds_only_local_helper() {
+fn cached_remote_deployments_build_and_publish_on_the_controller() {
     let mut backend = FakeBackend {
         hostname: "controller".to_owned(),
         terminal: true,
@@ -277,7 +318,13 @@ fn deployment_stages_requested_source_and_builds_only_local_helper() {
             url: REPO_URL.to_owned(),
         }]
     );
-    assert_eq!(backend.builds, ["x86_64-linux"]);
+    assert_eq!(
+        backend.builds,
+        ["x86_64-linux", "x86_64-linux", "aarch64-darwin"]
+    );
+    assert_eq!(backend.system_builds, ["alpha", "mair"]);
+    assert_eq!(backend.publishes.len(), 2);
+    assert_eq!(backend.prebuilt_activations, ["alpha", "mair"]);
     assert_eq!(backend.activations.len(), 3);
     assert!(backend.activations[0].2);
     assert!(!backend.activations[1].2);
@@ -285,6 +332,29 @@ fn deployment_stages_requested_source_and_builds_only_local_helper() {
         .activations
         .iter()
         .all(|(_, request, _)| request.no_inhibit));
+}
+
+#[test]
+fn remote_realms_without_a_deployment_cache_keep_the_target_build_path() {
+    let mut backend = FakeBackend {
+        hostname: "controller".to_owned(),
+        terminal: true,
+        ..Default::default()
+    };
+
+    assert!(run(
+        args(&["--local", "work"]),
+        &inventory(),
+        &mut backend,
+        &mut Vec::new(),
+    )
+    .unwrap());
+
+    assert!(backend.builds.is_empty());
+    assert!(backend.system_builds.is_empty());
+    assert!(backend.publishes.is_empty());
+    assert!(backend.prebuilt_activations.is_empty());
+    assert_eq!(backend.activations.len(), 1);
 }
 
 #[test]
@@ -387,6 +457,50 @@ fn remote_helper_uses_the_existing_package_interface() {
             "/nix/store/source#fleet-tools",
             "--command",
             "fleet-deploy-remote",
+        ]
+    );
+}
+
+#[test]
+fn prebuilt_activation_receives_only_the_completed_system() {
+    let request = ActivationRequest {
+        action: DeployAction::Switch,
+        config_name: "alpha".to_owned(),
+        expected_runtime_host: "alpha".to_owned(),
+        no_inhibit: true,
+    };
+
+    assert_eq!(
+        prebuilt_prepare_arguments(&request),
+        [
+            "prepare",
+            "--config-name",
+            "alpha",
+            "--expected-runtime-host",
+            "alpha",
+            "--gc-headroom-gib",
+            "5",
+            "--min-free-gib",
+            "30",
+        ]
+    );
+    assert_eq!(
+        prebuilt_activation_arguments(Path::new("/nix/store/system-alpha"), &request),
+        [
+            "activate",
+            "--action",
+            "switch",
+            "--config-name",
+            "alpha",
+            "--expected-runtime-host",
+            "alpha",
+            "--gc-headroom-gib",
+            "5",
+            "--min-free-gib",
+            "30",
+            "--system-config",
+            "/nix/store/system-alpha",
+            "--no-inhibit",
         ]
     );
 }

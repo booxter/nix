@@ -12,18 +12,14 @@ env:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
   actions: read
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: nix-ci
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Save current flake lock
         run: cp flake.lock "$RUNNER_TEMP/flake.lock.before"

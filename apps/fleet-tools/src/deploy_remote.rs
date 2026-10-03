@@ -50,6 +50,25 @@ pub struct DeployRequest {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PrebuiltRequest {
+    pub action: DeployAction,
+    pub config_name: String,
+    pub expected_runtime_host: String,
+    pub gc_headroom_gib: u64,
+    pub min_free_gib: u64,
+    pub no_inhibit: bool,
+    pub system_config: PathBuf,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PrepareRequest {
+    pub config_name: String,
+    pub expected_runtime_host: String,
+    pub gc_headroom_gib: u64,
+    pub min_free_gib: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandSpec {
     pub args: Vec<String>,
     pub cwd: Option<PathBuf>,
@@ -166,6 +185,26 @@ pub fn deploy(backend: &mut impl Backend, request: &DeployRequest) -> Result<()>
     }
 }
 
+pub fn activate(backend: &mut impl Backend, request: &PrebuiltRequest) -> Result<()> {
+    validate_prebuilt_request(backend, request)?;
+    let _gc_roots = protect_deployment_paths(backend, &request.system_config)?;
+    ensure_free_space(backend, request.min_free_gib, request.gc_headroom_gib)?;
+
+    match backend.target_os() {
+        TargetOs::Darwin => activate_prebuilt_darwin(backend, request),
+        TargetOs::Linux => activate_prebuilt_linux(backend, request),
+    }
+}
+
+pub fn prepare(backend: &mut impl Backend, request: &PrepareRequest) -> Result<()> {
+    validate_runtime_host(
+        backend,
+        &request.config_name,
+        &request.expected_runtime_host,
+    )?;
+    ensure_free_space(backend, request.min_free_gib, request.gc_headroom_gib)
+}
+
 fn protect_deployment_paths(
     backend: &mut impl Backend,
     source: &Path,
@@ -270,17 +309,52 @@ fn validate_request(backend: &impl Backend, request: &DeployRequest) -> Result<(
         );
     }
 
-    let actual = backend.hostname()?;
-    if actual != request.expected_runtime_host {
+    validate_target(
+        backend,
+        &request.config_name,
+        &request.expected_runtime_host,
+        request.action,
+    )
+}
+
+fn validate_prebuilt_request(backend: &impl Backend, request: &PrebuiltRequest) -> Result<()> {
+    if !request.system_config.is_absolute() || !request.system_config.starts_with(NIX_STORE) {
         bail!(
-            "refusing to deploy {}: SSH landed on {actual}, expected {}",
-            request.config_name,
-            request.expected_runtime_host
+            "system configuration must be an absolute Nix store path: {}",
+            request.system_config.display()
         );
     }
+    validate_target(
+        backend,
+        &request.config_name,
+        &request.expected_runtime_host,
+        request.action,
+    )
+}
 
-    if backend.target_os() == TargetOs::Darwin && request.action != DeployAction::Switch {
+fn validate_target(
+    backend: &impl Backend,
+    config_name: &str,
+    expected_runtime_host: &str,
+    action: DeployAction,
+) -> Result<()> {
+    validate_runtime_host(backend, config_name, expected_runtime_host)?;
+    if backend.target_os() == TargetOs::Darwin && action != DeployAction::Switch {
         bail!("unsupported deploy action on Darwin; use --action switch");
+    }
+    Ok(())
+}
+
+fn validate_runtime_host(
+    backend: &impl Backend,
+    config_name: &str,
+    expected_runtime_host: &str,
+) -> Result<()> {
+    let actual = backend.hostname()?;
+    if actual != expected_runtime_host {
+        bail!(
+            "refusing to deploy {config_name}: SSH landed on {actual}, expected {expected_runtime_host}"
+        );
     }
     Ok(())
 }
@@ -365,6 +439,44 @@ fn deploy_linux(backend: &mut impl Backend, request: &DeployRequest) -> Result<(
             backend.run(command)
         }
     }
+}
+
+fn activate_prebuilt_linux(backend: &mut impl Backend, request: &PrebuiltRequest) -> Result<()> {
+    if request.action != DeployAction::DryActivate {
+        run_sudo(
+            backend,
+            CommandSpec::new(DEPLOY_NIX).args([
+                "build".to_owned(),
+                "--no-link".to_owned(),
+                "--profile".to_owned(),
+                "/nix/var/nix/profiles/system".to_owned(),
+                request.system_config.display().to_string(),
+            ]),
+        )?;
+    }
+
+    let action = match request.action {
+        DeployAction::Switch => "switch",
+        DeployAction::Boot => "boot",
+        DeployAction::DryActivate => "dry-activate",
+    };
+    let mut command =
+        CommandSpec::new(request.system_config.join("bin/switch-to-configuration")).args([action]);
+    if request.no_inhibit {
+        command = command.env("NIXOS_NO_CHECK", "1");
+    }
+    run_sudo(backend, command)
+}
+
+fn activate_prebuilt_darwin(backend: &mut impl Backend, request: &PrebuiltRequest) -> Result<()> {
+    run_sudo(
+        backend,
+        CommandSpec::new(backend.current_exe()?).args([
+            "activate-darwin".to_owned(),
+            "--system-config".to_owned(),
+            request.system_config.display().to_string(),
+        ]),
+    )
 }
 
 fn deploy_darwin(backend: &mut impl Backend, request: &DeployRequest) -> Result<()> {
@@ -514,6 +626,27 @@ mod tests {
         }
     }
 
+    fn prebuilt_request() -> PrebuiltRequest {
+        PrebuiltRequest {
+            action: DeployAction::Switch,
+            config_name: "beast".to_owned(),
+            expected_runtime_host: "beast".to_owned(),
+            gc_headroom_gib: 5,
+            min_free_gib: 30,
+            no_inhibit: false,
+            system_config: PathBuf::from("/nix/store/system"),
+        }
+    }
+
+    fn prepare_request() -> PrepareRequest {
+        PrepareRequest {
+            config_name: "beast".to_owned(),
+            expected_runtime_host: "beast".to_owned(),
+            gc_headroom_gib: 5,
+            min_free_gib: 30,
+        }
+    }
+
     #[test]
     fn rejects_a_mismatched_runtime_host_before_running_commands() {
         let source = source();
@@ -524,6 +657,16 @@ mod tests {
 
         assert!(error.to_string().contains("SSH landed on other"));
         assert!(backend.commands.is_empty());
+    }
+
+    #[test]
+    fn preflight_checks_space_before_the_system_closure_is_copied() {
+        let mut backend = FakeBackend::new(TargetOs::Linux);
+
+        prepare(&mut backend, &prepare_request()).expect("preflight should succeed");
+
+        assert!(backend.commands.is_empty());
+        assert!(backend.available.is_empty());
     }
 
     #[test]
@@ -555,6 +698,62 @@ mod tests {
         assert_eq!(backend.commands[1].args[0..2], ["os", "switch"]);
         assert_eq!(backend.commands[1].env["NIXOS_NO_CHECK"], "1");
         assert_eq!(backend.commands[1].cwd.as_deref(), Some(source.path()));
+    }
+
+    #[test]
+    fn activates_a_prebuilt_nixos_system_without_evaluating_source() {
+        let mut backend = FakeBackend::new(TargetOs::Linux);
+        let mut request = prebuilt_request();
+        request.no_inhibit = true;
+
+        activate(&mut backend, &request).expect("activation should succeed");
+
+        assert_eq!(backend.commands.len(), 4);
+        assert!(backend.commands[0]
+            .args
+            .contains(&"/nix/store/deploy".to_owned()));
+        assert!(backend.commands[1]
+            .args
+            .contains(&"/nix/store/system".to_owned()));
+        assert_eq!(backend.commands[2].program, Path::new(SUDO));
+        assert!(backend.commands[2]
+            .args
+            .contains(&"/nix/var/nix/profiles/system".to_owned()));
+        assert_eq!(backend.commands[3].program, Path::new(SUDO));
+        assert!(backend.commands[3]
+            .args
+            .contains(&"/nix/store/system/bin/switch-to-configuration".to_owned()));
+        assert!(backend.commands[3].args.contains(&"switch".to_owned()));
+        assert_eq!(backend.commands[3].args[0], "NIXOS_NO_CHECK=1");
+    }
+
+    #[test]
+    fn prebuilt_dry_activation_does_not_update_the_system_profile() {
+        let mut backend = FakeBackend::new(TargetOs::Linux);
+        let mut request = prebuilt_request();
+        request.action = DeployAction::DryActivate;
+
+        activate(&mut backend, &request).expect("activation should succeed");
+
+        assert_eq!(backend.commands.len(), 3);
+        assert!(backend.commands[2]
+            .args
+            .contains(&"dry-activate".to_owned()));
+        assert!(!backend.commands.iter().any(|command| command
+            .args
+            .contains(&"/nix/var/nix/profiles/system".to_owned())));
+    }
+
+    #[test]
+    fn prebuilt_activation_rejects_paths_outside_the_nix_store() {
+        let mut backend = FakeBackend::new(TargetOs::Linux);
+        let mut request = prebuilt_request();
+        request.system_config = PathBuf::from("relative-system");
+
+        let error = activate(&mut backend, &request).unwrap_err();
+
+        assert!(error.to_string().contains("absolute Nix store path"));
+        assert!(backend.commands.is_empty());
     }
 
     #[test]

@@ -129,5 +129,5 @@ pkgs.testers.runNixOSTest {
     TARGET_DNS_PORT = ${toString targetDnsPort}
     TEST_PKI = ${builtins.toJSON "${testPki}"}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

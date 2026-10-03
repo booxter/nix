@@ -90,5 +90,5 @@ pkgs.testers.runNixOSTest {
   testScript = ''
     JQ = ${builtins.toJSON (lib.getExe pkgs.jq)}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

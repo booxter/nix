@@ -1,4 +1,5 @@
 {
+  attic-client,
   bind,
   clippy,
   curl,
@@ -42,6 +43,7 @@ rustPlatform.buildRustPackage {
   DIFF_NH = lib.getExe nh;
   DIFF_NIX = lib.getExe nix;
   DIFF_TARGET_ALIASES_JSON = builtins.toJSON vmTargets;
+  DEPLOY_ATTIC = lib.getExe attic-client;
   DEPLOY_NH = lib.getExe nh;
   DEPLOY_DIG = lib.getExe' bind "dig";
   DEPLOY_FZF = lib.getExe fzf;

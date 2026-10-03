@@ -1,0 +1,30 @@
+diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/clients/base_handler.py
+index a2bfe87..7aec734 100644
+--- a/shelfmark/download/clients/base_handler.py
++++ b/shelfmark/download/clients/base_handler.py
+@@ -802,2 +802,25 @@ class ExternalClientHandler(DownloadHandler, ABC):
+                     message = (status.message or "").strip()
+                     message_lower = message.lower()
++
++                    # Transmission reports temporary RPC outages as error statuses. Keep the
++                    # queue item alive so polling resumes when the daemon becomes responsive.
++                    retryable_transmission_error = (
++                        client.name == "transmission"
++                        and message.startswith(
++                            (
++                                "TransmissionConnectError:",
++                                "TransmissionTimeoutError:",
++                            )
++                        )
++                    )
++                    if retryable_transmission_error:
++                        logger.warning(
++                            "Transmission temporarily unavailable while polling %s: %s",
++                            download_id,
++                            message,
++                        )
++                        status_callback("resolving", "Waiting for Transmission...")
++                        if cancel_flag.wait(timeout=poll_interval):
++                            break
++                        continue
++

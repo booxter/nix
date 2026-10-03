@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import getpass
 import os
 import platform
 import socket
@@ -14,8 +13,8 @@ from typing import Protocol
 from .age import AgeRecipientResolver
 from .bootstrap import (
     BootstrapService,
+    CommandHostRecipientProvider,
     CommandOperatorRecipientProvider,
-    CommandRuntimeKeyProvider,
 )
 from .errors import ToolError
 from .model import KeyPath
@@ -242,10 +241,8 @@ def bootstrap_main(
     argv: Sequence[str] | None = None, *, application: Application | None = None
 ) -> int:
     def command() -> int:
-        parser = _parser("Bootstrap a host SOPS runtime key and encrypted secret.")
-        parser.add_argument("--local", action="store_true")
+        parser = _parser("Bootstrap host SOPS secrets from its committed SSH host key.")
         parser.add_argument("host")
-        parser.add_argument("--user", default=os.environ.get("USER", getpass.getuser()))
         args = parser.parse_args(argv)
         current = application or Application.discover()
         realm = current.runtime.resolve_realm(args.realm, require_identity=False)
@@ -255,15 +252,10 @@ def bootstrap_main(
             current.runtime,
             SecretRepository(current.runtime.repo_root, realm),
             current.backend_factory.create(environment, current.runtime.repo_root / ".sops.yaml"),
-            CommandRuntimeKeyProvider(runner, current.runtime.repo_root),
+            CommandHostRecipientProvider(runner, current.runtime.repo_root),
             CommandOperatorRecipientProvider(current.runtime, runner, AgeRecipientResolver(runner)),
         )
-        result = service.bootstrap(
-            args.host,
-            args.user,
-            local=args.local,
-            has_tty=sys.stdin.isatty(),
-        )
+        result = service.bootstrap(args.host)
         for message in result.messages:
             print(message)
         return 0

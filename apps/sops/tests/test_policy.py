@@ -40,5 +40,28 @@ def test_ensure_host_rule_adds_unique_recipients_and_is_idempotent() -> None:
     ]
 
 
+def test_policy_write_uses_readable_sequence_indentation(tmp_path: Path) -> None:
+    policy = SopsPolicy.create()
+    policy.ensure_host_rule("home", "beast", ["age1host", "age1operator"])
+
+    path = tmp_path / ".sops.yaml"
+    policy.write(path)
+
+    assert (
+        path.read_text()
+        == """\
+keys:
+  - age1host
+  - age1operator
+creation_rules:
+  - path_regex: secrets/home/beast\\.yaml$
+    key_groups:
+      - age:
+          - age1host
+          - age1operator
+"""
+    )
+
+
 def test_repository_policy_and_secrets_are_valid() -> None:
     validate_repository(Path(__file__).parents[3])

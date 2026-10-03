@@ -30,6 +30,15 @@ in
       pinentry.package = pkgs.pinentry-tty;
     };
 
+    # Refresh pinentry's store path before the old path is garbage-collected.
+    home.file."${config.programs.gpg.homedir}/gpg-agent.conf".onChange =
+      lib.optionalString pkgs.stdenv.isDarwin ''
+        agent_socket="$(${config.programs.gpg.package}/bin/gpgconf --list-dirs agent-socket)"
+        if [[ -S "$agent_socket" ]]; then
+          ${config.programs.gpg.package}/bin/gpgconf --reload gpg-agent
+        fi
+      '';
+
     # Home Manager's Darwin socket activation is broken; see
     # https://github.com/nix-community/home-manager/pull/5901. GnuPG starts
     # gpg-agent on demand when pass or another client first needs it. Linux

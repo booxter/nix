@@ -55,6 +55,13 @@
         calendar = null;
       };
     };
+    ci = {
+      switch = "04:10";
+      reboot = {
+        mode = "with-upgrade";
+        calendar = null;
+      };
+    };
     fana = {
       switch = "04:10";
       reboot = {

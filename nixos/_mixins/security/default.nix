@@ -1,9 +1,11 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
+  homeRealm = config.host.realm == "home";
   username = config.host.username;
   operatorAgeIdentity = config.host.security.secrets.operator.ageIdentity;
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
@@ -11,8 +13,15 @@ in
 {
   config = lib.mkMerge [
     {
-      security.sudo.wheelNeedsPassword = lib.mkDefault (config.host.realm != "home");
+      security.sudo.wheelNeedsPassword = lib.mkDefault (!homeRealm);
+      sops.age.generateKey = !homeRealm;
     }
+    (lib.mkIf homeRealm {
+      # Home hosts use their SSH host keys; keep the retired generated identity absent.
+      system.activationScripts.removeLegacySopsAgeKey.text = ''
+        ${pkgs.coreutils}/bin/rm -f /var/lib/sops-nix/key.txt
+      '';
+    })
     (lib.mkIf useYubiAgeIdentity {
       services.pcscd.enable = true;
       security.polkit = {

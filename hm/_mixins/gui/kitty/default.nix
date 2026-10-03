@@ -17,7 +17,8 @@
         mouse_hide_wait = 0;
         strip_trailing_spaces = "always";
         scrollback_pager = "page -t man";
-        scrollback_lines = 100000;
+        scrollback_lines = 10000;
+        scrollback_pager_history_size = 100;
         hide_window_decorations = "titlebar-only";
         # Make the focused split obvious even when the cursor is hard to spot.
         window_border_width = "2pt";

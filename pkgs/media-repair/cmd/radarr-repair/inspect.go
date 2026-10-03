@@ -64,7 +64,7 @@ func addDownloadSourceFlags(flags *flag.FlagSet) downloadSourceFlags {
 			"transmission-url", "", "loopback Transmission RPC URL",
 		),
 		sabnzbdURL: flags.String(
-			"sabnzbd-url", "", "loopback SABnzbd API URL",
+			"sabnzbd-url", "", "loopback SABnzbd base URL",
 		),
 		sabnzbdAPIKeyFile: flags.String(
 			"sabnzbd-api-key-file", "", "SABnzbd API-key credential file",

@@ -131,5 +131,5 @@ pkgs.testers.runNixOSTest {
     CURL = ${builtins.toJSON (pkgs.lib.getExe pkgs.curl)}
     SERVER_NAME = ${builtins.toJSON serverName}
   ''
-  + builtins.readFile "${fixtures}/test.py";
+  + builtins.readFile (fixtures + "/test.py");
 }

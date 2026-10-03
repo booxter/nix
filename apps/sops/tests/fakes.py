@@ -59,6 +59,7 @@ class MemorySopsBackend:
     edits: list[Path] = field(default_factory=list)
     encryptions: list[tuple[Path, JsonValue]] = field(default_factory=list)
     failing_set_paths: set[Path] = field(default_factory=set)
+    fail_encryption: bool = False
 
     def decrypt_text(self, path: Path) -> str:
         return yaml.safe_dump(self.documents[path], sort_keys=False)
@@ -95,6 +96,8 @@ class MemorySopsBackend:
             current[final] = copy.deepcopy(value)
 
     def encrypt_data(self, path: Path, value: JsonValue) -> str:
+        if self.fail_encryption:
+            raise ToolError(f"Unable to encrypt {path}")
         self.encryptions.append((path, copy.deepcopy(value)))
         self.documents[path] = copy.deepcopy(value)
         return "encrypted\n"
@@ -140,13 +143,14 @@ class StaticPasswordHasher(PasswordHasher):
 
 
 @dataclass
-class StaticRuntimeKeyProvider:
-    value: str = "age1runtime"
-    calls: list[tuple[str, str, bool]] = field(default_factory=list)
+class StaticHostRecipientProvider:
+    value: str = "age1host"
+    values: dict[str, str] = field(default_factory=dict)
+    calls: list[str] = field(default_factory=list)
 
-    def recipient(self, host: str, user: str, *, local: bool) -> str:
-        self.calls.append((host, user, local))
-        return self.value
+    def recipient(self, host: str) -> str:
+        self.calls.append(host)
+        return self.values.get(host, self.value)
 
 
 @dataclass(frozen=True)

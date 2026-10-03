@@ -5,7 +5,7 @@
 }:
 let
   builders = lib.filterAttrs (
-    _: builder: builtins.elem "build" builder.uses
+    _: builder: builtins.elem config.host.nix.builderClient.buildUse builder.uses
   ) config.host.nix.builder-pool;
   toBuildMachine = name: builder: {
     inherit (builder)

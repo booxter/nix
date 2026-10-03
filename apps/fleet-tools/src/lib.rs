@@ -25,9 +25,17 @@ pub struct Host {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct DeploymentCache {
+    pub push_target: String,
+    pub store_uri: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HostInventory {
     pub aliases: BTreeMap<String, String>,
     pub darwin: BTreeMap<String, Host>,
+    pub deployment_caches: BTreeMap<String, DeploymentCache>,
     pub lan_dns_server: String,
     pub lan_domain: String,
     pub nixos: BTreeMap<String, Host>,
@@ -45,6 +53,7 @@ pub fn select_hosts(inventory: &HostInventory, requested: &[String]) -> HostInve
     HostInventory {
         aliases: inventory.aliases.clone(),
         darwin: select_platform(&inventory.darwin, requested),
+        deployment_caches: inventory.deployment_caches.clone(),
         lan_dns_server: inventory.lan_dns_server.clone(),
         lan_domain: inventory.lan_domain.clone(),
         nixos: select_platform(&inventory.nixos, requested),
@@ -72,6 +81,10 @@ mod tests {
         assert_eq!(inventory.nixos["beast"].realm, "home");
         assert_eq!(inventory.nixos["beast"].platform, "x86_64-linux");
         assert_eq!(inventory.nixos["nv"].realm, "work");
+        assert_eq!(
+            inventory.deployment_caches["home"].store_uri,
+            "https://attic.home.arpa/default"
+        );
         assert_eq!(inventory.aliases["JGWXHWDL4X"], "JGWXHWDL4X");
         assert!(!inventory.lan_dns_server.is_empty());
         assert!(!inventory.lan_domain.is_empty());

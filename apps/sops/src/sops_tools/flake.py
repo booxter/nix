@@ -8,7 +8,7 @@ from .process import ProcessRunner
 
 
 def archive_flake_source(runner: ProcessRunner, repo_root: Path) -> Path:
-    output = runner.run(["nix", "flake", "archive", "--json", f"path:{repo_root}"])
+    output = runner.run(["nix", "flake", "archive", "--json", str(repo_root)])
     try:
         payload: object = json.loads(output)
     except json.JSONDecodeError as error:

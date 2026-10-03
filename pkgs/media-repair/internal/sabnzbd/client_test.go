@@ -39,7 +39,7 @@ func TestFindDownloadMapsCompletedHistoryRecord(t *testing.T) {
 		_, _ = writer.Write(fixture)
 	}))
 	defer server.Close()
-	client, err := New(server.URL+"/api", "test-key", time.Second, server.Client())
+	client, err := New(server.URL, "test-key", time.Second, server.Client())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,12 +124,12 @@ func TestNewRejectsUnsafeConfiguration(t *testing.T) {
 		timeout  time.Duration
 		client   *http.Client
 	}{
-		{endpoint: "http://sabnzbd.example/api", key: "key", timeout: time.Second, client: http.DefaultClient},
-		{endpoint: "/api", key: "key", timeout: time.Second, client: http.DefaultClient},
-		{endpoint: "http://127.0.0.1/api?key=secret", key: "key", timeout: time.Second, client: http.DefaultClient},
-		{endpoint: "http://127.0.0.1/api", key: "", timeout: time.Second, client: http.DefaultClient},
-		{endpoint: "http://127.0.0.1/api", key: "key", client: http.DefaultClient},
-		{endpoint: "http://127.0.0.1/api", key: "key", timeout: time.Second},
+		{endpoint: "http://sabnzbd.example", key: "key", timeout: time.Second, client: http.DefaultClient},
+		{endpoint: "/sabnzbd", key: "key", timeout: time.Second, client: http.DefaultClient},
+		{endpoint: "http://127.0.0.1?key=secret", key: "key", timeout: time.Second, client: http.DefaultClient},
+		{endpoint: "http://127.0.0.1", key: "", timeout: time.Second, client: http.DefaultClient},
+		{endpoint: "http://127.0.0.1", key: "key", client: http.DefaultClient},
+		{endpoint: "http://127.0.0.1", key: "key", timeout: time.Second},
 	}
 	for _, test := range tests {
 		if _, err := New(test.endpoint, test.key, test.timeout, test.client); err == nil {
@@ -142,7 +142,7 @@ func TestFindDownloadDoesNotExposeKeyInTransportErrors(t *testing.T) {
 	t.Parallel()
 
 	client, err := New(
-		"http://127.0.0.1/api", "do-not-expose-key", time.Second,
+		"http://127.0.0.1", "do-not-expose-key", time.Second,
 		&http.Client{Transport: failingTransport{}},
 	)
 	if err != nil {
@@ -163,7 +163,11 @@ func (failingTransport) RoundTrip(*http.Request) (*http.Response, error) {
 
 func testClient(t *testing.T, body string) (*Client, *httptest.Server) {
 	t.Helper()
-	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/api" {
+			http.Error(writer, "invalid request", http.StatusBadRequest)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(body))
 	}))

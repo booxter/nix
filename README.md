@@ -136,6 +136,7 @@ around `nixmoxer`).
 | `builder1` | CI VM | Primary builder VM for CI and heavy Nix builds. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder2` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder3` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
+| `ci` | CI VM | GitHub Actions coordinator using the fleet's remote builders. | [nixos/ci/default.nix](nixos/ci/default.nix) | [common](common), [nixos](nixos) |
 
 ### Clients (macs, frame)
 

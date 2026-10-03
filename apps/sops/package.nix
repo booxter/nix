@@ -30,6 +30,7 @@ let
       openssh
       pass
       sops
+      ssh-to-age
     ]
   );
 in
@@ -52,6 +53,7 @@ pythonPackages.buildPythonApplication {
     pkgs.age
     pkgs.pythonRuffCheckHook
     pkgs.sops
+    pkgs.ssh-to-age
     mypy
     pytestCheckHook
     pytest-cov
