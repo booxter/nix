@@ -39,7 +39,7 @@ let
       media-repair-contracts = pkgs.media-repair-contracts;
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-      radarr-repair = pkgs.radarr-repair;
+      repairr-package = pkgs.repairr;
       media-repair-planner = pkgs.media-repair-planner;
     };
   collisions = lib.intersectLists (builtins.attrNames batchChecks) (builtins.attrNames nixosTests);
