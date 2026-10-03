@@ -71,6 +71,7 @@ in
 
   systemd.services.flaresolverr.environment = {
     HOST = "127.0.0.1";
+    LOG_LEVEL = "warning";
     TZ = config.host.site.timeZone;
   };
 
