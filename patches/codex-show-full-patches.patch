@@ -14,8 +14,8 @@ diff --git a/tui/src/history_cell/patches.rs b/tui/src/history_cell/patches.rs
 +        self.display_hyperlink_lines(width)
      }
  
-+    fn has_hidden_activity_details(&self, _width: u16) -> bool {
-+        false
++    fn activity_disclosure(&self, _width: u16) -> Option<super::ActivityDisclosure> {
++        None
 +    }
 +
      fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
