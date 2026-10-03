@@ -18,19 +18,30 @@ func ApplyQueueRemovals(snapshot *Snapshot, processed []queueaction.Processed) e
 		}
 		byCase[action.Request.CaseID] = action
 	}
+	current := snapshot.Current[:0]
 	for index := range snapshot.Current {
-		action, found := byCase[snapshot.Current[index].CaseID]
+		item := snapshot.Current[index]
+		action, found := byCase[item.CaseID]
 		if !found {
+			current = append(current, item)
 			continue
 		}
 		attemptedAt := action.Result.AttemptedAt.UTC()
-		snapshot.Current[index].QueueRemoval = &QueueRemoval{
+		item.QueueRemoval = &QueueRemoval{
 			RequestID: action.Request.RequestID, CreatedAt: action.Request.CreatedAt,
 			State: action.Result.State, Attempts: action.Result.Attempts,
 			AttemptedAt: optionalRemovalTime(attemptedAt), Outcome: action.Result.Outcome,
 			Failure: action.Result.Failure,
 		}
+		if action.Result.State == queueaction.StateCompleted {
+			item.State = StateNoLongerQueued
+			item.NoLongerQueuedAt = &attemptedAt
+			snapshot.History = append(snapshot.History, item)
+			continue
+		}
+		current = append(current, item)
 	}
+	snapshot.Current = current
 	return snapshot.Validate()
 }
 
