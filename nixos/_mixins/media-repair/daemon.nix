@@ -90,46 +90,11 @@ in
       "d /var/lib/repairr 0700 ${serviceUser} repairr - -"
       "d /var/lib/prometheus-node-exporter-textfile/repairr 0755 ${serviceUser} repairr - -"
     ];
-    systemd.services.repairr-migrate = {
-      description = "Convert existing repair state once";
-      before = [ "repairr.service" ];
-      after = [ "systemd-tmpfiles-setup.service" ];
-      conflicts = [
-        "radarr-repair-controller.service"
-        "lidarr-repair-controller.service"
-      ];
-      unitConfig.ConditionPathExists = "!/var/lib/repairr/jobs.db";
-      serviceConfig = {
-        Type = "oneshot";
-        UMask = "0077";
-        ExecStart = lib.escapeShellArgs (
-          [
-            (lib.getExe' pkgs.repairr "repairr-migrate")
-            "--source"
-            "/var/lib"
-            "--database"
-            "/var/lib/repairr/jobs.db"
-          ]
-          ++ rootArguments
-        );
-        ExecStartPost = "${pkgs.coreutils}/bin/chown ${serviceUser}:repairr /var/lib/repairr/jobs.db";
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateNetwork = true;
-        PrivateTmp = true;
-        ReadWritePaths = [ "/var/lib/repairr" ];
-      };
-    };
-
     systemd.services.repairr = {
       description = "Media repair controller and operator inbox";
       wantedBy = [ "multi-user.target" ];
-      requires = [
-        "repairr-migrate.service"
-        "media-repair-planner.socket"
-      ];
+      requires = [ "media-repair-planner.socket" ];
       after = [
-        "repairr-migrate.service"
         "media-repair-planner.socket"
         "sops-install-secrets.service"
         "radarr.service"

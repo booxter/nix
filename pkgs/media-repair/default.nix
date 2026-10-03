@@ -42,10 +42,7 @@ in
     common
     // {
       pname = "repairr";
-      subPackages = [
-        "cmd/repairr"
-        "cmd/repairr-migrate"
-      ];
+      subPackages = [ "cmd/repairr" ];
 
       nativeCheckInputs = [
         ffmpeg-full
