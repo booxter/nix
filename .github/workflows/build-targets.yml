@@ -45,39 +45,30 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve CI targets
-        id: ci_targets
+      - name: Resolve CI inventory
+        id: ci_inventory
         shell: bash
         run: |
-          targets="$(nix eval --json .#lib.ciTargets)"
-          printf 'targets=%s\n' "${targets}" >>"${GITHUB_OUTPUT}"
-
-      - name: Resolve CI checks
-        id: ci_checks
-        shell: bash
-        run: |
-          checks="$(nix eval --json .#lib.ciChecks)"
-          printf 'checks=%s\n' "${checks}" >>"${GITHUB_OUTPUT}"
+          inventory="$(nix eval --json .#lib.ci)"
+          printf 'inventory=%s\n' "${inventory}" >>"${GITHUB_OUTPUT}"
 
       - name: Compute CI matrices
         id: ci_matrices
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          CI_CHECKS: ${{ steps.ci_checks.outputs.checks }}
-          CI_TARGETS: ${{ steps.ci_targets.outputs.targets }}
+          CI_INVENTORY: ${{ steps.ci_inventory.outputs.inventory }}
         with:
           script: |
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const checks = JSON.parse(process.env.CI_CHECKS);
-            const buildTargets = JSON.parse(process.env.CI_TARGETS).buildTargets;
+            const inventory = JSON.parse(process.env.CI_INVENTORY);
             const buildMatrix = {
-              include: targetInventory.toBuildMatrixEntries(buildTargets)
+              include: targetInventory.toBuildMatrixEntries(inventory.buildTargets)
             };
             const checkBatchMatrix = {
-              include: targetInventory.toCheckBatchMatrixEntries(checks)
+              include: targetInventory.toCheckBatchMatrixEntries(inventory.checks)
             };
             const nixosTestMatrix = {
-              include: targetInventory.toNixosTestMatrixEntries(checks)
+              include: targetInventory.toNixosTestMatrixEntries(inventory.checks)
             };
             core.setOutput("build_matrix", JSON.stringify(buildMatrix));
             core.setOutput("check_batch_matrix", JSON.stringify(checkBatchMatrix));
