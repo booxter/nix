@@ -36,6 +36,7 @@ in
     enable = true;
     url = "https://github.com/booxter/nix";
     tokenFile = config.sops.secrets."github/actions_runner/token".path;
+    tokenType = "access";
     inherit name;
     ephemeral = true;
     extraLabels = [ "nix-ci" ];
