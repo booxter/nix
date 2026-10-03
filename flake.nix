@@ -150,6 +150,7 @@
 
       overlays = import ./overlays { inherit inputs; };
 
+      lib.ciChecks = selectPerSystem "ci-checks";
       lib.ciTargets = import ./ci {
         inherit hosts lib;
       };
