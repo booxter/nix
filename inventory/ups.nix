@@ -3,6 +3,7 @@
     builder1 = "prx1-lab";
     builder2 = "prx1-lab";
     builder3 = "prx1-lab";
+    ci = "prx1-lab";
     fana = "prx1-lab";
     gw = "prx1-lab";
     home = "prx1-lab";
