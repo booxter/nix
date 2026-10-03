@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   ...
 }:
@@ -61,6 +62,16 @@ in
 
   host.prowlarr = {
     stateDir = "/data/.state/nixarr/prowlarr";
+  };
+
+  services.flaresolverr = {
+    enable = true;
+    port = 8191;
+  };
+
+  systemd.services.flaresolverr.environment = {
+    HOST = "127.0.0.1";
+    TZ = config.host.site.timeZone;
   };
 
   host.radarr = {
