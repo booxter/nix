@@ -67,6 +67,7 @@ type mediaRoot struct {
 }
 
 type Client struct {
+	runner         RequestRunner
 	httpClient     *http.Client
 	transport      *http.Transport
 	roots          []mediaRoot
@@ -87,6 +88,25 @@ func New(
 		!filepath.IsAbs(socketPath) || filepath.Clean(socketPath) != socketPath {
 		return nil, fmt.Errorf("worker socket must be an absolute clean path")
 	}
+	client, err := newClient(rootPaths, requestTimeout, stageTimeout)
+	if err != nil {
+		return nil, err
+	}
+	dialer := &net.Dialer{}
+	client.transport = &http.Transport{
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			return dialer.DialContext(ctx, "unix", socketPath)
+		},
+		DisableCompression: true, MaxIdleConns: 2, MaxIdleConnsPerHost: 2,
+		IdleConnTimeout: 30 * time.Second,
+	}
+	client.httpClient = &http.Client{Transport: client.transport,
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
+	return client, nil
+}
+
+func newClient(rootPaths map[string]string, requestTimeout, stageTimeout time.Duration) (*Client, error) {
 	if requestTimeout <= 0 {
 		return nil, fmt.Errorf("worker request timeout must be positive")
 	}
@@ -130,24 +150,7 @@ func New(
 		return len(roots[left].path) > len(roots[right].path)
 	})
 
-	dialer := &net.Dialer{}
-	transport := &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, "unix", socketPath)
-		},
-		DisableCompression:  true,
-		MaxIdleConns:        2,
-		MaxIdleConnsPerHost: 2,
-		IdleConnTimeout:     30 * time.Second,
-	}
 	return &Client{
-		httpClient: &http.Client{
-			Transport: transport,
-			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		},
-		transport:      transport,
 		roots:          roots,
 		requestTimeout: requestTimeout,
 		stageTimeout:   max(requestTimeout, stageTimeout),
@@ -245,7 +248,7 @@ func (client *Client) ResolvePublishedPath(
 }
 
 func (client *Client) configured() bool {
-	return client != nil && client.httpClient != nil && client.requestTimeout > 0
+	return client != nil && (client.httpClient != nil || client.runner != nil) && client.requestTimeout > 0
 }
 
 func (client *Client) nextID() string {
@@ -270,6 +273,9 @@ func (client *Client) postWithTimeout(
 ) ([]byte, error) {
 	requestContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	if client.runner != nil {
+		return client.runner.Run(requestContext, path, payload, responseLimit)
+	}
 	request, err := http.NewRequestWithContext(
 		requestContext,
 		http.MethodPost,

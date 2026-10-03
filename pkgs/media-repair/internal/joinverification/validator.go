@@ -87,8 +87,23 @@ func ValidateStagedJoin(
 	}
 	validation.Discard = &reference
 	evidence := workerclient.EvidenceFromWorker(success.Evidence)
+	validation.Rejections = append(validation.Rejections, ValidateOutput(authorized, evidence, success.SizeBytes)...)
+	if len(validation.Rejections) != 0 {
+		return validation
+	}
+	validation.Discard = nil
+	validation.Publish = &VerifiedArtifact{
+		ArtifactReference: reference,
+		SizeBytes:         success.SizeBytes,
+		Evidence:          evidence,
+	}
+	return validation
+}
+
+func ValidateOutput(authorized decisionpolicy.AuthorizedJoin, evidence controller.ProbeEvidence, sizeBytes int64) []Rejection {
+	validation := Validation{}
 	if evidence.Format.SizeBytes == nil || *evidence.Format.SizeBytes <= 0 ||
-		*evidence.Format.SizeBytes != success.SizeBytes {
+		*evidence.Format.SizeBytes != sizeBytes {
 		validation = reject(validation, ArtifactSizeMismatch)
 	}
 
@@ -109,16 +124,7 @@ func ValidateStagedJoin(
 		validation = reject(validation, StreamLayoutMismatch)
 	}
 
-	if len(validation.Rejections) != 0 {
-		return validation
-	}
-	validation.Discard = nil
-	validation.Publish = &VerifiedArtifact{
-		ArtifactReference: reference,
-		SizeBytes:         success.SizeBytes,
-		Evidence:          evidence,
-	}
-	return validation
+	return validation.Rejections
 }
 
 func requestMatchesAuthorization(
