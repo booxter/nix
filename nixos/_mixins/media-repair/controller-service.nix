@@ -15,6 +15,7 @@
   readOnlyPaths ? [ ],
   wantedUnits ? [ ],
   supplementaryGroups ? [ ],
+  triggerPaths ? { },
 }:
 let
   requiredUnits = [
@@ -100,4 +101,18 @@ in
       Unit = "${serviceName}.service";
     };
   };
+
+  systemd.paths = builtins.listToAttrs (
+    map (triggerName: {
+      name = "${serviceName}-${triggerName}";
+      value = {
+        description = "Run ${description} when the ${triggerName} inbox changes";
+        wantedBy = [ "paths.target" ];
+        pathConfig = {
+          PathChanged = triggerPaths.${triggerName};
+          Unit = "${serviceName}.service";
+        };
+      };
+    }) (builtins.attrNames triggerPaths)
+  );
 }
