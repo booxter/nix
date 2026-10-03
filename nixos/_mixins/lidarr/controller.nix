@@ -106,6 +106,10 @@ in
           queueActionDirectory
         ];
         supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
+        triggerPaths = lib.optionalAttrs review.enable {
+          queue-actions = queueActionDirectory;
+          reconsiderations = reconsiderationDirectory;
+        };
       })
       {
         assertions = [

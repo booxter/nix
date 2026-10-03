@@ -7,12 +7,11 @@ This repository uses `.github/workflows/build-targets.yml` to run CI.
 For pull requests, CI runs:
 
 1. `format` checks formatting and evaluates the build and check inventories.
-2. `codex` prebuilds Codex for Linux and macOS.
-3. `check_batch` builds non-NixOS checks once per system, while `nixos_test`
+2. `check_batch` builds non-NixOS checks once per system, while `nixos_test`
    runs each NixOS test as a separate job with bounded parallelism.
-4. `build` runs every fleet build target in the matrix.
-5. `post-config-diffs` publishes advisory machine configuration diffs.
-6. `ci-success` serves as the required final gate.
+3. `build` runs every fleet build target in the matrix.
+4. `post-config-diffs` publishes advisory machine configuration diffs.
+5. `ci-success` serves as the required final gate.
 
 ## Notes
 

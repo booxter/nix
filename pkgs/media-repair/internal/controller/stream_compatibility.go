@@ -2,8 +2,11 @@ package controller
 
 import (
 	"cmp"
+	"math"
 	"slices"
 )
+
+const muxedAverageRateRelativeTolerance = 0.001
 
 type StreamCompatibility string
 
@@ -293,7 +296,9 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 	compareRequiredField(&comparison, StreamFieldKind, reference.Kind, candidate.Kind)
 	compareRequiredField(&comparison, StreamFieldCodecName, reference.CodecName, candidate.CodecName)
 	compareOptionalField(&comparison, StreamFieldProfile, reference.Profile, candidate.Profile)
-	compareRequiredField(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
+	// FFmpeg rescales packet timestamps while remuxing. Different time bases
+	// describe different units, not different stream contents.
+	compareRequiredPresence(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
 	if reference.Kind == nil || candidate.Kind == nil || *reference.Kind != *candidate.Kind {
 		return comparison
 	}
@@ -339,10 +344,39 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 }
 
 func compareMuxedStream(reference ProbeStream, candidate ProbeStream) streamComparison {
-	if reference.TimeBase != nil && candidate.TimeBase != nil {
-		reference.TimeBase = candidate.TimeBase
+	// avg_frame_rate is derived from the complete muxed stream and can differ
+	// slightly from the rate reported for each input part.
+	if reference.AverageRate != nil && candidate.AverageRate != nil &&
+		rationalWithinRelativeTolerance(
+			*reference.AverageRate,
+			*candidate.AverageRate,
+			muxedAverageRateRelativeTolerance,
+		) {
+		reference.AverageRate = candidate.AverageRate
 	}
 	return compareStreams(reference, candidate)
+}
+
+func rationalWithinRelativeTolerance(reference, candidate Rational, tolerance float64) bool {
+	if reference.Numerator <= 0 || reference.Denominator <= 0 ||
+		candidate.Numerator <= 0 || candidate.Denominator <= 0 {
+		return false
+	}
+	referenceValue := float64(reference.Numerator) / float64(reference.Denominator)
+	candidateValue := float64(candidate.Numerator) / float64(candidate.Denominator)
+	return math.Abs(candidateValue-referenceValue) <= referenceValue*tolerance
+}
+
+func compareRequiredPresence[T any](
+	comparison *streamComparison,
+	field StreamCompatibilityField,
+	reference *T,
+	candidate *T,
+) {
+	if (reference == nil || candidate == nil) && comparison.missing == "" {
+		comparison.missing = field
+		comparison.missingReference = reference == nil
+	}
 }
 
 func compareRequiredField[T comparable](

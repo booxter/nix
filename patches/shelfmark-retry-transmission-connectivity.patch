@@ -1,11 +1,8 @@
 diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/clients/base_handler.py
-index a2bfe87..7aec734 100644
+index c4ca3cbc6..3ee4b2303 100644
 --- a/shelfmark/download/clients/base_handler.py
 +++ b/shelfmark/download/clients/base_handler.py
-@@ -802,2 +802,25 @@ class ExternalClientHandler(DownloadHandler, ABC):
-                     message = (status.message or "").strip()
-                     message_lower = message.lower()
-+
+@@ -963,3 +963,25 @@ class ExternalClientHandler(DownloadHandler, ABC):
 +                    # Transmission reports temporary RPC outages as error statuses. Keep the
 +                    # queue item alive so polling resumes when the daemon becomes responsive.
 +                    retryable_transmission_error = (
@@ -28,3 +25,6 @@ index a2bfe87..7aec734 100644
 +                            break
 +                        continue
 +
+                     # Only treat *actual* "not found" as retryable.
+                     # qBittorrent auth/network/API failures should surface immediately (more actionable)
+                     # and must not be confused with "torrent missing".

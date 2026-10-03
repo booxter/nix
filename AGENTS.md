@@ -104,10 +104,10 @@ Scope: whole repository.
 
 ## SSH
 
-- Use normal OpenSSH:
+- Use machine names, not IP addresses, with normal OpenSSH:
 
   ```sh
-  ssh <target> [command ...]
+  ssh <machine> [command ...]
   ```
 
 - OpenSSH transports a remote command as shell text rather than an argv array.

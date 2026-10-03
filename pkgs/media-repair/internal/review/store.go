@@ -91,15 +91,24 @@ func mergeHistory(current *Snapshot, previous Snapshot, found bool) {
 	for _, item := range current.Current {
 		present[item.QueueID] = struct{}{}
 	}
-	history := append([]Item(nil), previous.History...)
+	history := make(map[int64]Item, len(previous.History)+len(current.History))
+	for _, item := range previous.History {
+		history[item.QueueID] = item
+	}
+	for _, item := range current.History {
+		history[item.QueueID] = item
+	}
 	for _, item := range previous.Current {
 		if _, ok := present[item.QueueID]; ok {
+			continue
+		}
+		if _, ok := history[item.QueueID]; ok {
 			continue
 		}
 		removedAt := current.GeneratedAt
 		item.State = StateNoLongerQueued
 		item.NoLongerQueuedAt = &removedAt
-		history = append(history, item)
+		history[item.QueueID] = item
 	}
 	cutoff := current.GeneratedAt.Add(-90 * 24 * time.Hour)
 	current.History = current.History[:0]
