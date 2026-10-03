@@ -80,6 +80,7 @@ nix run .#sops-cat -- mair
 nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
 printf %s "$attic_token" | nix run .#sops-set -- --realm home --all attic/token
+nix run .#sops-unset -- --realm home --all obsolete/token
 nix run .#sops-pass -- beast root
 nix run .#sops-pass -- --gen gw root
 nix run .#sops-pass -- --gen gw both
@@ -91,8 +92,9 @@ nix run .#sops-copy -- mair prx1-lab attic
 
 Run `sops-update` when a host secret should receive missing template keys.
 `sops-edit` only opens the selected secret for editing.
-`sops-set --all` updates every host secret in the selected realm and reports
-completed and remaining hosts if an update fails partway through.
+`sops-set --all` and `sops-unset --all` update every host secret in the selected
+realm and report completed and remaining hosts if an operation fails partway
+through.
 
 ## Tests
 

@@ -51,12 +51,12 @@ def test_set_all_uses_sorted_host_secrets_and_excludes_template(tmp_path: Path) 
     secrets, backend = service(
         tmp_path,
         {
-            "mair": {"flakehub": {"token": "old"}},
-            "beast": {"flakehub": {"token": "old"}},
+            "mair": {"service": {"token": "old"}},
+            "beast": {"service": {"token": "old"}},
         },
     )
 
-    hosts = secrets.set_all_text(KeyPath.parse("flakehub/token"), "new")
+    hosts = secrets.set_all_text(KeyPath.parse("service/token"), "new")
 
     assert hosts == ("beast", "mair")
     assert [path.name for path, _, _ in backend.set_calls] == ["beast.yaml", "mair.yaml"]
@@ -66,9 +66,9 @@ def test_set_all_reports_partial_completion(tmp_path: Path) -> None:
     secrets, backend = service(
         tmp_path,
         {
-            "beast": {"flakehub": {"token": "old"}},
-            "mair": {"flakehub": {"token": "old"}},
-            "mmini": {"flakehub": {"token": "old"}},
+            "beast": {"service": {"token": "old"}},
+            "mair": {"service": {"token": "old"}},
+            "mmini": {"service": {"token": "old"}},
         },
     )
     backend.failing_set_paths.add(secrets.repository.secret("mair"))
@@ -77,10 +77,48 @@ def test_set_all_reports_partial_completion(tmp_path: Path) -> None:
         ToolError,
         match=r"Bulk update stopped\. Updated: beast\. Not updated: mair, mmini\.",
     ):
-        secrets.set_all_text(KeyPath.parse("flakehub/token"), "new")
+        secrets.set_all_text(KeyPath.parse("service/token"), "new")
 
-    assert backend.documents[secrets.repository.secret("beast")] == {"flakehub": {"token": "new"}}
-    assert backend.documents[secrets.repository.secret("mair")] == {"flakehub": {"token": "old"}}
+    assert backend.documents[secrets.repository.secret("beast")] == {"service": {"token": "new"}}
+    assert backend.documents[secrets.repository.secret("mair")] == {"service": {"token": "old"}}
+
+
+def test_unset_all_uses_sorted_host_secrets_and_excludes_template(tmp_path: Path) -> None:
+    secrets, backend = service(
+        tmp_path,
+        {
+            "mair": {"legacy": {"token": "old"}, "keep": "mair"},
+            "beast": {"legacy": {"token": "old"}, "keep": "beast"},
+        },
+    )
+
+    hosts = secrets.unset_all(KeyPath.parse("legacy"))
+
+    assert hosts == ("beast", "mair")
+    assert [path.name for path, _ in backend.unset_calls] == ["beast.yaml", "mair.yaml"]
+    assert backend.documents[secrets.repository.secret("beast")] == {"keep": "beast"}
+    assert backend.documents[secrets.repository.secret("mair")] == {"keep": "mair"}
+
+
+def test_unset_all_reports_partial_completion(tmp_path: Path) -> None:
+    secrets, backend = service(
+        tmp_path,
+        {
+            "beast": {"legacy": "old"},
+            "mair": {"legacy": "old"},
+            "mmini": {"legacy": "old"},
+        },
+    )
+    backend.failing_unset_paths.add(secrets.repository.secret("mair"))
+
+    with pytest.raises(
+        ToolError,
+        match=r"Bulk delete stopped\. Updated: beast\. Not updated: mair, mmini\.",
+    ):
+        secrets.unset_all(KeyPath.parse("legacy"))
+
+    assert backend.documents[secrets.repository.secret("beast")] == {}
+    assert backend.documents[secrets.repository.secret("mair")] == {"legacy": "old"}
 
 
 def test_copy_supports_different_paths_and_complex_values(tmp_path: Path) -> None:
@@ -190,3 +228,21 @@ def test_command_backend_passes_json_on_stdin_not_argv(tmp_path: Path) -> None:
     assert argv[-1] == '["nested"]["value"]'
     assert "secret" not in argv
     assert input_text == '"secret\\n"'
+
+
+def test_command_backend_unsets_idempotently(tmp_path: Path) -> None:
+    runner = RecordingRunner()
+    backend = CommandSopsBackend(runner)
+    secret = tmp_path / "secret.yaml"
+
+    backend.unset_value(secret, KeyPath.parse("nested/value"))
+
+    argv, input_text, _ = runner.calls[0]
+    assert argv == [
+        "sops",
+        "unset",
+        "--idempotent",
+        str(secret),
+        '["nested"]["value"]',
+    ]
+    assert input_text is None

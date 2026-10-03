@@ -142,6 +142,33 @@ def set_main(argv: Sequence[str] | None = None, *, application: Application | No
     return _run(command)
 
 
+def unset_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
+    def command() -> int:
+        parser = _parser("Delete a secret value for one host or every host in a realm.")
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="update every host secret in the selected realm",
+        )
+        parser.add_argument("host", nargs="?")
+        parser.add_argument("key_path")
+        args = parser.parse_args(argv)
+        if args.all and args.host is not None:
+            parser.error("--all cannot be combined with HOST")
+        if not args.all and args.host is None:
+            parser.error("HOST is required unless --all is passed")
+        service = (application or Application.discover()).secrets(args.realm)
+        if args.all:
+            hosts = service.unset_all(KeyPath.parse(args.key_path))
+            print(f"Deleted {args.key_path} for {len(hosts)} hosts: {', '.join(hosts)}.")
+        else:
+            service.unset(args.host, KeyPath.parse(args.key_path))
+            print(f"Deleted {args.host}:{args.key_path}.")
+        return 0
+
+    return _run(command)
+
+
 def copy_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Copy a value between host secrets.")

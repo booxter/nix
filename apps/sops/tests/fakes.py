@@ -56,9 +56,11 @@ class FailingRunner:
 class MemorySopsBackend:
     documents: dict[Path, JsonValue]
     set_calls: list[tuple[Path, KeyPath, JsonValue]] = field(default_factory=list)
+    unset_calls: list[tuple[Path, KeyPath]] = field(default_factory=list)
     edits: list[Path] = field(default_factory=list)
     encryptions: list[tuple[Path, JsonValue]] = field(default_factory=list)
     failing_set_paths: set[Path] = field(default_factory=set)
+    failing_unset_paths: set[Path] = field(default_factory=set)
     fail_encryption: bool = False
 
     def decrypt_text(self, path: Path) -> str:
@@ -94,6 +96,26 @@ class MemorySopsBackend:
         else:
             assert isinstance(current, dict)
             current[final] = copy.deepcopy(value)
+
+    def unset_value(self, path: Path, key_path: KeyPath) -> None:
+        if path in self.failing_unset_paths:
+            raise ToolError(f"Unable to update {path}")
+        self.unset_calls.append((path, key_path))
+        current: JsonValue = self.documents[path]
+        for segment in key_path.segments[:-1]:
+            if isinstance(segment, int):
+                if not isinstance(current, list) or segment >= len(current):
+                    return
+                current = current[segment]
+                continue
+            if not isinstance(current, dict) or segment not in current:
+                return
+            current = current[segment]
+        final = key_path.segments[-1]
+        if isinstance(final, int) and isinstance(current, list) and final < len(current):
+            current.pop(final)
+        elif isinstance(final, str) and isinstance(current, dict):
+            current.pop(final, None)
 
     def encrypt_data(self, path: Path, value: JsonValue) -> str:
         if self.fail_encryption:

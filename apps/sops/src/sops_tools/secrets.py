@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -39,6 +40,8 @@ class SopsBackend(Protocol):
 
     def set_value(self, path: Path, key_path: KeyPath, value: JsonValue) -> None: ...
 
+    def unset_value(self, path: Path, key_path: KeyPath) -> None: ...
+
     def encrypt_data(self, path: Path, value: JsonValue) -> str: ...
 
 
@@ -72,6 +75,17 @@ class CommandSopsBackend:
                 key_path.sops_index(),
             ],
             input_text=json.dumps(value, separators=(",", ":")),
+        )
+
+    def unset_value(self, path: Path, key_path: KeyPath) -> None:
+        self.runner.run(
+            [
+                "sops",
+                "unset",
+                "--idempotent",
+                str(path),
+                key_path.sops_index(),
+            ]
         )
 
     def encrypt_data(self, path: Path, value: JsonValue) -> str:
@@ -119,18 +133,41 @@ class SecretService:
         return secret
 
     def set_all_text(self, key_path: KeyPath, value: str) -> tuple[str, ...]:
+        return self._apply_to_all(
+            lambda host: self.set_text(host, key_path, value),
+            operation="update",
+        )
+
+    def unset(self, host: str, key_path: KeyPath) -> Path:
+        secret = self.repository.require_secret(host)
+        self.sops.unset_value(secret, key_path)
+        return secret
+
+    def unset_all(self, key_path: KeyPath) -> tuple[str, ...]:
+        return self._apply_to_all(
+            lambda host: self.unset(host, key_path),
+            operation="delete",
+        )
+
+    def _apply_to_all(
+        self,
+        action: Callable[[str], Path],
+        *,
+        operation: str,
+    ) -> tuple[str, ...]:
         hosts = self.repository.hosts()
         if not hosts:
             raise ToolError(f"No host secrets found in {self.repository.directory}")
 
         for index, host in enumerate(hosts):
             try:
-                self.set_text(host, key_path, value)
+                action(host)
             except ToolError as error:
                 updated = ", ".join(hosts[:index]) or "none"
                 remaining = ", ".join(hosts[index:])
                 raise ToolError(
-                    f"{error}\nBulk update stopped. Updated: {updated}. Not updated: {remaining}."
+                    f"{error}\nBulk {operation} stopped. "
+                    f"Updated: {updated}. Not updated: {remaining}."
                 ) from error
         return hosts
 

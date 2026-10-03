@@ -6,16 +6,30 @@ This repository uses `.github/workflows/build-targets.yml` to run CI.
 
 For pull requests, CI runs:
 
-1. `format` checks formatting and evaluates the full build matrix.
-2. `build` runs every target in the matrix.
-3. `post-config-diffs` publishes advisory machine configuration diffs.
-4. `ci-success` serves as the required final gate.
+1. `format` checks formatting and evaluates the build and check inventories.
+2. `codex` prebuilds Codex for Linux and macOS.
+3. `check_batch` builds non-NixOS checks once per system, while `nixos_test`
+   runs each NixOS test as a separate job with bounded parallelism.
+4. `build` runs every fleet build target in the matrix.
+5. `post-config-diffs` publishes advisory machine configuration diffs.
+6. `ci-success` serves as the required final gate.
 
 ## Notes
 
 - `format` runs `nix fmt .`, which uses the flake-pinned formatter and includes
   workflow (`actionlint`) and markdown checks.
 - Pull requests, pushes, and manual runs all use the full build matrix.
+
+## Runners
+
+The `ci` host provides six ephemeral `nix-ci` runners. It does not build
+locally; Nix delegates Linux builds to the builder hosts and macOS builds to
+`mmini`. The `mmini-ci` service provides the `nix-ci-darwin` label for checks
+and update jobs that must execute on macOS.
+
+Completed CI builds are published to both the private `default` Attic cache
+and the public `github` cache. Other managed hosts publish only to their
+realm's default cache.
 
 ## Config diffs
 
