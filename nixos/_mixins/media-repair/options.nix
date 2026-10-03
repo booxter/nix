@@ -31,6 +31,12 @@
       readOnly = true;
       description = "Shared root containing operator queue action requests.";
     };
+    triggerStateDirectory = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/var/lib/media-repair-triggers";
+      readOnly = true;
+      description = "Shared root containing durable controller wake markers.";
+    };
     writerGroup = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "media-repair-review";

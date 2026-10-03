@@ -10,12 +10,13 @@
   timerDescription,
   timeoutStopSec,
   worker,
+  pkgs,
   extraRequiredUnits ? [ ],
   readWritePaths ? [ ],
   readOnlyPaths ? [ ],
   wantedUnits ? [ ],
   supplementaryGroups ? [ ],
-  triggerPaths ? { },
+  triggerPath ? null,
 }:
 let
   requiredUnits = [
@@ -25,6 +26,7 @@ let
     "sops-install-secrets.service"
   ]
   ++ extraRequiredUnits;
+  wakeMarker = if triggerPath == null then null else "${triggerPath}/.wake";
 in
 {
   users.groups.${serviceName} = { };
@@ -43,6 +45,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStart = command;
+      ExecStartPre = if wakeMarker == null then [ ] else [ "-${pkgs.coreutils}/bin/rm -f ${wakeMarker}" ];
       LoadCredential = credentials;
       User = serviceName;
       Group = serviceName;
@@ -78,7 +81,7 @@ in
       ProtectSystem = "strict";
       ProcSubset = "pid";
       ReadOnlyPaths = rootPaths ++ readOnlyPaths;
-      ReadWritePaths = readWritePaths;
+      ReadWritePaths = readWritePaths ++ (if triggerPath == null then [ ] else [ triggerPath ]);
       RemoveIPC = true;
       RestrictAddressFamilies = [
         "AF_INET"
@@ -102,17 +105,18 @@ in
     };
   };
 
-  systemd.paths = builtins.listToAttrs (
-    map (triggerName: {
-      name = "${serviceName}-${triggerName}";
-      value = {
-        description = "Run ${description} when the ${triggerName} inbox changes";
-        wantedBy = [ "paths.target" ];
-        pathConfig = {
-          PathChanged = triggerPaths.${triggerName};
-          Unit = "${serviceName}.service";
+  systemd.paths =
+    if wakeMarker == null then
+      { }
+    else
+      {
+        ${serviceName} = {
+          description = "Run ${description} when Repairr requests it";
+          wantedBy = [ "paths.target" ];
+          pathConfig = {
+            PathExists = wakeMarker;
+            Unit = "${serviceName}.service";
+          };
         };
       };
-    }) (builtins.attrNames triggerPaths)
-  );
 }

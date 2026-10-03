@@ -25,6 +25,8 @@ type config struct {
 	RadarrRequests string
 	LidarrActions  string
 	RadarrActions  string
+	LidarrTrigger  string
+	RadarrTrigger  string
 	LidarrURL      string
 	RadarrURL      string
 	PublicURL      string
@@ -41,6 +43,8 @@ func parseConfig(arguments []string, stderr io.Writer) (config, error) {
 	radarrRequests := flags.String("radarr-requests", "", "Radarr reconsideration request directory")
 	lidarrActions := flags.String("lidarr-actions", "", "Lidarr operator action directory")
 	radarrActions := flags.String("radarr-actions", "", "Radarr operator action directory")
+	lidarrTrigger := flags.String("lidarr-trigger", "", "Lidarr controller wake directory")
+	radarrTrigger := flags.String("radarr-trigger", "", "Radarr controller wake directory")
 	lidarrURL := flags.String("lidarr-url", "", "browser-facing Lidarr queue URL")
 	radarrURL := flags.String("radarr-url", "", "browser-facing Radarr queue URL")
 	publicURL := flags.String("public-url", "", "browser-facing Repairr URL")
@@ -59,6 +63,7 @@ func parseConfig(arguments []string, stderr io.Writer) (config, error) {
 		Listen: *listen, LidarrSnapshot: *lidarrSnapshot, RadarrSnapshot: *radarrSnapshot,
 		LidarrRequests: *lidarrRequests, RadarrRequests: *radarrRequests,
 		LidarrActions: *lidarrActions, RadarrActions: *radarrActions,
+		LidarrTrigger: *lidarrTrigger, RadarrTrigger: *radarrTrigger,
 		LidarrURL: *lidarrURL, RadarrURL: *radarrURL, PublicURL: *publicURL,
 		AllowedOrigins: allowedOrigins,
 	}
@@ -84,6 +89,8 @@ func validateConfig(configuration config) error {
 		"Radarr request":  configuration.RadarrRequests,
 		"Lidarr action":   configuration.LidarrActions,
 		"Radarr action":   configuration.RadarrActions,
+		"Lidarr trigger":  configuration.LidarrTrigger,
+		"Radarr trigger":  configuration.RadarrTrigger,
 	} {
 		if path == "" || !filepath.IsAbs(path) || filepath.Clean(path) != path ||
 			filepath.Dir(path) == path {

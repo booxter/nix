@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -41,6 +42,7 @@ let
   reviewDirectory = "${review.stateDirectory}/lidarr";
   reconsiderationDirectory = "${review.requestStateDirectory}/lidarr";
   queueActionDirectory = "${review.queueActionStateDirectory}/lidarr";
+  triggerDirectory = "${review.triggerStateDirectory}/lidarr";
   command =
     if controller == null then
       ""
@@ -84,6 +86,7 @@ in
         applicationService = "lidarr.service";
         inherit
           command
+          pkgs
           planner
           rootPaths
           serviceName
@@ -106,10 +109,7 @@ in
           queueActionDirectory
         ];
         supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
-        triggerPaths = lib.optionalAttrs review.enable {
-          queue-actions = queueActionDirectory;
-          reconsiderations = reconsiderationDirectory;
-        };
+        triggerPath = if review.enable then triggerDirectory else null;
       })
       {
         assertions = [

@@ -19,6 +19,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
+	"github.com/booxter/nix-config/media-repair/internal/wake"
 )
 
 //go:embed templates/page.html static/style.css
@@ -29,6 +30,7 @@ type source struct {
 	store    *review.Store
 	requests *reconsideration.Store
 	actions  *queueaction.Store
+	trigger  *wake.Store
 	queueURL string
 }
 
@@ -106,6 +108,14 @@ func newHandler(configuration config) (http.Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("configure Radarr operator action inbox: %w", err)
 	}
+	lidarrTrigger, err := wake.NewStore(configuration.LidarrTrigger)
+	if err != nil {
+		return nil, fmt.Errorf("configure Lidarr controller trigger: %w", err)
+	}
+	radarrTrigger, err := wake.NewStore(configuration.RadarrTrigger)
+	if err != nil {
+		return nil, fmt.Errorf("configure Radarr controller trigger: %w", err)
+	}
 	csrfBytes := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, csrfBytes); err != nil {
 		return nil, fmt.Errorf("generate CSRF token: %w", err)
@@ -173,12 +183,12 @@ func newHandler(configuration config) (http.Handler, error) {
 			{
 				service: review.ServiceLidarr, store: lidarrStore,
 				requests: lidarrRequests, queueURL: configuration.LidarrURL,
-				actions: lidarrActions,
+				actions: lidarrActions, trigger: lidarrTrigger,
 			},
 			{
 				service: review.ServiceRadarr, store: radarrStore,
 				requests: radarrRequests, queueURL: configuration.RadarrURL,
-				actions: radarrActions,
+				actions: radarrActions, trigger: radarrTrigger,
 			},
 		},
 	}
@@ -329,6 +339,10 @@ func (app *applicationHandler) removeHandler(writer http.ResponseWriter, request
 		http.Error(writer, "store queue removal request", http.StatusInternalServerError)
 		return
 	}
+	if err := source.trigger.Signal(); err != nil {
+		http.Error(writer, "wake repair controller", http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?removed=1", http.StatusSeeOther)
 }
 
@@ -398,6 +412,10 @@ func (app *applicationHandler) reconsiderHandler(
 	}
 	if _, err := source.requests.Submit(reconsiderationRequest); err != nil {
 		http.Error(writer, "store reconsideration request", http.StatusInternalServerError)
+		return
+	}
+	if err := source.trigger.Signal(); err != nil {
+		http.Error(writer, "wake repair controller", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(writer, request, "/cases/"+url.PathEscape(caseID)+"?submitted=1", http.StatusSeeOther)

@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -19,6 +20,7 @@ let
   reviewDirectory = "${review.stateDirectory}/radarr";
   reconsiderationDirectory = "${review.requestStateDirectory}/radarr";
   queueActionDirectory = "${review.queueActionStateDirectory}/radarr";
+  triggerDirectory = "${review.triggerStateDirectory}/radarr";
   killSwitchFile = "/run/radarr-repair-disable-apply";
   metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
   sabnzbdSecret = if sabnzbd == null then null else sabnzbd.authentication.secret;
@@ -109,6 +111,7 @@ in
         applicationService = "radarr.service";
         inherit
           command
+          pkgs
           planner
           rootPaths
           serviceName
@@ -133,10 +136,7 @@ in
           queueActionDirectory
         ];
         supplementaryGroups = lib.optionals review.enable [ review.writerGroup ];
-        triggerPaths = lib.optionalAttrs review.enable {
-          queue-actions = queueActionDirectory;
-          reconsiderations = reconsiderationDirectory;
-        };
+        triggerPath = if review.enable then triggerDirectory else null;
         wantedUnits = [ "network-online.target" ];
       })
       {

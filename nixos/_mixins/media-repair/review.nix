@@ -14,6 +14,8 @@ let
   radarrRequests = "${cfg.requestStateDirectory}/radarr";
   lidarrActions = "${cfg.queueActionStateDirectory}/lidarr";
   radarrActions = "${cfg.queueActionStateDirectory}/radarr";
+  lidarrTrigger = "${cfg.triggerStateDirectory}/lidarr";
+  radarrTrigger = "${cfg.triggerStateDirectory}/radarr";
   webService = config.host.web.services.repairr;
   internalWeb = webService.internal;
   localAliases = internalWeb.localAliases ++ map (alias: "${alias}.local") internalWeb.localAliases;
@@ -42,6 +44,10 @@ let
       lidarrActions
       "--radarr-actions"
       radarrActions
+      "--lidarr-trigger"
+      lidarrTrigger
+      "--radarr-trigger"
+      radarrTrigger
       "--lidarr-url"
       "https://lidarr.${config.host.network.lanDomain}/activity/queue"
       "--radarr-url"
@@ -85,6 +91,9 @@ in
       "d ${cfg.queueActionStateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
       "d ${lidarrActions} 2750 ${serviceName} ${lidarrController} - -"
       "d ${radarrActions} 2750 ${serviceName} ${radarrController} - -"
+      "d ${cfg.triggerStateDirectory} 0750 ${serviceName} ${cfg.writerGroup} - -"
+      "d ${lidarrTrigger} 2770 ${serviceName} ${lidarrController} - -"
+      "d ${radarrTrigger} 2770 ${serviceName} ${radarrController} - -"
     ];
 
     systemd.services.${serviceName} = {
@@ -122,6 +131,7 @@ in
         ReadWritePaths = [
           cfg.requestStateDirectory
           cfg.queueActionStateDirectory
+          cfg.triggerStateDirectory
         ];
         RemoveIPC = true;
         RestrictAddressFamilies = [

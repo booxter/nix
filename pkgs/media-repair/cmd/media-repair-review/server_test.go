@@ -13,6 +13,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/queueaction"
 	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/review"
+	"github.com/booxter/nix-config/media-repair/internal/wake"
 )
 
 func TestReadyAndSecurityHeaders(t *testing.T) {
@@ -110,6 +111,7 @@ func TestHandlerSubmitsReconsiderationForCurrentCase(t *testing.T) {
 		submitted.PolicyOverrides.MaximumRuntimeDifferenceMS != 30*60*1_000 {
 		t.Fatalf("request=%#v found=%v err=%v", submitted, found, err)
 	}
+	assertWakeMarker(t, configuration.RadarrTrigger)
 
 	request = httptest.NewRequest(
 		http.MethodPost, "/cases/"+caseID+"/reconsider", strings.NewReader(values.Encode()),
@@ -239,6 +241,7 @@ func TestHandlerConfirmsAndRequestsCurrentQueueRemoval(t *testing.T) {
 		wanted == nil || stored.Queue != *wanted {
 		t.Fatalf("request=%#v found=%t err=%v", stored, found, err)
 	}
+	assertWakeMarker(t, configuration.RadarrTrigger)
 }
 
 func questionableItem(caseID string) review.Item {
@@ -264,8 +267,11 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 	radarrRequests := filepath.Join(t.TempDir(), "radarr-requests")
 	lidarrActions := filepath.Join(t.TempDir(), "lidarr-actions")
 	radarrActions := filepath.Join(t.TempDir(), "radarr-actions")
+	lidarrTrigger := filepath.Join(t.TempDir(), "lidarr-trigger")
+	radarrTrigger := filepath.Join(t.TempDir(), "radarr-trigger")
 	for _, directory := range []string{
 		lidarrRequests, radarrRequests, lidarrActions, radarrActions,
+		lidarrTrigger, radarrTrigger,
 	} {
 		if err := os.Mkdir(directory, 0o750); err != nil {
 			t.Fatal(err)
@@ -275,9 +281,18 @@ func handlerConfig(t *testing.T, lidarr, radarr string) config {
 		LidarrSnapshot: lidarr, RadarrSnapshot: radarr,
 		LidarrRequests: lidarrRequests, RadarrRequests: radarrRequests,
 		LidarrActions: lidarrActions, RadarrActions: radarrActions,
+		LidarrTrigger: lidarrTrigger, RadarrTrigger: radarrTrigger,
 		LidarrURL: "https://lidarr.example/activity/queue",
 		RadarrURL: "https://radarr.example/activity/queue",
 		PublicURL: "https://repairr.example",
+	}
+}
+
+func assertWakeMarker(t *testing.T, directory string) {
+	t.Helper()
+	info, err := os.Stat(filepath.Join(directory, wake.FileName))
+	if err != nil || !info.Mode().IsRegular() {
+		t.Fatalf("wake marker = %#v, error = %v", info, err)
 	}
 }
 
