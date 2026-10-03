@@ -291,6 +291,9 @@
               url = "https://github.com/calibrain/shelfmark/commit/119d3374e3bc123982966ff49cbcfa912f96718a.patch";
               hash = "sha256-7eKce2Cb+lQaTdPZ9o6K8mdCbN8vCYccsPiDVUuLzGs=";
             })
+            # Persist external-client download IDs and reattach to them after
+            # Shelfmark restarts, without resolving an expired indexer URL.
+            ../patches/shelfmark-resume-external-downloads.patch
             # Torrent-client jobs can legitimately sit queued/checking without
             # progress or message churn for much longer than 5 minutes. Keep
             # Shelfmark's stall canceller for direct downloads, but do not

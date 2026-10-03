@@ -1,0 +1,587 @@
+diff --git a/shelfmark/core/download_history_service.py b/shelfmark/core/download_history_service.py
+index e43998d..b32c905 100644
+--- a/shelfmark/core/download_history_service.py
++++ b/shelfmark/core/download_history_service.py
+@@ -394,6 +394,31 @@ class DownloadHistoryService:
+             finally:
+                 conn.close()
+ 
++    def update_retry_payload(
++        self,
++        *,
++        task_id: str,
++        retry_payload: dict[str, Any],
++    ) -> None:
++        """Update restart state for a download that is still active."""
++        normalized_task_id = _normalize_task_id(task_id)
++        normalized_retry_payload = self._serialize_retry_payload(retry_payload)
++
++        with self._lock:
++            conn = self._connect()
++            try:
++                conn.execute(
++                    """
++                    UPDATE download_history
++                    SET retry_payload = ?
++                    WHERE task_id = ? AND final_status = 'active'
++                    """,
++                    (normalized_retry_payload, normalized_task_id),
++                )
++                conn.commit()
++            finally:
++                conn.close()
++
+     def get_by_task_id(self, task_id: str) -> dict[str, Any] | None:
+         """Return a persisted download row for the given task id."""
+         normalized_task_id = _normalize_task_id(task_id)
+diff --git a/shelfmark/core/models.py b/shelfmark/core/models.py
+index a596c6c..1ce4ef8 100644
+--- a/shelfmark/core/models.py
++++ b/shelfmark/core/models.py
+@@ -112,6 +112,9 @@ class DownloadTask:
+     retry_source_context: dict[str, Any] = field(
+         default_factory=dict
+     )  # Source-private context for retry/re-resolution
++    external_download_client: str | None = None  # Client managing an in-flight download
++    external_download_id: str | None = None  # Stable client identifier for the download
++    external_download_protocol: str | None = None  # Protocol used to select the client
+     can_retry_without_staged_source: bool = (
+         True  # Whether the source can restart without a preserved staged file
+     )
+diff --git a/shelfmark/core/queue.py b/shelfmark/core/queue.py
+index 293a58b..fac7163 100644
+--- a/shelfmark/core/queue.py
++++ b/shelfmark/core/queue.py
+@@ -51,6 +51,7 @@ class BookQueue:
+         self._active_downloads: dict[str, bool] = {}  # Track currently downloading tasks
+         self._terminal_status_hook: Callable[[str, QueueStatus, DownloadTask], None] | None = None
+         self._queue_hook: Callable[[str, DownloadTask], None] | None = None
++        self._state_hook: Callable[[str, DownloadTask], None] | None = None
+ 
+     @property
+     def _status_timeout(self) -> timedelta:
+@@ -145,6 +146,26 @@ class BookQueue:
+         with self._lock:
+             self._queue_hook = hook
+ 
++    def set_state_hook(
++        self,
++        hook: Callable[[str, DownloadTask], None] | None,
++    ) -> None:
++        """Register a callback used to persist non-terminal task state changes."""
++        with self._lock:
++            self._state_hook = hook
++
++    def notify_task_changed(self, task_id: str) -> None:
++        """Persist mutable task state without holding the queue lock during I/O."""
++        with self._lock:
++            task = self._task_data.get(task_id)
++            hook = self._state_hook
++
++        if hook is not None and task is not None:
++            try:
++                hook(task_id, task)
++            except _QUEUE_HOOK_ERRORS as exc:
++                logger.warning("State hook failed for task %s: %s", task_id, exc)
++
+     def _apply_status_locked(
+         self, book_id: str, status: QueueStatus
+     ) -> tuple[Callable[[str, QueueStatus, DownloadTask], None] | None, DownloadTask | None]:
+diff --git a/shelfmark/core/startup_reconcile.py b/shelfmark/core/startup_reconcile.py
+index 1ce984a..c7ffbb3 100644
+--- a/shelfmark/core/startup_reconcile.py
++++ b/shelfmark/core/startup_reconcile.py
+@@ -21,6 +21,8 @@ from shelfmark.core.models import QueueStatus
+ from shelfmark.core.request_validation import RequestStatus
+ 
+ if TYPE_CHECKING:
++    from collections.abc import Callable
++
+     from shelfmark.core.download_history_service import DownloadHistoryService
+     from shelfmark.core.user_db import UserDB
+ 
+@@ -68,6 +70,7 @@ def reconcile_interrupted_downloads(
+     *,
+     now: datetime | None = None,
+     reopen_window: timedelta = REOPEN_WINDOW,
++    resume_download: Callable[[object], bool] | None = None,
+ ) -> dict[str, int]:
+     """Close out downloads the last process left active, and reopen the recent ones.
+ 
+@@ -88,8 +91,12 @@ def reconcile_interrupted_downloads(
+     now = now or datetime.now(UTC)
+     marked = 0
+     reopened = 0
++    resumed = 0
+ 
+     for row in history_service.list_active():
++        if resume_download is not None and resume_download(row.get("retry_payload")):
++            resumed += 1
++            continue
+         request_id = row.get("request_id")
+         if request_id:
+             if not _is_recent(row.get("queued_at"), now=now, window=reopen_window):
+@@ -123,4 +130,7 @@ def reconcile_interrupted_downloads(
+         ):
+             reopened += 1
+ 
++    if resumed:
++        logger.info("Startup: resumed %d external-client download(s)", resumed)
++
+     return {"marked": marked, "reopened": reopened}
+diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/clients/base_handler.py
+index 8e14e0c..ebb06db 100644
+--- a/shelfmark/download/clients/base_handler.py
++++ b/shelfmark/download/clients/base_handler.py
+@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard
+ 
+ from shelfmark.core.config import config
+ from shelfmark.core.logger import setup_logger
++from shelfmark.core.queue import book_queue
+ from shelfmark.core.request_helpers import normalize_optional_text
+ from shelfmark.core.utils import is_audiobook
+ from shelfmark.download.clients import (
+@@ -209,6 +210,20 @@ class ExternalClientHandler(DownloadHandler, ABC):
+         """List protocols with configured clients."""
+         return list_configured_clients()
+ 
++    @staticmethod
++    def _remember_external_download(
++        task: DownloadTask,
++        *,
++        client: DownloadClient,
++        download_id: str,
++        protocol: str,
++    ) -> None:
++        """Store the client binding before entering a long-running poll loop."""
++        task.external_download_client = client.name
++        task.external_download_id = download_id
++        task.external_download_protocol = protocol
++        book_queue.notify_task_changed(task.task_id)
++
+     def _poll_interval(self) -> float:
+         """Return the polling interval for status checks."""
+         return POLL_INTERVAL
+@@ -776,6 +791,37 @@ class ExternalClientHandler(DownloadHandler, ABC):
+                 status_callback("cancelled", "Cancelled")
+                 return None
+ 
++            bound_client_name = normalize_optional_text(task.external_download_client)
++            bound_download_id = normalize_optional_text(task.external_download_id)
++            bound_protocol = normalize_optional_text(task.external_download_protocol)
++            if bound_client_name and bound_download_id and bound_protocol:
++                client = self._get_client(bound_protocol)
++                if client is None:
++                    status_callback("error", f"No {bound_protocol} client configured")
++                    return None
++                if client.name != bound_client_name:
++                    status_callback(
++                        "error",
++                        f"Cannot resume download from {bound_client_name}: "
++                        f"the configured {bound_protocol} client is {client.name}",
++                    )
++                    return None
++                logger.info(
++                    "Reattaching to %s download %s after restart",
++                    client.name,
++                    bound_download_id,
++                )
++                status_callback("resolving", f"Reattaching to {client.name}")
++                return self._poll_and_complete(
++                    client=client,
++                    download_id=bound_download_id,
++                    protocol=bound_protocol,
++                    task=task,
++                    cancel_flag=cancel_flag,
++                    progress_callback=progress_callback,
++                    status_callback=status_callback,
++                )
++
+             request = self._resolve_download(task, status_callback)
+             if not request:
+                 return None
+@@ -800,6 +846,12 @@ class ExternalClientHandler(DownloadHandler, ABC):
+             if existing:
+                 download_id, existing_status = existing
+                 logger.info("Found existing download in %s: %s", client.name, download_id)
++                self._remember_external_download(
++                    task,
++                    client=client,
++                    download_id=download_id,
++                    protocol=request.protocol,
++                )
+ 
+                 # If already complete, skip straight to file handling
+                 if existing_status.complete:
+@@ -906,6 +958,13 @@ class ExternalClientHandler(DownloadHandler, ABC):
+                         message=f"Torrent file saved to {download_id}",
+                     )
+ 
++                self._remember_external_download(
++                    task,
++                    client=client,
++                    download_id=download_id,
++                    protocol=request.protocol,
++                )
++
+             # Poll for progress
+             return self._poll_and_complete(
+                 client=client,
+diff --git a/shelfmark/download/orchestrator.py b/shelfmark/download/orchestrator.py
+index 184ba14..77f9f28 100644
+--- a/shelfmark/download/orchestrator.py
++++ b/shelfmark/download/orchestrator.py
+@@ -613,6 +613,9 @@ def serialize_task_for_retry(task: DownloadTask) -> dict[str, Any]:
+         "retry_source_context": (
+             dict(raw_retry_source_context) if isinstance(raw_retry_source_context, dict) else {}
+         ),
++        "external_download_client": getattr(task, "external_download_client", None),
++        "external_download_id": getattr(task, "external_download_id", None),
++        "external_download_protocol": getattr(task, "external_download_protocol", None),
+         "can_retry_without_staged_source": bool(
+             getattr(task, "can_retry_without_staged_source", True)
+         ),
+@@ -676,10 +679,36 @@ def _restore_task_from_retry_payload(payload: object) -> DownloadTask | None:
+         retry_source_context=(
+             dict(retry_source_context) if isinstance(retry_source_context, dict) else {}
+         ),
++        external_download_client=normalize_optional_text(payload.get("external_download_client")),
++        external_download_id=normalize_optional_text(payload.get("external_download_id")),
++        external_download_protocol=normalize_optional_text(
++            payload.get("external_download_protocol")
++        ),
+         can_retry_without_staged_source=bool(payload.get("can_retry_without_staged_source", True)),
+     )
+ 
+ 
++def resume_interrupted_download(payload: object, *, priority: int = -10) -> bool:
++    """Restore an active task whose external-client download survived a restart."""
++    task = _restore_task_from_retry_payload(payload)
++    if task is None:
++        return False
++    if not (
++        task.external_download_client
++        and task.external_download_id
++        and task.external_download_protocol
++    ):
++        return False
++
++    task.priority = priority
++    task.status_message = None
++    _clear_task_error_state(task)
++    if not book_queue.add(task):
++        return False
++    book_queue.update_status_message(task.task_id, "Resuming after restart")
++    return True
++
++
+ def retry_persisted_download(
+     payload: object,
+     *,
+diff --git a/shelfmark/main.py b/shelfmark/main.py
+index 8420a75..cb1f002 100644
+--- a/shelfmark/main.py
++++ b/shelfmark/main.py
+@@ -230,30 +230,6 @@ def _warn_if_local_admin_missing() -> None:
+ 
+ _warn_if_local_admin_missing()
+ 
+-# Nothing is downloading yet, so anything the last process left "active" or "queued" was
+-# interrupted. Close those rows out and put the recently interrupted requests back in the
+-# queue, before the coordinator starts. Assumes one worker process (entrypoint.sh).
+-if user_db is not None and download_history_service is not None:
+-    try:
+-        from shelfmark.core.startup_reconcile import reconcile_interrupted_downloads
+-
+-        _reconciled = reconcile_interrupted_downloads(user_db, download_history_service)
+-        if _reconciled["marked"] or _reconciled["reopened"]:
+-            logger.info(
+-                "Startup: closed out %d interrupted download(s), reopened %d request(s)",
+-                _reconciled["marked"],
+-                _reconciled["reopened"],
+-            )
+-    except (ImportError, OSError, RuntimeError, ValueError, sqlite3.Error) as exc:
+-        logger.warning("Could not reconcile interrupted downloads at startup: %s", exc)
+-
+-# Start download coordinator
+-backend.start()
+-
+-# Pre-solve the direct-download source's protection challenge in the background so the
+-# first user search does not pay for a cold Chrome bypass. Never blocks startup.
+-warmup.start()
+-
+ # Rate limiting for login attempts
+ # Map usernames to their failed-attempt counters and lockout timestamps.
+ failed_login_attempts: dict[str, dict[str, Any]] = {}
+@@ -1524,6 +1500,19 @@ def _record_download_queued(task_id: str, task: Any) -> None:
+         logger.warning("Failed to reset activity viewer state for task %s: %s", task_id, exc)
+ 
+ 
++def _record_download_state(task_id: str, task: Any) -> None:
++    """Persist mutable restart state while a download remains active."""
++    if download_history_service is None:
++        return
++    try:
++        download_history_service.update_retry_payload(
++            task_id=task_id,
++            retry_payload=backend.serialize_task_for_retry(task),
++        )
++    except _OPERATIONAL_ERRORS as exc:
++        logger.warning("Failed to persist state for task %s: %s", task_id, exc)
++
++
+ def _record_download_terminal_snapshot(task_id: str, status: QueueStatus, task: Any) -> None:
+     _notify_admin_for_terminal_download_status(task_id=task_id, status=status, task=task)
+ 
+@@ -1666,8 +1655,35 @@ def _queue_task_visible_to_actor(
+ 
+ 
+ backend.book_queue.set_queue_hook(_record_download_queued)
++backend.book_queue.set_state_hook(_record_download_state)
+ backend.book_queue.set_terminal_status_hook(_record_download_terminal_snapshot)
+ 
++# Restore external-client downloads before closing out anything the last process left active.
++# The hooks are registered first so a resumed task cannot race ahead of its persisted state.
++if user_db is not None and download_history_service is not None:
++    try:
++        from shelfmark.core.startup_reconcile import reconcile_interrupted_downloads
++
++        _reconciled = reconcile_interrupted_downloads(
++            user_db,
++            download_history_service,
++            resume_download=backend.resume_interrupted_download,
++        )
++        if _reconciled["marked"] or _reconciled["reopened"]:
++            logger.info(
++                "Startup: closed out %d interrupted download(s), reopened %d request(s)",
++                _reconciled["marked"],
++                _reconciled["reopened"],
++            )
++    except (ImportError, OSError, RuntimeError, ValueError, sqlite3.Error) as exc:
++        logger.warning("Could not reconcile interrupted downloads at startup: %s", exc)
++
++backend.start()
++
++# Pre-solve the direct-download source's protection challenge in the background so the
++# first user search does not pay for a cold Chrome bypass. Never blocks startup.
++warmup.start()
++
+ 
+ def _emit_request_update_events(updated_requests: list[dict[str, Any]]) -> None:
+     """Broadcast request_update events for rows changed by delivery-state sync."""
+diff --git a/tests/core/test_download_history_service.py b/tests/core/test_download_history_service.py
+index 7b29ec7..8e29730 100644
+--- a/tests/core/test_download_history_service.py
++++ b/tests/core/test_download_history_service.py
+@@ -50,3 +50,34 @@ def test_record_download_stores_utc_iso_timestamps():
+         assert row is not None
+         assert "+00:00" in row["queued_at"]
+         assert "+00:00" in row["terminal_at"]
++
++
++def test_update_retry_payload_only_changes_active_downloads(tmp_path):
++    db_path = str(tmp_path / "users.db")
++    user_db = UserDB(db_path)
++    user_db.initialize()
++    service = DownloadHistoryService(db_path)
++    service.record_download(
++        task_id="task-1",
++        user_id=None,
++        username=None,
++        request_id=None,
++        source="prowlarr",
++        source_display_name="Prowlarr",
++        title="Example",
++        author=None,
++        file_format=None,
++        size=None,
++        preview=None,
++        content_type="ebook",
++        downloads=None,
++        origin="direct",
++        retry_payload={"version": 1},
++    )
++
++    service.update_retry_payload(task_id="task-1", retry_payload={"version": 2})
++    assert service.get_by_task_id("task-1")["retry_payload"] == {"version": 2}
++
++    service.finalize_download(task_id="task-1", final_status="error")
++    service.update_retry_payload(task_id="task-1", retry_payload={"version": 3})
++    assert service.get_by_task_id("task-1")["retry_payload"] == {"version": 2}
+diff --git a/tests/core/test_startup_reconcile.py b/tests/core/test_startup_reconcile.py
+index 87a0a03..226cc7c 100644
+--- a/tests/core/test_startup_reconcile.py
++++ b/tests/core/test_startup_reconcile.py
+@@ -158,6 +158,31 @@ def test_a_download_with_no_request_is_closed_out_and_keeps_its_manual_retry(db)
+     assert history.is_retry_available(row) is True
+ 
+ 
++def test_an_external_client_download_is_resumed_instead_of_closed_out(db):
++    user_db, history, path = db
++    user = user_db.create_user(username="reader", role="user")
++    payload = {
++        "task_id": "t1",
++        "source": "prowlarr",
++        "title": "Title t1",
++        "external_download_client": "transmission",
++        "external_download_id": "abc123",
++        "external_download_protocol": "torrent",
++    }
++    _download(history, path, task_id="t1", user_id=user["id"], retry_payload=payload)
++    resumed = []
++
++    result = _run(
++        user_db,
++        history,
++        resume_download=lambda candidate: resumed.append(candidate) or True,
++    )
++
++    assert result == {"marked": 0, "reopened": 0}
++    assert resumed == [payload]
++    assert history.get_by_task_id("t1")["final_status"] == "active"
++
++
+ def test_a_download_whose_request_already_completed_is_left_alone(db):
+     user_db, history, path = db
+     user = user_db.create_user(username="reader", role="user")
+diff --git b/tests/download/test_external_client_restart.py b/tests/download/test_external_client_restart.py
+new file mode 100644
+index 0000000..9485dd5
+--- /dev/null
++++ b/tests/download/test_external_client_restart.py
+@@ -0,0 +1,88 @@
++"""Restart recovery for downloads managed by external clients."""
++
++from threading import Event
++from types import SimpleNamespace
++from unittest.mock import MagicMock
++
++from shelfmark.core.models import DownloadTask
++from shelfmark.release_sources.prowlarr.handler import ProwlarrHandler
++
++
++def _callbacks():
++    statuses = []
++    return (
++        (lambda _progress: None),
++        (lambda status, message: statuses.append((status, message))),
++        statuses,
++    )
++
++
++def test_bound_download_reattaches_without_resolving_source(monkeypatch):
++    client = SimpleNamespace(name="transmission")
++    handler = ProwlarrHandler()
++    poll_calls = []
++    resolve_download = MagicMock(side_effect=AssertionError("source was resolved"))
++    monkeypatch.setattr(handler, "_get_client", lambda _protocol: client)
++    monkeypatch.setattr(handler, "_resolve_download", resolve_download)
++    monkeypatch.setattr(
++        handler,
++        "_poll_and_complete",
++        lambda **kwargs: poll_calls.append(kwargs) or "/tmp/complete",
++    )
++    task = DownloadTask(
++        task_id="t1",
++        source="prowlarr",
++        title="Example",
++        external_download_client="transmission",
++        external_download_id="abc123",
++        external_download_protocol="torrent",
++    )
++    progress, status, statuses = _callbacks()
++
++    result = handler.download(task, Event(), progress, status)
++
++    assert result == "/tmp/complete"
++    resolve_download.assert_not_called()
++    assert poll_calls[0]["download_id"] == "abc123"
++    assert ("resolving", "Reattaching to transmission") in statuses
++
++
++def test_new_external_download_binding_is_persisted_before_poll(monkeypatch):
++    client = SimpleNamespace(
++        name="transmission",
++        handoff_only=False,
++        find_existing=lambda _url, category=None: None,
++        add_download=lambda **_kwargs: "abc123",
++    )
++    handler = ProwlarrHandler()
++    poll_calls = []
++    request = SimpleNamespace(
++        url="magnet:?xt=urn:btih:fresh",
++        protocol="torrent",
++        release_name="Example",
++        expected_hash=None,
++        seeding_time_limit=None,
++        ratio_limit=None,
++    )
++    monkeypatch.setattr(handler, "_get_client", lambda _protocol: client)
++    monkeypatch.setattr(handler, "_resolve_download", lambda *_args, **_kwargs: request)
++    monkeypatch.setattr(
++        handler,
++        "_poll_and_complete",
++        lambda **kwargs: poll_calls.append(kwargs) or "/tmp/complete",
++    )
++    task = DownloadTask(task_id="t1", source="prowlarr", title="Example")
++    changed = []
++    monkeypatch.setattr(
++        "shelfmark.download.clients.base_handler.book_queue.notify_task_changed",
++        changed.append,
++    )
++    progress, status, _statuses = _callbacks()
++
++    result = handler.download(task, Event(), progress, status)
++
++    assert result == "/tmp/complete"
++    assert task.external_download_client == "transmission"
++    assert task.external_download_id == "abc123"
++    assert task.external_download_protocol == "torrent"
++    assert changed == ["t1"]
+diff --git a/tests/download/test_orchestrator_pack_fields.py b/tests/download/test_orchestrator_pack_fields.py
+index 61e19f9..102ecb3 100644
+--- a/tests/download/test_orchestrator_pack_fields.py
++++ b/tests/download/test_orchestrator_pack_fields.py
+@@ -34,6 +34,42 @@ def test_retry_payload_drops_malformed_plan():
+     assert restored.book_plan is None
+ 
+ 
++def test_retry_payload_round_trips_external_download_binding():
++    task = DownloadTask(
++        task_id="t",
++        source="prowlarr",
++        title="T",
++        external_download_client="transmission",
++        external_download_id="abc123",
++        external_download_protocol="torrent",
++    )
++    payload = orchestrator.serialize_task_for_retry(task)
++    restored = orchestrator._restore_task_from_retry_payload(payload)
++    assert restored is not None
++    assert restored.external_download_client == "transmission"
++    assert restored.external_download_id == "abc123"
++    assert restored.external_download_protocol == "torrent"
++
++
++def test_resume_interrupted_download_requires_external_binding(monkeypatch):
++    queued: list[DownloadTask] = []
++    monkeypatch.setattr(orchestrator.book_queue, "add", lambda task: queued.append(task) or True)
++
++    payload = orchestrator.serialize_task_for_retry(
++        DownloadTask(task_id="t", source="prowlarr", title="T")
++    )
++    assert orchestrator.resume_interrupted_download(payload) is False
++    assert queued == []
++
++    payload.update(
++        external_download_client="transmission",
++        external_download_id="abc123",
++        external_download_protocol="torrent",
++    )
++    assert orchestrator.resume_interrupted_download(payload) is True
++    assert queued[0].priority == -10
++
++
+ def test_queue_release_reads_pack_fields(monkeypatch):
+     captured: dict[str, DownloadTask] = {}
+ 
