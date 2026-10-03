@@ -15,6 +15,10 @@ comments. Review readability before committing; formatting alone is not
 enough. Do not recount old code in comments unless that history helps
 prevent a mistake.
 
+Prefer less code and obvious code. Implement only what is clearly needed;
+do not add speculative features or special handling for hypothetical cases.
+Keep the solution minimal without sacrificing readability or correctness.
+
 Test behavior, not implementation details. Remove implementation-detail
 tests when encountered; never add them.
 
