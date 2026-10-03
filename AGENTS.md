@@ -142,6 +142,7 @@ nix run .#sops-cat -- [host]
 nix run .#sops-edit -- [host]
 nix run .#sops-update -- [host]
 nix run .#sops-copy -- <from-host> <to-host> <key>
+nix run .#sops-unset -- [--realm <realm>] [--all] [host] <key>
 nix run .#sops-pass -- [--gen] <host> <user|both>
 nix run .#sops-bootstrap -- <host>
 ```

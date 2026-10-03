@@ -109,6 +109,12 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
         },
     }
 
+    service.unset("destination", KeyPath.parse("nested/copied"))
+    assert backend.decrypt_data(destination) == {
+        "keep": "destination",
+        "nested": {"exact": exact_value},
+    }
+
 
 def test_real_sops_bootstrap_encrypts_for_host_identity(tmp_path: Path) -> None:
     operator_identity, operator_recipient = age_identity(tmp_path, "operator")

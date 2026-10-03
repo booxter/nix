@@ -16,6 +16,7 @@ sops-copy = "sops_tools.cli:copy_main"
 sops-edit = "sops_tools.cli:edit_main"
 sops-pass = "sops_tools.cli:pass_main"
 sops-set = "sops_tools.cli:set_main"
+sops-unset = "sops_tools.cli:unset_main"
 sops-update = "sops_tools.cli:update_main"
 
 [tool.setuptools]

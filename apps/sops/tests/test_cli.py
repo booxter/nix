@@ -11,6 +11,7 @@ from sops_tools.cli import (
     copy_main,
     edit_main,
     set_main,
+    unset_main,
     update_main,
 )
 from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
@@ -92,23 +93,48 @@ def test_set_all_updates_every_host_in_the_realm(
     current, backend = application(
         tmp_path,
         {
-            "beast": {"flakehub": {"token": "old"}},
-            "mair": {"flakehub": {"token": "old"}},
+            "beast": {"service": {"token": "old"}},
+            "mair": {"service": {"token": "old"}},
         },
     )
     monkeypatch.setattr("sys.stdin", io.StringIO("new-token"))
 
     assert (
         set_main(
-            ["--realm", "home", "--all", "flakehub/token"],
+            ["--realm", "home", "--all", "service/token"],
             application=current,
         )
         == 0
     )
 
     for document in backend.documents.values():
-        assert document["flakehub"] == {"token": "new-token"}  # type: ignore[index]
-    assert capsys.readouterr().out == "Updated flakehub/token for 2 hosts: beast, mair.\n"
+        assert document["service"] == {"token": "new-token"}  # type: ignore[index]
+    assert capsys.readouterr().out == "Updated service/token for 2 hosts: beast, mair.\n"
+
+
+def test_unset_all_deletes_from_every_host_in_the_realm(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    current, backend = application(
+        tmp_path,
+        {
+            "beast": {"legacy": "old", "keep": "beast"},
+            "mair": {"legacy": "old", "keep": "mair"},
+        },
+    )
+
+    assert (
+        unset_main(
+            ["--realm", "home", "--all", "legacy"],
+            application=current,
+        )
+        == 0
+    )
+
+    for document in backend.documents.values():
+        assert "legacy" not in document  # type: ignore[operator]
+    assert capsys.readouterr().out == "Deleted legacy for 2 hosts: beast, mair.\n"
 
 
 def test_copy_reports_distinct_destination_path(
