@@ -7,6 +7,14 @@
 let
   servers = config.host.attic.realmServers;
   serverNames = builtins.attrNames servers;
+  authenticatedHosts = lib.unique (
+    builtins.concatMap (
+      server:
+      map (cache: endpointHost cache.endpoint) (
+        builtins.attrValues (lib.filterAttrs (_: cache: cache.authenticated) server.caches)
+      )
+    ) (builtins.attrValues servers)
+  );
   rootDir = if pkgs.stdenv.isDarwin then "/private/var/root" else "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   endpointHost =
@@ -41,13 +49,15 @@ let
   '';
 in
 {
-  config = lib.mkIf (servers != { }) {
-    host.nix.netrcMachines = lib.mapAttrs' (
-      _: server:
-      lib.nameValuePair (endpointHost server.endpoint) {
-        password = config.sops.placeholder."attic/token";
-      }
-    ) servers;
+  config = lib.mkIf (config.host.attic.publisher && servers != { }) {
+    host.nix.netrcMachines = lib.listToAttrs (
+      map (hostName: {
+        name = hostName;
+        value = {
+          password = config.sops.placeholder."attic/token";
+        };
+      }) authenticatedHosts
+    );
 
     nix.settings.post-build-hook = postBuildHook;
 

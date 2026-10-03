@@ -9,6 +9,7 @@ let
     inherit (server) defaultCache endpoint;
     caches = lib.mapAttrs (cacheName: cache: {
       inherit cacheName;
+      authenticated = cache.authenticated or (!(cache.public or false));
       endpoint = cache.endpoint or server.endpoint;
       public = cache.public or false;
       trustedPublicKey = cache.trustedPublicKey or null;
