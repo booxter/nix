@@ -123,20 +123,18 @@ class BootstrapService:
         operator_recipient = self.operator.recipient(self.repository.realm)
 
         recipients = [host_recipient, operator_recipient]
-        return self._update_host(host, operator_recipient, recipients)
+        if self.repository.realm.name == "home":
+            recipients.append(self.host_recipients.recipient("pki"))
+        return self._update_host(host, recipients)
 
     def _update_host(
         self,
         host: str,
-        operator_recipient: str,
         recipients: list[str],
     ) -> BootstrapResult:
         policy_path = self.runtime.repo_root / ".sops.yaml"
         created_policy = not policy_path.is_file()
         policy = SopsPolicy.create() if created_policy else SopsPolicy.load(policy_path)
-        control = self._control_plane_recipient(policy, operator_recipient)
-        if control is not None:
-            recipients.append(control)
         policy_changed = policy.ensure_host_rule(
             self.repository.realm.name,
             host,
@@ -185,15 +183,3 @@ class BootstrapService:
         if host_template.is_file():
             plaintext = deep_merge(plaintext, load_yaml(host_template))
         return plaintext
-
-    def _control_plane_recipient(self, policy: SopsPolicy, operator_recipient: str) -> str | None:
-        if self.repository.realm.name != "home":
-            return None
-        return next(
-            (
-                recipient
-                for recipient in policy.recipients_for_rule("secrets/home/pki\\.yaml$")
-                if recipient != operator_recipient
-            ),
-            None,
-        )

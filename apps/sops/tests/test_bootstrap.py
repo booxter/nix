@@ -37,7 +37,7 @@ def service(
         yaml.safe_dump({"bootstrap": {"token": "replace"}}, sort_keys=False)
     )
     backend = MemorySopsBackend({})
-    host_recipients = StaticHostRecipientProvider()
+    host_recipients = StaticHostRecipientProvider(values={"pki": "age1pki"})
     return (
         BootstrapService(
             runtime,
@@ -60,12 +60,13 @@ def test_bootstrap_creates_policy_and_encrypted_template(tmp_path: Path) -> None
         "Created .sops.yaml.",
         "Created encrypted secrets/home/newhost.yaml.",
     )
-    assert host_recipients.calls == ["newhost"]
+    assert host_recipients.calls == ["newhost", "pki"]
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
-    assert policy.keys == ["age1host", "age1operator"]
+    assert policy.keys == ["age1host", "age1operator", "age1pki"]
     assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
         "age1host",
         "age1operator",
+        "age1pki",
     ]
     secret = bootstrap.repository.secret("newhost")
     assert backend.documents[secret] == {"bootstrap": {"token": "replace"}}
@@ -85,7 +86,7 @@ def test_bootstrap_appends_hosts_and_does_not_rewrite_existing_secret(
     assert len(backend.encryptions) == first_encryption_count + 1
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
     assert len(policy.creation_rules) == 2
-    assert policy.keys == ["age1host", "age1operator"]
+    assert policy.keys == ["age1host", "age1operator", "age1pki"]
 
 
 def test_bootstrap_creates_merged_secret_without_contacting_host(tmp_path: Path) -> None:
@@ -107,11 +108,12 @@ def test_bootstrap_creates_merged_secret_without_contacting_host(tmp_path: Path)
         "Created .sops.yaml.",
         "Created encrypted secrets/home/newhost.yaml.",
     )
-    assert host_recipients.calls == ["newhost"]
+    assert host_recipients.calls == ["newhost", "pki"]
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
     assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
         "age1host",
         "age1operator",
+        "age1pki",
     ]
     assert backend.documents[bootstrap.repository.secret("newhost")] == {
         "bootstrap": {"token": "replace", "host": "replace"},
@@ -136,6 +138,7 @@ def test_bootstrap_adds_host_recipient_to_existing_secret(tmp_path: Path) -> Non
     assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
         "age1operator",
         "age1host",
+        "age1pki",
     ]
 
 
@@ -160,11 +163,8 @@ def test_failed_reencryption_restores_policy_for_retry(tmp_path: Path) -> None:
     assert result.messages[-1].startswith("Re-encrypted ")
 
 
-def test_main_bootstrap_inherits_control_plane_recipient(tmp_path: Path) -> None:
-    bootstrap, _, _ = service(tmp_path)
-    policy = SopsPolicy.create()
-    policy.ensure_host_rule("home", "pki", ["age1pki", "age1operator"])
-    policy.write(tmp_path / ".sops.yaml")
+def test_home_bootstrap_uses_pki_host_recipient_for_control_plane(tmp_path: Path) -> None:
+    bootstrap, _, host_recipients = service(tmp_path)
 
     bootstrap.bootstrap("newhost")
 
@@ -174,6 +174,7 @@ def test_main_bootstrap_inherits_control_plane_recipient(tmp_path: Path) -> None
         "age1operator",
         "age1pki",
     ]
+    assert host_recipients.calls == ["newhost", "pki"]
 
 
 def test_host_recipient_is_derived_from_committed_public_key(tmp_path: Path) -> None:

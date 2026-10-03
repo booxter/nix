@@ -148,7 +148,7 @@ def test_real_sops_bootstrap_encrypts_for_host_identity(tmp_path: Path) -> None:
     result = bootstrap.bootstrap("newhost")
     secret = repository.secret("newhost")
     assert result.messages[-1].startswith("Created encrypted ")
-    assert host_recipients.calls == ["newhost"]
+    assert host_recipients.calls == ["newhost", "pki"]
     assert operator_backend.decrypt_data(secret) == {
         "common": {"token": "replace"},
         "host": {"token": "replace"},

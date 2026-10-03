@@ -145,11 +145,12 @@ class StaticPasswordHasher(PasswordHasher):
 @dataclass
 class StaticHostRecipientProvider:
     value: str = "age1host"
+    values: dict[str, str] = field(default_factory=dict)
     calls: list[str] = field(default_factory=list)
 
     def recipient(self, host: str) -> str:
         self.calls.append(host)
-        return self.value
+        return self.values.get(host, self.value)
 
 
 @dataclass(frozen=True)
