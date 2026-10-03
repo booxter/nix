@@ -26,6 +26,12 @@ in
 
   nix.settings.max-jobs = lib.mkForce 0;
 
+  sops.age = {
+    keyFile = lib.mkForce null;
+    generateKey = lib.mkForce false;
+    sshKeyPaths = lib.mkForce [ "/etc/ssh/ssh_host_ed25519_key" ];
+  };
+
   services.github-runners = lib.genAttrs runnerNames (name: {
     enable = true;
     url = "https://github.com/booxter/nix";
