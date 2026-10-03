@@ -15,6 +15,9 @@ comments. Review readability before committing; formatting alone is not
 enough. Do not recount old code in comments unless that history helps
 prevent a mistake.
 
+Test behavior, not implementation details. Remove implementation-detail
+tests when encountered; never add them.
+
 Use `apply_patch` for manual edits to tracked text files; do not rewrite them
 with scripts or shell redirects.
 
