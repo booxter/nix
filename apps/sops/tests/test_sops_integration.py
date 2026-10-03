@@ -1,20 +1,24 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
 
 import yaml
 from atomic_file_writes import write_text_atomic
+from sops_tools.bootstrap import BootstrapService
 from sops_tools.model import KeyPath
 from sops_tools.policy import SopsPolicy
 from sops_tools.process import SubprocessRunner
-from sops_tools.repository import Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
 
+from .fakes import StaticOperatorRecipientProvider, StaticRuntimeKeyProvider
 
-def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> None:
-    identity = tmp_path / "age.txt"
+
+def age_identity(tmp_path: Path, name: str) -> tuple[Path, str]:
+    identity = tmp_path / f"{name}.txt"
     subprocess.run(
         ["age-keygen", "-o", str(identity)],
         check=True,
@@ -27,6 +31,11 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
         capture_output=True,
         text=True,
     ).stdout.strip()
+    return identity, recipient
+
+
+def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> None:
+    identity, recipient = age_identity(tmp_path, "operator")
 
     policy = SopsPolicy.create()
     for host in ("beast", "source", "destination"):
@@ -98,4 +107,60 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
             "copied": {"token": "secret", "endpoint": "cache"},
             "exact": exact_value,
         },
+    }
+
+
+def test_real_sops_seed_is_reencrypted_for_runtime_identity(tmp_path: Path) -> None:
+    operator_identity, operator_recipient = age_identity(tmp_path, "operator")
+    runtime_identity, runtime_recipient = age_identity(tmp_path, "runtime")
+    inventory = tmp_path / "realms.json"
+    inventory.write_text(json.dumps({"newhost": "home"}))
+    runtime = RuntimeEnvironment(
+        repo_root=tmp_path,
+        home=tmp_path / "home",
+        config_home=tmp_path / "home/.config",
+        system_name="Linux",
+        hostname="controller",
+        values={"SOPS_REALMS_FILE": str(inventory)},
+    )
+    repository = SecretRepository(tmp_path, Realm("home", None))
+    repository.directory.mkdir(parents=True)
+    repository.template.write_text(
+        yaml.safe_dump({"common": {"token": "replace"}}, sort_keys=False)
+    )
+    host_template = repository.host_template("newhost")
+    host_template.parent.mkdir()
+    host_template.write_text(yaml.safe_dump({"host": {"token": "replace"}}, sort_keys=False))
+    operator_environment = {**os.environ, "SOPS_AGE_KEY_FILE": str(operator_identity)}
+    operator_backend = CommandSopsBackend(
+        SubprocessRunner(operator_environment),
+        tmp_path / ".sops.yaml",
+    )
+    runtime_keys = StaticRuntimeKeyProvider(runtime_recipient)
+    bootstrap = BootstrapService(
+        runtime,
+        repository,
+        operator_backend,
+        runtime_keys,
+        StaticOperatorRecipientProvider(operator_recipient),
+    )
+
+    bootstrap.seed("newhost")
+    secret = repository.secret("newhost")
+    assert runtime_keys.calls == []
+    assert operator_backend.decrypt_data(secret) == {
+        "common": {"token": "replace"},
+        "host": {"token": "replace"},
+    }
+
+    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+
+    assert result.messages[-1].startswith("Re-encrypted ")
+    runtime_backend = CommandSopsBackend(
+        SubprocessRunner({**os.environ, "SOPS_AGE_KEY_FILE": str(runtime_identity)}),
+        tmp_path / ".sops.yaml",
+    )
+    assert runtime_backend.decrypt_data(secret) == {
+        "common": {"token": "replace"},
+        "host": {"token": "replace"},
     }

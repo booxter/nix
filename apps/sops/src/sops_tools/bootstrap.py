@@ -13,7 +13,7 @@ from atomic_file_writes import write_text_atomic
 from .age import AgeRecipientResolver
 from .errors import ToolError
 from .flake import archive_flake_source
-from .model import JsonValue
+from .model import JsonValue, deep_merge
 from .policy import SopsPolicy
 from .process import ProcessRunner
 from .repository import Realm, RuntimeEnvironment, SecretRepository
@@ -189,32 +189,75 @@ class BootstrapService:
             raise ToolError(f"Failed to read age public key for {host}.")
         operator_recipient = self.operator.recipient(self.repository.realm)
 
+        recipients = [runtime_recipient, operator_recipient]
+        return self._update_host(host, operator_recipient, recipients)
+
+    def seed(self, host: str) -> BootstrapResult:
+        """Create an operator-encrypted secret before the host is reachable."""
+        self.runtime.assert_realm_host(self.repository.realm, host)
+        operator_recipient = self.operator.recipient(self.repository.realm)
+        return self._update_host(host, operator_recipient, [operator_recipient])
+
+    def _update_host(
+        self,
+        host: str,
+        operator_recipient: str,
+        recipients: list[str],
+    ) -> BootstrapResult:
         policy_path = self.runtime.repo_root / ".sops.yaml"
         created_policy = not policy_path.is_file()
         policy = SopsPolicy.create() if created_policy else SopsPolicy.load(policy_path)
-        recipients = [runtime_recipient, operator_recipient]
         control = self._control_plane_recipient(policy, operator_recipient)
         if control is not None:
             recipients.append(control)
-        policy.ensure_host_rule(self.repository.realm.name, host, recipients)
+        policy_changed = policy.ensure_host_rule(
+            self.repository.realm.name,
+            host,
+            recipients,
+        )
+        original_policy = policy_path.read_text() if policy_path.is_file() else None
         policy.write(policy_path)
 
         messages = ["Created .sops.yaml." if created_policy else "Updated .sops.yaml."]
+        try:
+            messages.append(self._update_secret(host, policy_changed))
+        except Exception:
+            if original_policy is None:
+                policy_path.unlink(missing_ok=True)
+            else:
+                write_text_atomic(policy_path, original_policy)
+            raise
+        return BootstrapResult(tuple(messages))
+
+    def _update_secret(self, host: str, policy_changed: bool) -> str:
         self.repository.directory.mkdir(parents=True, exist_ok=True)
         secret = self.repository.secret(host)
+        relative = secret.relative_to(self.runtime.repo_root)
         if secret.is_file():
-            messages.append(f"{secret.relative_to(self.runtime.repo_root)} already exists.")
-        else:
-            plaintext: JsonValue = {}
-            if self.repository.template.is_file():
-                plaintext = load_yaml(self.repository.template)
+            if not policy_changed:
+                return f"{relative} already exists."
+            plaintext = self.sops.decrypt_data(secret)
             encrypted = self.sops.encrypt_data(secret, plaintext)
             if not encrypted:
-                raise ToolError(f"Failed to create encrypted secret for {secret}.")
+                raise ToolError(f"Failed to re-encrypt secret for {secret}.")
             write_text_atomic(secret, encrypted)
-            relative = secret.relative_to(self.runtime.repo_root)
-            messages.append(f"Created encrypted {relative}.")
-        return BootstrapResult(tuple(messages))
+            return f"Re-encrypted {relative} for updated recipients."
+
+        plaintext = self._template_for(host)
+        encrypted = self.sops.encrypt_data(secret, plaintext)
+        if not encrypted:
+            raise ToolError(f"Failed to create encrypted secret for {secret}.")
+        write_text_atomic(secret, encrypted)
+        return f"Created encrypted {relative}."
+
+    def _template_for(self, host: str) -> JsonValue:
+        plaintext: JsonValue = {}
+        if self.repository.template.is_file():
+            plaintext = load_yaml(self.repository.template)
+        host_template = self.repository.host_template(host)
+        if host_template.is_file():
+            plaintext = deep_merge(plaintext, load_yaml(host_template))
+        return plaintext
 
     def _control_plane_recipient(self, policy: SopsPolicy, operator_recipient: str) -> str | None:
         if self.repository.realm.name != "home":

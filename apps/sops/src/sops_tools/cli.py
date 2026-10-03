@@ -242,11 +242,18 @@ def bootstrap_main(
     argv: Sequence[str] | None = None, *, application: Application | None = None
 ) -> int:
     def command() -> int:
-        parser = _parser("Bootstrap a host SOPS runtime key and encrypted secret.")
+        parser = _parser("Seed or bootstrap a host SOPS runtime key and encrypted secret.")
         parser.add_argument("--local", action="store_true")
+        parser.add_argument(
+            "--seed",
+            action="store_true",
+            help="create an operator-encrypted secret without contacting the host",
+        )
         parser.add_argument("host")
         parser.add_argument("--user", default=os.environ.get("USER", getpass.getuser()))
         args = parser.parse_args(argv)
+        if args.seed and args.local:
+            parser.error("--seed cannot be combined with --local")
         current = application or Application.discover()
         realm = current.runtime.resolve_realm(args.realm, require_identity=False)
         environment = current.runtime.command_environment(realm)
@@ -258,12 +265,15 @@ def bootstrap_main(
             CommandRuntimeKeyProvider(runner, current.runtime.repo_root),
             CommandOperatorRecipientProvider(current.runtime, runner, AgeRecipientResolver(runner)),
         )
-        result = service.bootstrap(
-            args.host,
-            args.user,
-            local=args.local,
-            has_tty=sys.stdin.isatty(),
-        )
+        if args.seed:
+            result = service.seed(args.host)
+        else:
+            result = service.bootstrap(
+                args.host,
+                args.user,
+                local=args.local,
+                has_tty=sys.stdin.isatty(),
+            )
         for message in result.messages:
             print(message)
         return 0

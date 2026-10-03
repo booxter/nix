@@ -88,6 +88,65 @@ def test_bootstrap_appends_hosts_and_does_not_rewrite_existing_secret(
     assert policy.keys == ["age1runtime", "age1operator"]
 
 
+def test_seed_creates_merged_secret_without_requesting_runtime_key(tmp_path: Path) -> None:
+    bootstrap, backend, runtime_keys = service(tmp_path)
+    bootstrap.repository.host_template("newhost").parent.mkdir(parents=True)
+    bootstrap.repository.host_template("newhost").write_text(
+        yaml.safe_dump(
+            {
+                "bootstrap": {"host": "replace"},
+                "github": {"token": "replace"},
+            },
+            sort_keys=False,
+        )
+    )
+
+    result = bootstrap.seed("newhost")
+
+    assert result.messages == (
+        "Created .sops.yaml.",
+        "Created encrypted secrets/home/newhost.yaml.",
+    )
+    assert runtime_keys.calls == []
+    policy = SopsPolicy.load(tmp_path / ".sops.yaml")
+    assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == ["age1operator"]
+    assert backend.documents[bootstrap.repository.secret("newhost")] == {
+        "bootstrap": {"token": "replace", "host": "replace"},
+        "github": {"token": "replace"},
+    }
+
+
+def test_bootstrap_adds_runtime_recipient_to_existing_seed(tmp_path: Path) -> None:
+    bootstrap, backend, _ = service(tmp_path)
+    bootstrap.seed("newhost")
+
+    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+
+    assert result.messages[-1] == ("Re-encrypted secrets/home/newhost.yaml for updated recipients.")
+    assert len(backend.encryptions) == 2
+    policy = SopsPolicy.load(tmp_path / ".sops.yaml")
+    assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
+        "age1operator",
+        "age1runtime",
+    ]
+
+
+def test_failed_reencryption_restores_policy_for_retry(tmp_path: Path) -> None:
+    bootstrap, backend, _ = service(tmp_path)
+    bootstrap.seed("newhost")
+    policy_path = tmp_path / ".sops.yaml"
+    seeded_policy = policy_path.read_text()
+    backend.fail_encryption = True
+
+    with pytest.raises(ToolError, match="Unable to encrypt"):
+        bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+
+    assert policy_path.read_text() == seeded_policy
+    backend.fail_encryption = False
+    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    assert result.messages[-1].startswith("Re-encrypted ")
+
+
 def test_remote_bootstrap_requires_tty_before_key_provider(tmp_path: Path) -> None:
     bootstrap, _, runtime_keys = service(tmp_path)
 
