@@ -22,6 +22,22 @@ keys:
   - age1rcpzj9rsqs038a3h3rcqw27szw3qw0wy3qat5mg8n52sn68ymyes0fc9k6
   - age1se1qw0jnkm4jxvrj0msw5kq9pcpj7vpz867hme8q20l0hhld7wxshq7zd3ccw9
   - age12peyvy8frp2nd5gjmmgextu68ys2q9rxp8yhjrn6mdu5d62u64yq94zcd7
+  - age1u6nk00wxmr0v0352c9np5ptgww8h2e2n6f22vpmngeq0pwjl9qms2s7wfr
+  - age1hvcjjtuljhpxlylgvfea99jputrc2jm6qtqhkngaslu0k396reqscj8rdk
+  - age158k7jvr9agaw8j2ju2vftcc636xeezsq85jljgynncqzjm98xycsgtv4pk
+  - age10e2p9tw9qser8s5sfchxm087ehwy83mc0a9v6et5tlq4sqr6t47q56lex7
+  - age1m6thj5fpd6t0kfdgmlkx8hfdxju8fpwcgy3f5yz09pu0347scczquh5x2s
+  - age19050zu62xjhp5hcdy36guan794x52w7dtsn4qs92typesgg8xqsq5xhndl
+  - age13z3yg2a4tr6uxxruxeaqn844pughjv5sza7679wyw4w72jrqsynqf4ztfq
+  - age1zz8kswf2uguky45awak44r6eqfkdwy2sf5xxmkpgzql66jy5rfaq6af6vr
+  - age1eg52yp0zhhq2g64ncnrfwk0n9dha7077fp09u02gwnuq2dmq5aus75esjn
+  - age17f8vjepwsu2zevm09ny7ny2lwrlsremwfsyczj2e9yrjmggdx40q3un7mm
+  - age184lr80hzdradjl2uugqu5c98tq3x6kexp3puz98qczfl0rfwnc7q5dkm69
+  - age1qt430qaymx32s5402stgj6l9u254ewydvhpu5az9nxulrtnvpq7qdugz3y
+  - age1x2q77vgyw96g2cq4k88u7n3st7rh02gp3l9zq7jqd6w4aqapnalqjsa55g
+  - age1mweywhdwy232k05la8ae6numkv8z27g4tmmme75czeucq6uyjygs47fqll
+  - age1sc5an2t8zcz4ya2zfwnretr4srec6n6eeu3jz3ny5j4pq02efuuqz4hj5k
+  - age163ufhagfnkl8w8nfryj5wy0a0vrl5fhzc6dkha9074mtszkewy9qce34ym
 creation_rules:
   - path_regex: secrets/home/mair\.yaml$
     key_groups:
@@ -31,6 +47,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1eg52yp0zhhq2g64ncnrfwk0n9dha7077fp09u02gwnuq2dmq5aus75esjn
   - path_regex: secrets/home/mmini\.yaml$
     key_groups:
       - age:
@@ -39,6 +56,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age17f8vjepwsu2zevm09ny7ny2lwrlsremwfsyczj2e9yrjmggdx40q3un7mm
   - path_regex: secrets/home/prx1-lab\.yaml$
     key_groups:
       - age:
@@ -47,6 +65,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1x2q77vgyw96g2cq4k88u7n3st7rh02gp3l9zq7jqd6w4aqapnalqjsa55g
   - path_regex: secrets/home/prx2-lab\.yaml$
     key_groups:
       - age:
@@ -55,6 +74,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1mweywhdwy232k05la8ae6numkv8z27g4tmmme75czeucq6uyjygs47fqll
   - path_regex: secrets/home/prx3-lab\.yaml$
     key_groups:
       - age:
@@ -63,6 +83,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1sc5an2t8zcz4ya2zfwnretr4srec6n6eeu3jz3ny5j4pq02efuuqz4hj5k
   - path_regex: secrets/home/frame\.yaml$
     key_groups:
       - age:
@@ -71,6 +92,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age19050zu62xjhp5hcdy36guan794x52w7dtsn4qs92typesgg8xqsq5xhndl
   - path_regex: secrets/home/srvarr\.yaml$
     key_groups:
       - age:
@@ -79,6 +101,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age163ufhagfnkl8w8nfryj5wy0a0vrl5fhzc6dkha9074mtszkewy9qce34ym
   - path_regex: secrets/home/fana\.yaml$
     key_groups:
       - age:
@@ -87,6 +110,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1m6thj5fpd6t0kfdgmlkx8hfdxju8fpwcgy3f5yz09pu0347scczquh5x2s
   - path_regex: secrets/home/beast\.yaml$
     key_groups:
       - age:
@@ -95,6 +119,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1u6nk00wxmr0v0352c9np5ptgww8h2e2n6f22vpmngeq0pwjl9qms2s7wfr
   - path_regex: secrets/home/org\.yaml$
     key_groups:
       - age:
@@ -103,6 +128,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age184lr80hzdradjl2uugqu5c98tq3x6kexp3puz98qczfl0rfwnc7q5dkm69
   - path_regex: secrets/home/gw\.yaml$
     key_groups:
       - age:
@@ -111,6 +137,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age13z3yg2a4tr6uxxruxeaqn844pughjv5sza7679wyw4w72jrqsynqf4ztfq
   - path_regex: secrets/home/builder1\.yaml$
     key_groups:
       - age:
@@ -119,6 +146,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1hvcjjtuljhpxlylgvfea99jputrc2jm6qtqhkngaslu0k396reqscj8rdk
   - path_regex: secrets/home/builder2\.yaml$
     key_groups:
       - age:
@@ -127,6 +155,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age158k7jvr9agaw8j2ju2vftcc636xeezsq85jljgynncqzjm98xycsgtv4pk
   - path_regex: secrets/home/builder3\.yaml$
     key_groups:
       - age:
@@ -135,6 +164,7 @@ creation_rules:
           - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age10e2p9tw9qser8s5sfchxm087ehwy83mc0a9v6et5tlq4sqr6t47q56lex7
   - path_regex: secrets/home/ci\.yaml$
     key_groups:
       - age:
@@ -150,6 +180,7 @@ creation_rules:
           - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+          - age1qt430qaymx32s5402stgj6l9u254ewydvhpu5az9nxulrtnvpq7qdugz3y
   - path_regex: secrets/home/home\.yaml$
     key_groups:
       - age:
@@ -158,6 +189,7 @@ creation_rules:
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
           - age1n7vnsmumaqfgslf463henqwpg96u36jv04nmcqde5d40tvx5l3hqje8jur
+          - age1zz8kswf2uguky45awak44r6eqfkdwy2sf5xxmkpgzql66jy5rfaq6af6vr
   - path_regex: secrets/work/JGWXHWDL4X\.yaml$
     key_groups:
       - age:
