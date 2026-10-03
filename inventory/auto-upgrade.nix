@@ -56,7 +56,7 @@
       };
     };
     ci = {
-      switch = "05:15";
+      switch = "04:10";
       reboot = {
         mode = "with-upgrade";
         calendar = null;
