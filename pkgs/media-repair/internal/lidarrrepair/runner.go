@@ -44,13 +44,7 @@ type Worker interface {
 }
 
 type Planner interface {
-	PlanLidarr(context.Context, lidarrcontracts.Case) (lidarrcontracts.Decision, error)
-	ReconsiderLidarr(
-		context.Context,
-		lidarrcontracts.Case,
-		lidarrcontracts.Decision,
-		reconsideration.Request,
-	) (lidarrcontracts.Decision, error)
+	PlanLidarr(context.Context, lidarrcontracts.Case, planningrunner.Options) (lidarrcontracts.Decision, error)
 }
 
 type Report struct {
@@ -165,7 +159,7 @@ func NewRunner(client Lidarr, worker Worker, planner Planner, store *Store) (*Ru
 			if err != nil {
 				return lidarrcontracts.Decision{}, err
 			}
-			decision, err := planner.PlanLidarr(ctx, repairCase)
+			decision, err := planner.PlanLidarr(ctx, repairCase, planningrunner.Options{})
 			if err != nil {
 				return lidarrcontracts.Decision{}, err
 			}

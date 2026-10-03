@@ -3,6 +3,7 @@ package plannerclient
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestClientPlansThroughUnixSocket(t *testing.T) {
@@ -41,7 +43,7 @@ func TestClientPlansThroughUnixSocket(t *testing.T) {
 	}))
 	client := testClient(t, socketPath, time.Second)
 
-	decision, err := client.Plan(context.Background(), repairCase)
+	decision, err := client.Plan(context.Background(), repairCase, planning.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +111,7 @@ func TestClientRejectsInvalidResponses(t *testing.T) {
 			t.Parallel()
 			socketPath := serveUnix(t, test.handler)
 			client := testClient(t, socketPath, time.Second)
-			_, err := client.Plan(context.Background(), repairCase)
+			_, err := client.Plan(context.Background(), repairCase, planning.Options{})
 			assertFailure(t, err, test.kind, test.status)
 			if strings.Contains(fmt.Sprint(err), "do-not-expose-response") {
 				t.Fatalf("error exposes response body: %v", err)
@@ -126,7 +128,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 		t.Parallel()
 		socketPath := filepath.Join(t.TempDir(), "missing.sock")
 		client := testClient(t, socketPath, time.Second)
-		_, err := client.Plan(context.Background(), repairCase)
+		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureUnavailable, 0)
 		if strings.Contains(err.Error(), socketPath) {
 			t.Fatalf("error exposes socket path: %v", err)
@@ -149,7 +151,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 			t.Fatal(err)
 		}
 		client := testClient(t, socketPath, time.Second)
-		_, err := client.Plan(context.Background(), repairCase)
+		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureUnavailable, 0)
 		if strings.Contains(err.Error(), socketPath) {
 			t.Fatalf("error exposes socket path: %v", err)
@@ -165,7 +167,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 			<-request.Context().Done()
 		}))
 		client := testClient(t, socketPath, 20*time.Millisecond)
-		_, err := client.Plan(context.Background(), repairCase)
+		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureTimeout, 0)
 	})
 }
@@ -180,7 +182,7 @@ func TestClientHonorsCallerCancellation(t *testing.T) {
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := client.Plan(ctx, fixtureCase(t))
+	_, err := client.Plan(ctx, fixtureCase(t), planning.Options{})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
 	}
@@ -192,7 +194,7 @@ func TestClientRejectsInvalidCase(t *testing.T) {
 	repairCase := fixtureCase(t)
 	repairCase.CaseID = "sha256:" + strings.Repeat("f", 64)
 	client := testClient(t, "/run/planner.sock", time.Second)
-	if _, err := client.Plan(context.Background(), repairCase); err == nil {
+	if _, err := client.Plan(context.Background(), repairCase, planning.Options{}); err == nil {
 		t.Fatal("invalid repair case was accepted")
 	}
 }
@@ -254,7 +256,7 @@ func serveUnix(t *testing.T, handler http.Handler) string {
 }
 
 func readRepairCase(request *http.Request) (contracts.RepairCaseV3, error) {
-	if request.Method != http.MethodPost || request.URL.Path != "/v3/repair-plans" ||
+	if request.Method != http.MethodPost || request.URL.Path != "/radarr/plan" ||
 		request.Header.Get("Content-Type") != "application/json" {
 		return contracts.RepairCaseV3{}, fmt.Errorf("unexpected request")
 	}
@@ -262,7 +264,13 @@ func readRepairCase(request *http.Request) (contracts.RepairCaseV3, error) {
 	if err != nil {
 		return contracts.RepairCaseV3{}, err
 	}
-	return contracts.DecodeCase(data)
+	var envelope struct {
+		RepairCase json.RawMessage `json:"repair_case"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return contracts.RepairCaseV3{}, err
+	}
+	return contracts.DecodeCase(envelope.RepairCase)
 }
 
 func writeJSON(writer http.ResponseWriter, data []byte) {

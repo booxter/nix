@@ -8,8 +8,6 @@ import httpx
 import pytest
 from media_repair_planner.api import (
     ContractEndpoint,
-    PolicyOverrides,
-    ReconsiderationEndpoint,
     create_app,
 )
 from media_repair_planner.case_models import RepairCaseV3
@@ -21,7 +19,6 @@ from media_repair_planner.lidarr_contracts import (
     ContractError,
     decode_case,
     decode_decision,
-    encode_case,
     encode_decision,
 )
 from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV3
@@ -34,14 +31,11 @@ from media_repair_planner.lidarr_evaluation import (
 )
 from media_repair_planner.lidarr_evaluation_cli import main as evaluation_main
 from media_repair_planner.lidarr_planning import LidarrPlanner
-from media_repair_planner.lidarr_projection import project_case
-from media_repair_planner.lidarr_prompt import SYSTEM_INSTRUCTION as LIDARR_SYSTEM_INSTRUCTION
 from media_repair_planner.lidarr_validation import (
     validate_decision_for_case,
     validate_decision_object,
 )
-from media_repair_planner.planning_core import PlanningOutcome
-from media_repair_planner.prompt import RECONSIDERATION_INSTRUCTION
+from media_repair_planner.planning_core import PlanningContext, PlanningOutcome
 from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
 
@@ -215,33 +209,6 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
     assert outcome.attempts == 1
     assert not outcome.used_fallback
     assert model.calls[0][3] == CASE_ID
-    assert model.calls[0][1] == project_case(case).case_content
-
-
-async def test_lidarr_planner_reconsiders_with_policy_override() -> None:
-    expected = repair_decision()
-    model = ScriptedModel([json.dumps(model_decision_value())])
-    request_id = "sha256:" + "b" * 64
-    guidance = "Accept a looser duration match for this release."
-
-    actual = await LidarrPlanner(model).reconsider(
-        repair_case(), expected, request_id, guidance, None
-    )
-
-    assert actual == expected
-    system_instruction, case_content, _, _, _ = model.calls[0]
-    assert (
-        system_instruction
-        == LIDARR_SYSTEM_INSTRUCTION + "\n\n" + RECONSIDERATION_INSTRUCTION.strip()
-    )
-    context = json.loads(case_content.split("\n\n", 1)[1])
-    assert context["reconsideration"]["request_id"] == request_id
-    assert context["reconsideration"]["operator_guidance"] == {
-        "authority": "policy_override",
-        "media_evidence": False,
-        "text": guidance,
-    }
-    assert context["reconsideration"]["prior_decision"] == json.loads(encode_decision(expected))
 
 
 async def test_lidarr_planner_returns_partial_mapping() -> None:
@@ -413,71 +380,28 @@ def test_lidarr_object_validation_explains_missing_and_unknown_action() -> None:
 
 
 class NeverRadarrPlanner:
-    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
-        del repair_case
-        raise AssertionError("wrong endpoint")
-
-    async def reconsider(
-        self,
-        repair_case: RepairCaseV3,
-        prior_decision: RepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
+    async def plan(
+        self, repair_case: RepairCaseV3, context: PlanningContext | None = None
     ) -> RepairDecisionV3:
-        del repair_case, prior_decision, request_id, guidance, policy_overrides
         raise AssertionError("wrong endpoint")
 
 
 class StaticLidarrPlanner:
     def __init__(self) -> None:
-        self.reconsiderations: list[
-            tuple[LidarrRepairCaseV3, LidarrRepairDecisionV3, str, str, PolicyOverrides | None]
-        ] = []
+        self.contexts: list[PlanningContext | None] = []
 
-    async def plan(self, repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
-        assert repair_case.case_id.root == CASE_ID
-        return repair_decision()
-
-    async def reconsider(
-        self,
-        repair_case: LidarrRepairCaseV3,
-        prior_decision: LidarrRepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
+    async def plan(
+        self, repair_case: LidarrRepairCaseV3, context: PlanningContext | None = None
     ) -> LidarrRepairDecisionV3:
-        self.reconsiderations.append(
-            (repair_case, prior_decision, request_id, guidance, policy_overrides)
-        )
+        assert repair_case.case_id.root == CASE_ID
+        self.contexts.append(context)
         return repair_decision()
 
 
-async def test_lidarr_endpoint_uses_shared_http_boundary() -> None:
-    endpoint = ContractEndpoint(
-        planner=StaticLidarrPlanner(),
-        decode_case=decode_case,
-        encode_decision=encode_decision,
-    )
-    app = create_app(
-        NeverRadarrPlanner(),
-        additional_endpoints={"/lidarr/v3/repair-plans": endpoint},
-    )
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
-        response = await client.post(
-            "/lidarr/v3/repair-plans",
-            content=encode_case(repair_case()),
-            headers={"Content-Type": "application/json"},
-        )
-
-    assert response.status_code == 200
-    assert decode_decision(response.content) == repair_decision()
-
-
-async def test_lidarr_reconsideration_uses_shared_http_boundary() -> None:
+@pytest.mark.parametrize("include_prior", [False, True])
+async def test_lidarr_planning_with_guidance(include_prior: bool) -> None:
     planner = StaticLidarrPlanner()
-    endpoint = ReconsiderationEndpoint(
+    endpoint = ContractEndpoint(
         planner=planner,
         decode_case=decode_case,
         decode_decision=decode_decision,
@@ -487,30 +411,25 @@ async def test_lidarr_reconsideration_uses_shared_http_boundary() -> None:
     )
     app = create_app(
         NeverRadarrPlanner(),
-        additional_endpoints={"/lidarr/v3/reconsiderations": endpoint},
+        additional_endpoints={"/lidarr/plan": endpoint},
     )
-    transport = httpx.ASGITransport(app=app)
-    request_id = "sha256:" + "b" * 64
+    guidance = "Check the disc and absolute track numbering."
     payload = {
         "repair_case": case_value(),
-        "prior_decision": decision_value(),
-        "operator_guidance": {
-            "request_id": request_id,
-            "text": "Check the disc and absolute track numbering.",
-        },
+        "operator_guidance": guidance,
     }
+    if include_prior:
+        payload["prior_decision"] = decision_value()
 
+    transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
-        response = await client.post("/lidarr/v3/reconsiderations", json=payload)
+        response = await client.post("/lidarr/plan", json=payload)
 
     assert response.status_code == 200
     assert decode_decision(response.content) == repair_decision()
-    assert planner.reconsiderations[0][1:] == (
-        repair_decision(),
-        request_id,
-        "Check the disc and absolute track numbering.",
-        None,
-    )
+    context = planner.contexts[0]
+    assert context is not None
+    assert guidance in context.user_content
 
 
 def write_lidarr_case(directory: Path, value: dict[str, object] | None = None) -> Path:

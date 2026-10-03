@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
 
@@ -24,7 +25,7 @@ func TestClientPlansLidarrCaseThroughSharedTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 	socketPath := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/lidarr/v3/repair-plans" {
+		if request.URL.Path != "/lidarr/plan" {
 			http.NotFound(writer, request)
 			return
 		}
@@ -32,7 +33,7 @@ func TestClientPlansLidarrCaseThroughSharedTransport(t *testing.T) {
 	}))
 	client := testClient(t, socketPath, time.Second)
 
-	actual, err := client.PlanLidarr(context.Background(), repairCase)
+	actual, err := client.PlanLidarr(context.Background(), repairCase, planning.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}

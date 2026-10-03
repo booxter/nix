@@ -92,27 +92,11 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 		return repair.Decision{}, err
 	}
 
-	var decision lidarrcontracts.Decision
-	if len(job.Plan) != 0 && job.Guidance != "" {
-		prior, err := lidarrcontracts.DecodeDecision(job.Plan)
-		if err != nil {
-			return repair.Decision{}, err
-		}
-		guidance, err := repair.Guidance(job, repairCase.CaseID)
-		if err != nil {
-			return repair.Decision{}, err
-		}
-
-		decision, err = adapter.Planner.ReconsiderLidarr(ctx, repairCase, prior, guidance)
-		if err != nil {
-			return repair.Decision{}, err
-		}
-	} else {
-		decision, err = adapter.Planner.PlanLidarr(ctx, repairCase)
-		if err != nil {
-			return repair.Decision{}, err
-		}
+	decision, err := adapter.Planner.PlanLidarr(ctx, repairCase, repair.Guidance(job))
+	if err != nil {
+		return repair.Decision{}, err
 	}
+
 	if err := lidarrrepair.ValidateDecision(repairCase, decision); err != nil {
 		return repair.Decision{}, err
 	}

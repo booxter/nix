@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .api import PolicyOverrides
 from .case_models import RepairCaseV3
 from .contracts import decision_schema, decode_case, decode_decision, encode_case, encode_decision
 from .decision_models import (
@@ -17,7 +16,6 @@ from .planning_core import DecisionModelError as DecisionModelError
 from .planning_core import PlanningOutcome as PlanningOutcome
 from .prompt import SYSTEM_INSTRUCTION
 from .radarr_projection import project_case
-from .reconsideration_context import build_reconsideration_context
 from .structured_model import StructuredDecisionModel
 from .structured_planning import StructuredDecisionGenerator
 
@@ -65,25 +63,4 @@ class Planner(ContractPlanner[RepairCaseV3, RepairDecisionV3]):
             validate_decision=validate_decision_for_case,
             fallback=_fallback,
             case_id=lambda repair_case: repair_case.case_id.root,
-        )
-
-    async def reconsider(
-        self,
-        repair_case: RepairCaseV3,
-        prior_decision: RepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
-    ) -> RepairDecisionV3:
-        validated_prior = _roundtrip_decision(prior_decision)
-        if validated_prior.root.case_id.root != repair_case.case_id.root:
-            raise ValueError("prior decision does not match the repair case")
-        return await self.plan(
-            repair_case,
-            build_reconsideration_context(
-                request_id,
-                guidance,
-                policy_overrides,
-                encode_decision(validated_prior),
-            ),
         )

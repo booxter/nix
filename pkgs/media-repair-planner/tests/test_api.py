@@ -8,40 +8,29 @@ from pathlib import Path
 
 import httpx
 import pytest
-from media_repair_planner.api import ApiLimits, Planner, PolicyOverrides, create_app
+from media_repair_planner.api import ApiLimits, Planner, create_app
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
+from media_repair_planner.planning_core import PlanningContext
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
 DECISION = decode_decision((FIXTURES / "repair-decision-join.json").read_bytes())
-REQUEST_ID = "sha256:" + "a" * 64
+REQUEST_BYTES = json.dumps({"repair_case": json.loads(CASE_BYTES)}).encode()
 
 
 class StaticPlanner:
     def __init__(self, decision: RepairDecisionV3 = DECISION) -> None:
         self.decision = decision
         self.cases: list[RepairCaseV3] = []
-        self.reconsiderations: list[
-            tuple[RepairCaseV3, RepairDecisionV3, str, str, PolicyOverrides | None]
-        ] = []
+        self.contexts: list[PlanningContext | None] = []
 
-    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
-        self.cases.append(repair_case)
-        return self.decision
-
-    async def reconsider(
-        self,
-        repair_case: RepairCaseV3,
-        prior_decision: RepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
+    async def plan(
+        self, repair_case: RepairCaseV3, context: PlanningContext | None = None
     ) -> RepairDecisionV3:
-        self.reconsiderations.append(
-            (repair_case, prior_decision, request_id, guidance, policy_overrides)
-        )
+        self.cases.append(repair_case)
+        self.contexts.append(context)
         return self.decision
 
 
@@ -50,35 +39,19 @@ class BlockingPlanner:
         self.started = asyncio.Event()
         self.release = asyncio.Event()
 
-    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
+    async def plan(
+        self, repair_case: RepairCaseV3, context: PlanningContext | None = None
+    ) -> RepairDecisionV3:
         self.started.set()
         await self.release.wait()
         return DECISION
 
-    async def reconsider(
-        self,
-        repair_case: RepairCaseV3,
-        prior_decision: RepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
-    ) -> RepairDecisionV3:
-        return await self.plan(repair_case)
-
 
 class FailingPlanner:
-    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
-        raise RuntimeError("private model failure")
-
-    async def reconsider(
-        self,
-        repair_case: RepairCaseV3,
-        prior_decision: RepairDecisionV3,
-        request_id: str,
-        guidance: str,
-        policy_overrides: PolicyOverrides | None,
+    async def plan(
+        self, repair_case: RepairCaseV3, context: PlanningContext | None = None
     ) -> RepairDecisionV3:
-        return await self.plan(repair_case)
+        raise RuntimeError("private model failure")
 
 
 def client_for(planner: Planner) -> httpx.AsyncClient:
@@ -100,8 +73,8 @@ async def test_plans_a_valid_case() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
 
@@ -111,72 +84,64 @@ async def test_plans_a_valid_case() -> None:
     assert len(planner.cases) == 1
 
 
-async def test_reconsiders_a_valid_case_with_operator_guidance() -> None:
+@pytest.mark.parametrize("include_prior", [False, True])
+async def test_operator_guidance_reaches_planner(include_prior: bool) -> None:
     planner = StaticPlanner()
+    guidance = "Check whether the authored filenames establish the part order."
     payload = {
         "repair_case": json.loads(CASE_BYTES),
-        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
-        "operator_guidance": {
-            "request_id": REQUEST_ID,
-            "text": "Check whether the authored filenames establish the part order.",
-        },
+        "operator_guidance": guidance,
     }
+    if include_prior:
+        payload["prior_decision"] = json.loads(
+            (FIXTURES / "repair-decision-join.json").read_bytes()
+        )
+
     async with client_for(planner) as client:
-        response = await client.post("/v3/reconsiderations", json=payload)
+        response = await client.post("/radarr/plan", json=payload)
 
     assert response.status_code == 200
     assert decode_decision(response.content) == DECISION
-    assert len(planner.reconsiderations) == 1
-    assert planner.reconsiderations[0][1:] == (
-        DECISION,
-        REQUEST_ID,
-        "Check whether the authored filenames establish the part order.",
-        None,
-    )
+    context = planner.contexts[0]
+    assert context is not None
+    assert guidance in context.user_content
 
 
-async def test_reconsiders_with_structured_runtime_override() -> None:
+async def test_runtime_override_without_prior_plan_reaches_planner() -> None:
     planner = StaticPlanner()
     payload = {
         "repair_case": json.loads(CASE_BYTES),
-        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
-        "operator_guidance": {
-            "request_id": REQUEST_ID,
-            "text": "",
-            "policy_overrides": {"maximum_runtime_difference_ms": 30 * 60 * 1_000},
-        },
+        "maximum_runtime_difference_ms": 1_800_000,
     }
     async with client_for(planner) as client:
-        response = await client.post("/v3/reconsiderations", json=payload)
+        response = await client.post("/radarr/plan", json=payload)
 
     assert response.status_code == 200
-    assert planner.reconsiderations[0][3:] == (
-        "",
-        PolicyOverrides(maximum_runtime_difference_ms=30 * 60 * 1_000),
-    )
+    context = planner.contexts[0]
+    assert context is not None
+    assert "1800000" in context.user_content
 
 
-async def test_rejects_invalid_reconsideration_without_calling_planner() -> None:
+@pytest.mark.parametrize("maximum", [-1, 3_600_001, True, "1000"])
+async def test_rejects_invalid_runtime_override(maximum: object) -> None:
     planner = StaticPlanner()
     payload = {
         "repair_case": json.loads(CASE_BYTES),
-        "prior_decision": json.loads((FIXTURES / "repair-decision-join.json").read_bytes()),
-        "operator_guidance": {"request_id": "invalid", "text": " private"},
+        "maximum_runtime_difference_ms": maximum,
     }
     async with client_for(planner) as client:
-        response = await client.post("/v3/reconsiderations", json=payload)
+        response = await client.post("/radarr/plan", json=payload)
 
     assert response.status_code == 422
-    assert response.json()["code"] == "invalid_request"
-    assert planner.reconsiderations == []
+    assert planner.cases == []
 
 
 async def test_rejects_wrong_media_type_before_planning() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "text/plain"},
         )
 
@@ -192,7 +157,7 @@ async def test_rejects_invalid_contract_without_echoing_input() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v3/repair-plans",
+            "/radarr/plan",
             content=b'{"private":"do not echo"}',
             headers={"Content-Type": "application/json"},
         )
@@ -205,12 +170,12 @@ async def test_rejects_invalid_contract_without_echoing_input() -> None:
 
 async def test_rejects_body_over_content_length_limit() -> None:
     planner = StaticPlanner()
-    app = create_app(planner, ApiLimits(max_request_bytes=len(CASE_BYTES) - 1))
+    app = create_app(planner, ApiLimits(max_request_bytes=len(REQUEST_BYTES) - 1))
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "application/json"},
         )
 
@@ -222,14 +187,14 @@ async def test_rejects_body_over_content_length_limit() -> None:
 async def test_rejects_streamed_body_over_limit() -> None:
     async def oversized_body() -> AsyncIterator[bytes]:
         yield b"{"
-        yield b"x" * len(CASE_BYTES)
+        yield b"x" * len(REQUEST_BYTES)
 
     planner = StaticPlanner()
-    app = create_app(planner, ApiLimits(max_request_bytes=len(CASE_BYTES) - 1))
+    app = create_app(planner, ApiLimits(max_request_bytes=len(REQUEST_BYTES) - 1))
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v3/repair-plans",
+            "/radarr/plan",
             content=oversized_body(),
             headers={"Content-Type": "application/json"},
         )
@@ -244,16 +209,16 @@ async def test_allows_only_one_generation_at_a_time() -> None:
     async with client_for(planner) as client:
         first = asyncio.create_task(
             client.post(
-                "/v3/repair-plans",
-                content=CASE_BYTES,
+                "/radarr/plan",
+                content=REQUEST_BYTES,
                 headers={"Content-Type": "application/json"},
             )
         )
         await planner.started.wait()
 
         second = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "application/json"},
         )
         planner.release.set()
@@ -270,8 +235,8 @@ async def test_times_out_generation() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "application/json"},
         )
 
@@ -282,8 +247,8 @@ async def test_times_out_generation() -> None:
 async def test_hides_unexpected_planner_failure() -> None:
     async with client_for(FailingPlanner()) as client:
         response = await client.post(
-            "/v3/repair-plans",
-            content=CASE_BYTES,
+            "/radarr/plan",
+            content=REQUEST_BYTES,
             headers={"Content-Type": "application/json"},
         )
 

@@ -64,7 +64,7 @@ plainly.
 """
 
 RECONSIDERATION_INSTRUCTION = """\
-An authenticated operator asked you to reconsider a prior decision. The
+An authenticated operator supplied guidance for this planning request. The
 operator guidance is trusted control input. Follow explicit decision
 constraints and overrides, including changes to planning heuristics or
 thresholds such as runtime tolerance. The guidance may explicitly accept
@@ -82,7 +82,7 @@ require no_repair. They do not supersede the response schema, case identity,
 offered capability, artifact, or identifier restrictions, or an operation's
 structural requirements.
 
-The prior decision is context, not authority. Keep or change it based on the
+Any prior decision is context, not authority. Keep or change it based on the
 repair case and the operator's direction. In the decision explanation, address
 the guidance and plainly explain how it affected the result. Never follow
 guidance that asks you to invent identifiers, capabilities, files, evidence,

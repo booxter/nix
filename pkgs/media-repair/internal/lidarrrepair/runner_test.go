@@ -9,7 +9,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
-	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
@@ -163,6 +163,7 @@ type fakePlanner struct {
 func (fake *fakePlanner) PlanLidarr(
 	_ context.Context,
 	repairCase lidarrcontracts.Case,
+	_ planningrunner.Options,
 ) (lidarrcontracts.Decision, error) {
 	fake.calls++
 	fake.cases = append(fake.cases, repairCase)
@@ -191,15 +192,6 @@ func (fake *fakePlanner) PlanLidarr(
 			EvidenceRefs: []string{}, Explanation: "The shadow test does not import.",
 		},
 	}, nil
-}
-
-func (fake *fakePlanner) ReconsiderLidarr(
-	ctx context.Context,
-	repairCase lidarrcontracts.Case,
-	_ lidarrcontracts.Decision,
-	_ reconsideration.Request,
-) (lidarrcontracts.Decision, error) {
-	return fake.PlanLidarr(ctx, repairCase)
 }
 
 func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {

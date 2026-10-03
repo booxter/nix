@@ -7,14 +7,13 @@ import (
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
-	"github.com/booxter/nix-config/media-repair/internal/reconsideration"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 )
 
 type Planner interface {
-	Plan(context.Context, contracts.RepairCaseV3) (contracts.RepairDecisionV3, error)
-	Reconsider(context.Context, contracts.RepairCaseV3, contracts.RepairDecisionV3, reconsideration.Request) (contracts.RepairDecisionV3, error)
+	Plan(context.Context, contracts.RepairCaseV3, planning.Options) (contracts.RepairDecisionV3, error)
 }
 
 func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Observation, error) {
@@ -58,22 +57,7 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 		return repair.Decision{}, err
 	}
 
-	var decision contracts.RepairDecisionV3
-	var err error
-	if len(job.Plan) != 0 && (job.Guidance != "" || job.RuntimeToleranceMS != 0) {
-		prior, decodeErr := contracts.DecodeDecision(job.Plan)
-		if decodeErr != nil {
-			return repair.Decision{}, decodeErr
-		}
-		guidance, guidanceErr := repair.Guidance(job, evidence.Case.CaseID)
-		if guidanceErr != nil {
-			return repair.Decision{}, guidanceErr
-		}
-
-		decision, err = adapter.Planner.Reconsider(ctx, evidence.Case, prior, guidance)
-	} else {
-		decision, err = adapter.Planner.Plan(ctx, evidence.Case)
-	}
+	decision, err := adapter.Planner.Plan(ctx, evidence.Case, repair.Guidance(job))
 	if err != nil {
 		return repair.Decision{}, err
 	}
