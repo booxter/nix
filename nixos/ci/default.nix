@@ -37,7 +37,6 @@ in
     noDefaultLabels = true;
     replace = true;
     extraPackages = with pkgs; [
-      attic-client
       findutils
       gawk
       gnumake

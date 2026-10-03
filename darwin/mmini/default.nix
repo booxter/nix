@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
@@ -35,5 +40,34 @@ in
       backend = "yubikey";
       path = "/Users/${config.host.username}/.config/sops/age/yubi-nix.txt";
     };
+  };
+
+  services.github-runners.mmini-ci = {
+    enable = true;
+    url = "https://github.com/booxter/nix";
+    tokenFile = config.sops.secrets."github/actions_runner/token".path;
+    name = "mmini-ci";
+    ephemeral = true;
+    extraLabels = [ "nix-ci-darwin" ];
+    noDefaultLabels = true;
+    replace = true;
+    extraPackages = with pkgs; [
+      findutils
+      gawk
+      gnumake
+      gnugrep
+      jq
+    ];
+  };
+
+  host.launchd.logging.locations.github-runner = {
+    directory = "/var/log/github-runners/mmini-ci";
+    collect = true;
+    scope = "system";
+  };
+
+  sops.secrets."github/actions_runner/token" = {
+    mode = "0400";
+    owner = "_github-runner";
   };
 }

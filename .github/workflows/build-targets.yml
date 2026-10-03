@@ -22,7 +22,7 @@ permissions:
 jobs:
   format:
     name: Format check
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     outputs:
       matrix: ${{ steps.build_matrix.outputs.matrix }}
     steps:
@@ -30,9 +30,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Format
         run: nix fmt .
@@ -89,13 +86,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Free disk space
-        if: runner.environment == 'github-hosted' && matrix.system == 'x86_64-linux'
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
       - name: Build Codex
         run: nix build ".#packages.${{ matrix.system }}.codex" --no-link --print-build-logs
 
@@ -110,7 +100,7 @@ jobs:
         include:
           - os: nix-ci
             system: x86_64-linux
-          - os: macos-26
+          - os: nix-ci-darwin
             system: aarch64-darwin
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -120,13 +110,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Free disk space
-        if: runner.environment == 'github-hosted' && matrix.system == 'x86_64-linux'
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
       - name: Run regular checks
         run: make check
 
@@ -135,7 +118,7 @@ jobs:
     if: ${{ always() }}
     needs:
       - check
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     steps:
       - name: Check regular check results
         run: |
@@ -165,13 +148,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
           fetch-depth: 0
-
-      - name: Free disk space
-        if: runner.environment == 'github-hosted'
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
@@ -374,7 +350,7 @@ jobs:
         needs.format.result == 'success' &&
         needs.build.result == 'success'
       }}
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     continue-on-error: true
     permissions:
       actions: read
@@ -828,7 +804,7 @@ jobs:
       - check-success
       - build
       - post-config-diffs
-    runs-on: ubuntu-slim
+    runs-on: nix-ci
     steps:
       - name: Check job results
         run: |

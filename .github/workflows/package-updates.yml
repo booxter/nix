@@ -25,7 +25,7 @@ permissions:
 jobs:
   plan:
     name: Plan update targets
-    runs-on: ubuntu-latest
+    runs-on: nix-ci
     outputs:
       package-targets: ${{ steps.plan.outputs.package-targets }}
       has-package-targets: ${{ steps.plan.outputs.has-package-targets }}
@@ -34,9 +34,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Plan targets
         id: plan
@@ -71,7 +68,7 @@ jobs:
                   | {
                       target: .attr,
                       branch: (.attr | branch_slug),
-                      os: (if .system == "aarch64-darwin" then "macos-26" else "ubuntu-latest" end)
+                      os: (if .system == "aarch64-darwin" then "nix-ci-darwin" else "nix-ci" end)
                     }
                 ]
               ' apps/package-updates/targets.json
@@ -120,9 +117,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
       - name: Update package sources
         id: update_packages
         shell: bash
@@ -158,7 +152,7 @@ jobs:
     needs:
       - plan
     if: needs.plan.outputs.has-oci-targets == 'true'
-    runs-on: ubuntu-latest
+    runs-on: nix-ci
     strategy:
       fail-fast: false
       matrix:
@@ -166,9 +160,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
 
       - name: Update OCI image tags
         id: update_oci_images
