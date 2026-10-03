@@ -116,6 +116,7 @@ in
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateNetwork = true;
+        PrivateTmp = true;
         ReadWritePaths = [ "/var/lib/repairr" ];
       };
     };
