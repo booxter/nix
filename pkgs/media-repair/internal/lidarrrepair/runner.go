@@ -470,22 +470,11 @@ func (runner *Runner) recoverQueueIdentity(
 	if !eligibleQueueWithoutIdentity(queue) {
 		return queue, nil
 	}
-	identity, found, err := runner.lidarr.RecoverAlbumIdentity(ctx, queue.DownloadID)
+	recovered, err := lidarr.RecoverQueueIdentity(ctx, runner.lidarr, queue)
 	if err != nil {
 		return queue, fmt.Errorf("recover Lidarr album identity: %w", err)
 	}
-	if !found {
-		return queue, nil
-	}
-	if queue.AlbumID != nil && *queue.AlbumID != identity.AlbumID {
-		return queue, fmt.Errorf("recovered Lidarr album identity conflicts with queue")
-	}
-	if queue.ArtistID != nil && *queue.ArtistID != identity.ArtistID {
-		return queue, fmt.Errorf("recovered Lidarr artist identity conflicts with queue")
-	}
-	queue.AlbumID = &identity.AlbumID
-	queue.ArtistID = &identity.ArtistID
-	return queue, nil
+	return recovered, nil
 }
 
 func (runner *Runner) buildArchiveEvidence(

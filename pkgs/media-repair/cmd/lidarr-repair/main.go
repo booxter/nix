@@ -532,15 +532,7 @@ func processLidarrQueueActions(
 	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
 		Service: "Lidarr", StateDirectory: configuration.StateDir,
 		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
-			records, readErr := client.ReadQueue(ctx)
-			if readErr != nil {
-				return nil, readErr
-			}
-			entries := make([]queuefinalize.Entry, len(records))
-			for index, record := range records {
-				entries[index] = lidarrsource.FinalizationEntry(record)
-			}
-			return entries, nil
+			return lidarrsource.ReadFinalizationEntries(ctx, client)
 		},
 		Remove: client.FinalizeQueue, Clock: wallClock{},
 	})
@@ -574,15 +566,7 @@ func finalizeLidarrQueue(
 	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
 		Service: "Lidarr", StateDirectory: configuration.StateDir,
 		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
-			records, err := client.ReadQueue(ctx)
-			if err != nil {
-				return nil, err
-			}
-			entries := make([]queuefinalize.Entry, len(records))
-			for index, record := range records {
-				entries[index] = lidarrsource.FinalizationEntry(record)
-			}
-			return entries, nil
+			return lidarrsource.ReadFinalizationEntries(ctx, client)
 		},
 		Remove: client.FinalizeQueue,
 		Clock:  wallClock{},

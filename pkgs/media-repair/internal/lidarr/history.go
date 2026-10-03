@@ -36,6 +36,36 @@ type AlbumIdentity struct {
 	ArtistID int64
 }
 
+type AlbumIdentityReader interface {
+	RecoverAlbumIdentity(context.Context, string) (AlbumIdentity, bool, error)
+}
+
+func RecoverQueueIdentity(
+	ctx context.Context,
+	reader AlbumIdentityReader,
+	queue QueueRecord,
+) (QueueRecord, error) {
+	if queue.AlbumID != nil && queue.ArtistID != nil {
+		return queue, nil
+	}
+	identity, found, err := reader.RecoverAlbumIdentity(ctx, queue.DownloadID)
+	if err != nil {
+		return queue, err
+	}
+	if !found {
+		return queue, nil
+	}
+	if queue.AlbumID != nil && *queue.AlbumID != identity.AlbumID {
+		return queue, fmt.Errorf("recovered Lidarr album identity conflicts with queue")
+	}
+	if queue.ArtistID != nil && *queue.ArtistID != identity.ArtistID {
+		return queue, fmt.Errorf("recovered Lidarr artist identity conflicts with queue")
+	}
+	queue.AlbumID = &identity.AlbumID
+	queue.ArtistID = &identity.ArtistID
+	return queue, nil
+}
+
 func (client *Client) RecoverAlbumIdentity(
 	ctx context.Context,
 	downloadID string,
