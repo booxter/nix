@@ -47,16 +47,12 @@ in
         "cmd/repairr-migrate"
       ];
 
-      RADARR_REPAIR_TEST_FFMPEG = lib.getExe' ffmpeg-full "ffmpeg";
-      RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg-full "ffprobe";
-      RADARR_REPAIR_TEST_MKVMERGE = lib.getExe' mkvtoolnixCli "mkvmerge";
-      RADARR_REPAIR_TEST_LSDVD = lib.getExe' lsdvd "lsdvd";
-      RADARR_REPAIR_TEST_LSAR = lib.getExe' unar "lsar";
-      RADARR_REPAIR_TEST_UNAR = lib.getExe unar;
-      RADARR_REPAIR_TEST_CUECONVERT = lib.getExe' cuetools "cueconvert";
-      RADARR_REPAIR_TEST_CUEBREAKPOINTS = lib.getExe' cuetools "cuebreakpoints";
-      RADARR_REPAIR_TEST_WAVPACK = lib.getExe' wavpack "wavpack";
-      RADARR_REPAIR_TEST_WVUNPACK = lib.getExe' wavpack "wvunpack";
+      nativeCheckInputs = [
+        ffmpeg-full
+        cuetools
+        mkvtoolnixCli
+        wavpack
+      ];
 
       preCheck = ''
         unformatted="$(gofmt -l cmd contracts internal worker)"

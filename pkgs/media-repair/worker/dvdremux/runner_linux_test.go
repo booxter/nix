@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -25,7 +26,7 @@ func TestRunnerRetainsBoundedDiagnosticsWithoutMediaPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = output.Close() })
-	runner, err := NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"), 10*time.Second)
+	runner, err := NewRunner(toolPath(t, "ffmpeg"), 10*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,11 +42,11 @@ func TestRunnerRetainsBoundedDiagnosticsWithoutMediaPath(t *testing.T) {
 	}
 }
 
-func requiredEnvironment(t *testing.T, name string) string {
+func toolPath(t *testing.T, name string) string {
 	t.Helper()
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("%s is not set", name)
+	value, err := exec.LookPath(name)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return value
 }

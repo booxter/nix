@@ -64,10 +64,13 @@ func TestChangedSourceDoesNotPublish(t *testing.T) {
 
 func joinFixture(t *testing.T) (Transformer, mediaoperation.Transform) {
 	t.Helper()
-	ffmpeg := os.Getenv("RADARR_REPAIR_TEST_FFMPEG")
-	ffprobePath := os.Getenv("RADARR_REPAIR_TEST_FFPROBE")
-	if ffmpeg == "" || ffprobePath == "" {
-		t.Fatal("Nix test environment must provide ffmpeg and ffprobe")
+	ffmpeg, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ffprobePath, err := exec.LookPath("ffprobe")
+	if err != nil {
+		t.Fatal(err)
 	}
 	root := t.TempDir()
 	roots := map[string]string{"downloads": root}
