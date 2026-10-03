@@ -11,6 +11,11 @@ from .errors import ToolError
 from .model import JsonValue, require_json_value
 
 
+class _IndentedSafeDumper(yaml.SafeDumper):
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
+        super().increase_indent(flow, False)
+
+
 def _string_list(value: JsonValue, *, description: str, allow_empty: bool) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise ToolError(f".sops.yaml must contain a top-level '{description}' sequence.")
@@ -129,7 +134,11 @@ class SopsPolicy:
         return True
 
     def write(self, path: Path) -> None:
-        content = yaml.safe_dump(self.document, sort_keys=False)
+        content = yaml.dump(
+            self.document,
+            Dumper=_IndentedSafeDumper,
+            sort_keys=False,
+        )
         write_text_atomic(path, content)
 
 
