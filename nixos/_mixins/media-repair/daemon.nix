@@ -134,7 +134,6 @@ in
         ProtectClock = true;
         ProtectControlGroups = true;
         ProtectHome = true;
-        ProtectHostname = true;
         ProtectKernelModules = true;
         ProtectProc = "invisible";
         ProtectSystem = "strict";
