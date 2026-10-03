@@ -188,7 +188,7 @@ def test_remote_runtime_key_builds_archived_source_on_target() -> None:
         "flake",
         "archive",
         "--json",
-        f"path:{repo_root}",
+        str(repo_root),
     ]
     assert runner.calls[1][0] == [
         "nix",
@@ -202,6 +202,6 @@ def test_remote_runtime_key_builds_archived_source_on_target() -> None:
         "-tt",
         "operator@newhost",
         "sudo -H nix shell -L --show-trace "
-        "'path:/nix/store/test-repository-source#sops-tools' --command "
+        "'/nix/store/test-repository-source#sops-bootstrap' --command "
         "sops-runtime-key --age-keygen age-keygen /var/lib/sops-nix/key.txt",
     ]

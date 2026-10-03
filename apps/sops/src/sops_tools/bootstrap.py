@@ -78,7 +78,7 @@ class CommandRuntimeKeyProvider:
                 "shell",
                 "-L",
                 "--show-trace",
-                f"path:{source}#sops-tools",
+                f"{source}#sops-bootstrap",
                 "--command",
                 "sops-runtime-key",
                 "--age-keygen",
