@@ -85,13 +85,6 @@ func TestAssessStreamCompatibilityRejectsKnownDifferences(t *testing.T) {
 			},
 			field: StreamFieldAverageFrameRate,
 		},
-		{
-			name: "time base",
-			mutate: func(stream *ProbeStream) {
-				stream.TimeBase = &Rational{Numerator: 1, Denominator: 12_800}
-			},
-			field: StreamFieldTimeBase,
-		},
 	}
 
 	for _, test := range tests {
@@ -113,6 +106,24 @@ func TestAssessStreamCompatibilityRejectsKnownDifferences(t *testing.T) {
 				test.field,
 			)
 		})
+	}
+}
+
+func TestAssessStreamCompatibilityAcceptsDifferentTimeBases(t *testing.T) {
+	t.Parallel()
+
+	first := videoStream(0)
+	first.AverageRate = &Rational{Numerator: 25, Denominator: 1}
+	first.TimeBase = &Rational{Numerator: 1, Denominator: 12_800}
+	second := videoStream(0)
+	second.AverageRate = &Rational{Numerator: 25, Denominator: 1}
+	second.TimeBase = &Rational{Numerator: 1, Denominator: 25}
+
+	got := AssessStreamCompatibility(
+		[]ProbeEvidence{{Streams: []ProbeStream{first}}, {Streams: []ProbeStream{second}}},
+	)
+	if got.Compatibility != StreamsCompatible || got.Issue != nil || got.Layout == nil {
+		t.Fatalf("assessment = %#v", got)
 	}
 }
 
@@ -278,10 +289,16 @@ func TestStreamLayoutMatchesMuxedOutput(t *testing.T) {
 	if !assessment.Layout.MatchesMuxedOutput([]ProbeStream{audioStream(1), videoStream(0)}) {
 		t.Fatal("layout did not match streams returned out of array order")
 	}
+	assessment.Layout.Streams[0].Video.AverageRate = Rational{Numerator: 25, Denominator: 1}
 	muxed := []ProbeStream{videoStream(0), audioStream(1)}
 	muxed[0].TimeBase = pointerTo(Rational{Numerator: 1, Denominator: 12_800})
+	muxed[0].AverageRate = pointerTo(Rational{Numerator: 965_825, Denominator: 38_634})
 	if !assessment.Layout.MatchesMuxedOutput(muxed) {
-		t.Fatal("layout did not match a muxer-selected time base")
+		t.Fatal("layout did not match muxer-selected timing metadata")
+	}
+	muxed[0].AverageRate = pointerTo(Rational{Numerator: 24, Denominator: 1})
+	if assessment.Layout.MatchesMuxedOutput(muxed) {
+		t.Fatal("layout matched a materially changed average frame rate")
 	}
 
 	reordered := []ProbeStream{audioStream(0), videoStream(1)}

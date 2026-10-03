@@ -49,6 +49,23 @@ func TestValidateStagedJoinAcceptsMP4OutputWithMuxerTimeBase(t *testing.T) {
 	}
 }
 
+func TestValidateStagedJoinAcceptsMuxedAverageFrameRate(t *testing.T) {
+	t.Parallel()
+
+	authorized, request, response := validStage()
+	authorized.ExpectedStreamLayout.Streams[0].Video.AverageRate = controller.Rational{
+		Numerator: 25, Denominator: 1,
+	}
+	evidence := joinedEvidence()
+	evidence.Streams[0].AverageRate = value(controller.Rational{
+		Numerator: 965_825, Denominator: 38_634,
+	})
+	response.Success.Evidence = mediaevidence.FromProbe(evidence)
+	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
+		t.Fatalf("validation = %#v", validation)
+	}
+}
+
 func TestValidateStagedJoinAcceptsAVIOutput(t *testing.T) {
 	t.Parallel()
 
