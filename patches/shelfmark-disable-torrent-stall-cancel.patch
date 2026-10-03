@@ -19,15 +19,17 @@ index 1dba345..78d1e35 100644
  def set_book_priority(book_id: str, priority: int) -> bool:
      """Set priority for a queued book (lower = higher priority)."""
      return book_queue.set_priority(book_id, priority)
-@@ -980,6 +990,11 @@ def concurrent_download_loop() -> None:
-                         if task_id in stalled_tasks:
-                             continue
-                         last_active = _last_activity.get(task_id, current_time)
-+                        if _task_uses_torrent_client(task_id):
-+                            # Torrent clients can legitimately sit in stable queued/checking
-+                            # states for long periods without any progress or status-message
-+                            # changes. Do not treat that as an orchestrator-side stall.
-+                            continue
-                         if current_time - last_active > STALL_TIMEOUT:
-                             logger.warning("Download stalled for %s, cancelling", task_id)
-                             book_queue.cancel_download(task_id)
+@@ -1161,9 +1171,12 @@ def concurrent_download_loop() -> None:
+                 # Check for stalled downloads (no activity in STALL_TIMEOUT seconds)
+                 current_time = time.time()
++                # Torrent clients can legitimately sit in stable queued/checking states for
++                # long periods without progress or status-message changes. Do not treat them
++                # as orchestrator-side stalls.
+                 candidates = [
+                     task_id
+                     for _future, (task_id, _cancel_flag) in list(active_futures.items())
+-                    if task_id not in stalled_tasks
++                    if task_id not in stalled_tasks and not _task_uses_torrent_client(task_id)
+                 ]
+                 for task_id in _find_stalled_tasks(candidates, current_time):
+                     _cancel_stalled_task(task_id)

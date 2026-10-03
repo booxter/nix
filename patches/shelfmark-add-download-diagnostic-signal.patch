@@ -2,9 +2,7 @@ diff --git a/shelfmark/download/orchestrator.py b/shelfmark/download/orchestrato
 index 78d1e35..d04b656 100644
 --- a/shelfmark/download/orchestrator.py
 +++ b/shelfmark/download/orchestrator.py
-@@ -4,19 +4,23 @@ with archive extraction and custom script support.
- """
- 
+@@ -6,7 +6,10 @@ with archive extraction and custom script support.
  import os
  import random
 +import signal
@@ -15,17 +13,14 @@ index 78d1e35..d04b656 100644
  from concurrent.futures import Future, ThreadPoolExecutor
  from email.utils import parseaddr
  from pathlib import Path
- from threading import Event, Lock
- from typing import Any
- 
- from shelfmark.core.config import config
- from shelfmark.core.logger import setup_logger
- from shelfmark.core.models import DownloadTask, QueueStatus, SearchMode
- from shelfmark.core.queue import book_queue
+@@ -25,6 +28,7 @@ from shelfmark.core.utils import is_audiobook as check_audiobook
+ from shelfmark.core.utils import transform_cover_url
+ from shelfmark.download.activity import parse_activity_grace
+ from shelfmark.download.fs import run_blocking_io
 +from shelfmark.download.poll_debug import get_poll_debug_snapshot
- from shelfmark.core.request_helpers import (
-     normalize_optional_text,
-     normalize_positive_int,
+ from shelfmark.download.postprocess.pipeline import is_torrent_source, safe_cleanup_path
+ from shelfmark.download.postprocess.router import post_process_download
+ from shelfmark.release_sources import (
 @@ -66,6 +70,91 @@ _PROGRESS_BROADCAST_COMPLETE_PERCENT = 99
  _PROGRESS_BROADCAST_MIN_DELTA = 10
  
