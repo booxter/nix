@@ -77,13 +77,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: nix-ci
             system: x86_64-linux
             extra_conf: |
               extra-experimental-features = auto-allocate-uids cgroups
               auto-allocate-uids = true
             nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
-          - os: macos-26
+          - os: nix-ci
             system: aarch64-darwin
             extra_conf: ""
             nix_config: ""
@@ -99,7 +99,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Free disk space
-        if: matrix.system == 'x86_64-linux'
+        if: runner.environment == 'github-hosted' && matrix.system == 'x86_64-linux'
         uses: ./.github/actions/free-disk-space
 
       - name: Prepare Nix environment
@@ -136,7 +136,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: nix-ci
             system: x86_64-linux
             extra_conf: |
               extra-experimental-features = auto-allocate-uids cgroups
@@ -157,7 +157,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Free disk space
-        if: matrix.system == 'x86_64-linux'
+        if: runner.environment == 'github-hosted' && matrix.system == 'x86_64-linux'
         uses: ./.github/actions/free-disk-space
 
       - name: Prepare Nix environment
@@ -205,6 +205,7 @@ jobs:
           fetch-depth: 0
 
       - name: Free disk space
+        if: runner.environment == 'github-hosted'
         uses: ./.github/actions/free-disk-space
 
       - name: Prepare Nix environment

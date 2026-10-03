@@ -13,8 +13,8 @@ let
     "prx3-lab"
   ];
   runners = {
-    aarch64-darwin = "macos-26";
-    x86_64-linux = "ubuntu-latest";
+    aarch64-darwin = "nix-ci";
+    x86_64-linux = "nix-ci";
   };
   mkTarget =
     {
