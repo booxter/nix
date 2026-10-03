@@ -143,12 +143,12 @@ class StaticPasswordHasher(PasswordHasher):
 
 
 @dataclass
-class StaticRuntimeKeyProvider:
-    value: str = "age1runtime"
-    calls: list[tuple[str, str, bool]] = field(default_factory=list)
+class StaticHostRecipientProvider:
+    value: str = "age1host"
+    calls: list[str] = field(default_factory=list)
 
-    def recipient(self, host: str, user: str, *, local: bool) -> str:
-        self.calls.append((host, user, local))
+    def recipient(self, host: str) -> str:
+        self.calls.append(host)
         return self.value
 
 

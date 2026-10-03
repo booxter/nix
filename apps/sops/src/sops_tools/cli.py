@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import getpass
 import os
 import platform
 import socket
@@ -14,8 +13,8 @@ from typing import Protocol
 from .age import AgeRecipientResolver
 from .bootstrap import (
     BootstrapService,
+    CommandHostRecipientProvider,
     CommandOperatorRecipientProvider,
-    CommandRuntimeKeyProvider,
 )
 from .errors import ToolError
 from .model import KeyPath
@@ -242,18 +241,9 @@ def bootstrap_main(
     argv: Sequence[str] | None = None, *, application: Application | None = None
 ) -> int:
     def command() -> int:
-        parser = _parser("Seed or bootstrap a host SOPS runtime key and encrypted secret.")
-        parser.add_argument("--local", action="store_true")
-        parser.add_argument(
-            "--seed",
-            action="store_true",
-            help="create an operator-encrypted secret without contacting the host",
-        )
+        parser = _parser("Bootstrap host SOPS secrets from its committed SSH host key.")
         parser.add_argument("host")
-        parser.add_argument("--user", default=os.environ.get("USER", getpass.getuser()))
         args = parser.parse_args(argv)
-        if args.seed and args.local:
-            parser.error("--seed cannot be combined with --local")
         current = application or Application.discover()
         realm = current.runtime.resolve_realm(args.realm, require_identity=False)
         environment = current.runtime.command_environment(realm)
@@ -262,18 +252,10 @@ def bootstrap_main(
             current.runtime,
             SecretRepository(current.runtime.repo_root, realm),
             current.backend_factory.create(environment, current.runtime.repo_root / ".sops.yaml"),
-            CommandRuntimeKeyProvider(runner),
+            CommandHostRecipientProvider(runner, current.runtime.repo_root),
             CommandOperatorRecipientProvider(current.runtime, runner, AgeRecipientResolver(runner)),
         )
-        if args.seed:
-            result = service.seed(args.host)
-        else:
-            result = service.bootstrap(
-                args.host,
-                args.user,
-                local=args.local,
-                has_tty=sys.stdin.isatty(),
-            )
+        result = service.bootstrap(args.host)
         for message in result.messages:
             print(message)
         return 0

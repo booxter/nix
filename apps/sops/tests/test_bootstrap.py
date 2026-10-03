@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from sops_tools.bootstrap import BootstrapService, CommandRuntimeKeyProvider
+from sops_tools.bootstrap import BootstrapService, CommandHostRecipientProvider
 from sops_tools.errors import ToolError
 from sops_tools.policy import SopsPolicy
 from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
@@ -13,14 +13,14 @@ from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 from .fakes import (
     MemorySopsBackend,
     RecordingRunner,
+    StaticHostRecipientProvider,
     StaticOperatorRecipientProvider,
-    StaticRuntimeKeyProvider,
 )
 
 
 def service(
     tmp_path: Path, hosts: tuple[str, ...] = ("newhost", "secondhost")
-) -> tuple[BootstrapService, MemorySopsBackend, StaticRuntimeKeyProvider]:
+) -> tuple[BootstrapService, MemorySopsBackend, StaticHostRecipientProvider]:
     inventory = tmp_path / "realms.json"
     inventory.write_text(json.dumps(dict.fromkeys(hosts, "home")))
     runtime = RuntimeEnvironment(
@@ -37,34 +37,34 @@ def service(
         yaml.safe_dump({"bootstrap": {"token": "replace"}}, sort_keys=False)
     )
     backend = MemorySopsBackend({})
-    runtime_keys = StaticRuntimeKeyProvider()
+    host_recipients = StaticHostRecipientProvider()
     return (
         BootstrapService(
             runtime,
             repository,
             backend,
-            runtime_keys,
+            host_recipients,
             StaticOperatorRecipientProvider(),
         ),
         backend,
-        runtime_keys,
+        host_recipients,
     )
 
 
 def test_bootstrap_creates_policy_and_encrypted_template(tmp_path: Path) -> None:
-    bootstrap, backend, runtime_keys = service(tmp_path)
+    bootstrap, backend, host_recipients = service(tmp_path)
 
-    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    result = bootstrap.bootstrap("newhost")
 
     assert result.messages == (
         "Created .sops.yaml.",
         "Created encrypted secrets/home/newhost.yaml.",
     )
-    assert runtime_keys.calls == [("newhost", "operator", True)]
+    assert host_recipients.calls == ["newhost"]
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
-    assert policy.keys == ["age1runtime", "age1operator"]
+    assert policy.keys == ["age1host", "age1operator"]
     assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
-        "age1runtime",
+        "age1host",
         "age1operator",
     ]
     secret = bootstrap.repository.secret("newhost")
@@ -75,21 +75,21 @@ def test_bootstrap_appends_hosts_and_does_not_rewrite_existing_secret(
     tmp_path: Path,
 ) -> None:
     bootstrap, backend, _ = service(tmp_path)
-    bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    bootstrap.bootstrap("newhost")
     first_encryption_count = len(backend.encryptions)
 
-    repeated = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
-    bootstrap.bootstrap("secondhost", "operator", local=True, has_tty=False)
+    repeated = bootstrap.bootstrap("newhost")
+    bootstrap.bootstrap("secondhost")
 
     assert repeated.messages[-1] == "secrets/home/newhost.yaml already exists."
     assert len(backend.encryptions) == first_encryption_count + 1
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
     assert len(policy.creation_rules) == 2
-    assert policy.keys == ["age1runtime", "age1operator"]
+    assert policy.keys == ["age1host", "age1operator"]
 
 
-def test_seed_creates_merged_secret_without_requesting_runtime_key(tmp_path: Path) -> None:
-    bootstrap, backend, runtime_keys = service(tmp_path)
+def test_bootstrap_creates_merged_secret_without_contacting_host(tmp_path: Path) -> None:
+    bootstrap, backend, host_recipients = service(tmp_path)
     bootstrap.repository.host_template("newhost").parent.mkdir(parents=True)
     bootstrap.repository.host_template("newhost").write_text(
         yaml.safe_dump(
@@ -101,59 +101,63 @@ def test_seed_creates_merged_secret_without_requesting_runtime_key(tmp_path: Pat
         )
     )
 
-    result = bootstrap.seed("newhost")
+    result = bootstrap.bootstrap("newhost")
 
     assert result.messages == (
         "Created .sops.yaml.",
         "Created encrypted secrets/home/newhost.yaml.",
     )
-    assert runtime_keys.calls == []
+    assert host_recipients.calls == ["newhost"]
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
-    assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == ["age1operator"]
+    assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
+        "age1host",
+        "age1operator",
+    ]
     assert backend.documents[bootstrap.repository.secret("newhost")] == {
         "bootstrap": {"token": "replace", "host": "replace"},
         "github": {"token": "replace"},
     }
 
 
-def test_bootstrap_adds_runtime_recipient_to_existing_seed(tmp_path: Path) -> None:
+def test_bootstrap_adds_host_recipient_to_existing_secret(tmp_path: Path) -> None:
     bootstrap, backend, _ = service(tmp_path)
-    bootstrap.seed("newhost")
+    policy = SopsPolicy.create()
+    policy.ensure_host_rule("home", "newhost", ["age1operator"])
+    policy.write(tmp_path / ".sops.yaml")
+    secret = bootstrap.repository.secret("newhost")
+    secret.write_text("encrypted\n")
+    backend.documents[secret] = {"bootstrap": {"token": "secret"}}
 
-    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    result = bootstrap.bootstrap("newhost")
 
     assert result.messages[-1] == ("Re-encrypted secrets/home/newhost.yaml for updated recipients.")
-    assert len(backend.encryptions) == 2
+    assert len(backend.encryptions) == 1
     policy = SopsPolicy.load(tmp_path / ".sops.yaml")
     assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
         "age1operator",
-        "age1runtime",
+        "age1host",
     ]
 
 
 def test_failed_reencryption_restores_policy_for_retry(tmp_path: Path) -> None:
     bootstrap, backend, _ = service(tmp_path)
-    bootstrap.seed("newhost")
+    policy = SopsPolicy.create()
+    policy.ensure_host_rule("home", "newhost", ["age1operator"])
+    policy.write(tmp_path / ".sops.yaml")
+    secret = bootstrap.repository.secret("newhost")
+    secret.write_text("encrypted\n")
+    backend.documents[secret] = {"bootstrap": {"token": "secret"}}
     policy_path = tmp_path / ".sops.yaml"
     seeded_policy = policy_path.read_text()
     backend.fail_encryption = True
 
     with pytest.raises(ToolError, match="Unable to encrypt"):
-        bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+        bootstrap.bootstrap("newhost")
 
     assert policy_path.read_text() == seeded_policy
     backend.fail_encryption = False
-    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    result = bootstrap.bootstrap("newhost")
     assert result.messages[-1].startswith("Re-encrypted ")
-
-
-def test_remote_bootstrap_requires_tty_before_key_provider(tmp_path: Path) -> None:
-    bootstrap, _, runtime_keys = service(tmp_path)
-
-    with pytest.raises(ToolError, match="no TTY available"):
-        bootstrap.bootstrap("newhost", "operator", local=False, has_tty=False)
-
-    assert runtime_keys.calls == []
 
 
 def test_main_bootstrap_inherits_control_plane_recipient(tmp_path: Path) -> None:
@@ -162,35 +166,31 @@ def test_main_bootstrap_inherits_control_plane_recipient(tmp_path: Path) -> None
     policy.ensure_host_rule("home", "pki", ["age1pki", "age1operator"])
     policy.write(tmp_path / ".sops.yaml")
 
-    bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
+    bootstrap.bootstrap("newhost")
 
     updated = SopsPolicy.load(tmp_path / ".sops.yaml")
     assert updated.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
-        "age1runtime",
+        "age1host",
         "age1operator",
         "age1pki",
     ]
 
 
-def test_remote_runtime_key_reads_only_public_recipient() -> None:
-    runner = RecordingRunner(
-        outputs=["1000\n"],
-        streaming_outputs=["age1remote\r\n"],
-    )
-    provider = CommandRuntimeKeyProvider(runner)
+def test_host_recipient_is_derived_from_committed_public_key(tmp_path: Path) -> None:
+    public_key = tmp_path / "nixos/newhost/ssh_host_ed25519_key.pub"
+    public_key.parent.mkdir(parents=True)
+    public_key.write_text("ssh-ed25519 public-key newhost\n")
+    runner = RecordingRunner(outputs=["age1host\n"])
+    provider = CommandHostRecipientProvider(runner, tmp_path)
 
-    assert provider.recipient("newhost", "operator", local=False) == "age1remote"
+    assert provider.recipient("newhost") == "age1host"
+    command = runner.calls[0][0]
+    assert Path(command[0]).name == "ssh-to-age"
+    assert command[1:] == ["-i", str(public_key)]
 
-    assert runner.calls[0][0] == [
-        "ssh",
-        "operator@newhost",
-        "id",
-        "-u",
-    ]
-    assert runner.streaming_calls[0] == [
-        "ssh",
-        "-tt",
-        "operator@newhost",
-        "sudo -H /run/current-system/sw/bin/sed -n "
-        "'s/^# public key: //p' /var/lib/sops-nix/key.txt",
-    ]
+
+def test_host_recipient_requires_committed_public_key(tmp_path: Path) -> None:
+    provider = CommandHostRecipientProvider(RecordingRunner(), tmp_path)
+
+    with pytest.raises(ToolError, match="No committed Ed25519 SSH host key"):
+        provider.recipient("newhost")

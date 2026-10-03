@@ -14,7 +14,7 @@ from sops_tools.process import SubprocessRunner
 from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
 
-from .fakes import StaticOperatorRecipientProvider, StaticRuntimeKeyProvider
+from .fakes import StaticHostRecipientProvider, StaticOperatorRecipientProvider
 
 
 def age_identity(tmp_path: Path, name: str) -> tuple[Path, str]:
@@ -110,9 +110,9 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
     }
 
 
-def test_real_sops_seed_is_reencrypted_for_runtime_identity(tmp_path: Path) -> None:
+def test_real_sops_bootstrap_encrypts_for_host_identity(tmp_path: Path) -> None:
     operator_identity, operator_recipient = age_identity(tmp_path, "operator")
-    runtime_identity, runtime_recipient = age_identity(tmp_path, "runtime")
+    host_identity, host_recipient = age_identity(tmp_path, "host")
     inventory = tmp_path / "realms.json"
     inventory.write_text(json.dumps({"newhost": "home"}))
     runtime = RuntimeEnvironment(
@@ -136,31 +136,29 @@ def test_real_sops_seed_is_reencrypted_for_runtime_identity(tmp_path: Path) -> N
         SubprocessRunner(operator_environment),
         tmp_path / ".sops.yaml",
     )
-    runtime_keys = StaticRuntimeKeyProvider(runtime_recipient)
+    host_recipients = StaticHostRecipientProvider(host_recipient)
     bootstrap = BootstrapService(
         runtime,
         repository,
         operator_backend,
-        runtime_keys,
+        host_recipients,
         StaticOperatorRecipientProvider(operator_recipient),
     )
 
-    bootstrap.seed("newhost")
+    result = bootstrap.bootstrap("newhost")
     secret = repository.secret("newhost")
-    assert runtime_keys.calls == []
+    assert result.messages[-1].startswith("Created encrypted ")
+    assert host_recipients.calls == ["newhost"]
     assert operator_backend.decrypt_data(secret) == {
         "common": {"token": "replace"},
         "host": {"token": "replace"},
     }
 
-    result = bootstrap.bootstrap("newhost", "operator", local=True, has_tty=False)
-
-    assert result.messages[-1].startswith("Re-encrypted ")
-    runtime_backend = CommandSopsBackend(
-        SubprocessRunner({**os.environ, "SOPS_AGE_KEY_FILE": str(runtime_identity)}),
+    host_backend = CommandSopsBackend(
+        SubprocessRunner({**os.environ, "SOPS_AGE_KEY_FILE": str(host_identity)}),
         tmp_path / ".sops.yaml",
     )
-    assert runtime_backend.decrypt_data(secret) == {
+    assert host_backend.decrypt_data(secret) == {
         "common": {"token": "replace"},
         "host": {"token": "replace"},
     }
