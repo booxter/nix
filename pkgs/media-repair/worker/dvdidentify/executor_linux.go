@@ -36,7 +36,7 @@ func (executor *Executor) Execute(
 		return failure(request.RequestID, "timeout")
 	}
 	parts := request.PathComponents
-	if len(parts) < 2 || parts[len(parts)-2] != "VIDEO_TS" || parts[len(parts)-1] != "VIDEO_TS.IFO" {
+	if len(parts) < 1 || parts[len(parts)-1] != "VIDEO_TS.IFO" {
 		return failure(request.RequestID, "invalid_path")
 	}
 	media, err := executor.files.Open(request.RootID, parts, request.ExpectedFingerprint)

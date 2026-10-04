@@ -23,7 +23,7 @@ type Candidate struct {
 }
 
 // ListFeatureTitles offers title navigation only when every inventoried file
-// in the VIDEO_TS directory belongs to a complete, selected DVD structure.
+// beside the navigation file belongs to a complete, selected DVD structure.
 func ListFeatureTitles(
 	ctx context.Context, inventory controller.FileInventory, identifier Identifier,
 ) ([]Candidate, error) {
@@ -45,8 +45,7 @@ func ListFeatureTitles(
 	var navigation []controller.InventoryFile
 	for _, file := range inventory.Files {
 		parts := file.PathComponents
-		if len(parts) >= 2 && parts[len(parts)-2] == "VIDEO_TS" &&
-			parts[len(parts)-1] == "VIDEO_TS.IFO" {
+		if len(parts) >= 1 && parts[len(parts)-1] == "VIDEO_TS.IFO" {
 			navigation = append(navigation, file)
 		}
 	}
@@ -65,8 +64,7 @@ func ListFeatureTitles(
 			continue
 		}
 		path := paths[navigationFile.ID]
-		if path == "" || filepath.Base(path) != "VIDEO_TS.IFO" ||
-			filepath.Base(filepath.Dir(path)) != "VIDEO_TS" {
+		if path == "" || filepath.Base(path) != "VIDEO_TS.IFO" {
 			return nil, fmt.Errorf("DVD navigation file path differs from inventory")
 		}
 		files, complete := discFiles(inventory.Files, paths, filepath.Dir(path))

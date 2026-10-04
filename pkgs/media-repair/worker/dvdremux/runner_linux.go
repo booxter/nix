@@ -63,8 +63,8 @@ func (runner *Runner) RemuxDVD(
 		return 0, err
 	}
 	if !filepath.IsAbs(directory) || filepath.Clean(directory) != directory ||
-		filepath.Base(directory) != "VIDEO_TS" || title < 1 || title > 128 || output == nil {
-		return 0, fmt.Errorf("DVD remux requires a VIDEO_TS directory, title, and output")
+		title < 1 || title > 128 || output == nil {
+		return 0, fmt.Errorf("DVD remux requires an absolute directory, title, and output")
 	}
 	info, err := output.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() != 0 {

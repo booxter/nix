@@ -25,6 +25,18 @@ func TestValidateDVDRequiresCompleteMatchingTitle(t *testing.T) {
 	}
 }
 
+func TestValidateDVDAcceptsFlatDirectory(t *testing.T) {
+	t.Parallel()
+	assembly, decision := dvdCase()
+	for index := range assembly.LocalSnapshot.Observation.Inventory.Paths {
+		path := &assembly.LocalSnapshot.Observation.Inventory.Paths[index]
+		path.AbsolutePath = filepath.Join("/media/movie", filepath.Base(path.AbsolutePath))
+	}
+	if validation := ValidateDVD(assembly, decision); !validation.Accepted() {
+		t.Fatalf("flat DVD authorization = %#v", validation)
+	}
+}
+
 func TestValidateDVDRejectsChangedTitleAndRuntime(t *testing.T) {
 	t.Parallel()
 	assembly, decision := dvdCase()
