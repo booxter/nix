@@ -1,0 +1,83 @@
+Backport the remote store and protocol declarations from:
+https://github.com/NixOS/nix/commit/011dcfe3f32552eccc5511cab52bf215f023e631
+https://github.com/NixOS/nix/commit/9b1503fdeb4fb075c93aaf114343c1daf9d5f4bd
+
+These files are excluded from the corresponding fetchpatch entries because
+2.35.2 has different surrounding APIs and protocol declarations. Keep the
+single-path fallback so inputs stay protected when a builder runs an older
+daemon during an upgrade. Drop this patch when the packaged release includes
+batched temporary roots, after checking its older-daemon behavior.
+
+diff --git a/src/libstore/remote-store.cc b/src/libstore/remote-store.cc
+--- a/src/libstore/remote-store.cc
++++ b/src/libstore/remote-store.cc
+@@ -668,14 +668,41 @@ void RemoteStore::ensurePath(const StorePath & path)
+     readInt(conn->from);
+ }
+ 
+-void RemoteStore::addTempRoot(const StorePath & path)
++void RemoteStore::addTempRoots(const StorePathSet & paths)
+ {
++    if (paths.empty())
++        return;
++
+     auto conn(getConnection());
+-    if (conn->tempRootsPinned.get(path))
+-        return;
+-    conn->addTempRoot(*this, &conn.daemonException, path);
+-    conn->tempRootsPinned.upsert(path, true);
++
++    if (conn->protoVersion.features.contains(WorkerProto::featureAddTempRoots)) {
++        StorePathSet newPaths;
++        for (auto & path : paths)
++            if (!conn->tempRootsPinned.get(path))
++                newPaths.insert(path);
++
++        if (newPaths.empty())
++            return;
++
++        conn->to << WorkerProto::Op::AddTempRoots;
++        WorkerProto::write(*this, *conn, newPaths);
++        conn.processStderr();
++        readInt(conn->from);
++
++        for (auto & path : newPaths)
++            conn->tempRootsPinned.upsert(path, true);
++    } else {
++        /* Older daemons need one round trip per path, but skipping these
++           roots would leave remote build inputs exposed to GC. */
++        for (auto & path : paths) {
++            if (conn->tempRootsPinned.get(path))
++                continue;
++
++            conn->addTempRoot(*this, &conn.daemonException, path);
++            conn->tempRootsPinned.upsert(path, true);
++        }
++    }
+ }
+ 
+ Roots RemoteStore::findRoots(bool censor)
+ {
+diff --git a/src/libstore/include/nix/store/worker-protocol.hh b/src/libstore/include/nix/store/worker-protocol.hh
+--- a/src/libstore/include/nix/store/worker-protocol.hh
++++ b/src/libstore/include/nix/store/worker-protocol.hh
+@@ -136,6 +136,11 @@ struct WorkerProto
+      */
+     static constexpr std::string_view featureDisableSetOptions = "disable-set-options";
+ 
++    /**
++     * Feature for the addTempRoots() operation.
++     */
++    static constexpr std::string_view featureAddTempRoots = "addTempRoots";
++
+     /**
+      * A unidirectional read connection, to be used by the read half of the
+      * canonical serializers below.
+@@ -257,6 +262,7 @@ enum struct WorkerProto::Op : uint64_t {
+     AddBuildLog = 45,
+     BuildPathsWithResults = 46,
+     AddPermRoot = 47,
++    AddTempRoots = 49,
+ };
+ 
+ struct WorkerProto::ClientHandshakeInfo
