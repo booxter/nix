@@ -1,0 +1,13 @@
+diff --git a/shelfmark/core/naming.py b/shelfmark/core/naming.py
+--- a/shelfmark/core/naming.py
++++ b/shelfmark/core/naming.py
+@@ -55,7 +55,8 @@ def _sanitize(name: str | None, max_length: int = 245) -> str:
+     sanitized = INVALID_CHARS.sub("_", name)
+     sanitized = re.sub(r"^[\s.]+|[\s.]+$", "", sanitized)  # Strip whitespace and dots
+     sanitized = re.sub(r"_+", "_", sanitized)  # Collapse underscores
+-    return sanitized[:max_length]
++    # Filesystem filename limits count bytes, not Unicode characters.
++    return sanitized.encode("utf-8")[:max_length].decode("utf-8", errors="ignore")
+ 
+ 
+ def sanitize_filename(name: str | None, max_length: int = 245) -> str:
