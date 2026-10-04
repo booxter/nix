@@ -50,14 +50,14 @@ public final class BatteryApplet {
 
   private func icon(for state: BatteryState) -> String {
     if state.externalPower {
-      return "􀋦"
+      return "󰂄"
     }
     switch state.percentage {
-    case 90...100: return "􀛨"
-    case 60..<90: return "􀺸"
-    case 30..<60: return "􀺶"
-    case 10..<30: return "􀛩"
-    default: return "􀛪"
+    case 90...100: return "󰁹"
+    case 60..<90: return "󰂁"
+    case 30..<60: return "󰁾"
+    case 10..<30: return "󰁻"
+    default: return "󰂎"
     }
   }
 }

@@ -24,6 +24,7 @@ default=(
   background.height="$BACKGROUND_HEIGHT"
   icon.drawing=on
   icon.font="$ICON_FONT"
+  icon.y_offset="$ICON_Y_OFFSET"
   icon.color="$LABEL_COLOR"
   label.align="$LABEL_ALIGN"
   label.font="$LABEL_FONT"

@@ -69,6 +69,10 @@ func TestIdentifyDVDReturnsBoundedTitleEvidence(t *testing.T) {
 	if _, err := workercontracts.EncodeDVDIdentifyResponse(response); err != nil {
 		t.Fatalf("DVD identification does not satisfy wire contract: %v", err)
 	}
+	request.PathComponents = []string{"Movie", "VIDEO_TS.IFO"}
+	if flat := executor.Execute(context.Background(), request); flat.Success == nil {
+		t.Fatalf("flat DVD identification = %#v", flat)
+	}
 	request.PathComponents = []string{"Movie", "VIDEO_TS", "VTS_01_1.VOB"}
 	if rejected := executor.Execute(context.Background(), request); rejected.Failure == nil ||
 		rejected.Failure.Reason != "invalid_path" {

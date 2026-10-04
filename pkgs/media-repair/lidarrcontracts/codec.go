@@ -50,7 +50,7 @@ func EncodeCase(repairCase Case) ([]byte, error) {
 	if repairCase.CaseID != expectedID {
 		return nil, fmt.Errorf("Lidarr repair case ID does not match its planning evidence")
 	}
-	schema, err := loadCaseSchema(repairCase.SchemaVersion)
+	schema, err := caseSchemaV3()
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,7 @@ func EncodeCase(repairCase Case) ([]byte, error) {
 }
 
 func DecodeCase(data []byte) (Case, error) {
-	version, err := schemaVersion(data)
-	if err != nil {
-		return Case{}, fmt.Errorf("decode Lidarr repair case schema version: %w", err)
-	}
-	schema, err := loadCaseSchema(version)
+	schema, err := caseSchemaV3()
 	if err != nil {
 		return Case{}, err
 	}
@@ -85,11 +81,7 @@ func EncodeDecision(decision Decision) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	version, err := decisionVersion(decision)
-	if err != nil {
-		return nil, err
-	}
-	schema, err := loadDecisionSchema(version)
+	schema, err := decisionSchemaV3()
 	if err != nil {
 		return nil, err
 	}
@@ -97,11 +89,7 @@ func EncodeDecision(decision Decision) ([]byte, error) {
 }
 
 func DecodeDecision(data []byte) (Decision, error) {
-	version, err := schemaVersion(data)
-	if err != nil {
-		return Decision{}, fmt.Errorf("decode Lidarr repair decision schema version: %w", err)
-	}
-	schema, err := loadDecisionSchema(version)
+	schema, err := decisionSchemaV3()
 	if err != nil {
 		return Decision{}, err
 	}
@@ -130,33 +118,6 @@ func DecodeDecision(data []byte) (Decision, error) {
 	default:
 		return Decision{}, fmt.Errorf("unsupported Lidarr repair decision action %q", envelope.Action)
 	}
-}
-
-func schemaVersion(data []byte) (string, error) {
-	var envelope struct {
-		SchemaVersion string `json:"schema_version"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
-		return "", err
-	}
-	if envelope.SchemaVersion == "" {
-		return "", fmt.Errorf("schema version is empty")
-	}
-	return envelope.SchemaVersion, nil
-}
-
-func decisionVersion(decision Decision) (string, error) {
-	switch decision.Kind {
-	case ActionNoRepair:
-		if decision.NoRepair != nil {
-			return decision.NoRepair.SchemaVersion, nil
-		}
-	case ActionImportMissingTracks:
-		if decision.ImportMissingTracks != nil {
-			return decision.ImportMissingTracks.SchemaVersion, nil
-		}
-	}
-	return "", fmt.Errorf("Lidarr repair decision has no schema version")
 }
 
 func decisionValue(decision Decision) (any, error) {

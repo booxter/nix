@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	defaultMetricsFile          = "/var/lib/prometheus-node-exporter-textfile/lan-wan.prom"
+	defaultMetricsFile          = "/var/lib/observability-lan-wan/textfile/lan-wan.prom"
 	defaultMetricsMaxAgeSeconds = 90
 	defaultScope                = "wan"
 )

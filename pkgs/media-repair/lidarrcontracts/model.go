@@ -3,7 +3,6 @@ package lidarrcontracts
 import "time"
 
 const (
-	LidarrRepairV2 = "lidarr-repair/v2"
 	SchemaVersion  = "lidarr-repair/v3"
 )
 

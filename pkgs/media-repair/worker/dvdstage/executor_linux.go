@@ -244,7 +244,7 @@ func (executor *Executor) openAndIdentify(
 		}
 		if filepath.Dir(path) != directory || seen[filepath.Base(path)] {
 			closeFiles(opened)
-			return nil, "", fmt.Errorf("DVD sources do not form one VIDEO_TS directory")
+			return nil, "", fmt.Errorf("DVD sources do not form one directory")
 		}
 		seen[filepath.Base(path)] = true
 	}
@@ -317,8 +317,8 @@ func validateSpecification(spec Specification) error {
 		return fmt.Errorf("invalid DVD remux specification")
 	}
 	parts := spec.Navigation.PathComponents
-	if len(parts) < 2 || parts[len(parts)-2] != "VIDEO_TS" ||
-		parts[len(parts)-1] != "VIDEO_TS.IFO" || !validSource(spec.Navigation) {
+	if len(parts) < 1 || parts[len(parts)-1] != "VIDEO_TS.IFO" ||
+		!validSource(spec.Navigation) {
 		return fmt.Errorf("invalid DVD navigation source")
 	}
 	directory := parts[:len(parts)-1]

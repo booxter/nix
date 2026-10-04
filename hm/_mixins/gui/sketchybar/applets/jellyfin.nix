@@ -42,7 +42,7 @@ in
                                 update_freq=30 \
                                 drawing=off \
                                 icon="󰼁" \
-                                icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
+                                icon.font="$ICON_BASE_FONT:Regular:16.0" \
                                 icon.color="0xff${colors.base0E}" \
                                 icon.padding_left=6 \
                                 icon.padding_right=2 \

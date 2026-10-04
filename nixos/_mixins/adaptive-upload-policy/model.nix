@@ -56,8 +56,8 @@ in
   maxStateAgeSeconds = 15;
   stateFile = "/run/adaptive-upload-policy/state.json";
   stateDir = "/run/adaptive-upload-policy";
-  metricsDirectory = "/var/lib/prometheus-node-exporter-textfile";
-  metricsFile = "/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom";
+  metricsDirectory = "/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy";
+  metricsFile = "/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy/adaptive-upload-policy.prom";
   user = "adaptive-upload-policy";
   group = "adaptive-upload-policy";
 

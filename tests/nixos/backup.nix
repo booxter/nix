@@ -17,6 +17,7 @@ pkgs.testers.runNixOSTest {
       imports = [
         inputs.sops-nix.nixosModules.sops
         ../../nixos/_mixins/backups/composition.nix
+        ../../common/_mixins/observability/textfiles.nix
         ./lib/sops.nix
       ];
 

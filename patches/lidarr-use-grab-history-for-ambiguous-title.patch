@@ -1,0 +1,16 @@
+Use the grab's release title and identity when reconstructing queue associations.
+Incomplete-import history records contain download folder names, which may not
+identify the artist or album.
+
+--- a/src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs
++++ b/src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs
+@@ -151,8 +151,8 @@
+ 
+                 if (historyItems.Any())
+                 {
+-                    var firstHistoryItem = historyItems.First();
+                     var grabbedEvent = historyItems.FirstOrDefault(v => v.EventType == EntityHistoryEventType.Grabbed);
++                    var firstHistoryItem = grabbedEvent ?? historyItems.First();
+ 
+                     trackedDownload.Indexer = grabbedEvent?.Data?.GetValueOrDefault("indexer");
+                     trackedDownload.Added = grabbedEvent?.Date;

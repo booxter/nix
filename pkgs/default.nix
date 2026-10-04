@@ -37,8 +37,6 @@ in
 
   git-command-runner = gitCommandRunner;
 
-  lidarr-repair = mediaRepair.lidarrController;
-
   media-repair-contracts = mediaRepairContracts;
 
   media-repair-go-models = mediaRepairGoModels;
@@ -48,9 +46,9 @@ in
     pydanticModels = mediaRepairPydanticModels;
   };
 
-  media-repair-review = mediaRepair.review;
+  media-repair-helper = mediaRepair.helper;
 
-  media-repair-worker = mediaRepair.worker;
+  repairr = mediaRepair.daemon;
 
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
     inherit atomicFileWrites;
@@ -59,8 +57,6 @@ in
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
-
-  radarr-repair = mediaRepair.controller;
 
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;

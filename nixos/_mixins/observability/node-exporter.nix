@@ -10,7 +10,6 @@ in
         host.observability.nodeExporter = {
           serviceUser = config.services.prometheus.exporters.node.user;
           serviceGroup = config.services.prometheus.exporters.node.group;
-          textfile.directories.default = "/var/lib/prometheus-node-exporter-textfile";
         };
 
         services.prometheus.exporters.node = {
@@ -26,10 +25,6 @@ in
             builtins.attrValues cfg.nodeExporter.textfile.directories
           );
         };
-
-        systemd.tmpfiles.rules = [
-          "d ${cfg.nodeExporter.textfile.directories.default} 0755 root root - -"
-        ];
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets = {

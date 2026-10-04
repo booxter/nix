@@ -19,9 +19,13 @@ def cloud_snapshot_count():
     return len(json.loads(server.succeed(command)))
 
 
-def assert_metric(machine, file_name, metric, value):
-    metrics = machine.succeed(f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}")
-    matches = [line for line in metrics.splitlines() if line.startswith(metric + "{")]
+def assert_metric(machine, job_name, metric, value):
+    metrics = machine.succeed("cat /var/lib/prometheus-node-exporter-textfile/backups/backups.prom")
+    matches = [
+        line
+        for line in metrics.splitlines()
+        if line.startswith(metric + "{") and f'backup_job="{job_name}"' in line
+    ]
     assert len(matches) == 1, (metric, metrics)
     assert matches[0].endswith(f" {value}"), matches[0]
     return metrics
@@ -57,13 +61,13 @@ with subtest("pipeline prepares and snapshots once"):
     assert snapshot_count() == 1
     assert_metric(
         client,
-        "prepare-backup-test.prom",
+        "prepare-backup-test",
         "host_observability_backup_last_success",
         "1.0",
     )
     assert_metric(
         client,
-        "restic-server.prom",
+        "restic-server",
         "host_observability_backup_last_success",
         "1.0",
     )
@@ -73,7 +77,7 @@ with subtest("server offloads the repository"):
     assert cloud_snapshot_count() == 1
     metrics = assert_metric(
         server,
-        "restic-client-cloud-offload.prom",
+        "restic-client-cloud-offload",
         "host_observability_backup_last_success",
         "1.0",
     )
@@ -94,7 +98,7 @@ with subtest("failed preparation blocks a new snapshot"):
     assert snapshot_count() == 1
     assert_metric(
         client,
-        "prepare-backup-test.prom",
+        "prepare-backup-test",
         "host_observability_backup_last_success",
         "0.0",
     )

@@ -12,9 +12,8 @@ Scope: whole repository.
   paste shared patterns; refactor them when useful, normally in a separate
   commit.
 - Prefer declarative Nix changes; keep unrelated worktree changes intact.
-- When work exposes a genuine defect in existing code, do not hide it behind a
-  workaround. Report it to the user so they can decide whether it should be
-  fixed before proceeding.
+- When repository code causes an issue, do not work around it with manual live
+  actions. Stop and fix the code, or report the bug and ask before proceeding.
 - Investigate unexpected system behavior before explaining it. Inspect the
   relevant code and, when practical, reproduce the behavior; do not present an
   unverified hypothesis as the cause.
@@ -130,6 +129,8 @@ nix run .#deploy -- --branch <branch> <host>
   committed and pushed before deploy. Default branch: `master`.
 - Use `--dry-run` for SSH/disk checks and `--test` for NixOS dry activation.
 - Use `--local` to deploy from local checkout (includes origin/master changes).
+- Deploy the full current branch with the normal upstream merge. Do not use
+  `--no-merge` or isolate deployment changes in a worktree unless explicitly asked.
 - Related apps: `prox-deploy` for Proxmox VMs, `vm` for local VM variants,
   `diff` for generated config comparisons.
 

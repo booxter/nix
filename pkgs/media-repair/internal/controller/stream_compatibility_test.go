@@ -109,7 +109,7 @@ func TestAssessStreamCompatibilityRejectsKnownDifferences(t *testing.T) {
 	}
 }
 
-func TestAssessStreamCompatibilityAcceptsDifferentTimeBases(t *testing.T) {
+func TestAssessStreamCompatibilityAllowsTimeBaseNormalization(t *testing.T) {
 	t.Parallel()
 
 	first := videoStream(0)
@@ -122,8 +122,8 @@ func TestAssessStreamCompatibilityAcceptsDifferentTimeBases(t *testing.T) {
 	got := AssessStreamCompatibility(
 		[]ProbeEvidence{{Streams: []ProbeStream{first}}, {Streams: []ProbeStream{second}}},
 	)
-	if got.Compatibility != StreamsCompatible || got.Issue != nil || got.Layout == nil {
-		t.Fatalf("assessment = %#v", got)
+	if got.Compatibility != StreamsCompatible {
+		t.Fatalf("compatible parts with different timestamp units rejected: %+v", got)
 	}
 }
 

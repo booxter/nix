@@ -87,9 +87,9 @@ public final class SpotifyApplet {
     try sketchyBar.run([
       "-m",
       "--set", "spotify.name",
-      "label=􀑪 \(track) 􀉮 \(performer)",
+      "label=󰝚 \(track) 󰠃 \(performer)",
       "drawing=on",
-      "--set", "spotify.play", "icon=􀊆",
+      "--set", "spotify.play", "icon=󰏤",
       "--set", "spotify.shuffle",
       "icon.highlight=\(shuffling ? "on" : "off")",
       "--set", "spotify.repeat",
@@ -102,7 +102,7 @@ public final class SpotifyApplet {
       "-m",
       "--set", "spotify.name", "drawing=off",
       "--set", "spotify.name", "popup.drawing=off",
-      "--set", "spotify.play", "icon=􀊄",
+      "--set", "spotify.play", "icon=󰐊",
     ])
   }
 

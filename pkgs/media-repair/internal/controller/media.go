@@ -110,8 +110,7 @@ func supportedMediaExtension(pathComponents []string) (MediaExtension, bool) {
 		return "", false
 	}
 
-	// Radarr recognizes more media extensions. Repair v1 deliberately narrows
-	// this set to the containers represented by its contract and join analyzer.
+	// Only accept containers supported by the contract and join analyzer.
 	switch strings.ToLower(path.Ext(pathComponents[len(pathComponents)-1])) {
 	case ".ts":
 		return MediaExtensionTS, true

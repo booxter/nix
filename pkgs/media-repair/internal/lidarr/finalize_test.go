@@ -6,13 +6,24 @@ import (
 )
 
 type finalizationReader struct {
-	queue  []QueueRecord
-	album  Album
-	tracks []Track
+	queue             []QueueRecord
+	album             Album
+	tracks            []Track
+	recoveredIdentity AlbumIdentity
+	recoveredFound    bool
+	identityReads     int
 }
 
 func (reader *finalizationReader) ReadQueue(context.Context) ([]QueueRecord, error) {
 	return append([]QueueRecord(nil), reader.queue...), nil
+}
+
+func (reader *finalizationReader) RecoverAlbumIdentity(
+	context.Context,
+	string,
+) (AlbumIdentity, bool, error) {
+	reader.identityReads++
+	return reader.recoveredIdentity, reader.recoveredFound, nil
 }
 
 func (reader *finalizationReader) ReadAlbum(context.Context, int64) (Album, error) {
@@ -66,5 +77,36 @@ func TestFinalizationCandidatesRefuseUnresolvedQueueIdentity(t *testing.T) {
 	candidates, err := FinalizationCandidates(context.Background(), reader)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("candidates = %#v, error = %v", candidates, err)
+	}
+}
+
+func TestReadFinalizationEntriesRecoversQueueIdentity(t *testing.T) {
+	t.Parallel()
+	reader := &finalizationReader{
+		queue: []QueueRecord{{
+			ID: 1, DownloadID: "download", Status: "completed", TrackedDownloadStatus: "warning",
+		}},
+		recoveredIdentity: AlbumIdentity{AlbumID: 3, ArtistID: 2},
+		recoveredFound:    true,
+	}
+	entries, err := ReadFinalizationEntries(context.Background(), reader)
+	if err != nil || len(entries) != 1 || entries[0].SubjectID != 3 || reader.identityReads != 1 {
+		t.Fatalf("entries = %#v, identity reads = %d, error = %v", entries, reader.identityReads, err)
+	}
+}
+
+func TestReadFinalizationEntriesRejectsConflictingRecoveredIdentity(t *testing.T) {
+	t.Parallel()
+	albumID := int64(4)
+	reader := &finalizationReader{
+		queue: []QueueRecord{{
+			ID: 1, AlbumID: &albumID, DownloadID: "download",
+			Status: "completed", TrackedDownloadStatus: "warning",
+		}},
+		recoveredIdentity: AlbumIdentity{AlbumID: 3, ArtistID: 2},
+		recoveredFound:    true,
+	}
+	if _, err := ReadFinalizationEntries(context.Background(), reader); err == nil {
+		t.Fatal("conflicting recovered identity was accepted")
 	}
 }

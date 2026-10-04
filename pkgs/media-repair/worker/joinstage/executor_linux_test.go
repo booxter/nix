@@ -30,16 +30,17 @@ func TestExecutorStagesRealMultipartMedia(t *testing.T) {
 	makeMediaPart(t, secondPath, "blue")
 	execution := preparedExecution(t, rootPath, []string{"second.mkv", "first.mkv"})
 	rootSet := newRootSet(t, rootPath)
-	joiner, err := mediajoin.NewRunner(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
+	prober, err := ffprobe.NewRunner(
+		toolPath(t, "ffprobe"),
 		10*time.Second,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	prober, err := ffprobe.NewRunner(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"),
+	joiner, err := mediajoin.NewRunner(
+		toolPath(t, "ffmpeg"),
 		10*time.Second,
+		prober,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -536,7 +537,7 @@ func fileSize(t *testing.T, path string) int64 {
 func makeMediaPart(t *testing.T, path string, color string) {
 	t.Helper()
 	command := exec.Command(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
+		toolPath(t, "ffmpeg"),
 		"-hide_banner",
 		"-loglevel", "error",
 		"-nostdin",
@@ -551,11 +552,11 @@ func makeMediaPart(t *testing.T, path string, color string) {
 	}
 }
 
-func requiredEnvironment(t *testing.T, name string) string {
+func toolPath(t *testing.T, name string) string {
 	t.Helper()
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("%s is not set", name)
+	value, err := exec.LookPath(name)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return value
 }

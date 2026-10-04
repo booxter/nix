@@ -68,6 +68,16 @@
       # the release branch. Keep the base and ROCm variants on one revision.
       inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
 
+      lidarr = prev.lidarr.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Restore queue associations from grab titles, not import-failure folder names.
+          ../patches/lidarr-use-grab-history-for-ambiguous-title.patch
+          # Reject unidentified queue removal without crashing or reporting success.
+          # https://github.com/Lidarr/Lidarr/issues/5732
+          ../patches/lidarr-reject-unidentified-queue-removal.patch
+        ];
+      });
+
       # Expose Radarr's stable manual-import rejection reason beside its human
       # message so local API consumers do not have to match mutable text.
       radarr = prev.radarr.overrideAttrs (old: {

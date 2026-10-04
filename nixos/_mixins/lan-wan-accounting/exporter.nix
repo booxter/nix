@@ -6,7 +6,8 @@
 }:
 let
   override = config.host.observability.lanWan.wanEgressOverride;
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.observability-lan-wan-export.directory;
   exporter = pkgs.callPackage ./pkgs/lan-wan-exporter { };
   exportCommand = [
     (lib.getExe exporter)

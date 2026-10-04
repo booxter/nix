@@ -109,10 +109,27 @@ func TestStageRejectsUnboundDVDFile(t *testing.T) {
 	}
 }
 
+func TestStageAcceptsFlatDVDDirectory(t *testing.T) {
+	t.Parallel()
+	root, spec, title, _ := stagedDVDIn(t, "Movie")
+	defer root.Close()
+	executor, err := NewExecutor(root, root, testIdentifier{title}, &testRemuxer{}, testProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result, err := executor.StageOrRecover(context.Background(), spec); err != nil || result.SizeBytes == 0 {
+		t.Fatalf("flat DVD stage = %#v, error = %v", result, err)
+	}
+}
+
 func stagedDVD(t *testing.T) (*mediafile.RootSet, Specification, dvdvideo.Title, string) {
+	return stagedDVDIn(t, "Movie", "VIDEO_TS")
+}
+
+func stagedDVDIn(t *testing.T, components ...string) (*mediafile.RootSet, Specification, dvdvideo.Title, string) {
 	t.Helper()
 	rootPath := t.TempDir()
-	directory := filepath.Join(rootPath, "Movie", "VIDEO_TS")
+	directory := filepath.Join(append([]string{rootPath}, components...)...)
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +146,7 @@ func stagedDVD(t *testing.T) (*mediafile.RootSet, Specification, dvdvideo.Title,
 		if err := os.WriteFile(path, []byte("test media"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		source := Source{PathComponents: []string{"Movie", "VIDEO_TS", name},
+		source := Source{PathComponents: append(append([]string(nil), components...), name),
 			ExpectedFingerprint: fingerprint(t, path), SizeBytes: int64(len("test media"))}
 		spec.Sources = append(spec.Sources, source)
 		if name == "VIDEO_TS.IFO" {

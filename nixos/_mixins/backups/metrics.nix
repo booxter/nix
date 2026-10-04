@@ -41,22 +41,8 @@ let
   ) cloudRepositories;
   jobs = localJobs // cloudJobs;
 
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile/backups";
   stateDir = "/var/lib/host-observability-backup-metrics";
-  sanitizeName =
-    name:
-    lib.replaceStrings
-      [
-        "/"
-        "."
-        " "
-      ]
-      [
-        "-"
-        "-"
-        "-"
-      ]
-      name;
   package = pkgs.callPackage ./pkgs/backup-metrics {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -72,12 +58,18 @@ let
     (lib.getExe' package "backup-metrics-configure")
     "--config"
     jobsConfig
+    "--state-directory"
+    stateDir
     "--metrics-file"
-    "${textfileDir}/backup-jobs-configured.prom"
+    "${textfileDir}/backups.prom"
   ];
 in
 {
   config = lib.mkIf (jobs != { }) {
+    # Removing the last job unregisters the whole directory, including results
+    # written by a recorder that was already running during the switch.
+    host.observability.nodeExporter.textfile.directories.backups = textfileDir;
+
     systemd.tmpfiles.rules = [
       "d ${stateDir} 0755 root root - -"
       "d ${textfileDir} 0755 root root - -"
@@ -99,25 +91,19 @@ in
     // lib.mapAttrs' (
       backupJob: job:
       let
-        metricsBase = sanitizeName backupJob;
-        unitName = "${job.service}.service";
         recordCommand = utils.escapeSystemdExecArgs [
           (lib.getExe' package "backup-metrics-record")
           "--backup-job"
           backupJob
-          "--backup-title"
-          job.title
-          "--phase"
-          job.phase
-          "--unit"
-          unitName
-          "--state-file"
-          "${stateDir}/${metricsBase}.json"
+          "--state-directory"
+          stateDir
           "--metrics-file"
-          "${textfileDir}/${metricsBase}.prom"
+          "${textfileDir}/backups.prom"
         ];
       in
       lib.nameValuePair job.service {
+        wants = [ "backup-metrics-configured.service" ];
+        after = [ "backup-metrics-configured.service" ];
         serviceConfig.ExecStopPost = lib.mkAfter [ "+${recordCommand}" ];
       }
     ) jobs;

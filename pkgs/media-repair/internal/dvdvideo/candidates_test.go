@@ -48,6 +48,25 @@ func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
 	}
 }
 
+func TestFeatureTitlesAcceptFlatDVDDirectory(t *testing.T) {
+	t.Parallel()
+	inventory := dvdInventory(
+		"Movie/VIDEO_TS.IFO",
+		"Movie/VIDEO_TS.BUP",
+		"Movie/VTS_01_0.IFO",
+		"Movie/VTS_01_1.VOB",
+	)
+	identifier := fixtureIdentifier{titles: []Title{{
+		Number: 1, DurationMS: 5_314_000, Chapters: 9, Angles: 1,
+		TitleSet: 1, TitleInSet: 1,
+		Tracks: []Track{{Kind: "video", Codec: "mpeg2video"}, {Kind: "audio", Codec: "ac3"}},
+	}}}
+	candidates, err := ListFeatureTitles(context.Background(), inventory, identifier)
+	if err != nil || len(candidates) != 1 || len(candidates[0].SourceFileIDs) != 4 {
+		t.Fatalf("flat DVD candidates = %#v, error = %v", candidates, err)
+	}
+}
+
 func dvdInventory(paths ...string) controller.FileInventory {
 	inventory := controller.FileInventory{}
 	for _, path := range paths {

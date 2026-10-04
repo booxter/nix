@@ -182,10 +182,10 @@ func TestRunnerHonorsCancellationAndTimeout(t *testing.T) {
 func TestRunnerRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewRunner("ffmpeg", time.Second); err == nil {
+	if _, err := NewRunner("ffmpeg", time.Second, nil); err == nil {
 		t.Fatal("relative ffmpeg path was accepted")
 	}
-	if _, err := NewRunner("/nix/store/ffmpeg", 0); err == nil {
+	if _, err := NewRunner("/nix/store/ffmpeg", 0, nil); err == nil {
 		t.Fatal("zero timeout was accepted")
 	}
 	if _, err := (*Runner)(nil).Join(
@@ -271,7 +271,7 @@ func makeJoinPart(
 	}
 	switch container {
 	case workercontracts.OutputContainerAVI:
-		arguments = append(arguments, "-c:v", "mpeg4", "-vtag", "XVID", "-q:v", "2")
+		arguments = append(arguments, "-c:v", "mpeg4", "-bf", "2", "-vtag", "XVID", "-q:v", "2")
 		if audioStreams > 0 {
 			arguments = append(arguments, "-c:a", "mp3")
 		}
@@ -286,7 +286,7 @@ func makeJoinPart(
 		t.Fatalf("unsupported fixture container %q", container)
 	}
 	arguments = append(arguments, "-y", path)
-	command := exec.Command(requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"), arguments...)
+	command := exec.Command(toolPath(t, "ffmpeg"), arguments...)
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("make media part: %v: %s", err, output)
 	}
@@ -295,7 +295,7 @@ func makeJoinPart(
 func probeJoinedOutput(t *testing.T, output *os.File) controller.ProbeEvidence {
 	t.Helper()
 	runner, err := ffprobe.NewRunner(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"),
+		toolPath(t, "ffprobe"),
 		10*time.Second,
 	)
 	if err != nil {
@@ -311,7 +311,7 @@ func probeJoinedOutput(t *testing.T, output *os.File) controller.ProbeEvidence {
 func boundaryPixels(t *testing.T, path string) ([3]byte, [3]byte) {
 	t.Helper()
 	command := exec.Command(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
+		toolPath(t, "ffmpeg"),
 		"-hide_banner",
 		"-loglevel", "error",
 		"-nostdin",
@@ -369,18 +369,22 @@ func openTestFile(t *testing.T, path string, flags int) *os.File {
 
 func testRunner(t *testing.T, timeout time.Duration) *Runner {
 	t.Helper()
-	runner, err := NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"), timeout)
+	prober, err := ffprobe.NewRunner(toolPath(t, "ffprobe"), 10*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runner, err := NewRunner(toolPath(t, "ffmpeg"), timeout, prober)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return runner
 }
 
-func requiredEnvironment(t *testing.T, name string) string {
+func toolPath(t *testing.T, name string) string {
 	t.Helper()
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("%s is not set", name)
+	value, err := exec.LookPath(name)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return value
 }

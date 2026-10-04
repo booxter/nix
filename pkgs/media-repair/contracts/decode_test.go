@@ -19,53 +19,6 @@ func readFixture(t *testing.T, path string) []byte {
 	return data
 }
 
-func TestEmbeddedSchemasCompile(t *testing.T) {
-	loaders := map[string]schemaLoader{
-		"case v2":     caseSchemaV2,
-		"case v3":     caseSchemaV3,
-		"decision v2": decisionSchemaV2,
-		"decision v3": decisionSchemaV3,
-	}
-	for name, load := range loaders {
-		if _, err := load(); err != nil {
-			t.Fatalf("%s schema: %v", name, err)
-		}
-	}
-}
-
-func TestVersionTwoDocumentsRemainReadable(t *testing.T) {
-	repairCase, err := DecodeCase(readFixture(t, "v2/examples/repair-case-joinable.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if repairCase.SchemaVersion != RadarrRepairV2 {
-		t.Fatalf("case schema version = %q", repairCase.SchemaVersion)
-	}
-	caseID, err := CalculateCaseID(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if caseID != repairCase.CaseID {
-		t.Fatalf("case ID = %q, want %q", caseID, repairCase.CaseID)
-	}
-	encodedCase, err := EncodeCase(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := DecodeCase(encodedCase); err != nil {
-		t.Fatalf("decode re-encoded v2 case: %v", err)
-	}
-
-	decision, err := DecodeDecision(readFixture(t, "v2/examples/repair-decision-join.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if decision.JoinParts == nil ||
-		decision.JoinParts.SchemaVersion != RadarrRepairV2 {
-		t.Fatalf("decision = %#v", decision)
-	}
-}
-
 func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
 	repairCase, err := DecodeCase(readFixture(t, "v3/examples/repair-case-joinable.json"))
 	if err != nil {

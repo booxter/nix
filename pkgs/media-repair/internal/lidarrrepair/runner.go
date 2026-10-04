@@ -44,13 +44,7 @@ type Worker interface {
 }
 
 type Planner interface {
-	PlanLidarr(context.Context, lidarrcontracts.Case) (lidarrcontracts.Decision, error)
-	ReconsiderLidarr(
-		context.Context,
-		lidarrcontracts.Case,
-		lidarrcontracts.Decision,
-		reconsideration.Request,
-	) (lidarrcontracts.Decision, error)
+	PlanLidarr(context.Context, lidarrcontracts.Case, planningrunner.Options) (lidarrcontracts.Decision, error)
 }
 
 type Report struct {
@@ -92,11 +86,19 @@ type Evidence struct {
 	Recovered         bool
 }
 
+type EvidenceCollector struct {
+	lidarr Lidarr
+	worker Worker
+	now    func() time.Time
+}
+
+func NewEvidenceCollector(client Lidarr, worker Worker) *EvidenceCollector {
+	return &EvidenceCollector{lidarr: client, worker: worker, now: time.Now}
+}
+
 type Runner struct {
-	lidarr   Lidarr
-	worker   Worker
+	*EvidenceCollector
 	store    *Store
-	now      func() time.Time
 	planning *planningrunner.Runner[
 		Record,
 		lidarrcontracts.Decision,
@@ -143,7 +145,8 @@ func NewRunner(client Lidarr, worker Worker, planner Planner, store *Store) (*Ru
 		return nil, fmt.Errorf("Lidarr shadow runner dependencies are incomplete")
 	}
 	runner := &Runner{
-		lidarr: client, worker: worker, store: store, now: time.Now,
+		EvidenceCollector: NewEvidenceCollector(client, worker),
+		store:             store,
 	}
 	planning, err := planningrunner.New(planningrunner.Dependencies[
 		Record,
@@ -156,7 +159,7 @@ func NewRunner(client Lidarr, worker Worker, planner Planner, store *Store) (*Ru
 			if err != nil {
 				return lidarrcontracts.Decision{}, err
 			}
-			decision, err := planner.PlanLidarr(ctx, repairCase)
+			decision, err := planner.PlanLidarr(ctx, repairCase, planningrunner.Options{})
 			if err != nil {
 				return lidarrcontracts.Decision{}, err
 			}
@@ -426,6 +429,22 @@ func (runner *Runner) BuildCurrentEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (Evidence, error) {
+	previous, found, err := runner.store.Get(queue.ID)
+	if err != nil {
+		return Evidence{}, err
+	}
+	if !found {
+		return runner.Inspect(ctx, queue, nil)
+	}
+
+	return runner.Inspect(ctx, queue, &previous)
+}
+
+func (runner *EvidenceCollector) Inspect(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+	previous *Record,
+) (Evidence, error) {
 	var err error
 	queue, err = runner.recoverQueueIdentity(ctx, queue)
 	if err != nil {
@@ -450,17 +469,14 @@ func (runner *Runner) BuildCurrentEvidence(
 			return Evidence{}, directoryErr
 		}
 	}
-	planned, found, getErr := runner.store.Get(queue.ID)
-	if getErr != nil {
-		return Evidence{}, getErr
-	}
-	if !found {
+	if previous == nil {
 		return Evidence{}, fmt.Errorf("discover archive: %w", err)
 	}
-	return runner.buildStoredEvidence(ctx, queue, planned)
+
+	return runner.buildStoredEvidence(ctx, queue, *previous)
 }
 
-func (runner *Runner) recoverQueueIdentity(
+func (runner *EvidenceCollector) recoverQueueIdentity(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (lidarr.QueueRecord, error) {
@@ -470,25 +486,14 @@ func (runner *Runner) recoverQueueIdentity(
 	if !eligibleQueueWithoutIdentity(queue) {
 		return queue, nil
 	}
-	identity, found, err := runner.lidarr.RecoverAlbumIdentity(ctx, queue.DownloadID)
+	recovered, err := lidarr.RecoverQueueIdentity(ctx, runner.lidarr, queue)
 	if err != nil {
 		return queue, fmt.Errorf("recover Lidarr album identity: %w", err)
 	}
-	if !found {
-		return queue, nil
-	}
-	if queue.AlbumID != nil && *queue.AlbumID != identity.AlbumID {
-		return queue, fmt.Errorf("recovered Lidarr album identity conflicts with queue")
-	}
-	if queue.ArtistID != nil && *queue.ArtistID != identity.ArtistID {
-		return queue, fmt.Errorf("recovered Lidarr artist identity conflicts with queue")
-	}
-	queue.AlbumID = &identity.AlbumID
-	queue.ArtistID = &identity.ArtistID
-	return queue, nil
+	return recovered, nil
 }
 
-func (runner *Runner) buildArchiveEvidence(
+func (runner *EvidenceCollector) buildArchiveEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	archivePath string,
@@ -520,7 +525,7 @@ func (runner *Runner) buildArchiveEvidence(
 	)
 }
 
-func (runner *Runner) buildDirectoryEvidence(
+func (runner *EvidenceCollector) buildDirectoryEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (Evidence, error) {
@@ -535,7 +540,7 @@ func (runner *Runner) buildDirectoryEvidence(
 	)
 }
 
-func (runner *Runner) assembleMaterializedEvidence(
+func (runner *EvidenceCollector) assembleMaterializedEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	sourceKind SourceKind,
@@ -585,7 +590,7 @@ func validateMaterializedSource(sourceKind SourceKind, materialized materialize.
 	return nil
 }
 
-func (runner *Runner) buildStoredEvidence(
+func (runner *EvidenceCollector) buildStoredEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	planned Record,
@@ -634,7 +639,7 @@ func (runner *Runner) buildStoredEvidence(
 	}, nil
 }
 
-func (runner *Runner) readCatalog(
+func (runner *EvidenceCollector) readCatalog(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (lidarr.Album, []lidarr.Track, error) {

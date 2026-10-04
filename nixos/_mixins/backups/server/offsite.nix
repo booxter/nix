@@ -93,10 +93,6 @@ let
 in
 {
   config = lib.mkIf (server != null) {
-    systemd.tmpfiles.rules = lib.optional (
-      enabledOffloads != { }
-    ) "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -";
-
     systemd.services =
       lib.mapAttrs' (
         name: _:

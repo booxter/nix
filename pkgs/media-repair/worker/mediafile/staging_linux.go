@@ -430,6 +430,11 @@ func (rootSet *RootSet) publishCompletedAt(
 		if publishedFound {
 			return nil, &Failure{Kind: FailureDestinationExists}
 		}
+		// The moved file must already be readable by the destination group.
+		// A failed permission change must leave it in private staging.
+		if err := makePublishedArtifactReadable(destinationDirectory, staged); err != nil {
+			return nil, err
+		}
 		if err := moveNoReplace(
 			stagedDirectory,
 			stagedName(artifactID, extension),
@@ -455,11 +460,11 @@ func (rootSet *RootSet) publishCompletedAt(
 		}
 		publishedArtifact = published
 	}
-	if err := makePublishedArtifactReadable(
-		destinationDirectory,
-		publishedArtifact,
-	); err != nil {
-		return nil, err
+	if !stagedFound {
+		// Also repair a verified artifact left by an interrupted older publish.
+		if err := makePublishedArtifactReadable(destinationDirectory, publishedArtifact); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := errors.Join(
@@ -821,7 +826,7 @@ func openArtifact(directory *os.File, name string) (*os.File, bool, error) {
 	if err := unix.Fstat(fd, &stat); err != nil ||
 		stat.Mode&unix.S_IFMT != unix.S_IFREG ||
 		stat.Uid != uint32(os.Geteuid()) ||
-		stat.Mode&0o777 != 0o600 {
+		stat.Mode&0o777 != 0o600 && stat.Mode&0o777 != 0o640 {
 		_ = file.Close()
 		return nil, false, &Failure{Kind: FailureInternal, cause: err}
 	}

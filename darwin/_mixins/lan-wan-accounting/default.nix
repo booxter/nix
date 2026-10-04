@@ -6,7 +6,7 @@
 }:
 let
   declaredInterfaces = builtins.attrNames config.host.network.interfaces;
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = "${stateDir}/textfile";
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";

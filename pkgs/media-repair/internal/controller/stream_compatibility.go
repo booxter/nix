@@ -296,9 +296,13 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 	compareRequiredField(&comparison, StreamFieldKind, reference.Kind, candidate.Kind)
 	compareRequiredField(&comparison, StreamFieldCodecName, reference.CodecName, candidate.CodecName)
 	compareOptionalField(&comparison, StreamFieldProfile, reference.Profile, candidate.Profile)
-	// FFmpeg rescales packet timestamps while remuxing. Different time bases
-	// describe different units, not different stream contents.
-	compareRequiredPresence(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
+
+	// Parts are stream-copy remuxed to a common time base before concat.
+	// Timestamp units may differ; missing timing metadata still blocks repair.
+	if reference.TimeBase == nil || candidate.TimeBase == nil {
+		compareRequiredField(&comparison, StreamFieldTimeBase, reference.TimeBase, candidate.TimeBase)
+	}
+
 	if reference.Kind == nil || candidate.Kind == nil || *reference.Kind != *candidate.Kind {
 		return comparison
 	}
@@ -365,18 +369,6 @@ func rationalWithinRelativeTolerance(reference, candidate Rational, tolerance fl
 	referenceValue := float64(reference.Numerator) / float64(reference.Denominator)
 	candidateValue := float64(candidate.Numerator) / float64(candidate.Denominator)
 	return math.Abs(candidateValue-referenceValue) <= referenceValue*tolerance
-}
-
-func compareRequiredPresence[T any](
-	comparison *streamComparison,
-	field StreamCompatibilityField,
-	reference *T,
-	candidate *T,
-) {
-	if (reference == nil || candidate == nil) && comparison.missing == "" {
-		comparison.missing = field
-		comparison.missingReference = reference == nil
-	}
 }
 
 func compareRequiredField[T comparable](

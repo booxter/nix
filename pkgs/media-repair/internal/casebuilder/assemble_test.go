@@ -15,6 +15,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/repairartifact"
 )
 
 const (
@@ -65,6 +66,23 @@ func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 	pretty.WriteByte('\n')
 	if !bytes.Equal(pretty.Bytes(), want) {
 		t.Fatalf("assembled case differs from golden file:\n%s", pretty.Bytes())
+	}
+}
+
+func TestAssembleIgnoresPublishedRepairOutputInManualImports(t *testing.T) {
+	t.Parallel()
+	observation := testObservation()
+	output := observation.ManualImports[0]
+	output.RelativePath = repairartifact.PublishedName("old-attempt", ".mp4")
+	output.Path = filepath.Join(observation.Correlation.DownloadRoot, output.RelativePath)
+	observation.ManualImports = append(observation.ManualImports, output)
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.LocalSnapshot.ManualImportBindings) != 2 {
+		t.Fatalf("manual import bindings = %#v", assembly.LocalSnapshot.ManualImportBindings)
 	}
 }
 

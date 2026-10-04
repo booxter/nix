@@ -20,6 +20,8 @@ let
   };
 in
 {
+  imports = [ ./textfiles.nix ];
+
   options.host.observability.nodeExporter = {
     listenAddress = lib.mkOption {
       type = lib.types.str;
@@ -39,13 +41,6 @@ in
       readOnly = true;
       internal = true;
       description = "Platform service group that runs the Prometheus node exporter.";
-    };
-
-    textfile.directories = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      default = { };
-      internal = true;
-      description = "Directories containing metrics for the node exporter textfile collector.";
     };
 
     mtls.enable = lib.mkEnableOption "mTLS protection for the Prometheus node exporter";

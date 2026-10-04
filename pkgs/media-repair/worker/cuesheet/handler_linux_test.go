@@ -40,7 +40,7 @@ func TestParseCuetoolsBreakpoints(t *testing.T) {
 
 func TestHandlerInspectsAndSplitsWithPackagedTools(t *testing.T) {
 	t.Parallel()
-	ffmpeg := requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG")
+	ffmpeg := toolPath(t, "ffmpeg")
 	directory := t.TempDir()
 	imagePath := filepath.Join(directory, "Album.flac")
 	command := exec.Command(
@@ -64,10 +64,10 @@ func TestHandlerInspectsAndSplitsWithPackagedTools(t *testing.T) {
 		t.Fatal(err)
 	}
 	handler, err := NewHandler(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
+		toolPath(t, "cueconvert"),
+		toolPath(t, "cuebreakpoints"),
 		ffmpeg,
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_WVUNPACK"),
+		toolPath(t, "wvunpack"),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +104,7 @@ func TestHandlerInspectsAndSplitsWithPackagedTools(t *testing.T) {
 func TestHandlerExtractsEmbeddedWavPackCue(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
-	ffmpeg := requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG")
+	ffmpeg := toolPath(t, "ffmpeg")
 	wavPath := filepath.Join(directory, "Album.wav")
 	command := exec.Command(
 		ffmpeg, "-nostdin", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440",
@@ -124,17 +124,17 @@ func TestHandlerExtractsEmbeddedWavPackCue(t *testing.T) {
 	}
 	wavpackPath := filepath.Join(directory, "Album.wvp")
 	command = exec.Command(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_WAVPACK"),
+		toolPath(t, "wavpack"),
 		"-q", "-w", "Cuesheet=@"+cuePath, wavPath, "-o", wavpackPath,
 	)
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("create WavPack image: %v: %s", err, output)
 	}
 	handler, err := NewHandler(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
+		toolPath(t, "cueconvert"),
+		toolPath(t, "cuebreakpoints"),
 		ffmpeg,
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_WVUNPACK"),
+		toolPath(t, "wvunpack"),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -169,11 +169,11 @@ func TestHandlerExtractsEmbeddedWavPackCue(t *testing.T) {
 	}
 }
 
-func requiredEnvironment(t *testing.T, name string) string {
+func toolPath(t *testing.T, name string) string {
 	t.Helper()
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("%s is required", name)
+	value, err := exec.LookPath(name)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return value
 }

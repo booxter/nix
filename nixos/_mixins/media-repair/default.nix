@@ -4,7 +4,6 @@
 
   imports = [
     ./planner.nix
-    ./review.nix
-    ./worker.nix
+    ./daemon.nix
   ];
 }

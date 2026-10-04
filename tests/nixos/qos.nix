@@ -29,6 +29,7 @@ pkgs.testers.runNixOSTest {
       {
         imports = [
           ../../nixos/_mixins/adaptive-upload-policy
+          ../../common/_mixins/observability/textfiles.nix
           ../../nixos/_mixins/qos
         ];
 

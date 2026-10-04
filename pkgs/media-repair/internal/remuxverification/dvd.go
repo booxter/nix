@@ -29,11 +29,8 @@ func ValidateDVDOutput(
 	if difference > dvdDurationToleranceMS {
 		return fmt.Errorf("DVD remux output duration differs from title")
 	}
-	lastChapter := evidence.Chapters[len(evidence.Chapters)-1]
-	if lastChapter.EndTimeMS == nil || *lastChapter.EndTimeMS < expectedDurationMS-dvdDurationToleranceMS ||
-		*lastChapter.EndTimeMS > expectedDurationMS+dvdDurationToleranceMS {
-		return fmt.Errorf("DVD remux output chapter endpoint differs from title")
-	}
+	// DVD chapter tables can omit an unchaptered tail. The output duration,
+	// chapter count, and tracks are checked independently.
 	want := make(map[string]int)
 	for _, track := range expectedTracks {
 		want[track.Kind+":"+track.Codec]++

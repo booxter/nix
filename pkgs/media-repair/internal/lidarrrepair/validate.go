@@ -20,8 +20,7 @@ func validateDecisionSelection(
 	repairCase lidarrcontracts.Case,
 	decision lidarrcontracts.Decision,
 ) error {
-	if repairCase.SchemaVersion != lidarrcontracts.LidarrRepairV2 &&
-		repairCase.SchemaVersion != lidarrcontracts.SchemaVersion {
+	if repairCase.SchemaVersion != lidarrcontracts.SchemaVersion {
 		return fmt.Errorf("unsupported Lidarr repair schema version %q", repairCase.SchemaVersion)
 	}
 	if decisionVersion(decision) != repairCase.SchemaVersion {
@@ -68,10 +67,6 @@ func validateDecisionSelection(
 	}
 	if len(tracks) == 0 {
 		return fmt.Errorf("Lidarr decision does not map any missing track")
-	}
-	if repairCase.SchemaVersion == lidarrcontracts.LidarrRepairV2 &&
-		len(tracks) != len(capability.TrackIDs) {
-		return fmt.Errorf("Lidarr decision does not map every missing track")
 	}
 	return nil
 }

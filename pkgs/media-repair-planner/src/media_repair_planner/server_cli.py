@@ -10,7 +10,7 @@ from typing import NoReturn, Protocol
 import uvicorn
 from fastapi import FastAPI
 
-from .api import ApiLimits, ContractEndpoint, ReconsiderationEndpoint, create_app
+from .api import ApiLimits, ContractEndpoint, create_app
 from .lidarr_contracts import decode_case as decode_lidarr_case
 from .lidarr_contracts import decode_decision as decode_lidarr_decision
 from .lidarr_contracts import encode_decision as encode_lidarr_decision
@@ -111,12 +111,7 @@ async def _serve(
             radarr_planner,
             limits,
             {
-                "/lidarr/v3/repair-plans": ContractEndpoint(
-                    planner=lidarr_planner,
-                    decode_case=decode_lidarr_case,
-                    encode_decision=encode_lidarr_decision,
-                ),
-                "/lidarr/v3/reconsiderations": ReconsiderationEndpoint(
+                "/lidarr/plan": ContractEndpoint(
                     planner=lidarr_planner,
                     decode_case=decode_lidarr_case,
                     decode_decision=decode_lidarr_decision,

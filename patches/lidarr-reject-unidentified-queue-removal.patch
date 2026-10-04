@@ -1,0 +1,28 @@
+Return an explicit error when an unidentified download cannot be ignored,
+without dropping tracking or dereferencing its missing album association.
+https://github.com/Lidarr/Lidarr/issues/5732
+
+--- a/src/NzbDrone.Core/Download/IgnoredDownloadService.cs
++++ b/src/NzbDrone.Core/Download/IgnoredDownloadService.cs
+@@ -25,8 +25,8 @@
+ 
+         public bool IgnoreDownload(TrackedDownload trackedDownload)
+         {
+-            var artist = trackedDownload.RemoteAlbum.Artist;
+-            var albums = trackedDownload.RemoteAlbum.Albums;
++            var artist = trackedDownload.RemoteAlbum?.Artist;
++            var albums = trackedDownload.RemoteAlbum?.Albums;
+ 
+             if (artist == null || albums.Empty())
+             {
+--- a/src/Lidarr.Api.V1/Queue/QueueController.cs
++++ b/src/Lidarr.Api.V1/Queue/QueueController.cs
+@@ -310,7 +310,7 @@
+             {
+                 if (!_ignoredDownloadService.IgnoreDownload(trackedDownload))
+                 {
+-                    return null;
++                    throw new BadRequestException("Cannot ignore download: artist or album is not identified.");
+                 }
+             }
+ 

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from backup_metrics.cli import run_configure, run_record
-from backup_metrics.metrics import configured_registry, result_registry
+from backup_metrics.metrics import backup_registry
 from backup_metrics.models import BackupJob, BackupState, JobsConfig, Outcome
 from backup_metrics.state import read_state, updated_state, write_state
 from backup_metrics.systemd import duration_from_timestamps
@@ -66,7 +66,7 @@ def test_success_updates_success_timestamp() -> None:
 
 
 def test_metrics_are_exposed_as_structured_samples() -> None:
-    configured = sample_values(configured_registry(JobsConfig(jobs=(job(),))))
+    configured = sample_values(backup_registry(JobsConfig(jobs=(job(),)), {}))
     configured_labels = tuple(
         sorted(
             {
@@ -88,7 +88,7 @@ def test_metrics_are_exposed_as_structured_samples() -> None:
         exit_code="exited",
         exit_status="1",
     )
-    result = sample_values(result_registry(job(), state))
+    result = sample_values(backup_registry(JobsConfig(jobs=(job(),)), {job().backup_job: state}))
     assert result[("host_observability_backup_last_duration_seconds", configured_labels)] == 2.5
     assert result[("host_observability_backup_last_success", configured_labels)] == 0
 
@@ -112,20 +112,39 @@ def test_state_round_trip_is_typed_and_world_readable(tmp_path: Path) -> None:
 
 
 def test_cli_records_service_environment_and_writes_parseable_metrics(tmp_path: Path) -> None:
-    state_path = tmp_path / "state.json"
+    state_directory = tmp_path / "state"
+    state_path = state_directory / "local.json"
     metrics_path = tmp_path / "backup.prom"
+    config_path = tmp_path / "jobs.json"
+    config_path.write_text(
+        JobsConfig(
+            jobs=(
+                BackupJob(
+                    backup_job="local",
+                    backup_title="Local backup",
+                    phase="local",
+                    unit="backup.service",
+                ),
+            )
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    run_configure(
+        [
+            "--config",
+            str(config_path),
+            "--state-directory",
+            str(state_directory),
+            "--metrics-file",
+            str(metrics_path),
+        ]
+    )
     run_record(
         [
             "--backup-job",
             "local",
-            "--backup-title",
-            "Local backup",
-            "--phase",
-            "local",
-            "--unit",
-            "backup.service",
-            "--state-file",
-            str(state_path),
+            "--state-directory",
+            str(state_directory),
             "--metrics-file",
             str(metrics_path),
         ],
@@ -149,7 +168,16 @@ def test_cli_configures_all_declared_jobs(tmp_path: Path) -> None:
         json.dumps({"jobs": [job().model_dump(mode="json")]}),
         encoding="utf-8",
     )
-    run_configure(["--config", str(config_path), "--metrics-file", str(metrics_path)])
+    run_configure(
+        [
+            "--config",
+            str(config_path),
+            "--state-directory",
+            str(tmp_path / "state"),
+            "--metrics-file",
+            str(metrics_path),
+        ]
+    )
     families = list(text_string_to_metric_families(metrics_path.read_text(encoding="utf-8")))
     samples = [sample for family in families for sample in family.samples]
     assert len(samples) == 1

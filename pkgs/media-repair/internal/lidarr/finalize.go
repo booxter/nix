@@ -9,8 +9,29 @@ import (
 
 type FinalizationReader interface {
 	ReadQueue(context.Context) ([]QueueRecord, error)
+	AlbumIdentityReader
 	ReadAlbum(context.Context, int64) (Album, error)
 	ReadReleaseTracks(context.Context, int64, int64) ([]Track, error)
+}
+
+type FinalizationQueueReader interface {
+	ReadQueue(context.Context) ([]QueueRecord, error)
+	AlbumIdentityReader
+}
+
+func ReadFinalizationEntries(
+	ctx context.Context,
+	reader FinalizationQueueReader,
+) ([]queuefinalize.Entry, error) {
+	records, err := readFinalizationQueue(ctx, reader)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]queuefinalize.Entry, len(records))
+	for index, record := range records {
+		entries[index] = FinalizationEntry(record)
+	}
+	return entries, nil
 }
 
 func FinalizationCandidates(
@@ -20,7 +41,7 @@ func FinalizationCandidates(
 	if reader == nil {
 		return nil, fmt.Errorf("Lidarr finalization reader is required")
 	}
-	records, err := reader.ReadQueue(ctx)
+	records, err := readFinalizationQueue(ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("read Lidarr queue for finalization: %w", err)
 	}
@@ -44,6 +65,31 @@ func FinalizationCandidates(
 		}
 	}
 	return result, nil
+}
+
+func readFinalizationQueue(
+	ctx context.Context,
+	reader FinalizationQueueReader,
+) ([]QueueRecord, error) {
+	records, err := reader.ReadQueue(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for index, record := range records {
+		if record.AlbumID != nil && record.ArtistID != nil {
+			continue
+		}
+		if record.ID <= 0 || record.DownloadID == "" || record.Status != "completed" ||
+			record.TrackedDownloadStatus != "warning" {
+			continue
+		}
+		recovered, recoverErr := RecoverQueueIdentity(ctx, reader, record)
+		if recoverErr != nil {
+			return nil, fmt.Errorf("recover Lidarr queue %d identity: %w", record.ID, recoverErr)
+		}
+		records[index] = recovered
+	}
+	return records, nil
 }
 
 func FinalizationEntry(record QueueRecord) queuefinalize.Entry {

@@ -2,8 +2,6 @@ package contracts
 
 type RepairCaseV3 = RadarrRepairCaseVersion3
 
-const RadarrRepairV2 SchemaVersion = "radarr-repair/v2"
-
 type DecisionAction string
 
 const (

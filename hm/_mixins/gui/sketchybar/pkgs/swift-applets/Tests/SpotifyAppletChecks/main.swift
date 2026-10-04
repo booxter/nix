@@ -93,9 +93,9 @@ do {
       [
         "-m",
         "--set", "spotify.name",
-        "label=􀑪 Motion Picture Soundtrack 􀉮 Radiohead",
+        "label=󰝚 Motion Picture Soundtrack 󰠃 Radiohead",
         "drawing=on",
-        "--set", "spotify.play", "icon=􀊆",
+        "--set", "spotify.play", "icon=󰏤",
         "--set", "spotify.shuffle", "icon.highlight=on",
         "--set", "spotify.repeat", "icon.highlight=off",
       ]
@@ -112,7 +112,7 @@ do {
       """
   )
   try expect(
-    albumFallback.sketchyBar.calls[0].contains("label=􀑪 Track 􀉮 Album"),
+    albumFallback.sketchyBar.calls[0].contains("label=󰝚 Track 󰠃 Album"),
     "album did not replace a missing artist"
   )
 
@@ -128,7 +128,7 @@ do {
         "-m",
         "--set", "spotify.name", "drawing=off",
         "--set", "spotify.name", "popup.drawing=off",
-        "--set", "spotify.play", "icon=􀊄",
+        "--set", "spotify.play", "icon=󰐊",
       ],
       "stopped state"
     )

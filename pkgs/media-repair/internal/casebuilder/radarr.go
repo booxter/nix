@@ -2,11 +2,13 @@ package casebuilder
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/repairartifact"
 )
 
 const (
@@ -108,9 +110,13 @@ func matchManualImports(
 		}
 		pathIDs[path] = fileID
 	}
-	matches := make([]manualImportMatch, len(imports))
+	matches := make([]manualImportMatch, 0, len(imports))
 	seen := make(map[controller.FileID]struct{}, len(imports))
-	for index, item := range imports {
+	for _, item := range imports {
+		// Published outputs are not source evidence, even when Radarr lists them.
+		if repairartifact.IsPublishedName(filepath.Base(item.Path)) {
+			continue
+		}
 		fileID, ok := pathIDs[item.Path]
 		if !ok {
 			return nil, fmt.Errorf("manual import path does not match the inventory")
@@ -122,9 +128,9 @@ func matchManualImports(
 		if item.SizeBytes != inventoryFiles[fileID].Fingerprint.SizeBytes {
 			return nil, fmt.Errorf("manual import size does not match file %q", fileID)
 		}
-		matches[index] = manualImportMatch{
+		matches = append(matches, manualImportMatch{
 			File: inventoryFiles[fileID], AbsolutePath: paths[fileID], Import: item,
-		}
+		})
 	}
 	return matches, nil
 }

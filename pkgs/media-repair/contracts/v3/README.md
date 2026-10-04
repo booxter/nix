@@ -1,7 +1,7 @@
 # Radarr repair protocol version 3
 
-Version 3 keeps the version 1 actions and safety boundaries while representing
-download evidence without assuming Transmission or torrents. The controller
+The contract represents download evidence without assuming Transmission or
+torrents. The controller
 may report a `torrent` from `transmission` or a `usenet` download from
 `sabnzbd`.
 

@@ -119,15 +119,7 @@ func validateRecord(record CaseRecord) error {
 	if err != nil {
 		return fmt.Errorf("reassemble stored observation: %w", err)
 	}
-	rebuiltRequest := rebuilt.Request
-	if request.SchemaVersion == contracts.RadarrRepairV2 {
-		rebuiltRequest.SchemaVersion = contracts.RadarrRepairV2
-		rebuiltRequest.CaseID, err = contracts.CalculateCaseID(rebuiltRequest)
-		if err != nil {
-			return fmt.Errorf("calculate legacy repair case ID: %w", err)
-		}
-	}
-	rebuiltEncoded, err := contracts.EncodeCase(rebuiltRequest)
+	rebuiltEncoded, err := contracts.EncodeCase(rebuilt.Request)
 	if err != nil {
 		return fmt.Errorf("encode reassembled repair case: %w", err)
 	}

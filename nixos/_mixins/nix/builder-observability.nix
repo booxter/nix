@@ -6,7 +6,8 @@
 }:
 let
   cfg = config.host.nix.builder;
-  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  textfileDir =
+    config.host.observability.nodeExporter.textfile.periodicProducers.nix-builder-metrics.directory;
 in
 {
   config = lib.mkIf (cfg != null && config.host.observability.enable) {

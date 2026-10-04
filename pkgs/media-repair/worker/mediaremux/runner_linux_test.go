@@ -18,7 +18,7 @@ func TestRunnerWritesMatroskaToPreopenedFile(t *testing.T) {
 	directory := t.TempDir()
 	source := filepath.Join(directory, "source.wav")
 	command := exec.Command(
-		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
+		toolPath(t, "ffmpeg"),
 		"-hide_banner", "-loglevel", "error", "-f", "lavfi",
 		"-i", "sine=frequency=1000:duration=1", "-c:a", "pcm_s16le", source,
 	)
@@ -31,7 +31,7 @@ func TestRunnerWritesMatroskaToPreopenedFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = file.Close() })
-	runner, err := NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_MKVMERGE"), 10*time.Second)
+	runner, err := NewRunner(toolPath(t, "mkvmerge"), 10*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func TestRunnerWritesMatroskaToPreopenedFile(t *testing.T) {
 	if err != nil || size <= 0 {
 		t.Fatalf("remux: size = %d, error = %v", size, err)
 	}
-	probe, err := ffprobe.NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"), 10*time.Second)
+	probe, err := ffprobe.NewRunner(toolPath(t, "ffprobe"), 10*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestRunnerWritesMatroskaToPreopenedFile(t *testing.T) {
 func TestRunnerRejectsBadOutputAndMedia(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
-	runner, err := NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_MKVMERGE"), 10*time.Second)
+	runner, err := NewRunner(toolPath(t, "mkvmerge"), 10*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestRunnerRejectsBadOutputAndMedia(t *testing.T) {
 
 func TestRunnerHonorsCancellation(t *testing.T) {
 	t.Parallel()
-	runner, err := NewRunner(requiredEnvironment(t, "RADARR_REPAIR_TEST_MKVMERGE"), time.Second)
+	runner, err := NewRunner(toolPath(t, "mkvmerge"), time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,11 +106,11 @@ func TestRunnerHonorsCancellation(t *testing.T) {
 	}
 }
 
-func requiredEnvironment(t *testing.T, name string) string {
+func toolPath(t *testing.T, name string) string {
 	t.Helper()
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("%s is not set", name)
+	value, err := exec.LookPath(name)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return value
 }

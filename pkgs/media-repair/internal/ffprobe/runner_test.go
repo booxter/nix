@@ -146,13 +146,9 @@ func TestRunnerRejectsMissingMediaFile(t *testing.T) {
 
 func makeMediaFixture(t *testing.T) string {
 	t.Helper()
-	ffmpeg := os.Getenv("RADARR_REPAIR_TEST_FFMPEG")
-	if ffmpeg == "" {
-		t.Fatal("RADARR_REPAIR_TEST_FFMPEG is not set")
-	}
 	mediaPath := filepath.Join(t.TempDir(), "fixture.mkv")
 	command := exec.Command(
-		ffmpeg,
+		"ffmpeg",
 		"-hide_banner",
 		"-loglevel", "error",
 		"-nostdin",
@@ -177,9 +173,9 @@ func makeMediaFixture(t *testing.T) string {
 
 func testRunner(t *testing.T, timeout time.Duration) *Runner {
 	t.Helper()
-	executable := os.Getenv("RADARR_REPAIR_TEST_FFPROBE")
-	if executable == "" {
-		t.Fatal("RADARR_REPAIR_TEST_FFPROBE is not set")
+	executable, err := exec.LookPath("ffprobe")
+	if err != nil {
+		t.Fatal(err)
 	}
 	runner, err := NewRunner(executable, timeout)
 	if err != nil {

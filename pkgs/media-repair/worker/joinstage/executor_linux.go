@@ -147,11 +147,12 @@ func (executor *Executor) Stage(
 		return Result{}, &Failure{Reason: workercontracts.StageJoinSourceSizeMismatch}
 	}
 
+	// Normalized parts and the joined output coexist until validation finishes.
 	artifact, err := executor.artifacts.CreateStaged(
 		execution.Specification.RootID,
 		execution.ArtifactID,
 		execution.Specification.OutputContainer,
-		execution.Specification.ExpectedSourceBytes,
+		2*execution.Specification.ExpectedSourceBytes,
 	)
 	if err != nil {
 		return Result{}, failureFor(err, mediajoin.Diagnostics{})

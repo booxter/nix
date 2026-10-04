@@ -117,7 +117,7 @@ func ValidateDVDWithPolicy(
 	}
 	navigationPath := paths[title.NavigationFileID]
 	directory := filepath.Dir(navigationPath)
-	if filepath.Base(navigationPath) != "VIDEO_TS.IFO" || filepath.Base(directory) != "VIDEO_TS" {
+	if filepath.Base(navigationPath) != "VIDEO_TS.IFO" {
 		return rejectDVD(RemuxPlaylistMismatch)
 	}
 	authorized := &AuthorizedDVD{

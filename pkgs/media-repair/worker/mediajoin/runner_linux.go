@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
+	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
+	"github.com/booxter/nix-config/media-repair/internal/joinverification"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
@@ -71,11 +73,16 @@ type Joiner interface {
 type Runner struct {
 	executable string
 	timeout    time.Duration
+	prober     PacketProber
+}
+
+type PacketProber interface {
+	Timeline(context.Context, *os.File) (ffprobe.Timeline, error)
 }
 
 var _ Joiner = (*Runner)(nil)
 
-func NewRunner(executable string, timeout time.Duration) (*Runner, error) {
+func NewRunner(executable string, timeout time.Duration, prober PacketProber) (*Runner, error) {
 	if executable == "" || strings.ContainsRune(executable, '\x00') ||
 		!filepath.IsAbs(executable) || filepath.Clean(executable) != executable {
 		return nil, fmt.Errorf("ffmpeg executable must be an absolute clean path")
@@ -83,7 +90,10 @@ func NewRunner(executable string, timeout time.Duration) (*Runner, error) {
 	if timeout <= 0 {
 		return nil, fmt.Errorf("media join timeout must be positive")
 	}
-	return &Runner{executable: executable, timeout: timeout}, nil
+	if prober == nil {
+		return nil, fmt.Errorf("packet timing probe is required")
+	}
+	return &Runner{executable: executable, timeout: timeout, prober: prober}, nil
 }
 
 // Join concatenates parts in the supplied order into an empty output file.
@@ -107,6 +117,21 @@ func (runner *Runner) Join(
 
 	joinContext, cancel := context.WithTimeout(ctx, runner.timeout)
 	defer cancel()
+
+	normalized, cleanup, err := runner.normalize(joinContext, parts, output, format)
+	if err != nil {
+		return Result{}, err
+	}
+	defer cleanup()
+
+	timelines := make([]ffprobe.Timeline, len(parts))
+	for index, part := range parts {
+		timelines[index], err = runner.prober.Timeline(joinContext, part)
+		if err != nil {
+			return Result{}, fmt.Errorf("read source part %d timing: %w", index+1, err)
+		}
+	}
+
 	manifest := concatManifest(len(parts))
 	outputDescriptor := firstInheritedDescriptor + len(parts)
 	arguments := []string{
@@ -131,7 +156,7 @@ func (runner *Runner) Join(
 	command.WaitDelay = commandWaitDelay
 	command.Stdin = strings.NewReader(manifest)
 	command.Stdout = io.Discard
-	command.ExtraFiles = append(append([]*os.File(nil), parts...), output)
+	command.ExtraFiles = append(append([]*os.File(nil), normalized...), output)
 	diagnosticOutput := commanddiagnostics.NewRecorder()
 	command.Stderr = diagnosticOutput
 	if err := command.Run(); err != nil {
@@ -167,6 +192,19 @@ func (runner *Runner) Join(
 		return Result{}, &Failure{
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics, cause: err,
 		}
+	}
+	joinedTimeline, err := runner.prober.Timeline(joinContext, output)
+	if err != nil {
+		return Result{}, fmt.Errorf("read joined packet timing: %w", err)
+	}
+	if err := joinverification.ValidateTimeline(timelines, joinedTimeline); err != nil {
+		return Result{}, &Failure{
+			Kind: FailureInvalidOutput, Diagnostics: diagnostics,
+			cause: fmt.Errorf("joined packet timing rejected: %w", err),
+		}
+	}
+	if _, err := output.Seek(0, io.SeekStart); err != nil {
+		return Result{}, err
 	}
 	return Result{SizeBytes: info.Size(), Diagnostics: diagnostics}, nil
 }
