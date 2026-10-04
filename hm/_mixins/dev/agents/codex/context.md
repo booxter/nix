@@ -24,6 +24,11 @@ without losing important functionality.
 Test behavior, not implementation details. Remove implementation-detail
 tests when encountered; never add them.
 
+Prove root causes; do not present assumptions as diagnoses. Trace the code,
+inspect available deployments and their actual versions, logs, and state,
+and reproduce the failure where practical. Keep digging until evidence
+establishes the cause; state explicitly what remains unproven.
+
 Use `apply_patch` for manual edits to tracked text files; do not rewrite them
 with scripts or shell redirects.
 
