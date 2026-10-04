@@ -12,22 +12,14 @@ import (
 
 func DecodeCase(data []byte) (RepairCaseV3, error) {
 	var repairCase RepairCaseV3
-	loadSchema, err := schemaForPayload(data, caseSchemaV2, caseSchemaV3)
-	if err != nil {
-		return RepairCaseV3{}, fmt.Errorf("invalid repair case: %w", err)
-	}
-	if err := validateAndDecode(data, loadSchema, &repairCase); err != nil {
+	if err := validateAndDecode(data, caseSchemaV3, &repairCase); err != nil {
 		return RepairCaseV3{}, fmt.Errorf("invalid repair case: %w", err)
 	}
 	return repairCase, nil
 }
 
 func DecodeDecision(data []byte) (RepairDecisionV3, error) {
-	loadSchema, err := schemaForPayload(data, decisionSchemaV2, decisionSchemaV3)
-	if err != nil {
-		return RepairDecisionV3{}, fmt.Errorf("invalid repair decision: %w", err)
-	}
-	schema, err := loadSchema()
+	schema, err := decisionSchemaV3()
 	if err != nil {
 		return RepairDecisionV3{}, err
 	}
@@ -77,25 +69,6 @@ func DecodeDecision(data []byte) (RepairDecisionV3, error) {
 		return RepairDecisionV3{Kind: ActionRemuxDVD, RemuxDVD: &decision}, nil
 	default:
 		return RepairDecisionV3{}, fmt.Errorf("unsupported repair decision action %q", envelope.Action)
-	}
-}
-
-type schemaLoader func() (*jsonschema.Schema, error)
-
-func schemaForPayload(data []byte, v2, v3 schemaLoader) (schemaLoader, error) {
-	var envelope struct {
-		SchemaVersion string `json:"schema_version"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
-		return nil, fmt.Errorf("decode schema version: %w", err)
-	}
-	switch envelope.SchemaVersion {
-	case string(RadarrRepairV2):
-		return v2, nil
-	case string(RadarrRepairV3):
-		return v3, nil
-	default:
-		return nil, fmt.Errorf("unsupported schema version %q", envelope.SchemaVersion)
 	}
 }
 

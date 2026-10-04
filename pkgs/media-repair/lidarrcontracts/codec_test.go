@@ -21,27 +21,6 @@ func TestCaseRoundTrip(t *testing.T) {
 	}
 }
 
-func TestLegacyCaseRoundTrip(t *testing.T) {
-	repairCase := testCase(t)
-	repairCase.SchemaVersion = LidarrRepairV2
-	caseID, err := CalculateCaseID(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	repairCase.CaseID = caseID
-	encoded, err := EncodeCase(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	decoded, err := DecodeCase(encoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if decoded.SchemaVersion != LidarrRepairV2 || decoded.CaseID != caseID {
-		t.Fatalf("unexpected legacy case: %#v", decoded)
-	}
-}
-
 func TestCaseIDIgnoresObservationTime(t *testing.T) {
 	first := testCase(t)
 	second := first
@@ -69,7 +48,7 @@ func TestDecodeCaseRejectsIdentityMismatch(t *testing.T) {
 
 func TestDecisionRoundTrip(t *testing.T) {
 	repairCase := testCase(t)
-	decision := testDecision(repairCase, SchemaVersion)
+	decision := testDecision(repairCase)
 	encoded, err := EncodeDecision(decision)
 	if err != nil {
 		t.Fatal(err)
@@ -83,33 +62,11 @@ func TestDecisionRoundTrip(t *testing.T) {
 	}
 }
 
-func TestLegacyDecisionRoundTrip(t *testing.T) {
-	repairCase := testCase(t)
-	repairCase.SchemaVersion = LidarrRepairV2
-	caseID, err := CalculateCaseID(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	repairCase.CaseID = caseID
-	decision := testDecision(repairCase, LidarrRepairV2)
-	encoded, err := EncodeDecision(decision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	decoded, err := DecodeDecision(encoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if decoded.ImportMissingTracks.SchemaVersion != LidarrRepairV2 || decoded.CaseID() != caseID {
-		t.Fatalf("unexpected legacy decision: %#v", decoded)
-	}
-}
-
-func testDecision(repairCase Case, schemaVersion string) Decision {
+func testDecision(repairCase Case) Decision {
 	return Decision{
 		Kind: ActionImportMissingTracks,
 		ImportMissingTracks: &ImportMissingTracksDecision{
-			SchemaVersion: schemaVersion, CaseID: repairCase.CaseID,
+			SchemaVersion: SchemaVersion, CaseID: repairCase.CaseID,
 			Action: string(ActionImportMissingTracks), CapabilityID: "capability:one",
 			AlbumID: 3, ReleaseID: 4,
 			Mappings:     []TrackMapping{{ArtifactID: "artifact:one", TrackID: 5}},

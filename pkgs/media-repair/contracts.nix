@@ -10,10 +10,7 @@ stdenvNoCC.mkDerivation {
   src = lib.fileset.toSource {
     root = ./.;
     fileset = lib.fileset.unions [
-      ./contracts/v1
-      ./contracts/v2
       ./contracts/v3
-      ./lidarrcontracts/v2
       ./lidarrcontracts/v3
       ./contract-tests
       ./worker/contracts/v1
@@ -32,14 +29,8 @@ stdenvNoCC.mkDerivation {
 
     worker_schema_base="file://$PWD/worker/contracts/v1"
 
-    check-jsonschema --check-metaschema contracts/v1/repair-case.schema.json
-    check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
-    check-jsonschema --check-metaschema contracts/v2/repair-case.schema.json
-    check-jsonschema --check-metaschema contracts/v2/repair-decision.schema.json
     check-jsonschema --check-metaschema contracts/v3/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v3/repair-decision.schema.json
-    check-jsonschema --check-metaschema lidarrcontracts/v2/repair-case.schema.json
-    check-jsonschema --check-metaschema lidarrcontracts/v2/repair-decision.schema.json
     check-jsonschema --check-metaschema lidarrcontracts/v3/repair-case.schema.json
     check-jsonschema --check-metaschema lidarrcontracts/v3/repair-decision.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
@@ -57,18 +48,6 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/wire-types.schema.json
 
-    check-jsonschema \
-      --schemafile contracts/v1/repair-case.schema.json \
-      contracts/v1/examples/repair-case-*.json
-    check-jsonschema \
-      --schemafile contracts/v1/repair-decision.schema.json \
-      contracts/v1/examples/repair-decision-*.json
-    check-jsonschema \
-      --schemafile contracts/v2/repair-case.schema.json \
-      contracts/v2/examples/repair-case-*.json
-    check-jsonschema \
-      --schemafile contracts/v2/repair-decision.schema.json \
-      contracts/v2/examples/repair-decision-*.json
     check-jsonschema \
       --schemafile contracts/v3/repair-case.schema.json \
       contracts/v3/examples/repair-case-*.json
@@ -143,18 +122,6 @@ stdenvNoCC.mkDerivation {
       fi
     }
 
-    for fixture in contract-tests/v1/decision-*.json; do
-      expect_invalid contracts/v1/repair-decision.schema.json "$fixture"
-    done
-    expect_invalid \
-      contracts/v1/repair-case.schema.json \
-      contract-tests/v1/request-unknown-field.json
-    for fixture in contract-tests/v2/decision-*.json; do
-      expect_invalid contracts/v2/repair-decision.schema.json "$fixture"
-    done
-    for fixture in contract-tests/v2/request-*.json; do
-      expect_invalid contracts/v2/repair-case.schema.json "$fixture"
-    done
     for fixture in contract-tests/v3/decision-*.json; do
       expect_invalid contracts/v3/repair-decision.schema.json "$fixture"
     done
@@ -181,15 +148,10 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
 
     mkdir -p "$out/share/radarr-repair/contracts"
-    cp -R contracts/v1 "$out/share/radarr-repair/contracts/"
-    cp -R contracts/v2 "$out/share/radarr-repair/contracts/"
     cp -R contracts/v3 "$out/share/radarr-repair/contracts/"
     mkdir -p "$out/share/lidarr-repair/contracts"
-    cp -R lidarrcontracts/v2 "$out/share/lidarr-repair/contracts/"
     cp -R lidarrcontracts/v3 "$out/share/lidarr-repair/contracts/"
     mkdir -p "$out/share/radarr-repair/contract-tests"
-    cp -R contract-tests/v1 "$out/share/radarr-repair/contract-tests/"
-    cp -R contract-tests/v2 "$out/share/radarr-repair/contract-tests/"
     cp -R contract-tests/v3 "$out/share/radarr-repair/contract-tests/"
     mkdir -p "$out/share/media-repair/worker-contracts"
     cp -R worker/contracts/v1 "$out/share/media-repair/worker-contracts/"
@@ -198,7 +160,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "Versioned wire contracts for media repair services";
+    description = "Wire contracts for media repair services";
     license = lib.licenses.mit;
     platforms = lib.platforms.unix;
   };

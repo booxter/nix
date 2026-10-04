@@ -17,8 +17,8 @@ from media_repair_planner.contracts import (
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"])
 VALID_CASES = sorted((FIXTURES / "contracts/v3/examples").glob("repair-case-*.json"))
 VALID_DECISIONS = sorted((FIXTURES / "contracts/v3/examples").glob("repair-decision-*.json"))
-INVALID_CASES = sorted((FIXTURES / "contract-tests/v1").glob("request-*.json"))
-INVALID_DECISIONS = sorted((FIXTURES / "contract-tests/v1").glob("decision-*.json"))
+INVALID_CASES = sorted((FIXTURES / "contract-tests/v3").glob("request-*.json"))
+INVALID_DECISIONS = sorted((FIXTURES / "contract-tests/v3").glob("decision-*.json"))
 
 
 def test_shared_fixture_sets_are_present() -> None:

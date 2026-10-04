@@ -4,7 +4,7 @@ The controller supplies the planner with the selected Lidarr album and its
 releases and tracks, content-derived evidence for every materialized audio
 artifact, and Lidarr's own manual-import assessment of those artifacts.
 
-The only repair action in version 3 maps distinct offered artifacts to one or
+The repair action maps distinct offered artifacts to one or
 more tracks currently missing from one Lidarr release. A decision may leave
 other missing tracks unresolved. Existing tracks are outside the capability
 and cannot be replaced. Paths, download IDs, import quality, commands, and
