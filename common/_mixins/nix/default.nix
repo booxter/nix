@@ -43,6 +43,31 @@ let
           url = "https://github.com/NixOS/nix/commit/20e5b8e84cfa0718323f6d93eabd86a73ff86cc8.patch";
           hash = "sha256-K6ATPUbVP2JPsqsgshSuiBqYthZurx7imxjFyH2rcEk=";
         })
+        # Keep remote build inputs rooted before checking or copying them.
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/b104a21b59e1b4621196ca72fdab935308037432.patch";
+          hash = "sha256-LXmF5B87gkvdr1GHJvyuNribazImMwfC+HyUgeCRc6U=";
+        })
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/d4c237e7216eea15fef6b8339889dbe7a0e1ad54.patch";
+          hash = "sha256-Ef1Aj3Wrm8JttWfPzRpGjeC6t/uue5oX0rAiSCjlCZk=";
+        })
+        # Batch root registration to avoid a round trip for every input.
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/011dcfe3f32552eccc5511cab52bf215f023e631.patch";
+          hash = "sha256-wolYYtJ8t028aWKYR5ipk4mHopzcmPIEh9xp4SZrJQQ=";
+          excludes = [ "src/libstore/remote-store.cc" ];
+        })
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/9b1503fdeb4fb075c93aaf114343c1daf9d5f4bd.patch";
+          hash = "sha256-qdPnH8yYTeb2Dn8eF165Gib6QvfjAqqYSf17KzF7SE4=";
+          excludes = [
+            "src/libstore/remote-store.cc"
+            "src/libstore/include/nix/store/worker-protocol.hh"
+          ];
+        })
+        # Adapt the excluded files to 2.35.2, retaining the older-daemon fallback.
+        ../../../patches/nix-remote-temp-roots-2.35.patch
       ];
 in
 {
