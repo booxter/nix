@@ -2,7 +2,7 @@ diff --git a/shelfmark/download/orchestrator.py b/shelfmark/download/orchestrato
 index 1dba345..78d1e35 100644
 --- a/shelfmark/download/orchestrator.py
 +++ b/shelfmark/download/orchestrator.py
-@@ -860,6 +860,16 @@ def retry_download(book_id: str) -> tuple[bool, str | None]:
+@@ -860,6 +860,22 @@ def retry_download(book_id: str) -> tuple[bool, str | None]:
      return True, None
  
  
@@ -12,14 +12,20 @@ index 1dba345..78d1e35 100644
 +    if task is None:
 +        return False
 +
-+    protocol = (task.retry_download_protocol or "").strip().lower()
++    # Prowlarr re-resolves releases on retry, so its retry protocol can be empty.
++    # Once handed off, the external-client binding records the actual protocol.
++    protocol = (
++        task.external_download_protocol
++        or task.retry_download_protocol
++        or ""
++    ).strip().lower()
 +    return protocol == "torrent"
 +
 +
  def set_book_priority(book_id: str, priority: int) -> bool:
      """Set priority for a queued book (lower = higher priority)."""
      return book_queue.set_priority(book_id, priority)
-@@ -1161,9 +1171,12 @@ def concurrent_download_loop() -> None:
+@@ -1161,9 +1177,12 @@ def concurrent_download_loop() -> None:
                  # Check for stalled downloads (no activity in STALL_TIMEOUT seconds)
                  current_time = time.time()
 +                # Torrent clients can legitimately sit in stable queued/checking states for
