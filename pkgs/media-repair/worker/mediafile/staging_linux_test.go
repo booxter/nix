@@ -370,6 +370,35 @@ func TestPublishCompletedAtPlacesBluRayOutputBesideBDMV(t *testing.T) {
 	}
 }
 
+func TestPublishCompletedRecoversReadableStagedArtifact(t *testing.T) {
+	t.Parallel()
+	rootPath := t.TempDir()
+	if err := os.Mkdir(filepath.Join(rootPath, "Movie"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	rootSet := testRootSet(t, rootPath)
+	fingerprint := retainTestArtifact(
+		t, rootSet, "artifact:readable", workercontracts.OutputContainerMKV, "remuxed media",
+	)
+	stagedPath := filepath.Join(rootPath, workspaceDirectoryName, stagedDirectoryName,
+		stagedName("artifact:readable", ".mkv"))
+	if err := os.Chmod(stagedPath, 0o640); err != nil {
+		t.Fatal(err)
+	}
+
+	location, err := rootSet.PublishCompletedAt(
+		"downloads", "artifact:readable", workercontracts.OutputContainerMKV,
+		fingerprint, []string{"Movie"},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(rootPath, filepath.Join(location...)))
+	if err != nil || info.Mode().Perm() != 0o640 {
+		t.Fatalf("published file = %#v, error = %v", info, err)
+	}
+}
+
 func TestPublishCompletedPreservesAVIExtension(t *testing.T) {
 	t.Parallel()
 
