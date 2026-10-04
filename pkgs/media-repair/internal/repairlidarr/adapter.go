@@ -70,10 +70,16 @@ func (adapter *Adapter) findQueue(ctx context.Context, job jobs.Job) (lidarr.Que
 		return lidarr.QueueRecord{}, err
 	}
 
-	for _, entry := range queue {
-		if entry.ID == job.QueueID && entry.DownloadID == job.DownloadID {
-			return entry, nil
-		}
+	keys := make([]jobs.QueueKey, len(queue))
+	for index, entry := range queue {
+		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
+	}
+	index, err := jobs.MatchQueue(job.QueueKey(), keys)
+	if err != nil {
+		return lidarr.QueueRecord{}, &repair.BlockedError{Reason: err.Error()}
+	}
+	if index >= 0 {
+		return queue[index], nil
 	}
 
 	return lidarr.QueueRecord{}, &repair.BlockedError{Reason: "queue item disappeared or changed download identity"}

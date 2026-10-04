@@ -95,7 +95,22 @@ func (adapter *Adapter) authorize(
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
 
-	fresh, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: job.QueueID})
+	entries, err := adapter.Client.ReadQueue(ctx)
+	if err != nil {
+		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
+	}
+	keys := make([]jobs.QueueKey, len(entries))
+	for index, entry := range entries {
+		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
+	}
+	index, err := jobs.MatchQueue(job.QueueKey(), keys)
+	if err != nil {
+		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: err.Error()}
+	}
+	if index < 0 {
+		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: "download is no longer queued"}
+	}
+	fresh, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entries[index].ID})
 	if err != nil {
 		return fresh, executioncheck.Authorization{}, err
 	}

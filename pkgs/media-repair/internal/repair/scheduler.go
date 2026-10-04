@@ -92,6 +92,11 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Rebind changing queue IDs before observations look up existing jobs.
+	if err := scheduler.Store.ReconcileQueue(ctx, scheduler.Name, observed.Queue, scheduler.Now()); err != nil {
+		return err
+	}
 	for _, job := range observed.Jobs {
 		job.Service = scheduler.Name
 		job.UpdatedAt = scheduler.Now().UTC()
@@ -103,8 +108,7 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 		return err
 	}
 
-	// Only a successful complete queue read can prove that an item vanished.
-	return scheduler.Store.ReconcileQueue(ctx, scheduler.Name, observed.Queue, scheduler.Now())
+	return nil
 }
 
 func (scheduler *Scheduler) advance(ctx context.Context) error {

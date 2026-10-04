@@ -17,9 +17,9 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 		return repair.Observation{}, err
 	}
 
-	stored := make(map[jobs.QueueKey]jobs.Job, len(previous))
-	for _, job := range previous {
-		stored[jobs.QueueKey{QueueID: job.QueueID, DownloadID: job.DownloadID}] = job
+	stored := make([]jobs.QueueKey, len(previous))
+	for index, job := range previous {
+		stored[index] = job.QueueKey()
 	}
 
 	observed := repair.Observation{}
@@ -34,7 +34,14 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 		key := jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
 		observed.Queue = append(observed.Queue, key)
 		job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
-		prior := stored[key]
+		index, err := jobs.MatchQueue(key, stored)
+		if err != nil {
+			return repair.Observation{}, err
+		}
+		var prior jobs.Job
+		if index >= 0 {
+			prior = previous[index]
+		}
 		if prior.State == jobs.Running || prior.State == jobs.Importing || prior.State == jobs.Imported {
 			observed.Jobs = append(observed.Jobs, job)
 			continue

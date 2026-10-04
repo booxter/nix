@@ -112,25 +112,46 @@ func (store *Store) StartRemoval(ctx context.Context, id int64, at time.Time) (J
 	return job, err
 }
 
-type QueueKey struct {
-	QueueID    int64
-	DownloadID string
-}
-
 func (store *Store) ReconcileQueue(ctx context.Context, service Service, present []QueueKey, at time.Time) error {
-	seen := make(map[QueueKey]bool, len(present))
-	for _, key := range present {
-		seen[key] = true
-	}
-
 	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var jobs []Job
-		if err := tx.Where(&Job{Service: service, InQueue: true}).Find(&jobs).Error; err != nil {
+		if err := tx.Where(&Job{Service: service}).Find(&jobs).Error; err != nil {
 			return err
 		}
+		previous := make([]QueueKey, len(jobs))
+		for index, job := range jobs {
+			previous[index] = job.QueueKey()
+		}
 
-		for _, job := range jobs {
-			if seen[QueueKey{QueueID: job.QueueID, DownloadID: job.DownloadID}] {
+		for index, job := range jobs {
+			matched, err := MatchQueue(job.QueueKey(), present)
+			if err != nil {
+				return err
+			}
+			if matched >= 0 {
+				// Matching in both directions prevents merging two album jobs.
+				owner, err := MatchQueue(present[matched], previous)
+				if err != nil {
+					return err
+				}
+				if owner != index {
+					continue
+				}
+				if job.QueueID == present[matched].QueueID && job.InQueue && job.State != Removed {
+					continue
+				}
+				job.QueueID = present[matched].QueueID
+				job.InQueue = true
+				if job.State == Removed {
+					job.State = Blocked
+					job.Reason = "queue entry is present again"
+				}
+				if err := tx.Save(&job).Error; err != nil {
+					return err
+				}
+				continue
+			}
+			if !job.InQueue {
 				continue
 			}
 

@@ -19,17 +19,19 @@ func RemoveTracking(ctx context.Context, client QueueRemover, job jobs.Job) erro
 		return err
 	}
 
-	var selected *queuefinalize.Entry
-	for _, entry := range entries {
-		if entry.QueueID == job.QueueID {
-			selected = &entry
-			break
-		}
+	keys := make([]jobs.QueueKey, len(entries))
+	for index, entry := range entries {
+		keys[index] = jobs.QueueKey{QueueID: entry.QueueID, DownloadID: entry.DownloadID}
 	}
-	if selected == nil {
+	index, err := jobs.MatchQueue(job.QueueKey(), keys)
+	if err != nil {
+		return err
+	}
+	if index < 0 {
 		return nil
 	}
-	if selected.DownloadID != job.DownloadID || !selected.Eligible() {
+	selected := entries[index]
+	if !selected.Eligible() {
 		return fmt.Errorf("queue identity or completion status changed; removal not performed")
 	}
 
@@ -42,7 +44,7 @@ func RemoveTracking(ctx context.Context, client QueueRemover, job jobs.Job) erro
 		return err
 	}
 	for _, entry := range remaining {
-		if entry.QueueID == job.QueueID && entry.DownloadID == job.DownloadID {
+		if entry.DownloadID == job.DownloadID {
 			return fmt.Errorf("queue removal accepted but the item is still present")
 		}
 	}
