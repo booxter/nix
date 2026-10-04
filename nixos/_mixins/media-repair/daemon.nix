@@ -106,9 +106,9 @@ in
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.repairr} --config ${configFile}";
         User = serviceUser;
-        Group = "repairr";
+        Group = "media";
         SupplementaryGroups = [
-          "media"
+          "repairr"
           cfg.planner.clientGroup
         ];
         StateDirectory = "repairr";
