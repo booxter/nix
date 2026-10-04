@@ -222,7 +222,10 @@ func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transf
 		return mediaoperation.Output{}, err
 	}
 
-	directory := spec.Navigation.PathComponents[:len(spec.Navigation.PathComponents)-2]
+	directory := spec.Navigation.PathComponents[:len(spec.Navigation.PathComponents)-1]
+	if len(directory) > 0 && directory[len(directory)-1] == "VIDEO_TS" {
+		directory = directory[:len(directory)-1]
+	}
 	published, err := worker.Files.PublishCompletedAt(root, result.ArtifactID, workercontracts.OutputContainerMKV, result.Fingerprint, directory)
 	if err != nil {
 		return mediaoperation.Output{}, err

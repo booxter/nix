@@ -21,7 +21,8 @@ func TestValidateDVDOutputAllowsCanaryTimestampTail(t *testing.T) {
 		},
 		Chapters: make([]controller.ProbeChapter, 12),
 	}
-	evidence.Chapters[11].EndTimeMS = pointer(titleDuration)
+	// DVD chapter metadata may end before the final unchaptered title tail.
+	evidence.Chapters[11].EndTimeMS = pointer(titleDuration - 104_000)
 	if err := ValidateDVDOutput(titleDuration, 12, tracks, evidence); err != nil {
 		t.Fatalf("valid DVD output rejected: %v", err)
 	}
