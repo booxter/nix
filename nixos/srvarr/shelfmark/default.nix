@@ -33,6 +33,8 @@
   };
 
   services.shelfmark.environment = {
+    # Torrent monitoring holds worker slots while waiting for peers or progress.
+    MAX_CONCURRENT_DOWNLOADS = "100";
     # Keep multi-file ebook releases as separate Audiobookshelf items.
     FILE_ORGANIZATION = "rename";
     # The torrent and book directories are separate sandbox mounts.
