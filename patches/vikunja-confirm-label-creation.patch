@@ -2,7 +2,7 @@ diff --git a/src/components/input/Multiselect.test.ts b/src/components/input/Mul
 index 3b3bb59be..7204856aa 100644
 --- a/src/components/input/Multiselect.test.ts
 +++ b/src/components/input/Multiselect.test.ts
-@@ -171,3 +171,83 @@ describe('Multiselect.vue — creation-disabled hint', () => {
+@@ -337,6 +337,86 @@ describe('Multiselect.vue — creation-disabled hint', () => {
  		wrapper.unmount()
  	})
  })
@@ -86,20 +86,23 @@ index 3b3bb59be..7204856aa 100644
 +		expect(wrapper.emitted('create')?.[0]).toEqual(['new label'])
 +	})
 +})
+ 
+ describe('Multiselect.vue — capped results hint', () => {
+ 	beforeEach(() => {
 diff --git a/src/components/input/Multiselect.vue b/src/components/input/Multiselect.vue
 index ba5ea4a86..6171d4c3e 100644
 --- a/src/components/input/Multiselect.vue
 +++ b/src/components/input/Multiselect.vue
-@@ -145,7 +145,7 @@
+@@ -166,7 +166,7 @@
  </template>
  
  <script setup lang="ts" generic="T extends Record<string, unknown>">
--import {computed, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance} from 'vue'
-+import {computed, nextTick, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance} from 'vue'
+-import {computed, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance, type Ref} from 'vue'
++import {computed, nextTick, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance, type Ref} from 'vue'
  import {useI18n} from 'vue-i18n'
  
  import {closeWhenClickedOutside} from '@/helpers/closeWhenClickedOutside'
-@@ -169,6 +169,8 @@ const props = withDefaults(defineProps<{
+@@ -193,6 +193,8 @@ const props = withDefaults(defineProps<{
  	name?: string
  	/** If true, will provide an 'add this as a new value' entry which  fires an @create event when clicking on it. */
  	creatable?: boolean
@@ -108,7 +111,7 @@ index ba5ea4a86..6171d4c3e 100644
  	/** When set and `creatable` is false, shows a non-interactive hint row explaining why a non-matching query can't be added. */
  	creationDisabledMessage?: string
  	/** The text shown next to the new value option. */
-@@ -195,6 +197,7 @@ const props = withDefaults(defineProps<{
+@@ -223,6 +225,7 @@ const props = withDefaults(defineProps<{
  	searchResults: () => [] as T[],
  	label: '',
  	creatable: false,
@@ -116,7 +119,7 @@ index ba5ea4a86..6171d4c3e 100644
  	creationDisabledMessage: '',
  	createPlaceholder: () => useI18n().t('input.multiselect.createPlaceholder'),
  	selectPlaceholder: () => useI18n().t('input.multiselect.selectPlaceholder'),
-@@ -517,12 +520,32 @@ function create() {
+@@ -532,13 +535,33 @@ function create() {
  	closeSearchResults()
  	refocusInput()
  }
@@ -150,6 +153,7 @@ index ba5ea4a86..6171d4c3e 100644
  	if (!creatableAvailable.value && searchResults.value.length === 1) {
  		select(searchResults.value[0])
  		return
+ 	}
 diff --git a/src/components/tasks/partials/EditLabels.vue b/src/components/tasks/partials/EditLabels.vue
 index 0b261cfb0..b254153d8 100644
 --- a/src/components/tasks/partials/EditLabels.vue
