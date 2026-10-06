@@ -32,8 +32,11 @@ establishes the cause; state explicitly what remains unproven.
 Use `apply_patch` for manual edits to tracked text files; do not rewrite them
 with scripts or shell redirects.
 
-Split distinct changes into logical commits. Keep messages brief and useful
-without stating the obvious. Include historical context when it explains why.
+Commit completed logical steps as you implement features. Do not accumulate
+large uncommitted changes unless the user explicitly asks for a proof of
+concept. Split distinct changes into logical commits. Keep messages brief
+and useful without stating the obvious. Include historical context when it
+explains why.
 Follow repo existing commit message style. Never bypass commit-message
 validation with `--no-verify` or disable commit message hook.
 
