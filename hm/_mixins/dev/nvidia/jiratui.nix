@@ -1,20 +1,41 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
   yamlFormat = pkgs.formats.yaml { };
   tokenFile = "${config.xdg.configHome}/jiratui/api-token";
+  repositoriesSecret = osConfig.sops.secrets.jiratuiGitRepositories or null;
   # TODO: use SOPS rendering if work secrets move to SOPS.
   jiratui = pkgs.writeShellApplication {
     name = "jiratui";
+    runtimeInputs = lib.optionals (repositoriesSecret != null) [ pkgs.jq ];
     text = ''
       if [ -s ${lib.escapeShellArg tokenFile} ]; then
         JIRA_API_TOKEN="$(< ${lib.escapeShellArg tokenFile})"
         export JIRA_API_TOKEN
       fi
+      ${lib.optionalString (repositoriesSecret != null) ''
+        # JiraTUI requires an ID-keyed JSON object with names and repository paths.
+        # Keep the SOPS value as a newline-separated path list instead.
+        GIT_REPOSITORIES="$(jq -R -s -c '
+          split("\n")
+          | map(select(length > 0))
+          | to_entries
+          | map({
+              key: (.key + 1 | tostring),
+              value: {
+                name: (.value | rtrimstr("/") | split("/") | last),
+                path: .value
+              }
+            })
+          | from_entries
+        ' < ${lib.escapeShellArg repositoriesSecret.path})"
+        export GIT_REPOSITORIES
+      ''}
       exec ${lib.getExe pkgs.jiratui} "$@"
     '';
   };
