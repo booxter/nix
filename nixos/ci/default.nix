@@ -40,6 +40,11 @@ in
     extraLabels = [ "nix-ci" ];
     noDefaultLabels = true;
     replace = true;
+    serviceOverrides = {
+      # Deleted registrations exit with 1; restart to register again after GitHub cleanup.
+      RestartForceExitStatus = [ 1 ];
+      RestartSec = "5s";
+    };
     extraPackages = with pkgs; [
       findutils
       gawk
