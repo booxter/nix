@@ -51,6 +51,10 @@ in
     extraLabels = [ "nix-ci-darwin" ];
     noDefaultLabels = true;
     replace = true;
+    serviceOverrides = {
+      # Restart after deleted-registration errors so ephemeral startup registers again.
+      KeepAlive = lib.mkForce true;
+    };
     extraPackages = with pkgs; [
       findutils
       gawk
