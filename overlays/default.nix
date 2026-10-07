@@ -29,12 +29,7 @@
         chatgpt
         ;
 
-      codex = pkgsNixpkgsUnstable.codex.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # https://github.com/openai/codex/issues/47390
-          ../patches/codex-show-full-patches.patch
-        ];
-      });
+      codex = pkgsNixpkgsUnstable.callPackage ./codex { };
 
       jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
         version = "1.16.0";
