@@ -29,8 +29,12 @@ inspect available deployments and their actual versions, logs, and state,
 and reproduce the failure where practical. Keep digging until evidence
 establishes the cause; state explicitly what remains unproven.
 
-Use `apply_patch` for manual edits to tracked text files; do not rewrite them
-with scripts or shell redirects.
+Use the native `apply_patch` tool for manual text-file edits so changes appear
+as reviewable diffs in the UI. Do not invoke `apply_patch` through the shell
+or edit files with Python, Perl, `sed -i`, shell redirects, or similar scripted
+rewrites. Run validation commands in separate tool calls. This restriction
+applies to manual edits; use normal formatters, code generators, and lock-file
+update tools when needed.
 
 Commit completed logical steps as you implement features. Do not accumulate
 large uncommitted changes unless the user explicitly asks for a proof of
