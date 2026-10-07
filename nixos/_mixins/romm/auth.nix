@@ -6,7 +6,7 @@
 let
   model = rommModel;
   inherit (model) cfg ssoApplication;
-  restartUnits = [ "romm-setup.service" ] ++ model.units.containers;
+  restartUnits = model.units.runtime;
 in
 {
   config = lib.mkIf (cfg != null && model.registrationReady) {

@@ -9,17 +9,12 @@ description = "Host integration tools for the RomM service"
 requires-python = ">=3.13"
 dependencies = [
   "mariadb",
-  "podman",
   "pydantic",
-  "python-dotenv",
-  "requests",
   "sqlalchemy",
 ]
 
 [project.scripts]
 romm-db-init = "romm_tools.database:main"
-romm-prepare-assets = "romm_tools.assets:main"
-romm-run-setup = "romm_tools.setup:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
