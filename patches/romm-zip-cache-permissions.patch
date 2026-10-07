@@ -1,0 +1,12 @@
+diff --git a/backend/utils/zip_cache.py b/backend/utils/zip_cache.py
+--- a/backend/utils/zip_cache.py
++++ b/backend/utils/zip_cache.py
+@@ -144,6 +144,8 @@
+             if m3u_content is not None and m3u_filename is not None:
+                 zf.writestr(m3u_filename, m3u_content)
+ 
++        # The host nginx worker reads downloads through the shared media group.
++        os.chmod(tmp_path, 0o640)
+         os.rename(tmp_path, target)
+     except BaseException:
+         if os.path.exists(tmp_path):

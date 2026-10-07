@@ -9,9 +9,8 @@ let
   inherit (model) cfg oidcClient;
   restartUnits = [
     "romm-db-init.service"
-    "romm-setup.service"
   ]
-  ++ model.units.containers;
+  ++ model.units.runtime;
 in
 {
   config = lib.mkIf (cfg != null && model.ready) {

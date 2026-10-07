@@ -4,18 +4,12 @@
 }:
 let
   absolutePath = lib.types.strMatching "^/.*";
-  imagePin = import ./image-pin.nix;
 in
 {
   options.host.romm = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
         options = {
-          container = import ../../_lib/oci-image-options.nix {
-            inherit lib;
-            pin = imagePin;
-          };
-
           publicHostName = lib.mkOption {
             type = lib.types.nonEmptyStr;
             description = "Public hostname published for RomM.";

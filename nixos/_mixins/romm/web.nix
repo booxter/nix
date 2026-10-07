@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   rommModel,
@@ -6,7 +7,8 @@
 }:
 let
   model = rommModel;
-  inherit (model) cfg state;
+  inherit (model) cfg;
+  package = config.services.romm.package;
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -15,18 +17,13 @@ in
       internal.path = "/api";
     };
 
-    systemd.services.nginx = lib.mkIf model.ready {
-      wants = [ "romm-web-assets.service" ];
-      after = [ "romm-web-assets.service" ];
-    };
-
     services.nginx = lib.mkIf model.ready {
       additionalModules = with pkgs.nginxModules; [
         njs
         zip
       ];
       commonHttpConfig = ''
-        js_import ${state.nginxDir}/decode.js;
+        js_import ${package}/share/romm/decode.js;
 
         map $request_uri $romm_coep_header {
             default "";
@@ -48,7 +45,7 @@ in
         }
       '';
       virtualHosts."internal-https-romm" = {
-        root = state.webDir;
+        root = "${package.frontend}";
         locations = {
           "/" = {
             tryFiles = "$uri $uri/ /index.html";

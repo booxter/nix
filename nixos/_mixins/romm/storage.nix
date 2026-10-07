@@ -32,7 +32,7 @@ in
         // {
           ${model.storageRelativePath}.owner = model.user;
         };
-      attachments.romm-setup = { };
+      attachments = lib.genAttrs [ "romm" "romm-worker" "romm-scheduler" "romm-watcher" ] (_: { });
     };
   };
 }

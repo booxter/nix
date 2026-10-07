@@ -27,10 +27,6 @@ let
       lib.filterAttrs (
         _: person: builtins.elem ssoApplication.roles.admin person.groups
       ) config.host.sso.users;
-  containerImage = import ../../_lib/oci-image.nix {
-    image = cfg.container;
-    inherit pkgs;
-  };
   service = config.host.web.services.romm;
   oidcClient = config.host.sso.oidc.clients.romm or null;
   publicUrl = service.public.url;
@@ -42,22 +38,12 @@ let
   basePath = if claim == null then null else "${claim.mountPoint}/${storageRelativePath}";
   state = {
     inherit (cfg) stateDir;
-    webDir = "${cfg.stateDir}/web";
-    nginxDir = "${cfg.stateDir}/nginx";
-    integrationDir = "${cfg.stateDir}/integration";
-    zipCacheModule = "${cfg.stateDir}/integration/utils/zip_cache.py";
     valkeyDir = "${cfg.stateDir}/valkey";
   };
-  image = containerImage.ref;
-  inherit (containerImage) imageFile;
   uid = if identity == null then null else identity.uid;
-  podmanSocket =
-    if uid == null then null else "http+unix:///run/user/${toString uid}/podman/podman.sock";
   commonEnvironment = {
-    PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
     PYTHONDONTWRITEBYTECODE = "1";
     PYTHONUNBUFFERED = "1";
-    PYTHONPATH = "/backend";
     ROMM_BASE_URL = publicUrl;
     ROMM_SESSION_SECURE_COOKIE = "true";
     DB_HOST = "localhost";
@@ -65,8 +51,8 @@ let
     DB_QUERY_JSON = builtins.toJSON {
       unix_socket = "/run/mysqld/mysqld.sock";
     };
-    REDIS_HOST = "10.0.2.2";
-    REDIS_PORT = toString cachePort;
+    ROMM_DB_DRIVER = "mariadb";
+    WEB_SERVER_CONCURRENCY = "1";
     ENABLE_RESCAN_ON_FILESYSTEM_CHANGE = "true";
     LAUNCHBOX_API_ENABLED = "true";
     ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
@@ -85,27 +71,6 @@ let
     OIDC_ROLE_VIEWER = ssoApplication.roles.viewer;
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
-  containerMounts =
-    if basePath == null then
-      [ ]
-    else
-      [
-        {
-          source = basePath;
-          target = "/romm";
-          readOnly = false;
-        }
-        {
-          source = "/run/mysqld";
-          target = "/run/mysqld";
-          readOnly = true;
-        }
-        {
-          source = state.zipCacheModule;
-          target = "/backend/utils/zip_cache.py";
-          readOnly = true;
-        }
-      ];
   registrationReady =
     claim != null
     && storageGroup != null
@@ -117,32 +82,23 @@ let
     && ssoApplication.bootstrapOwner != null;
   ready = registrationReady && oidcClient != null;
   units = {
-    containers = [
-      "podman-romm-api.service"
-      "podman-romm-scheduler.service"
-      "podman-romm-worker.service"
-      "podman-romm-watcher.service"
-    ];
-    user = [
-      "user-runtime-dir@${toString uid}.service"
-      "user@${toString uid}.service"
+    runtime = [
+      "romm.service"
+      "romm-scheduler.service"
+      "romm-worker.service"
+      "romm-watcher.service"
     ];
     tmpfiles = [
       "systemd-tmpfiles-setup.service"
       "systemd-tmpfiles-resetup.service"
     ];
     setupBefore = [
-      "romm-web-assets.service"
       "mysql.service"
       "romm-db-init.service"
       "romm-valkey.service"
       "sops-install-secrets.service"
       "romm-backup.service"
     ];
-  };
-  runtimeEnvironment = {
-    HOME = cfg.stateDir;
-    XDG_RUNTIME_DIR = "/run/user/${toString uid}";
   };
 in
 {
@@ -155,18 +111,13 @@ in
     cfg
     claim
     commonEnvironment
-    containerMounts
     databaseName
     groupsFor
-    image
-    imageFile
     identity
     oidcClient
     port
-    podmanSocket
     publicUrl
     registrationReady
-    runtimeEnvironment
     ready
     service
     ssoApplication
