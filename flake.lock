@@ -291,11 +291,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1791277293,
-        "narHash": "sha256-xYfpMK5Vi0LISb9r7uWqyNVVvkeJBXby7Sz50lWhq5A=",
+        "lastModified": 1791365213,
+        "narHash": "sha256-06pXvGEJl730ZlfQKUQOX0VLLM/0CPD5uhm0n7O8M+8=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "7966f681a7398fda77f65c81875ea8f704751bcd",
+        "rev": "370a374212a218639a240006d2ba41ccbf5ffeb7",
         "type": "github"
       },
       "original": {
@@ -307,11 +307,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1791280520,
-        "narHash": "sha256-E/lvgcxFZ3uoAMiFpnDVp0bYA79Xl3fNbzV3Dnn5JgI=",
+        "lastModified": 1791366674,
+        "narHash": "sha256-GaPUEHwGnf8qZh/vZZU+yzXfuEXpMVqD6lU0abzjfms=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "67cbf89cbb8b07f0576da8b87316bfe688604abe",
+        "rev": "2f7b4e726507fd2c748f6e5c8b705495fce59516",
         "type": "github"
       },
       "original": {
@@ -530,11 +530,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1791191277,
-        "narHash": "sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA=",
+        "lastModified": 1791336361,
+        "narHash": "sha256-o9ZUW4SlEAvFPIyJWnqChhOT/VHpHg8TAvEgmqK1fSI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "aa48d347080940b8a2b8d2f48228674e280a3514",
+        "rev": "7dd199b0e2993e37b4775ed66b1c291699608c9f",
         "type": "github"
       },
       "original": {
@@ -575,11 +575,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791279986,
-        "narHash": "sha256-NuQg1mLkTPwSR8D56vWUrSq0sCU+S5incDvVaoCpG8s=",
+        "lastModified": 1791367004,
+        "narHash": "sha256-iJvAqQ+HGrBBEtD6/9wQIqQfHDawcCMeBt8Jmxo/d04=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "9764d733302310d16474ca1e2f7d004ea96571b9",
+        "rev": "a43bbb7f19b3c3ed72e78c5c832ae80d580533aa",
         "type": "github"
       },
       "original": {
@@ -914,11 +914,11 @@
     },
     "vpnconfinement": {
       "locked": {
-        "lastModified": 1789394839,
-        "narHash": "sha256-trdjVJKmDBbzgbP8pd+R7iKbGkdRu0nmXgQlBR/hEiU=",
+        "lastModified": 1791310298,
+        "narHash": "sha256-SpqEEuyrkzTqjIHwHrZE+Rs6ez2tzIeYkSY67zp6fcQ=",
         "owner": "Maroka-chan",
         "repo": "VPN-Confinement",
-        "rev": "a21f66ccd9f644c3770ccdf287cb380c00192628",
+        "rev": "cc37bcf5000e237709e725a9cda010a5cbce3111",
         "type": "github"
       },
       "original": {
