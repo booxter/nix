@@ -233,90 +233,51 @@
         }
       );
 
-      # Pull Shelfmark's newer packaging from unstable, then advance it to the
-      # latest release until that channel catches up.
-      shelfmark =
-        let
-          version = "1.4.0";
-          src = prev.fetchFromGitHub {
-            owner = "calibrain";
-            repo = "shelfmark";
-            tag = "v${version}";
-            hash = "sha256-Q1fsrcF1TbBUvC8z4ofYuDvzcMTSiRVwzqqxz0LL9/g=";
-          };
-          unstableShelfmarkVersion = lib.getVersion pkgsNixpkgsUnstable.shelfmark;
-          unstableShelfmark =
-            assert lib.asserts.assertMsg (lib.versionOlder unstableShelfmarkVersion version)
-              "Remove the Shelfmark ${version} override: nixpkgs-unstable has ${unstableShelfmarkVersion}";
-            pkgsNixpkgsUnstable.shelfmark;
-          frontend = pkgsNixpkgsUnstable.buildNpmPackage (finalAttrs: {
-            pname = "shelfmark-frontend";
-            inherit version src;
-            sourceRoot = "${finalAttrs.src.name}/src/frontend";
-            npmDepsHash = "sha256-nRCQhm++Ftpt0Xy5umouLjkRBWP97+3eixiRQ5NE6nI=";
-            installPhase = ''
-              runHook preInstall
-              cp -r dist $out
-              runHook postInstall
-            '';
-          });
-        in
-        unstableShelfmark.overrideAttrs (old: {
-          inherit version src;
-          installPhase =
-            builtins.replaceStrings
-              [ "${unstableShelfmark.passthru.frontend}" ]
-              [
-                "${frontend}"
-              ]
-              old.installPhase;
-          passthru = old.passthru // {
-            inherit frontend;
-          };
-          postPatch = (old.postPatch or "") + ''
-            PYTHONPYCACHEPREFIX="$TMPDIR/shelfmark-pycache" \
-              ${pkgsNixpkgsUnstable.python314}/bin/python -m compileall -q shelfmark
-          '';
-          patchFlags = [
-            "-p1"
-            "-l"
-          ];
-          patches = (old.patches or [ ]) ++ [
-            # Prerequisite history lookup added shortly after v1.4.0.
-            # https://github.com/calibrain/shelfmark/pull/1422
-            (prev.fetchpatch {
-              url = "https://github.com/calibrain/shelfmark/commit/bac0b9356640e6f649b239efa8ca18f66cdef113.patch";
-              hash = "sha256-d9xSWqCF267fy9XOcN4SRn0JE3yQCMxNwHQFw1ioy38=";
-              includes = [ "shelfmark/core/download_history_service.py" ];
-            })
-            # Reconcile downloads left active across a Shelfmark restart.
-            # https://github.com/calibrain/shelfmark/pull/1409
-            (prev.fetchpatch {
-              url = "https://github.com/calibrain/shelfmark/commit/8392b43dd3c066835134c6c8e6f1415496691431.patch";
-              hash = "sha256-Cj7/v9Rt/J6NpV376DfeTnzF6ZaxLlKrA8vnTFLqicc=";
-            })
-            # Preserve retry behavior while reconciling request-linked downloads.
-            # https://github.com/calibrain/shelfmark/pull/1423
-            (prev.fetchpatch {
-              url = "https://github.com/calibrain/shelfmark/commit/119d3374e3bc123982966ff49cbcfa912f96718a.patch";
-              hash = "sha256-7eKce2Cb+lQaTdPZ9o6K8mdCbN8vCYccsPiDVUuLzGs=";
-            })
-            # Persist external-client download IDs and reattach to them after
-            # Shelfmark restarts, without resolving an expired indexer URL.
-            ../patches/shelfmark-resume-external-downloads.patch
-            # Torrent-client jobs can legitimately sit queued/checking without
-            # progress or message churn for much longer than 5 minutes. Keep
-            # Shelfmark's stall canceller for direct downloads, but do not
-            # auto-cancel torrent jobs.
-            ../patches/shelfmark-disable-torrent-stall-cancel.patch
-            ../patches/shelfmark-retry-transmission-connectivity.patch
-            ../patches/shelfmark-add-download-poll-debug-state.patch
-            ../patches/shelfmark-add-download-diagnostic-signal.patch
-            ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
-            ../patches/shelfmark-redact-sabnzbd-api-key.patch
-            ../patches/shelfmark-truncate-filenames-bytes.patch
-          ];
-        });
+      shelfmark = pkgsNixpkgsUnstable.shelfmark.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          PYTHONPYCACHEPREFIX="$TMPDIR/shelfmark-pycache" \
+            ${pkgsNixpkgsUnstable.python314}/bin/python -m compileall -q shelfmark
+        '';
+        patchFlags = [
+          "-p1"
+          "-l"
+        ];
+        patches = (old.patches or [ ]) ++ [
+          # Prerequisite history lookup added shortly after v1.4.0.
+          # https://github.com/calibrain/shelfmark/pull/1422
+          (prev.fetchpatch {
+            url = "https://github.com/calibrain/shelfmark/commit/bac0b9356640e6f649b239efa8ca18f66cdef113.patch";
+            hash = "sha256-d9xSWqCF267fy9XOcN4SRn0JE3yQCMxNwHQFw1ioy38=";
+            includes = [ "shelfmark/core/download_history_service.py" ];
+          })
+          # Reconcile downloads left active across a Shelfmark restart.
+          # https://github.com/calibrain/shelfmark/pull/1409
+          (prev.fetchpatch {
+            url = "https://github.com/calibrain/shelfmark/commit/8392b43dd3c066835134c6c8e6f1415496691431.patch";
+            hash = "sha256-Cj7/v9Rt/J6NpV376DfeTnzF6ZaxLlKrA8vnTFLqicc=";
+          })
+          # Preserve retry behavior while reconciling request-linked downloads.
+          # https://github.com/calibrain/shelfmark/pull/1423
+          (prev.fetchpatch {
+            url = "https://github.com/calibrain/shelfmark/commit/119d3374e3bc123982966ff49cbcfa912f96718a.patch";
+            hash = "sha256-7eKce2Cb+lQaTdPZ9o6K8mdCbN8vCYccsPiDVUuLzGs=";
+          })
+          # Persist external-client download IDs and reattach to them after
+          # Shelfmark restarts, without resolving an expired indexer URL.
+          ../patches/shelfmark-resume-external-downloads.patch
+          # Torrent-client jobs can legitimately sit queued/checking without
+          # progress or message churn for much longer than 5 minutes. Keep
+          # Shelfmark's stall canceller for direct downloads, but do not
+          # auto-cancel torrent jobs.
+          ../patches/shelfmark-disable-torrent-stall-cancel.patch
+          ../patches/shelfmark-retry-transmission-connectivity.patch
+          ../patches/shelfmark-add-download-poll-debug-state.patch
+          ../patches/shelfmark-add-download-diagnostic-signal.patch
+          ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
+          ../patches/shelfmark-redact-sabnzbd-api-key.patch
+          ../patches/shelfmark-truncate-filenames-bytes.patch
+        ];
+      });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
       darwin = prev.darwin.overrideScope (
