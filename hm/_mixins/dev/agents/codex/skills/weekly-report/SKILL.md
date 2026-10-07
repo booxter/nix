@@ -33,9 +33,9 @@ retains the 24-hour safety overlap unless the user says otherwise.
 
 At the start of the run, find and read the Google Doc named `Private weekly
 notes`. Use its current report as the style and structure reference for the new
-report. It is not a source of facts: never carry old accomplishments, links,
-people, dates, statuses, or project details forward without current-period
-evidence.
+report and as the baseline for work already covered. It is not a source of new
+facts: never carry old accomplishments, links, people, dates, statuses, or
+project details forward without current-period evidence.
 
 Infer and retain the document's stable report shape, including topic heading
 order, bullet hierarchy, link placement, level of detail, terse phrasing, and
@@ -78,6 +78,13 @@ Normalize the source results into work items, then merge records that refer to
 the same outcome. Jira keys, pull or merge request URLs, commit URLs, issue
 URLs, and explicit cross-references are strong merge evidence. Similar wording
 alone is not enough when it could combine separate work.
+
+Compare work items against the previous report. Omit work already covered
+unless current-period evidence shows a new contribution or outcome. For a
+previously reported item, describe only what changed, such as a merge, fix,
+review finding, or resolved blocker. A repeated mention, unchanged status, or
+updated timestamp alone does not justify reporting it again. This also applies
+to safety-overlap candidates.
 
 Use Slack and email to recover coordination, debugging, reviews, and help that
 may not have produced a code artifact. Summarize their contribution without
