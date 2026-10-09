@@ -8,11 +8,11 @@
   stdenvNoCC,
 }:
 let
-  rev = "927a479674b5b5816c7a3b2c89ecb67956b0bd5e";
+  rev = "115e36e3d7b7330bacdd4f5aeb55d86a87d4c928";
   upstreamSrc = fetchgit {
     url = "https://github.com/degoog-org/official-extensions.git";
     inherit rev;
-    hash = "sha256-fU2O8YETjxhjI/LB9PqzJr57QZfjYwh1ODeAK/bmdOY=";
+    hash = "sha256-F+MlfTx13rMjIztdUpV6jT2Hl4NsYUQLC3e0hX2Eko0=";
   };
   src = applyPatches {
     name = "degoog-official-extensions-source";
