@@ -281,12 +281,9 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-      opencode = prev.opencode.overrideAttrs (old: {
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.rcodesign ];
-        patches = (old.patches or [ ]) ++ [
-          ../patches/opencode-sign-before-smoke-test.patch
-        ];
-      });
+      # Bun 1.3.13 produces invalid signatures rejected by macOS 27.
+      # https://github.com/oven-sh/bun/pull/39837
+      inherit (pkgsNixpkgsUnstable) bun;
 
       darwin = prev.darwin.overrideScope (
         _: _: {
