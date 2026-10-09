@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from io import StringIO
 from pathlib import Path
 
@@ -49,6 +49,7 @@ class StaticScanner:
 @dataclass
 class StaticRotator:
     calls: int = 0
+    required_key_file: Path | None = None
 
     def rotate(
         self,
@@ -57,6 +58,8 @@ class StaticRotator:
         repo_root: Path,
         sops_age_key_file: Path | None,
     ) -> tuple[CertificateReference, ...]:
+        if sops_age_key_file != self.required_key_file:
+            raise RotationError("rotation did not use the configured SOPS identity")
         self.calls += 1
         return tuple(record.reference() for record in records)
 
@@ -250,15 +253,20 @@ def test_rotate_dry_run_writes_summary_and_metrics(tmp_path: Path) -> None:
     assert "host_observability_pki_rotation_last_success" in metrics.read_text()
 
 
-def test_authenticated_rotate_uses_factories_and_creates_pull_request(tmp_path: Path) -> None:
+@pytest.mark.parametrize("key_file", [None, Path("/configured/age-key.txt")])
+def test_authenticated_rotate_uses_factories_and_creates_pull_request(
+    tmp_path: Path, key_file: Path | None
+) -> None:
     token = tmp_path / "token"
     token.write_text("github-token\n")
     output = StringIO()
     app, repositories, pulls = application()
+    app = replace(app, rotator=StaticRotator(required_key_file=key_file))
+    arguments = [] if key_file is None else ["--sops-age-key-file", str(key_file)]
 
     assert (
         run(
-            ["rotate", "--github-token-file", str(token)],
+            [*arguments, "rotate", "--github-token-file", str(token)],
             application=app,
             stdout=output,
         )

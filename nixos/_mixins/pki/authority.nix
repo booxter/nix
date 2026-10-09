@@ -177,6 +177,14 @@ in
 
       pki-rotate = {
         description = "Rotate due internal PKI leaf certs and open a review PR";
+        # Reuse the host's SOPS identity for repository certificate writes.
+        environment =
+          lib.optionalAttrs (config.sops.age.keyFile != null) {
+            SOPS_AGE_KEY_FILE = config.sops.age.keyFile;
+          }
+          // lib.optionalAttrs (config.sops.age.sshKeyPaths != [ ]) {
+            SOPS_AGE_SSH_PRIVATE_KEY_FILE = lib.head config.sops.age.sshKeyPaths;
+          };
         wants = [
           "network-online.target"
           "sops-install-secrets.service"

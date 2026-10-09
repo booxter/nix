@@ -36,7 +36,6 @@ from .scanner import CertificateScanner, Clock, SystemClock
 DEFAULT_INTERMEDIATE_CERTIFICATE = Path("/var/lib/step-ca/certs/intermediate_ca.crt")
 DEFAULT_REPOSITORY_URL = "https://github.com/booxter/nix.git"
 DEFAULT_BASE_BRANCH = "master"
-DEFAULT_SOPS_AGE_KEY_FILE = Path("/var/lib/sops-nix/key.txt")
 
 
 @dataclass(frozen=True)
@@ -151,7 +150,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--sops-age-key-file",
         type=Path,
-        default=Path(os.environ.get("SOPS_AGE_KEY_FILE", str(DEFAULT_SOPS_AGE_KEY_FILE))),
+        default=os.environ.get("SOPS_AGE_KEY_FILE"),
     )
     modes = command.add_subparsers(dest="command", required=True)
     modes.add_parser("scan", help="print the managed certificate inventory as JSON")
