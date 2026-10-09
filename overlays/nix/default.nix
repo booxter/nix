@@ -56,4 +56,7 @@ nix.appendPatches [
   })
   # Adapt the excluded files to 2.35.2, retaining the older-daemon fallback.
   ../../patches/nix-remote-temp-roots-2.35.patch
+  # Avoid inheriting a locked signal callback registry in daemon workers.
+  # Drop when the packaged release includes https://github.com/NixOS/nix/pull/16581.
+  ./reset-signal-callbacks-after-fork.patch
 ]

@@ -1,0 +1,309 @@
+Backport https://github.com/NixOS/nix/pull/16581 to Nix 2.35.2.
+Upstream commit: 29ddc0eecd85beb135ad4a7468b6d04608857584
+
+Keep the interrupt-only registry used by this release. Skip the reset for
+Linux vfork children, which share the parent's address space, and cover that
+with an additional regression test. Retain the upstream fork isolation,
+inherited-handle removal, and inherited-lock regression tests unchanged.
+
+Omit the upstream daemon SIGWINCH stress test: SIGWINCH does not use the
+callback registry in 2.35.2. The deterministic unit test exercises the
+inherited-lock deadlock directly. Drop this backport once the packaged
+release includes the upstream fix.
+
+diff --git a/src/libutil-tests/unix/meson.build b/src/libutil-tests/unix/meson.build
+index 7092118..37fdbb1 100644
+--- a/src/libutil-tests/unix/meson.build
++++ b/src/libutil-tests/unix/meson.build
+@@ -1,4 +1,5 @@
+ sources += files(
+   'file-system-at.cc',
++  'signals.cc',
+   'unix-domain-socket.cc',
+ )
+diff --git a/src/libutil-tests/unix/signals.cc b/src/libutil-tests/unix/signals.cc
+new file mode 100644
+index 0000000..1f67204
+--- /dev/null
++++ b/src/libutil-tests/unix/signals.cc
+@@ -0,0 +1,125 @@
++#include "nix/util/processes.hh"
++#include "nix/util/signals.hh"
++
++#include <gtest/gtest.h>
++
++#include <latch>
++#include <memory>
++#include <thread>
++#include <unistd.h>
++
++namespace nix {
++
++/* Isolate the process-wide interrupt flag and registrations from other tests.
++   Bound each child so a callback registration or destruction cannot hang the
++   test suite. Assertions in the child must also fail the parent test. */
++static void inChildProcess(fun<void()> test)
++{
++    Pid child = startProcess([&] {
++        alarm(10);
++        test();
++        _exit(::testing::Test::HasFailure() ? 1 : 0);
++    });
++
++    EXPECT_EQ(child.wait(false), 0);
++}
++
++TEST(SignalCallbacks, registrationsAreProcessLocal)
++{
++    inChildProcess([] {
++        int parentCalls = 0;
++        auto parentCallback = createInterruptCallback([&] { ++parentCalls; });
++
++        inChildProcess([&] {
++            unix::triggerInterrupt();
++            EXPECT_EQ(parentCalls, 0);
++
++            int childCalls = 0;
++            auto childCallback = createInterruptCallback([&] { ++childCalls; });
++
++            unix::triggerInterrupt();
++            EXPECT_EQ(parentCalls, 0);
++            EXPECT_EQ(childCalls, 1);
++
++            childCallback.reset();
++            unix::triggerInterrupt();
++            EXPECT_EQ(childCalls, 1);
++        });
++
++        unix::triggerInterrupt();
++        EXPECT_EQ(parentCalls, 1);
++    });
++}
++
++TEST(SignalCallbacks, inheritedHandleDoesNotRemoveChildRegistration)
++{
++    inChildProcess([] {
++        auto parentCallback = createInterruptCallback([] {});
++
++        inChildProcess([&] {
++            int childCalls = 0;
++            auto childCallback = createInterruptCallback([&] { ++childCalls; });
++
++            // Destroying the parent's first registration must not remove the
++            // child's first registration, even if their identifiers coincide.
++            parentCallback.reset();
++            unix::triggerInterrupt();
++            EXPECT_EQ(childCalls, 1);
++        });
++    });
++}
++
++struct BlockingCapture
++{
++    std::latch & destroying;
++    std::latch & finish;
++
++    ~BlockingCapture()
++    {
++        destroying.count_down();
++        finish.wait();
++    }
++};
++
++TEST(SignalCallbacks, childCanRegisterWhileParentRemovesCallback)
++{
++    inChildProcess([] {
++        std::latch destroying{1};
++        std::latch finish{1};
++        auto callback = createInterruptCallback([capture = std::make_shared<BlockingCapture>(destroying, finish)] {});
++
++        std::thread remover([&] { callback.reset(); });
++        destroying.wait();
++
++        // Hold callback removal in progress across the fork through a user's
++        // capture destructor. This exercises the inherited-lock deadlock without
++        // accessing the registry or depending on signal delivery timing.
++        Pid child = startProcess([] {
++            alarm(5);
++            auto callback = createInterruptCallback([] {});
++            callback.reset();
++            _exit(0);
++        });
++
++        finish.count_down();
++        remover.join();
++
++        EXPECT_EQ(child.wait(false), 0);
++    });
++}
++
++TEST(SignalCallbacks, vforkPreservesParentRegistration)
++{
++    inChildProcess([] {
++        int parentCalls = 0;
++        auto parentCallback = createInterruptCallback([&] { ++parentCalls; });
++
++        Pid child = startProcess([] { _exit(0); }, {.allowVfork = true});
++        EXPECT_EQ(child.wait(false), 0);
++
++        unix::triggerInterrupt();
++        EXPECT_EQ(parentCalls, 1);
++    });
++}
++
++} // namespace nix
+diff --git a/src/libutil/unix/processes.cc b/src/libutil/unix/processes.cc
+index 32d5953..b0affd5 100644
+--- a/src/libutil/unix/processes.cc
++++ b/src/libutil/unix/processes.cc
+@@ -7,6 +7,8 @@
+ #include "nix/util/finally.hh"
+ #include "nix/util/serialise.hh"
+ 
++#include "unix/signals-private.hh"
++
+ #include <cerrno>
+ #include <filesystem>
+ #include <cstdlib>
+@@ -237,6 +239,12 @@ pid_t startProcess(fun<void()> processMain, const ProcessOptions & options)
+ {
+     auto newLogger = makeSimpleLogger().release();
+     ChildWrapperFunction wrapper = [&] {
++#ifdef __linux__
++        // A vfork child shares the parent's registry until exec or exit.
++        if (!options.allowVfork || options.cloneFlags)
++#endif
++            unix::resetSignalCallbacksAfterFork();
++
+         if (!options.allowVfork) {
+             /* Set a simple logger, while leaking (not destroying)
+                the parent logger. We don't want to run the parent
+diff --git a/src/libutil/unix/signals-private.hh b/src/libutil/unix/signals-private.hh
+new file mode 100644
+index 0000000..8126086
+--- /dev/null
++++ b/src/libutil/unix/signals-private.hh
+@@ -0,0 +1,15 @@
++#pragma once
++///@file
++
++namespace nix {
++namespace unix {
++
++/**
++ * Discard inherited registrations, which may refer to vanished threads or
++ * unusable parent state. Call only in a fork/clone child, before starting any
++ * threads or using signal callbacks; this is not a concurrent reset operation.
++ */
++void resetSignalCallbacksAfterFork();
++
++} // namespace unix
++} // namespace nix
+diff --git a/src/libutil/unix/signals.cc b/src/libutil/unix/signals.cc
+index 38030a7..c8df9c0 100644
+--- a/src/libutil/unix/signals.cc
++++ b/src/libutil/unix/signals.cc
+@@ -5,6 +5,9 @@
+ #include "nix/util/sync.hh"
+ #include "nix/util/terminal.hh"
+ 
++#include "unix/signals-private.hh"
++
++#include <atomic>
+ #include <thread>
+ 
+ namespace nix {
+@@ -47,15 +50,36 @@ struct InterruptCallbacks
+ 
+ InterruptCallback::~InterruptCallback() {}
+ 
+-/* Required to avoid static initialization order fiasco. This allows global
+-   objects to safely register callbacks. */
+-static Sync<InterruptCallbacks> & getInterruptCallbacks()
++using InterruptCallbacksSync = Sync<InterruptCallbacks>;
++
++static std::atomic<InterruptCallbacksSync *> interruptCallbacksRegistry{nullptr};
++
++/* Avoid a function-local static's initialization guard: another thread could
++   be initializing the registry when the process forks. */
++static InterruptCallbacksSync & getInterruptCallbacks()
++{
++    auto * current = interruptCallbacksRegistry.load(std::memory_order_acquire);
++    if (current)
++        return *current;
++
++    auto * fresh = new InterruptCallbacksSync();
++    if (!interruptCallbacksRegistry.compare_exchange_strong(
++            current, fresh, std::memory_order_release, std::memory_order_acquire))
++        delete fresh;
++    else
++        current = fresh;
++
++    return *current;
++}
++
++void unix::resetSignalCallbacksAfterFork()
+ {
+-    /* Intentionally leak, according to the Construct On First Use Idiom.
+-       An alternative is to use the Nifty Counter Idiom, but
+-       InterruptCallbacks' destructor is not very important. */
+-    static Sync<InterruptCallbacks> * _interruptCallbacks = new Sync<InterruptCallbacks>();
+-    return *_interruptCallbacks;
++    /* The inherited mutex may be locked and the map mid-update. Even destroying
++       callback captures could touch locks or threads that are unusable here.
++       Leave this state untouched until exit or exec reclaims it, and create a
++       fresh registry on first use. This abandons only the child's copy; repeated
++       forks do not accumulate discarded registries in the parent. */
++    interruptCallbacksRegistry.store(nullptr, std::memory_order_release);
+ }
+ 
+ static void signalHandlerThread(sigset_t set)
+@@ -156,10 +180,12 @@ namespace {
+ /* RAII helper to automatically deregister a callback. */
+ struct InterruptCallbackImpl : InterruptCallback
+ {
++    InterruptCallbacksSync * registry;
+     InterruptCallbacks::Token token;
+ 
+-    InterruptCallbackImpl(InterruptCallbacks::Token token)
+-        : token(token)
++    InterruptCallbackImpl(InterruptCallbacksSync * registry, InterruptCallbacks::Token token)
++        : registry(registry)
++        , token(token)
+     {
+     }
+ 
+@@ -170,8 +196,15 @@ struct InterruptCallbackImpl : InterruptCallback
+ 
+     ~InterruptCallbackImpl() override
+     {
+-        auto interruptCallbacks(getInterruptCallbacks().lock());
+-        interruptCallbacks->callbacks.erase(token);
++        /* A handle inherited across a fork belongs to discarded parent state,
++           whose mutex may be permanently locked. Published registries are never
++           freed, so their addresses identify registrations' owning processes
++           without address reuse confusing an inherited handle with a new one. */
++        if (registry != interruptCallbacksRegistry.load(std::memory_order_acquire))
++            return;
++
++        auto callbacks(registry->lock());
++        callbacks->callbacks.erase(token);
+     }
+ };
+ 
+@@ -179,10 +212,11 @@ struct InterruptCallbackImpl : InterruptCallback
+ 
+ std::unique_ptr<InterruptCallback> createInterruptCallback(fun<void()> callback)
+ {
+-    auto interruptCallbacks(getInterruptCallbacks().lock());
+-    auto token = interruptCallbacks->nextToken++;
+-    interruptCallbacks->callbacks.emplace(token, callback);
+-    return std::make_unique<InterruptCallbackImpl>(token);
++    auto & registry = getInterruptCallbacks();
++    auto callbacks(registry.lock());
++    auto token = callbacks->nextToken++;
++    callbacks->callbacks.emplace(token, callback);
++    return std::make_unique<InterruptCallbackImpl>(&registry, token);
+ }
+ 
+ } // namespace nix
