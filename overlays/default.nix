@@ -281,6 +281,13 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      opencode = prev.opencode.overrideAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.rcodesign ];
+        patches = (old.patches or [ ]) ++ [
+          ../patches/opencode-sign-before-smoke-test.patch
+        ];
+      });
+
       darwin = prev.darwin.overrideScope (
         _: _: {
           inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
