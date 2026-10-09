@@ -27,6 +27,7 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
+        opencode
         ;
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex { };
