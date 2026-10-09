@@ -27,6 +27,7 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
+        opencode
         ;
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex { };
@@ -281,6 +282,10 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      # Bun 1.3.13 produces invalid signatures rejected by macOS 27.
+      # https://github.com/oven-sh/bun/pull/39837
+      inherit (pkgsNixpkgsUnstable) bun;
+
       darwin = prev.darwin.overrideScope (
         _: _: {
           inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
