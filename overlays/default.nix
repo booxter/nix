@@ -32,6 +32,10 @@
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex { };
 
+      nix = prev.callPackage ./nix {
+        nix = pkgsNixpkgsUnstable.nixVersions.latest;
+      };
+
       jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
         version = "1.16.0";
         src = pkgsNixpkgsUnstable.fetchFromGitHub {
