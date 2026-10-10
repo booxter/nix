@@ -11,6 +11,8 @@ dependencies = ["pydantic>=2"]
 
 [project.scripts]
 nr = "nr.cli:main"
+nr-submit = "nr.tmux:main"
+nr-worker = "nr.worker:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
