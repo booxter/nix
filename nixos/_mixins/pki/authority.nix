@@ -183,7 +183,13 @@ in
             SOPS_AGE_KEY_FILE = config.sops.age.keyFile;
           }
           // lib.optionalAttrs (config.sops.age.sshKeyPaths != [ ]) {
-            SOPS_AGE_SSH_PRIVATE_KEY_FILE = lib.head config.sops.age.sshKeyPaths;
+            # Repository recipients use ssh-to-age conversion, not native SSH identities.
+            SOPS_AGE_KEY_CMD = lib.escapeShellArgs [
+              (lib.getExe pkgs.ssh-to-age)
+              "-private-key"
+              "-i"
+              (lib.head config.sops.age.sshKeyPaths)
+            ];
           };
         wants = [
           "network-online.target"
