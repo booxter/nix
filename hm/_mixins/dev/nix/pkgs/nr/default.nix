@@ -17,6 +17,7 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
+  dependencies = [ pythonPackages.pydantic ];
 
   nativeCheckInputs = with pythonPackages; [
     pythonRuffCheckHook

@@ -1,70 +1,8 @@
 import argparse
 import os
-import shlex
-import subprocess
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from typing import Protocol
 
-DEFAULT_SYSTEMS = ("x86_64-linux", "aarch64-darwin")
-AARCH64_LINUX_SYSTEMS = ("x86_64-linux", "aarch64-linux", "aarch64-darwin")
-
-
-class ReviewExecutor(Protocol):
-    def run(self, arguments: Sequence[str]) -> int: ...
-
-
-class NixpkgsReviewExecutor:
-    def run(self, arguments: Sequence[str]) -> int:
-        # The wrapped CLI is nixpkgs-review's supported interface. Importing
-        # its private Python entry point would bypass its Nix runtime wrapper.
-        return subprocess.run(arguments, check=False).returncode
-
-
-@dataclass(frozen=True)
-class ReviewOptions:
-    pull_requests: tuple[str, ...]
-    included_pull_requests: tuple[str, ...]
-    systems: str
-    post_result: bool
-    approve: bool
-    tests: bool
-    cuda: bool
-    builders: str | None
-
-
-def builder_systems(builders: str) -> set[str]:
-    systems: set[str] = set()
-    for builder in builders.split(";"):
-        fields = builder.split()
-        if len(fields) >= 2:
-            systems.update(fields[1].split(","))
-    return systems
-
-
-def default_systems(builders: str) -> tuple[str, ...]:
-    if "aarch64-linux" in builder_systems(builders):
-        return AARCH64_LINUX_SYSTEMS
-    return DEFAULT_SYSTEMS
-
-
-def review_arguments(options: ReviewOptions) -> list[str]:
-    arguments = ["nixpkgs-review", "pr", *options.pull_requests, "--no-shell"]
-    for pull_request in options.included_pull_requests:
-        arguments.extend(("--include-pr", pull_request))
-    if options.cuda:
-        arguments.append("--extra-nixpkgs-config={ cudaSupport = true; }")
-    if options.post_result:
-        arguments.append("--post-result")
-    if options.approve:
-        arguments.append("--approve-pr")
-    if options.tests:
-        arguments.append("--tests")
-    arguments.append(f"--systems={options.systems}")
-    if options.builders is not None:
-        build_arguments = shlex.join(["--builders", options.builders])
-        arguments.append(f"--build-args={build_arguments}")
-    return arguments
+from nr.review import NixpkgsReviewExecutor, ReviewExecutor, ReviewRequest, resolve_review
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -78,12 +16,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-i", "--include-pr", action="append", default=[])
     parser.add_argument("-s", "--systems")
     parser.add_argument("-C", "--cuda", action="store_true")
-    parser.add_argument(
-        "-l",
-        "--local",
-        action="store_true",
-        help="exclude community builders",
-    )
+    parser.add_argument("-l", "--local", action="store_true", help="exclude community builders")
     parser.add_argument("pull_requests", nargs="+")
     return parser
 
@@ -96,17 +29,14 @@ def main(
 ) -> int:
     arguments = _parser().parse_args(argv)
     environ = os.environ if environment is None else environment
-    configured_builders = environ.get("NR_BUILDERS", "")
-    builders = environ.get("NR_LOCAL_BUILDERS", "") if arguments.local else configured_builders
-    systems = arguments.systems or " ".join(default_systems(builders))
-    options = ReviewOptions(
+    request = ReviewRequest(
         pull_requests=tuple(arguments.pull_requests),
         included_pull_requests=tuple(arguments.include_pr),
-        systems=systems,
+        systems=arguments.systems,
         post_result=arguments.post_result,
         approve=arguments.approve,
         tests=arguments.tests,
         cuda=arguments.cuda,
-        builders=builders if arguments.local or builders else None,
+        local=arguments.local,
     )
-    return (executor or NixpkgsReviewExecutor()).run(review_arguments(options))
+    return (executor or NixpkgsReviewExecutor()).run(resolve_review(request, environ))

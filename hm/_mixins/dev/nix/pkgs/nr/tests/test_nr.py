@@ -1,16 +1,16 @@
-import shlex
 from collections.abc import Sequence
 
 from nr.cli import main
+from nr.review import ReviewOptions, ReviewRequest
 
 
 class RecordingReviewExecutor:
     def __init__(self, status: int = 0) -> None:
         self.status = status
-        self.arguments: tuple[str, ...] | None = None
+        self.options: ReviewOptions | None = None
 
-    def run(self, arguments: Sequence[str]) -> int:
-        self.arguments = tuple(arguments)
+    def run(self, options: ReviewOptions) -> int:
+        self.options = options
         return self.status
 
 
@@ -20,91 +20,73 @@ def invoke(
     builders: str = "",
     local_builders: str = "",
     status: int = 0,
-) -> tuple[int, tuple[str, ...]]:
+) -> tuple[int, ReviewOptions]:
     executor = RecordingReviewExecutor(status)
     result = main(
         arguments,
-        environment={
-            "NR_BUILDERS": builders,
-            "NR_LOCAL_BUILDERS": local_builders,
-        },
+        environment={"NR_BUILDERS": builders, "NR_LOCAL_BUILDERS": local_builders},
         executor=executor,
     )
-    assert executor.arguments is not None
-    return result, executor.arguments
+    assert executor.options is not None
+    return result, executor.options
 
 
 def test_defaults_to_portable_systems_without_an_arm_linux_builder() -> None:
-    status, arguments = invoke(
-        ["123"],
-        builders="ssh-ng://builder x86_64-linux - 4 100 - - -",
-    )
+    status, options = invoke(["123"], builders="ssh-ng://builder x86_64-linux - 4 100 - - -")
 
     assert status == 0
-    assert "--systems=x86_64-linux aarch64-darwin" in arguments
+    assert options.systems == "x86_64-linux aarch64-darwin"
 
 
 def test_includes_arm_linux_when_a_builder_supports_it() -> None:
-    _, arguments = invoke(
-        ["123"],
-        builders="ssh://builder x86_64-linux,aarch64-linux - 4 100 - - -",
-    )
+    _, options = invoke(["123"], builders="ssh://builder x86_64-linux,aarch64-linux - 4 100 - - -")
 
-    assert "--systems=x86_64-linux aarch64-linux aarch64-darwin" in arguments
+    assert options.systems == "x86_64-linux aarch64-linux aarch64-darwin"
 
 
 def test_explicit_systems_override_builder_detection() -> None:
-    _, arguments = invoke(
-        ["-s", "x86_64-linux", "123"],
-        builders="ssh://builder aarch64-linux - 4 100 - - -",
+    _, options = invoke(
+        ["-s", "x86_64-linux", "123"], builders="ssh://builder aarch64-linux - 4 100 - - -"
     )
 
-    assert "--systems=x86_64-linux" in arguments
+    assert options.systems == "x86_64-linux"
 
 
-def test_maps_review_options_and_builders_to_the_supported_cli() -> None:
-    builders = (
-        "ssh-ng://first x86_64-linux - 4 100 - - - ; ssh-ng://second aarch64-linux - 4 100 - - -"
-    )
-
-    status, arguments = invoke(
-        ["-p", "-a", "-t", "-C", "-i", "122", "-i", "121", "123", "124"],
-        builders=builders,
-        status=7,
+def test_preserves_review_choices_and_exit_status() -> None:
+    status, options = invoke(
+        ["-p", "-a", "-t", "-C", "-i", "122", "-i", "121", "123", "124"], status=7
     )
 
     assert status == 7
-    assert arguments[:5] == ("nixpkgs-review", "pr", "123", "124", "--no-shell")
-    assert arguments[5:9] == ("--include-pr", "122", "--include-pr", "121")
-    assert "--extra-nixpkgs-config={ cudaSupport = true; }" in arguments
-    assert "--post-result" in arguments
-    assert "--approve-pr" in arguments
-    assert "--tests" in arguments
-    build_argument = next(
-        argument for argument in arguments if argument.startswith("--build-args=")
+    assert options.request == ReviewRequest(
+        pull_requests=("123", "124"),
+        included_pull_requests=("122", "121"),
+        post_result=True,
+        approve=True,
+        tests=True,
+        cuda=True,
     )
-    assert shlex.split(build_argument.removeprefix("--build-args=")) == ["--builders", builders]
 
 
-def test_omits_build_arguments_without_configured_builders() -> None:
-    _, arguments = invoke(["123"])
+def test_leaves_unconfigured_builders_to_nix() -> None:
+    _, options = invoke(["123"])
 
-    assert all(not argument.startswith("--build-args=") for argument in arguments)
+    assert options.builders is None
 
 
 def test_local_builds_exclude_community_builders() -> None:
     local_builders = "ssh-ng://fleet-builder x86_64-linux - 4 100 - - -"
-    _, arguments = invoke(
+    _, options = invoke(
         ["-l", "123"],
-        builders=(f"{local_builders} ; ssh-ng://community-builder aarch64-linux - 4 100 - - -"),
+        builders=f"{local_builders} ; ssh-ng://community-builder aarch64-linux - 4 100 - - -",
         local_builders=local_builders,
     )
 
-    assert "--systems=x86_64-linux aarch64-darwin" in arguments
-    build_argument = next(
-        argument for argument in arguments if argument.startswith("--build-args=")
-    )
-    assert shlex.split(build_argument.removeprefix("--build-args=")) == [
-        "--builders",
-        local_builders,
-    ]
+    assert options.systems == "x86_64-linux aarch64-darwin"
+    assert options.builders == local_builders
+
+
+def test_local_with_an_empty_pool_disables_configured_builders() -> None:
+    _, options = invoke(["-l", "123"])
+
+    assert options.builders == ""
