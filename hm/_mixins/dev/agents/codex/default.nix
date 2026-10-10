@@ -80,6 +80,15 @@ let
   };
   agentContext = builtins.readFile ./context.md;
   codexContext = agentContext + mcps.instructions;
+  # Follow the configured Codex version and preserve its voice prompt. Overrides
+  # bypass Codex's first-name substitution, so render that placeholder here.
+  voicePrompt =
+    lib.replaceStrings
+      [ "{{ user_first_name }}" ]
+      [ (builtins.head (lib.splitString " " config.host.hm.fullName)) ]
+      (
+        builtins.readFile "${config.programs.codex.package.src}/codex-rs/prompts/templates/realtime/backend_prompt.md"
+      );
   oauthServerNames = builtins.attrNames (
     lib.filterAttrs (_: server: server.oauth != null) cfg.mcp.httpServers
   );
@@ -139,6 +148,11 @@ in
         model = "gpt-5.6-sol";
         model_reasoning_effort = "high";
         personality = "pragmatic";
+        experimental_realtime_ws_backend_prompt = voicePrompt + ''
+
+          Speak at a noticeably faster pace, with shorter pauses, while remaining clear.
+          Maintain this pace throughout the conversation.
+        '';
         approvals_reviewer = "auto_review";
         desktop.keepRemoteControlAwakeWhilePluggedIn = true;
         mcp_servers = mcps.settings;
