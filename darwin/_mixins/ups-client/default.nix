@@ -71,6 +71,7 @@ in
       AT LOWBATT * EXECUTE lowbatt
     '';
 
+    environment.etc."nut/upssched-cmd".mode = "0755";
     environment.etc."nut/upssched-cmd".text = ''
       #!/bin/sh
       case "$1" in
@@ -95,7 +96,6 @@ in
     system.activationScripts.postActivation.text = lib.mkAfter ''
       mkdir -p /var/lib/nut
       chmod 700 /var/lib/nut
-      chmod 755 /etc/nut/upssched-cmd
     '';
 
     launchd.daemons.nut-upsmon = {
