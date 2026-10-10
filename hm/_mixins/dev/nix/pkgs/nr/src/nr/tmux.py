@@ -4,17 +4,18 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Annotated
 from uuid import uuid4
 
 from nr.process import CommandRunner, ProcessRunner, checked
 from nr.review import ReviewRequest
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
 
 
 class Submission(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
 
-    window: str
+    window: Annotated[str, StringConstraints(pattern=r"^(pr-[0-9]+|review)-[0-9a-f]{8}$")]
 
 
 @dataclass(frozen=True)

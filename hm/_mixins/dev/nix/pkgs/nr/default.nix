@@ -4,6 +4,7 @@
   lib,
   git,
   nixpkgs-reviewFull,
+  openssh,
   python3,
   pythonRuffCheckHook,
   tmux,
@@ -37,6 +38,7 @@ pythonPackages.buildPythonApplication {
     "--prefix PATH : ${
       lib.makeBinPath [
         nixpkgs-reviewFull
+        openssh
         git
         tmux
       ]
