@@ -92,6 +92,8 @@ let
             builtins.readFile "${config.programs.codex.package.src}/codex-rs/prompts/templates/realtime/backend_prompt.md"
           );
     in
+    # Codex sends overrides verbatim. Fail on new or renamed upstream placeholders
+    # so upgrades cannot silently send unresolved template variables to the model.
     assert lib.assertMsg (
       !(lib.hasInfix "{{" rendered || lib.hasInfix "}}" rendered)
     ) "Codex voice prompt contains unhandled template placeholders; update its substitutions.";
