@@ -94,10 +94,11 @@ in
       materializations.default.group = "wheel";
     };
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      mkdir -p ${stateDir}
-      chmod 0755 ${stateDir}
-    '';
+    system.tmpfiles.settings.grafana-alloy.${stateDir}.d = {
+      mode = "0755";
+      user = "root";
+      group = "wheel";
+    };
 
     launchd.daemons.grafana-alloy-logs = {
       command = lib.escapeShellArgs [

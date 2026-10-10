@@ -36,6 +36,7 @@ let
     // topologyChecks
     // {
       python-quality = pythonQualityCheck;
+      darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

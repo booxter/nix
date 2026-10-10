@@ -23,11 +23,15 @@ in
       }
     ];
 
+    system.tmpfiles.settings.secretive."/Applications/Secretive.app".d = {
+      mode = "0555";
+      user = "root";
+      group = "wheel";
+    };
+
     # Secretive expects its app in /Applications, not the user's Applications
     # directory, for its SSH agent integration.
     system.activationScripts.applications.text = lib.mkAfter ''
-      install -o root -g wheel -m0555 -d "/Applications/Secretive.app"
-
       rsyncFlags=(
         --checksum
         --copy-unsafe-links

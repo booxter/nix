@@ -71,6 +71,7 @@ in
       AT LOWBATT * EXECUTE lowbatt
     '';
 
+    environment.etc."nut/upssched-cmd".mode = "0755";
     environment.etc."nut/upssched-cmd".text = ''
       #!/bin/sh
       case "$1" in
@@ -92,11 +93,11 @@ in
       fi
     '';
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      mkdir -p /var/lib/nut
-      chmod 700 /var/lib/nut
-      chmod 755 /etc/nut/upssched-cmd
-    '';
+    system.tmpfiles.settings.ups."/var/lib/nut".d = {
+      mode = "0700";
+      user = "root";
+      group = "wheel";
+    };
 
     launchd.daemons.nut-upsmon = {
       command = lib.escapeShellArgs [

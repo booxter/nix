@@ -181,13 +181,35 @@ in
       logLocations = config.host.launchd.logging.locations;
     };
 
-    system.activationScripts.launchd.text = lib.mkBefore ''
-      install -d -m 0755 -o root -g wheel ${logDirectory}
-      install -d -m 0700 -o root -g wheel ${privateLogDirectory}
-      install -d -m 0755 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg userLogDirectory}
-      install -d -m 0700 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg privateUserLogDirectory}
-      install -d -m 0700 -o root -g wheel ${stateDirectory}
+    system.tmpfiles.settings.launchd-logging = {
+      ${logDirectory}.d = {
+        mode = "0755";
+        user = "root";
+        group = "wheel";
+      };
+      ${privateLogDirectory}.d = {
+        mode = "0700";
+        user = "root";
+        group = "wheel";
+      };
+      ${userLogDirectory}.d = {
+        mode = "0755";
+        user = config.host.username;
+        group = "staff";
+      };
+      ${privateUserLogDirectory}.d = {
+        mode = "0700";
+        user = config.host.username;
+        group = "staff";
+      };
+      ${stateDirectory}.d = {
+        mode = "0700";
+        user = "root";
+        group = "wheel";
+      };
+    };
 
+    system.activationScripts.launchd.text = lib.mkBefore ''
       ${auxiliaryFileSetup}
 
       if [[ ! -e ${privateLogDirectory}/sops-install-secrets.log ]]; then

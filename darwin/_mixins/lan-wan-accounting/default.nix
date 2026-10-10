@@ -38,6 +38,14 @@ in
 {
   config = lib.mkMerge [
     {
+      system.tmpfiles.settings.lan-wan = lib.genAttrs [ stateDir textfileDir ] (_: {
+        d = {
+          mode = "0755";
+          user = serviceUser;
+          group = accessBpfGroup;
+        };
+      });
+
       assertions = [
         {
           assertion = declaredInterfaces != [ ];
@@ -62,7 +70,8 @@ in
         scope = "system";
       };
 
-      system.activationScripts.launchd.text = lib.mkAfter ''
+      # Validate the system group before tmpfiles assigns directory ownership.
+      system.activationScripts.users.text = lib.mkOrder 1400 ''
         access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
         if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
           echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
@@ -75,10 +84,6 @@ in
           echo "Expected /dev/bpf0 to be root:${accessBpfGroup} 660, got group=$bpf_group mode=$bpf_mode" >&2
           exit 1
         fi
-
-        mkdir -p ${stateDir} ${textfileDir}
-        chown ${serviceUser}:${accessBpfGroup} ${stateDir} ${textfileDir}
-        chmod 0755 ${stateDir} ${textfileDir}
       '';
 
       launchd.daemons.observability-lan-wan-accounting = {

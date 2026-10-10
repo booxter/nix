@@ -15,11 +15,11 @@ in
 
     host.observability.nodeExporter.textfile.directories.thermal = textfileDir;
 
-    system.activationScripts.launchd.text = lib.mkAfter ''
-      mkdir -p ${textfileDir}
-      chown root:wheel ${textfileDir}
-      chmod 0755 ${textfileDir}
-    '';
+    system.tmpfiles.settings.thermal.${textfileDir}.d = {
+      mode = "0755";
+      user = "root";
+      group = "wheel";
+    };
 
     launchd.daemons.observability-thermal-export = {
       command = lib.escapeShellArgs [

@@ -40,6 +40,7 @@ in
     ./_mixins/sketchybar-network
     ./_mixins/ssh
     ./_mixins/thermal-accounting
+    ./_mixins/tmpfiles
     ./_mixins/ups-client
     ./_mixins/browser
   ];
