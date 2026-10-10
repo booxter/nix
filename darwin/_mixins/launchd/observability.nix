@@ -107,10 +107,23 @@ in
       launchd-user = userTextfileDir;
     };
 
+    system.tmpfiles.settings.launchd-observability =
+      lib.genAttrs [ stateDir textfileDir ] (_: {
+        d = {
+          mode = "0755";
+          user = "root";
+          group = "wheel";
+        };
+      })
+      // {
+        ${userTextfileDir}.d = {
+          mode = "0755";
+          user = username;
+          group = "staff";
+        };
+      };
+
     system.activationScripts.launchd.text = lib.mkBefore ''
-      install -d -m 0755 -o root -g wheel ${stateDir}
-      install -d -m 0755 -o root -g wheel ${textfileDir}
-      install -d -m 0755 -o ${lib.escapeShellArg username} -g staff ${userTextfileDir}
       ln -sfn ${expectationsFile} ${textfileDir}/launchd-expectations.prom
     '';
 

@@ -45,8 +45,13 @@ in
       StandardErrorPath = daemonLogPath;
     };
 
+    system.tmpfiles.settings.xquartz."/var/log/nix-darwin".d = {
+      mode = "0755";
+      user = "root";
+      group = "wheel";
+    };
+
     system.activationScripts.launchd.text = lib.mkBefore ''
-      install -d -m 0755 -o root -g wheel /var/log/nix-darwin
       if [[ ! -e ${lib.escapeShellArg agentLogPath} ]]; then
         install -m 0644 -o ${lib.escapeShellArg username} -g staff /dev/null ${lib.escapeShellArg agentLogPath}
       fi

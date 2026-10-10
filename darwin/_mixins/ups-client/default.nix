@@ -93,10 +93,11 @@ in
       fi
     '';
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      mkdir -p /var/lib/nut
-      chmod 700 /var/lib/nut
-    '';
+    system.tmpfiles.settings.ups."/var/lib/nut".d = {
+      mode = "0700";
+      user = "root";
+      group = "wheel";
+    };
 
     launchd.daemons.nut-upsmon = {
       command = lib.escapeShellArgs [

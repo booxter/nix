@@ -12,9 +12,11 @@ in
   config = lib.mkIf (cfg != null && config.host.observability.enable) {
     host.observability.nodeExporter.textfile.directories.nixBuilderMetrics = textfileDir;
 
-    system.activationScripts.launchd.text = lib.mkAfter ''
-      install -d -m 0755 -o root -g wheel ${textfileDir}
-    '';
+    system.tmpfiles.settings.nix-builder-metrics.${textfileDir}.d = {
+      mode = "0755";
+      user = "root";
+      group = "wheel";
+    };
 
     launchd.daemons.nix-builder-metrics = {
       command = lib.escapeShellArgs [
