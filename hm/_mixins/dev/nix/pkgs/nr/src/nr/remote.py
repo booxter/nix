@@ -1,4 +1,5 @@
 import re
+import subprocess
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -10,6 +11,18 @@ from pydantic import ValidationError
 
 class RemoteSubmitter(Protocol):
     def submit(self, host: str, request: ReviewRequest) -> Submission: ...
+
+
+class RemoteAttacher(Protocol):
+    def attach(self, host: str) -> int: ...
+
+
+class SshAttacher:
+    def attach(self, host: str) -> int:
+        # Inherit the terminal rather than capturing SSH's interactive streams.
+        return subprocess.run(
+            ["ssh", "-a", "-t", "--", validate_host(host), "tmux attach -t =nr"], check=False
+        ).returncode
 
 
 def validate_host(host: str) -> str:

@@ -28,6 +28,102 @@ class RecordingSubmitter:
         return Submission(window="pr-123-12345678")
 
 
+class RecordingAttacher:
+    def __init__(self, status: int = 0, error: Exception | None = None) -> None:
+        self.host: str | None = None
+        self.status = status
+        self.error = error
+
+    def attach(self, host: str) -> int:
+        self.host = host
+        if self.error:
+            raise self.error
+        return self.status
+
+
+@pytest.mark.parametrize("host", [None, "other"])
+@pytest.mark.parametrize("status", [0, 1, 255])
+def test_attach_existing_session_without_submitting(host: str | None, status: int) -> None:
+    attacher = RecordingAttacher(status)
+    submitter = RecordingSubmitter()
+    executor = RecordingReviewExecutor()
+    arguments = ["-r", "--attach"]
+    if host:
+        arguments.extend(["--host", host])
+
+    result = main(
+        arguments,
+        environment={"NR_REMOTE_HOST": "frame"},
+        attacher=attacher,
+        submitter=submitter,
+        executor=executor,
+    )
+
+    assert result == status
+    assert attacher.host == (host or "frame")
+    assert submitter.request is None
+    assert executor.options is None
+
+
+@pytest.mark.parametrize("arguments", [["--attach"], ["-r", "--attach", "123"], [], ["-r"]])
+def test_invalid_attach_or_review_usage(arguments: list[str]) -> None:
+    with pytest.raises(SystemExit) as error:
+        main(arguments)
+    assert error.value.code == 2
+
+
+def test_attach_rejects_invalid_host() -> None:
+    attacher = RecordingAttacher()
+    assert main(["-r", "--attach", "--host", "bad;host"], attacher=attacher) == 1
+    assert attacher.host is None
+
+
+def test_attach_connection_error_is_reported(capsys: pytest.CaptureFixture[str]) -> None:
+    attacher = RecordingAttacher(error=OSError("cannot start SSH"))
+    assert main(["-r", "--attach"], attacher=attacher) == 1
+    assert "cannot start SSH" in capsys.readouterr().err
+
+
+class InterruptedAttacher:
+    def attach(self, host: str) -> int:
+        raise KeyboardInterrupt
+
+
+def test_interrupted_attach_does_not_report_uncertain_submission(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["-r", "--attach"], attacher=InterruptedAttacher()) == 130
+    assert not capsys.readouterr().err
+
+
+def test_attach_inherits_input_and_output_and_returns_ssh_status(
+    review_environment: dict[str, str], helpers: Path
+) -> None:
+    ssh = helpers / "ssh"
+    ssh.write_text(
+        f"#!{sys.executable}\n"
+        "import sys\n"
+        "print('remote terminal: ' + sys.stdin.readline().strip())\n"
+        "print('connection closed', file=sys.stderr)\n"
+        "sys.exit(23)\n"
+    )
+    ssh.chmod(0o755)
+    result = ProcessRunner(review_environment).run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "-r",
+            "--attach",
+        ],
+        input="viewer input\n",
+    )
+
+    assert result.returncode == 23
+    assert result.stdout.strip() == "remote terminal: viewer input"
+    assert result.stderr.strip() == "connection closed"
+
+
 @pytest.mark.parametrize("host", [None, "other"])
 def test_remote_submission_preserves_choices_without_resolving_client_defaults(
     capsys: pytest.CaptureFixture[str], host: str | None

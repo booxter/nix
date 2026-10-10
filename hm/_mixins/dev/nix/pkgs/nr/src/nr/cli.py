@@ -4,7 +4,14 @@ import sys
 from collections.abc import Mapping, Sequence
 
 from nr.process import ProcessRunner
-from nr.remote import RemoteSubmitter, SshSubmitter, attach_command, validate_host
+from nr.remote import (
+    RemoteAttacher,
+    RemoteSubmitter,
+    SshAttacher,
+    SshSubmitter,
+    attach_command,
+    validate_host,
+)
 from nr.review import NixpkgsReviewExecutor, ReviewExecutor, ReviewRequest, resolve_review
 
 
@@ -31,8 +38,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--host", help="remote SSH machine name (default: configured host or frame)"
     )
+    parser.add_argument(
+        "--attach",
+        action="store_true",
+        help="attach to the existing remote tmux session without submitting a review",
+    )
     parser.add_argument("-l", "--local", action="store_true", help="exclude community builders")
-    parser.add_argument("pull_requests", nargs="+")
+    parser.add_argument("pull_requests", nargs="*")
     return parser
 
 
@@ -42,14 +54,25 @@ def main(
     environment: Mapping[str, str] | None = None,
     executor: ReviewExecutor | None = None,
     submitter: RemoteSubmitter | None = None,
+    attacher: RemoteAttacher | None = None,
 ) -> int:
     parser = _parser()
     arguments = parser.parse_args(argv)
     if arguments.host is not None and not arguments.remote:
         parser.error("--host requires --remote")
+    if arguments.attach and not arguments.remote:
+        parser.error("--attach requires --remote")
+    if arguments.attach and arguments.pull_requests:
+        parser.error("--attach cannot be combined with pull requests")
+    if not arguments.pull_requests and not arguments.attach:
+        parser.error("at least one pull request is required unless --attach is given")
     environ = os.environ if environment is None else environment
     host = arguments.host if arguments.host is not None else environ.get("NR_REMOTE_HOST", "frame")
     try:
+        if arguments.remote:
+            validate_host(host)
+        if arguments.attach:
+            return (attacher or SshAttacher()).attach(host)
         request = ReviewRequest(
             pull_requests=tuple(arguments.pull_requests),
             included_pull_requests=tuple(arguments.include_pr),
@@ -61,14 +84,13 @@ def main(
             local=arguments.local,
         )
         if arguments.remote:
-            validate_host(host)
             result = (submitter or SshSubmitter(ProcessRunner())).submit(host, request)
             print(f"Submitted to {host}, window nr:{result.window}")
             print(f"Watch: {attach_command(host)}")
             return 0
         return (executor or NixpkgsReviewExecutor()).run(resolve_review(request, environ))
     except KeyboardInterrupt:
-        if arguments.remote:
+        if arguments.remote and not arguments.attach:
             print(
                 f"Submission interrupted; check before retrying: {attach_command(host)}",
                 file=sys.stderr,
