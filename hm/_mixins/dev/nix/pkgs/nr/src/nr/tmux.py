@@ -80,7 +80,9 @@ class TmuxLauncher:
 def main() -> int:
     try:
         request = ReviewRequest.model_validate_json(sys.stdin.read())
-        checkout = Path(os.environ.get("NR_REVIEW_DIRECTORY", "~/src/nixpkgs")).expanduser()
+        checkout = (
+            Path(os.environ.get("NR_REVIEW_DIRECTORY", "~/src/nixpkgs")).expanduser().resolve()
+        )
         # The sibling wrapper belongs to this package, even if PATH contains
         # another nr version or the tmux server inherited an old environment.
         worker = Path(sys.argv[0]).resolve().with_name("nr-worker")

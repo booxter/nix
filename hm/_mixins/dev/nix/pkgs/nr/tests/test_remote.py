@@ -74,6 +74,12 @@ def test_host_requires_remote() -> None:
     assert error.value.code == 2
 
 
+def test_explicit_empty_host_does_not_fall_back_to_default() -> None:
+    submitter = RecordingSubmitter()
+    assert main(["-r", "--host", "", "123"], submitter=submitter) == 1
+    assert submitter.request is None
+
+
 @pytest.mark.parametrize("host", ["-oProxyCommand=bad", "frame;bad", "", "frame\nother"])
 def test_invalid_host_is_rejected_without_submitting(host: str) -> None:
     submitter = RecordingSubmitter()

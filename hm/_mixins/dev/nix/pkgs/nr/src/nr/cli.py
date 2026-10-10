@@ -12,6 +12,12 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nr",
         description="Review a nixpkgs pull request using the fleet's remote builders.",
+        epilog=(
+            "Remote mode returns after submission. Each invocation gets a window in session nr; "
+            "finished windows retain the exit status. The destination needs nr and a nixpkgs "
+            "checkout at ~/src/nixpkgs (override there with NR_REVIEW_DIRECTORY). "
+            "NR_REMOTE_HOST overrides the default destination."
+        ),
     )
     parser.add_argument("-p", "--post-result", action="store_true")
     parser.add_argument("-a", "--approve", action="store_true")
@@ -39,10 +45,10 @@ def main(
 ) -> int:
     parser = _parser()
     arguments = parser.parse_args(argv)
-    if arguments.host and not arguments.remote:
+    if arguments.host is not None and not arguments.remote:
         parser.error("--host requires --remote")
     environ = os.environ if environment is None else environment
-    host = arguments.host or environ.get("NR_REMOTE_HOST", "frame")
+    host = arguments.host if arguments.host is not None else environ.get("NR_REMOTE_HOST", "frame")
     try:
         request = ReviewRequest(
             pull_requests=tuple(arguments.pull_requests),

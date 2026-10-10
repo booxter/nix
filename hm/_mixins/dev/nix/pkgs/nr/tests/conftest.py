@@ -14,10 +14,16 @@ def review_environment(tmp_path: Path) -> Iterator[dict[str, str]]:
     source = Path(__file__).with_name("review_stub.py").read_text()
     executable.write_text(f"#!{sys.executable}\n{source}")
     executable.chmod(0o755)
+
+    # Raw Nix interpreters do not process dependency .pth files from
+    # PYTHONPATH, so start subprocess coverage explicitly.
+    (tmp_path / "sitecustomize.py").write_text("import coverage\ncoverage.process_startup()\n")
     yield {
         **os.environ,
         "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}",
-        "PYTHONPATH": str(Path(__file__).parents[1] / "src"),
+        # Nix's pytest wrapper adds dependency paths at startup. Give child
+        # interpreters the same imports, including the package under test.
+        "PYTHONPATH": os.pathsep.join([str(tmp_path), *sys.path]),
         "NR_TEST_REPORT": str(tmp_path / "report.json"),
     }
 

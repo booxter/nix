@@ -1,6 +1,8 @@
 {
   builders ? "",
   localBuilders ? "",
+  remoteHost ? "frame",
+  reviewDirectory ? "~/src/nixpkgs",
   lib,
   git,
   nixpkgs-reviewFull,
@@ -45,6 +47,8 @@ pythonPackages.buildPythonApplication {
     }"
     "--set NR_BUILDERS ${lib.escapeShellArg builders}"
     "--set NR_LOCAL_BUILDERS ${lib.escapeShellArg localBuilders}"
+    "--set-default NR_REMOTE_HOST ${lib.escapeShellArg remoteHost}"
+    "--set-default NR_REVIEW_DIRECTORY ${lib.escapeShellArg reviewDirectory}"
   ];
 
   preCheck = ''
