@@ -83,12 +83,19 @@ let
   # Follow the configured Codex version and preserve its voice prompt. Overrides
   # bypass Codex's first-name substitution, so render that placeholder here.
   voicePrompt =
-    lib.replaceStrings
-      [ "{{ user_first_name }}" ]
-      [ (builtins.head (lib.splitString " " config.host.hm.fullName)) ]
-      (
-        builtins.readFile "${config.programs.codex.package.src}/codex-rs/prompts/templates/realtime/backend_prompt.md"
-      );
+    let
+      rendered =
+        lib.replaceStrings
+          [ "{{ user_first_name }}" ]
+          [ (builtins.head (lib.splitString " " config.host.hm.fullName)) ]
+          (
+            builtins.readFile "${config.programs.codex.package.src}/codex-rs/prompts/templates/realtime/backend_prompt.md"
+          );
+    in
+    assert lib.assertMsg (
+      !(lib.hasInfix "{{" rendered || lib.hasInfix "}}" rendered)
+    ) "Codex voice prompt contains unhandled template placeholders; update its substitutions.";
+    rendered;
   oauthServerNames = builtins.attrNames (
     lib.filterAttrs (_: server: server.oauth != null) cfg.mcp.httpServers
   );
