@@ -70,7 +70,10 @@ pkgs.testers.runNixOSTest {
     };
 
     server = {
+      # Match the managed host's login shell, including its =command expansion.
+      programs.zsh.enable = true;
       users.users.reviewer = {
+        shell = pkgs.zsh;
         packages = [
           (nr.override {
             builders = serverBuilders;

@@ -20,8 +20,10 @@ class RemoteAttacher(Protocol):
 class SshAttacher:
     def attach(self, host: str) -> int:
         # Inherit the terminal rather than capturing SSH's interactive streams.
+        # Quote the exact session target: zsh expands an unquoted =nr to the
+        # executable's path when SSH passes this command to the login shell.
         return subprocess.run(
-            ["ssh", "-a", "-t", "--", validate_host(host), "tmux attach -t =nr"], check=False
+            ["ssh", "-a", "-t", "--", validate_host(host), "tmux attach -t '=nr'"], check=False
         ).returncode
 
 
