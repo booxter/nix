@@ -24,7 +24,9 @@ def _parser() -> argparse.ArgumentParser:
             "finished windows retain the exit status. The destination needs nr and a nixpkgs "
             "checkout at ~/src/nixpkgs (override there with NR_REVIEW_DIRECTORY). "
             "NR_REMOTE_HOST overrides the default destination. "
-            "Arguments after -- are passed to nixpkgs-review, e.g. nr 123 -- -p hello."
+            "Arguments after -- are passed to nixpkgs-review, e.g. nr 123 -- -p hello. "
+            "Pass Nix build options with --build-args='--cores 2'; they are merged with "
+            "fleet defaults. Remote builders use their own cores setting."
         ),
     )
     parser.add_argument("-p", "--post-result", action="store_true")
