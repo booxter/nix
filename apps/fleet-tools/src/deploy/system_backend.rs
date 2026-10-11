@@ -2,7 +2,7 @@ use std::env;
 use std::io::{self, IsTerminal, Write};
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 use rustix::fs::statvfs;
@@ -31,6 +31,7 @@ const SUDO: &str = "/usr/bin/sudo";
 const SUDO: &str = "/run/wrappers/bin/sudo";
 
 pub struct SystemBackend {
+    deployment_directory: Option<PathBuf>,
     attic: PathBuf,
     dig: PathBuf,
     fzf: PathBuf,
@@ -50,6 +51,7 @@ impl SystemBackend {
             .transpose()?
             .unwrap_or_default();
         Ok(Self {
+            deployment_directory: None,
             attic: ATTIC.into(),
             dig: DIG.into(),
             fzf: FZF.into(),
@@ -62,14 +64,12 @@ impl SystemBackend {
         })
     }
 
-    fn checked_output(&self, command: &mut Command, description: &str) -> Result<Output> {
-        let output = command
-            .output()
-            .with_context(|| format!("failed to start {description}"))?;
-        if !output.status.success() {
-            bail!("{description} exited with {}", output.status);
-        }
-        Ok(output)
+    fn deployment_root(&self, name: impl AsRef<Path>) -> Result<PathBuf> {
+        let directory = self
+            .deployment_directory
+            .as_ref()
+            .context("deployment lock has not been acquired")?;
+        Ok(directory.join(name))
     }
 
     fn checked_status(&self, command: &mut Command, description: &str) -> Result<()> {
@@ -201,6 +201,15 @@ struct SshConnection {
 }
 
 impl Backend for SystemBackend {
+    type DeploymentLock = super::state::DeploymentLock;
+
+    fn lock_deployment(&mut self) -> Result<Self::DeploymentLock> {
+        let directory = super::state::directory()?;
+        let lock = super::state::lock(&directory)?;
+        self.deployment_directory = Some(directory);
+        Ok(lock)
+    }
+
     fn activate_local(
         &mut self,
         helper: &Path,
@@ -296,17 +305,11 @@ impl Backend for SystemBackend {
             "{}#packages.{platform}.fleet-tools",
             source.to_string_lossy()
         );
-        let output = self.checked_output(
-            Command::new(&self.nix).args([
-                "build",
-                "--no-link",
-                "--print-build-logs",
-                "--print-out-paths",
-                &attribute,
-            ]),
+        super::roots::build(
+            Command::new(&self.nix).args(["build", &attribute]),
+            &self.deployment_root(format!("helper-{platform}"))?,
             &format!("fleet deploy helper build for {platform}"),
-        )?;
-        parse_store_path(&output.stdout, "fleet deploy helper build")
+        )
     }
 
     fn build_system(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
@@ -322,17 +325,11 @@ impl Backend for SystemBackend {
                 target.config_name
             ),
         };
-        let output = self.checked_output(
-            Command::new(&self.nix).args([
-                "build",
-                "--no-link",
-                "--print-build-logs",
-                "--print-out-paths",
-                &attribute,
-            ]),
+        super::roots::build(
+            Command::new(&self.nix).args(["build", &attribute]),
+            &self.deployment_root(Path::new(&target.config_name).join("system"))?,
             &format!("system build for {}", target.host.display_name),
-        )?;
-        parse_store_path(&output.stdout, "system build")
+        )
     }
 
     fn disko(&mut self, request: &DiskoRequest) -> Result<()> {
@@ -469,13 +466,11 @@ impl Backend for SystemBackend {
             })?,
         };
         let revision = prepared.revision().to_owned();
-        let output = self.checked_output(
-            Command::new(&self.nix)
-                .args(["store", "add-path", "--name", "fleet-deploy-source"])
-                .arg(prepared.root()),
-            "adding deployment source to the Nix store",
+        let store_path = super::roots::build(
+            &mut super::roots::source_command(&self.nix, prepared.root()),
+            &self.deployment_root("source")?,
+            "rooting deployment source in the Nix store",
         )?;
-        let store_path = parse_store_path(&output.stdout, "Nix store add-path")?;
         eprintln!(
             "Using committed deployment source {revision} at {}.",
             store_path.display()

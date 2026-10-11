@@ -16,6 +16,7 @@ struct FakeBackend {
     builds: Vec<String>,
     diskos: Vec<DiskoRequest>,
     ensure_calls: usize,
+    lock_unavailable: bool,
     fail_hosts: BTreeSet<String>,
     hostname: String,
     prebuilt_activations: Vec<String>,
@@ -30,6 +31,15 @@ struct FakeBackend {
 }
 
 impl Backend for FakeBackend {
+    type DeploymentLock = ();
+
+    fn lock_deployment(&mut self) -> Result<()> {
+        if self.lock_unavailable {
+            bail!("another deployment is running");
+        }
+        Ok(())
+    }
+
     fn activate_local(
         &mut self,
         _helper: &Path,
@@ -196,9 +206,33 @@ fn clap_rejects_conflicting_source_and_host_discovery_options() {
 }
 
 #[test]
+fn competing_deployment_stops_before_gc_or_staging() {
+    let mut backend = FakeBackend {
+        hostname: "controller".to_owned(),
+        terminal: true,
+        lock_unavailable: true,
+        ..Default::default()
+    };
+
+    let error = run(
+        args(&["--local", "alpha"]),
+        &inventory(),
+        &mut backend,
+        &mut Vec::new(),
+    )
+    .unwrap_err();
+
+    assert!(error.to_string().contains("another deployment is running"));
+    assert_eq!(backend.ensure_calls, 0);
+    assert_eq!(backend.stage_calls, 0);
+    assert!(backend.activations.is_empty());
+}
+
+#[test]
 fn dry_run_defaults_to_current_host_without_side_effects() {
     let mut backend = FakeBackend {
         hostname: "controller".to_owned(),
+        lock_unavailable: true,
         ..Default::default()
     };
     let mut output = Vec::new();

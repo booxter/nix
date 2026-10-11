@@ -16,6 +16,8 @@ let
   nr = nixPkgs.nr.override {
     builders = nixpkgsBuilders;
     localBuilders = nixpkgsLocalBuilders;
+    remoteHost = "frame";
+    reviewDirectory = "${config.home.homeDirectory}/src/nixpkgs";
   };
 in
 lib.mkIf config.host.hm.env.roles.developer {

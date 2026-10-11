@@ -1,0 +1,97 @@
+--- a/Makefile
++++ b/Makefile
+@@ -10,7 +10,7 @@
+ all: $(BIN)
+ 
+ $(BIN):
+-	$(CC) -o $(BIN) $(CFLAGS) -framework Foundation -framework ApplicationServices src/main.m
++	$(CC) -o $(BIN) $(CFLAGS) -fobjc-arc -fblocks -framework Foundation -framework ApplicationServices -framework AppKit src/main.m
+ 
+ install: $(BIN)
+ 	install -d $(DESTDIR)$(BINDIR)
+--- a/src/main.m
++++ b/src/main.m
+@@ -5,7 +5,63 @@
+ 
+ #import <Foundation/Foundation.h>
+ #import <ApplicationServices/ApplicationServices.h>
++#import <AppKit/AppKit.h>
++#import <dispatch/dispatch.h>
+ 
++int set_default_app(NSString *path) {
++    if (![path isAbsolutePath]) {
++        fprintf(stderr, "Expected an absolute application path: %s\n", path.UTF8String);
++        return 1;
++    }
++
++    NSURL *appURL = [NSURL fileURLWithPath:[path stringByStandardizingPath]];
++    if ([NSBundle bundleWithURL:appURL].bundleIdentifier == nil) {
++        fprintf(stderr, "Not an application bundle: %s\n", path.UTF8String);
++        return 1;
++    }
++
++    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
++    for (NSString *scheme in @[@"http", @"https"]) {
++        NSURL *probeURL = [NSURL URLWithString:[scheme stringByAppendingString:@"://example.com"]];
++        NSURL *selectedURL = [workspace URLForApplicationToOpenURL:probeURL];
++        if ([selectedURL.path.stringByStandardizingPath isEqualToString:appURL.path]) {
++            continue;
++        }
++
++        __block NSError *failure = nil;
++
++        [workspace setDefaultApplicationAtURL:appURL
++                        toOpenURLsWithScheme:scheme
++                           completionHandler:^(NSError *error) {
++            // Keep completion state on the main thread while servicing consent UI.
++            dispatch_async(dispatch_get_main_queue(), ^{
++                failure = error;
++                CFRunLoopStop(CFRunLoopGetMain());
++            });
++        }];
++
++        // The callback stops this run loop after any consent dialog completes.
++        CFRunLoopRun();
++
++        if (failure != nil) {
++            fprintf(stderr, "Cannot set %s handler: %s\n",
++                    scheme.UTF8String, failure.localizedDescription.UTF8String);
++            return 1;
++        }
++
++        // A matching bundle ID alone does not distinguish installed Firefox copies.
++        selectedURL = [workspace URLForApplicationToOpenURL:probeURL];
++        if (![selectedURL.path.stringByStandardizingPath isEqualToString:appURL.path]) {
++            fprintf(stderr, "%s resolved to %s instead of %s\n",
++                    scheme.UTF8String, selectedURL.path.UTF8String ?: "(none)",
++                    appURL.path.UTF8String);
++            return 1;
++        }
++    }
++
++    return 0;
++}
++
+ NSString* app_name_from_bundle_id(NSString *app_bundle_id) {
+     return [[[app_bundle_id componentsSeparatedByString:@"."] lastObject] lowercaseString];
+ }
+@@ -46,6 +102,20 @@
+     const char *target = (argc == 1) ? '\0' : argv[1];
+ 
+     @autoreleasepool {
++        if (argc > 1 && strcmp(argv[1], "--help") == 0) {
++            puts("Usage: defaultbrowser [browser | --app /path/to/Browser.app]");
++            return 0;
++        }
++
++        if (argc > 1 && strcmp(argv[1], "--app") == 0) {
++            if (argc != 3) {
++                fprintf(stderr, "Usage: defaultbrowser --app /path/to/Browser.app\n");
++                return 1;
++            }
++
++            return set_default_app([NSString stringWithUTF8String:argv[2]]);
++        }
++
+         // Get all HTTP handlers
+         NSMutableDictionary *handlers = get_http_handlers();

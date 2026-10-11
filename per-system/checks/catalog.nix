@@ -38,6 +38,7 @@ let
       python-quality = pythonQualityCheck;
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
+      nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       repairr-package = pkgs.repairr;

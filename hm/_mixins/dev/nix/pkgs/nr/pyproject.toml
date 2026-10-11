@@ -7,9 +7,12 @@ name = "nr"
 version = "0.1.0"
 description = "Run nixpkgs-review with fleet builder defaults"
 requires-python = ">=3.13"
+dependencies = ["pydantic>=2"]
 
 [project.scripts]
 nr = "nr.cli:main"
+nr-submit = "nr.tmux:main"
+nr-worker = "nr.worker:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -23,6 +26,9 @@ testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
+
+[tool.coverage.run]
+patch = ["subprocess"]
 
 [tool.mypy]
 files = ["src/nr"]
