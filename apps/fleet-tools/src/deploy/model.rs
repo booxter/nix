@@ -131,6 +131,9 @@ pub(super) struct DiskoRequest {
 }
 
 pub(super) trait Backend {
+    type DeploymentLock;
+
+    fn lock_deployment(&mut self) -> Result<Self::DeploymentLock>;
     fn activate_local(
         &mut self,
         helper: &Path,

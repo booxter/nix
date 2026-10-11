@@ -55,6 +55,7 @@ pub(super) fn run_with_backend(
         bail!("no TTY available for sudo; run deploy from a real terminal");
     }
 
+    let _deployment_lock = backend.lock_deployment()?;
     backend.ensure_local_space(20, 5)?;
     let source_selection = if arguments.local {
         SourceSelection::Local {

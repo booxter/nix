@@ -201,6 +201,12 @@ struct SshConnection {
 }
 
 impl Backend for SystemBackend {
+    type DeploymentLock = super::state::DeploymentLock;
+
+    fn lock_deployment(&mut self) -> Result<Self::DeploymentLock> {
+        super::state::lock(&super::state::directory()?)
+    }
+
     fn activate_local(
         &mut self,
         helper: &Path,
