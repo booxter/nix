@@ -139,6 +139,12 @@ in
         && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.chatgpt
       ) pkgs.chatgpt;
 
+    home.file.".agents/skills/simple-review" =
+      lib.mkIf (config.host.hm.env.roles.developer && cfg.enable)
+        {
+          source = ./skills/simple-review;
+        };
+
     home.file.".agents/skills/weekly-report" =
       lib.mkIf (config.host.hm.env.roles.developer && cfg.enable && osConfig.host.realm == "work")
         {
