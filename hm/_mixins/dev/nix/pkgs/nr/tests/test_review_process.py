@@ -72,3 +72,87 @@ def test_package_selection_after_separator_reaches_review(
     assert report["package"] == ["llvmPackages_21.llvm"]
     assert report["systems"] == "x86_64-linux aarch64-darwin"
     assert not report["post_result"]
+
+
+@pytest.mark.parametrize(
+    "build_arguments",
+    [
+        ["--build-args=--cores 2 --max-jobs 1"],
+        ["--build-args", "--cores 2 --max-jobs 1"],
+        ["--build-args=--cores 2", "--build-args=--max-jobs 1"],
+    ],
+)
+def test_build_options_preserve_fleet_and_package_selection(
+    review_environment: dict[str, str], build_arguments: list[str]
+) -> None:
+    builders = "ssh-ng://fleet-builder aarch64-linux - 4 100 - - -"
+    environment = review_environment | {"NR_BUILDERS": builders}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "569298",
+            "--",
+            "-p",
+            "python314Packages.pysail",
+            *build_arguments,
+        ],
+        env=environment,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(Path(environment["NR_TEST_REPORT"]).read_text())
+    assert report["builders"] == builders
+    assert report["cores"] == 2
+    assert report["max_jobs"] == 1
+    assert report["package"] == ["python314Packages.pysail"]
+    assert report["extra_nixpkgs_config"] is None
+
+
+def test_explicit_builders_override_fleet_defaults(
+    review_environment: dict[str, str],
+) -> None:
+    builders = "ssh-ng://chosen-builder aarch64-linux '/key with spaces' 1"
+    environment = review_environment | {"NR_BUILDERS": "ssh-ng://fleet-builder aarch64-linux"}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "569298",
+            "--",
+            f'--build-args=--builders "{builders}"',
+        ],
+        env=environment,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(Path(environment["NR_TEST_REPORT"]).read_text())
+    assert report["builders"] == builders
+
+
+@pytest.mark.parametrize("build_arguments", [["--build-args"], ["--build-args='"]])
+def test_invalid_build_options_fail_before_starting_review(
+    review_environment: dict[str, str], build_arguments: list[str]
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "569298",
+            "--",
+            *build_arguments,
+        ],
+        env=review_environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "nr:" in result.stderr
+    assert not Path(review_environment["NR_TEST_REPORT"]).exists()

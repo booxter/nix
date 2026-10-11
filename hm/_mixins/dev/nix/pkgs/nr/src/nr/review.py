@@ -1,3 +1,4 @@
+import argparse
 import shlex
 import subprocess
 from collections.abc import Mapping
@@ -66,13 +67,34 @@ def resolve_review(request: ReviewRequest, environment: Mapping[str, str]) -> Re
     )
 
 
+def split_build_arguments(extra_arguments: tuple[str, ...]) -> tuple[list[str], list[str]]:
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False, exit_on_error=False)
+    parser.add_argument("--build-args", action="append", default=[])
+    try:
+        supplied, review_arguments = parser.parse_known_args(extra_arguments)
+    except argparse.ArgumentError as error:
+        raise ValueError(str(error)) from error
+
+    build_arguments: list[str] = []
+    for value in supplied.build_args:
+        build_arguments.extend(shlex.split(value))
+    return review_arguments, build_arguments
+
+
 def review_arguments(options: ReviewOptions) -> list[str]:
     request = options.request
+    extra_arguments, supplied_build_arguments = split_build_arguments(request.extra_arguments)
+    build_arguments = []
+    if options.builders is not None:
+        build_arguments.extend(["--builders", options.builders])
+    # Keep explicit Nix options last so they can override fleet defaults.
+    build_arguments.extend(supplied_build_arguments)
+
     arguments = [
         "nixpkgs-review",
         "pr",
         *request.pull_requests,
-        *request.extra_arguments,
+        *extra_arguments,
         "--no-shell",
     ]
     for pull_request in request.included_pull_requests:
@@ -86,7 +108,6 @@ def review_arguments(options: ReviewOptions) -> list[str]:
     if request.tests:
         arguments.append("--tests")
     arguments.append(f"--systems={options.systems}")
-    if options.builders is not None:
-        build_arguments = shlex.join(["--builders", options.builders])
-        arguments.append(f"--build-args={build_arguments}")
+    if build_arguments:
+        arguments.append(f"--build-args={shlex.join(build_arguments)}")
     return arguments

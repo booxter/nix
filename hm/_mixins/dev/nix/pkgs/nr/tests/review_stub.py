@@ -24,8 +24,10 @@ arguments = parser.parse_args()
 
 build_parser = argparse.ArgumentParser()
 build_parser.add_argument("--builders")
+build_parser.add_argument("--cores", type=int)
+build_parser.add_argument("--max-jobs", type=int)
 build_options = build_parser.parse_args(shlex.split(arguments.build_args or ""))
-report = vars(arguments) | {"builders": build_options.builders, "directory": str(Path.cwd())}
+report = vars(arguments) | vars(build_options) | {"directory": str(Path.cwd())}
 Path(os.environ["NR_TEST_REPORT"]).write_text(json.dumps(report))
 print("review started", flush=True)
 
