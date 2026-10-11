@@ -18,6 +18,7 @@ class ReviewRequest(BaseModel):
 
     pull_requests: Annotated[tuple[PullRequest, ...], Field(min_length=1)]
     included_pull_requests: tuple[PullRequest, ...] = ()
+    extra_arguments: tuple[str, ...] = ()
     systems: str | None = None
     post_result: bool = False
     approve: bool = False
@@ -67,7 +68,13 @@ def resolve_review(request: ReviewRequest, environment: Mapping[str, str]) -> Re
 
 def review_arguments(options: ReviewOptions) -> list[str]:
     request = options.request
-    arguments = ["nixpkgs-review", "pr", *request.pull_requests, "--no-shell"]
+    arguments = [
+        "nixpkgs-review",
+        "pr",
+        *request.pull_requests,
+        *request.extra_arguments,
+        "--no-shell",
+    ]
     for pull_request in request.included_pull_requests:
         arguments.extend(("--include-pr", pull_request))
     if request.cuda:

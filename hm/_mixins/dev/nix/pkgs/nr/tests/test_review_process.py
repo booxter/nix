@@ -45,3 +45,30 @@ def test_minimal_review_runs_successfully(review_environment: dict[str, str]) ->
     )
 
     assert result.returncode == 0
+
+
+def test_package_selection_after_separator_reaches_review(
+    review_environment: dict[str, str],
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "-s",
+            "x86_64-linux aarch64-darwin",
+            "572768",
+            "--",
+            "-p",
+            "llvmPackages_21.llvm",
+        ],
+        env=review_environment,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(Path(review_environment["NR_TEST_REPORT"]).read_text())
+    assert report["pull_requests"] == ["572768"]
+    assert report["package"] == ["llvmPackages_21.llvm"]
+    assert report["systems"] == "x86_64-linux aarch64-darwin"
+    assert not report["post_result"]

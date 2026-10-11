@@ -23,7 +23,8 @@ def _parser() -> argparse.ArgumentParser:
             "Remote mode returns after submission. Each invocation gets a window in session nr; "
             "finished windows retain the exit status. The destination needs nr and a nixpkgs "
             "checkout at ~/src/nixpkgs (override there with NR_REVIEW_DIRECTORY). "
-            "NR_REMOTE_HOST overrides the default destination."
+            "NR_REMOTE_HOST overrides the default destination. "
+            "Arguments after -- are passed to nixpkgs-review, e.g. nr 123 -- -p hello."
         ),
     )
     parser.add_argument("-p", "--post-result", action="store_true")
@@ -57,13 +58,16 @@ def main(
     attacher: RemoteAttacher | None = None,
 ) -> int:
     parser = _parser()
-    arguments = parser.parse_args(argv)
+    raw_arguments = list(sys.argv[1:] if argv is None else argv)
+    separator = raw_arguments.index("--") if "--" in raw_arguments else len(raw_arguments)
+    arguments = parser.parse_args(raw_arguments[:separator])
+    extra_arguments = tuple(raw_arguments[separator + 1 :])
     if arguments.host is not None and not arguments.remote:
         parser.error("--host requires --remote")
     if arguments.attach and not arguments.remote:
         parser.error("--attach requires --remote")
-    if arguments.attach and arguments.pull_requests:
-        parser.error("--attach cannot be combined with pull requests")
+    if arguments.attach and (arguments.pull_requests or extra_arguments):
+        parser.error("--attach cannot be combined with review arguments")
     if not arguments.pull_requests and not arguments.attach:
         parser.error("at least one pull request is required unless --attach is given")
     environ = os.environ if environment is None else environment
@@ -76,6 +80,7 @@ def main(
         request = ReviewRequest(
             pull_requests=tuple(arguments.pull_requests),
             included_pull_requests=tuple(arguments.include_pr),
+            extra_arguments=extra_arguments,
             systems=arguments.systems,
             post_result=arguments.post_result,
             approve=arguments.approve,

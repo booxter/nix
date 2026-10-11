@@ -65,7 +65,16 @@ def test_attach_existing_session_without_submitting(host: str | None, status: in
     assert executor.options is None
 
 
-@pytest.mark.parametrize("arguments", [["--attach"], ["-r", "--attach", "123"], [], ["-r"]])
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--attach"],
+        ["-r", "--attach", "123"],
+        ["-r", "--attach", "--", "-p", "hello"],
+        [],
+        ["-r"],
+    ],
+)
 def test_invalid_attach_or_review_usage(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(arguments)
@@ -268,7 +277,19 @@ def test_cli_to_remote_worker_with_destination_defaults(
     }
     runner = ProcessRunner(environment)
     result = runner.run(
-        [sys.executable, "-c", "from nr.cli import main; raise SystemExit(main())", "-r", "123"]
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            "-r",
+            "-p",
+            "123",
+            "--",
+            "-p",
+            "llvmPackages_21.llvm",
+            "-p",
+            "literal; echo 'package'",
+        ]
     )
     assert result.returncode == 0, result.stderr
     assert "Submitted to frame" in result.stdout
@@ -276,3 +297,6 @@ def test_cli_to_remote_worker_with_destination_defaults(
     report = json.loads(Path(environment["NR_TEST_REPORT"]).read_text())
     assert report["builders"] == "ssh://destination aarch64-linux - 2"
     assert "aarch64-linux" in report["systems"]
+    assert report["pull_requests"] == ["123"]
+    assert report["package"] == ["llvmPackages_21.llvm", "literal; echo 'package'"]
+    assert report["post_result"]

@@ -54,12 +54,14 @@ remote(
 )
 
 with subtest("submission creates a detached remote session using server defaults"):
-    output = client.succeed(as_reviewer("nr -r 123"))
+    output = client.succeed(as_reviewer("nr -r 123 -- -p llvmPackages_21.llvm"))
     assert "Submitted to server" in output, output
     first = report(123)
     assert first["builders"] == SERVER_BUILDERS, first
     assert "aarch64-linux" in first["systems"], first
     assert first["directory"] == "/home/reviewer/src/nixpkgs", first
+    assert first["package"] == ["llvmPackages_21.llvm"], first
+    assert not first["post_result"], first
     assert remote("tmux list-sessions -F '#{session_name}'") == "nr"
     first_windows = windows()
     assert len(first_windows) == 1, first_windows
