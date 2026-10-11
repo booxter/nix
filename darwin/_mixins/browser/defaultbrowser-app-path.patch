@@ -11,7 +11,7 @@
  	install -d $(DESTDIR)$(BINDIR)
 --- a/src/main.m
 +++ b/src/main.m
-@@ -5,7 +5,60 @@
+@@ -5,7 +5,63 @@
  
  #import <Foundation/Foundation.h>
  #import <ApplicationServices/ApplicationServices.h>
@@ -32,7 +32,12 @@
 +
 +    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
 +    for (NSString *scheme in @[@"http", @"https"]) {
-+        __block BOOL completed = NO;
++        NSURL *probeURL = [NSURL URLWithString:[scheme stringByAppendingString:@"://example.com"]];
++        NSURL *selectedURL = [workspace URLForApplicationToOpenURL:probeURL];
++        if ([selectedURL.path.stringByStandardizingPath isEqualToString:appURL.path]) {
++            continue;
++        }
++
 +        __block NSError *failure = nil;
 +
 +        [workspace setDefaultApplicationAtURL:appURL
@@ -41,13 +46,12 @@
 +            // Keep completion state on the main thread while servicing consent UI.
 +            dispatch_async(dispatch_get_main_queue(), ^{
 +                failure = error;
-+                completed = YES;
++                CFRunLoopStop(CFRunLoopGetMain());
 +            });
 +        }];
 +
-+        while (!completed) {
-+            [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
-+        }
++        // The callback stops this run loop after any consent dialog completes.
++        CFRunLoopRun();
 +
 +        if (failure != nil) {
 +            fprintf(stderr, "Cannot set %s handler: %s\n",
@@ -56,8 +60,7 @@
 +        }
 +
 +        // A matching bundle ID alone does not distinguish installed Firefox copies.
-+        NSURL *probeURL = [NSURL URLWithString:[scheme stringByAppendingString:@"://example.com"]];
-+        NSURL *selectedURL = [workspace URLForApplicationToOpenURL:probeURL];
++        selectedURL = [workspace URLForApplicationToOpenURL:probeURL];
 +        if (![selectedURL.path.stringByStandardizingPath isEqualToString:appURL.path]) {
 +            fprintf(stderr, "%s resolved to %s instead of %s\n",
 +                    scheme.UTF8String, selectedURL.path.UTF8String ?: "(none)",
@@ -72,7 +75,7 @@
  NSString* app_name_from_bundle_id(NSString *app_bundle_id) {
      return [[[app_bundle_id componentsSeparatedByString:@"."] lastObject] lowercaseString];
  }
-@@ -46,6 +99,20 @@
+@@ -46,6 +102,20 @@
      const char *target = (argc == 1) ? '\0' : argv[1];
  
      @autoreleasepool {
