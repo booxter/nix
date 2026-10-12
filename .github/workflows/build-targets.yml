@@ -307,7 +307,7 @@ jobs:
           {
             printf '%s\n' "${details_tag}"
             printf '<summary>%s</summary>\n\n' "${MACHINE_NAME}"
-            printf '```text\n'
+            printf '```diff\n'
             if [ "${status}" -ne 0 ]; then
               printf 'diff generation failed with exit code %s\n\n' "${status}"
               if [ -s "${stderr_file}" ]; then
@@ -675,14 +675,14 @@ jobs:
               }
 
               const summary = block.match(/<summary>([^<]*)<\/summary>/)?.[1] || "diff";
-              const fenceStart = block.indexOf("```text\n");
+              const fenceStart = block.indexOf("```diff\n");
               const fenceEnd = block.lastIndexOf("\n```");
               const content =
                 fenceStart >= 0 && fenceEnd > fenceStart
-                  ? block.slice(fenceStart + "```text\n".length, fenceEnd)
+                  ? block.slice(fenceStart + "```diff\n".length, fenceEnd)
                   : block;
               const detailsOpen = block.startsWith("<details open>") ? " open" : "";
-              const prefix = `<details${detailsOpen}>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
+              const prefix = `<details${detailsOpen}>\n<summary>${summary}</summary>\n\n\`\`\`diff\n`;
               const suffix =
                 "\n\n[truncated; full output is available in the workflow artifacts.]\n```\n\n</details>";
 

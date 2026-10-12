@@ -143,8 +143,10 @@ def request() -> RotationRequest:
 
 
 def test_controller_rotates_commits_pushes_and_creates_pull_request() -> None:
-    before = CertificateInventory((record(), record(due=False)))
-    after = CertificateInventory((record(due=False),))
+    current_expiry = datetime(2026, 11, 20, tzinfo=UTC).timestamp()
+    new_expiry = datetime(2027, 4, 9, tzinfo=UTC).timestamp()
+    before = CertificateInventory((record(expires=current_expiry),))
+    after = CertificateInventory((record(due=False, expires=new_expiry),))
     scanner = SequenceScanner([before, after])
     repository = RecordingRepository()
     pulls = RecordingPullRequests()
@@ -164,6 +166,7 @@ def test_controller_rotates_commits_pushes_and_creates_pull_request() -> None:
     assert repository.committed == 1
     assert repository.pushed == ["ci/pki-rotate"]
     assert len(pulls.created) == 1
+    assert "| `host/internal_https_server/web` | 2026-11-20 | 2027-04-09 |" in pulls.created[0][2]
     assert summary.due_count == 1
     assert summary.rotated_count == 1
     assert summary.pr_url == "https://github.com/owner/repo/pull/1"
@@ -201,13 +204,18 @@ def test_candidates_exclude_ca_and_not_due_certificates() -> None:
     assert rotation_candidates(inventory) == (record(CertificateCategory.OBSERVABILITY_CLIENT),)
 
 
-def test_pull_request_body_obeys_terse_repository_style() -> None:
-    item = record().reference()
-    body = pull_request_body((item,), CertificateInventory((record(),)), rotation_window_days=45)
+def test_pull_request_body_reports_unparsable_current_expiry() -> None:
+    current = record().model_copy(update={"parse_success": False})
+    refreshed = record(expires=datetime(2027, 4, 9, tzinfo=UTC).timestamp())
+    body = pull_request_body(
+        (current.reference(),),
+        CertificateInventory((current,)),
+        CertificateInventory((refreshed,)),
+        rotation_window_days=45,
+    )
 
-    assert body.count("\n") == 3
-    assert not any(line.startswith("#") for line in body.splitlines())
-    assert "host/internal_https_server/web" in body
+    assert "| Certificate | Current expiry (UTC) | New expiry (UTC) |" in body
+    assert "| `host/internal_https_server/web` | unparsable | 2027-04-09 |" in body
 
 
 @dataclass

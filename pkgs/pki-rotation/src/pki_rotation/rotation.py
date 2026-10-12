@@ -139,19 +139,25 @@ def _expiry(record: CertificateRecord) -> str:
 
 def pull_request_body(
     rotated: tuple[CertificateReference, ...],
+    current: CertificateInventory,
     refreshed: CertificateInventory,
     *,
     rotation_window_days: int,
 ) -> str:
-    records = {record.reference(): record for record in refreshed.root}
-    descriptions = ", ".join(
-        f"`{item.host}/{item.category.value}/{item.cert_name}` (expires {_expiry(records[item])})"
+    before = {record.reference(): record for record in current.root}
+    after = {record.reference(): record for record in refreshed.root}
+    rows = "".join(
+        f"| `{item.host}/{item.category.value}/{item.cert_name}` "
+        f"| {_expiry(before[item])} | {_expiry(after[item])} |\n"
         for item in rotated
     )
     return (
         f"- Rotated {len(rotated)} managed internal PKI leaf certificate(s).\n"
         f"- Rotation window: {rotation_window_days} days.\n"
-        f"- Certificates: {descriptions}.\n"
+        "\n"
+        "| Certificate | Current expiry (UTC) | New expiry (UTC) |\n"
+        "| --- | --- | --- |\n"
+        f"{rows}"
     )
 
 
@@ -215,6 +221,7 @@ class RotationController:
                         title="chore: rotate internal PKI leaf certs",
                         body=pull_request_body(
                             rotated,
+                            before,
                             after,
                             rotation_window_days=request.rotation_window_days,
                         ),
