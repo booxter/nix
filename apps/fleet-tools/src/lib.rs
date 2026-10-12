@@ -7,6 +7,7 @@ pub mod deploy;
 pub mod deploy_remote;
 pub mod deploy_source;
 pub mod diff;
+mod file_lock;
 mod repository;
 pub mod vm;
 pub mod wireguard;

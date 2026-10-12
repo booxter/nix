@@ -1,8 +1,10 @@
 use std::env;
-use std::fs::{self, File, TryLockError};
+use std::fs::{self, TryLockError};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+
+use crate::file_lock::FileLock;
 
 pub(super) fn directory() -> Result<PathBuf> {
     let state_home = match env::var_os("XDG_STATE_HOME").filter(|value| !value.is_empty()) {
@@ -12,15 +14,7 @@ pub(super) fn directory() -> Result<PathBuf> {
     Ok(state_home.join("fleet-deploy"))
 }
 
-pub struct DeploymentLock(File);
-
-impl Drop for DeploymentLock {
-    fn drop(&mut self) {
-        // Explicitly unlock even if a concurrently spawned child briefly
-        // inherited the file descriptor before exec closes it.
-        let _ = self.0.unlock();
-    }
-}
+pub(super) type DeploymentLock = FileLock;
 
 pub(super) fn lock(directory: &Path) -> Result<DeploymentLock> {
     fs::create_dir_all(directory).with_context(|| {
@@ -29,19 +23,11 @@ pub(super) fn lock(directory: &Path) -> Result<DeploymentLock> {
             directory.display()
         )
     })?;
-    // Never unlink this file: a new process could otherwise lock a different
-    // inode while an existing deployment still owns this one.
     let path = directory.join("lock");
-    let file = File::options()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(false)
-        .open(&path)
-        .with_context(|| format!("failed to open deployment lock {}", path.display()))?;
+    let file = FileLock::open(&path)?;
 
     match file.try_lock() {
-        Ok(()) => Ok(DeploymentLock(file)),
+        Ok(()) => Ok(file),
         Err(TryLockError::WouldBlock) => {
             bail!("another deployment is running (lock: {})", path.display())
         }
