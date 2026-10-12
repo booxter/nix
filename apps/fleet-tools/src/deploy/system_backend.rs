@@ -21,6 +21,7 @@ const DIG: &str = env!("DEPLOY_DIG");
 const ATTIC: &str = env!("DEPLOY_ATTIC");
 const FZF: &str = env!("DEPLOY_FZF");
 const NIX: &str = env!("DEPLOY_NIX");
+const NIX_STORE: &str = env!("DEPLOY_NIX_STORE");
 const NIX_COLLECT_GARBAGE: &str = env!("DEPLOY_NIX_COLLECT_GARBAGE");
 const SSH: &str = env!("DEPLOY_SSH");
 const GIB: u64 = 1024 * 1024 * 1024;
@@ -32,12 +33,14 @@ const SUDO: &str = "/run/wrappers/bin/sudo";
 
 pub struct SystemBackend {
     deployment_directory: Option<PathBuf>,
+    deployment_hosts: Vec<String>,
     attic: PathBuf,
     dig: PathBuf,
     fzf: PathBuf,
     lan_dns_server: String,
     lan_domain: String,
     nix: PathBuf,
+    nix_store: PathBuf,
     nix_collect_garbage: PathBuf,
     ssh: PathBuf,
     ssh_options: Vec<String>,
@@ -52,24 +55,26 @@ impl SystemBackend {
             .unwrap_or_default();
         Ok(Self {
             deployment_directory: None,
+            deployment_hosts: Vec::new(),
             attic: ATTIC.into(),
             dig: DIG.into(),
             fzf: FZF.into(),
             lan_dns_server: inventory.lan_dns_server.clone(),
             lan_domain: inventory.lan_domain.clone(),
             nix: NIX.into(),
+            nix_store: NIX_STORE.into(),
             nix_collect_garbage: NIX_COLLECT_GARBAGE.into(),
             ssh: SSH.into(),
             ssh_options,
         })
     }
 
-    fn deployment_root(&self, name: impl AsRef<Path>) -> Result<PathBuf> {
+    fn deployment_root(&self, host: &str, name: &str) -> Result<PathBuf> {
         let directory = self
             .deployment_directory
             .as_ref()
             .context("deployment lock has not been acquired")?;
-        Ok(directory.join(name))
+        Ok(directory.join(host).join(name))
     }
 
     fn checked_status(&self, command: &mut Command, description: &str) -> Result<()> {
@@ -203,10 +208,15 @@ struct SshConnection {
 impl Backend for SystemBackend {
     type DeploymentLock = super::state::DeploymentLock;
 
-    fn lock_deployment(&mut self) -> Result<Self::DeploymentLock> {
+    fn lock_deployment(&mut self, targets: &[DeploymentTarget]) -> Result<Self::DeploymentLock> {
         let directory = super::state::directory()?;
-        let lock = super::state::lock(&directory)?;
+        let hosts = targets
+            .iter()
+            .map(|target| target.config_name.clone())
+            .collect::<Vec<_>>();
+        let lock = super::state::lock(&directory, &hosts)?;
         self.deployment_directory = Some(directory);
+        self.deployment_hosts = hosts;
         Ok(lock)
     }
 
@@ -300,14 +310,15 @@ impl Backend for SystemBackend {
         )
     }
 
-    fn build_helper(&mut self, source: &Path, platform: &str) -> Result<PathBuf> {
+    fn build_helper(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
+        let platform = &target.host.platform;
         let attribute = format!(
             "{}#packages.{platform}.fleet-tools",
             source.to_string_lossy()
         );
         super::roots::build(
             Command::new(&self.nix).args(["build", &attribute]),
-            &self.deployment_root(format!("helper-{platform}"))?,
+            &self.deployment_root(&target.config_name, &format!("helper-{platform}"))?,
             &format!("fleet deploy helper build for {platform}"),
         )
     }
@@ -327,7 +338,7 @@ impl Backend for SystemBackend {
         };
         super::roots::build(
             Command::new(&self.nix).args(["build", &attribute]),
-            &self.deployment_root(Path::new(&target.config_name).join("system"))?,
+            &self.deployment_root(&target.config_name, "system")?,
             &format!("system build for {}", target.host.display_name),
         )
     }
@@ -363,6 +374,17 @@ impl Backend for SystemBackend {
             gib(available)
         );
         let minimum = min_free_gib.saturating_mul(GIB);
+        if available >= minimum {
+            return Ok(());
+        }
+        // Serialize only cleanup, leaving unrelated builds and activations
+        // concurrent. Recheck space after another collector may have finished.
+        let directory = self
+            .deployment_directory
+            .as_ref()
+            .context("deployment locks have not been acquired")?;
+        let _gc_lock = super::state::lock_gc(directory)?;
+        available = available_bytes(store)?;
         if available >= minimum {
             return Ok(());
         }
@@ -466,11 +488,24 @@ impl Backend for SystemBackend {
             })?,
         };
         let revision = prepared.revision().to_owned();
+        let first_host = self
+            .deployment_hosts
+            .first()
+            .context("no deployment hosts selected")?;
         let store_path = super::roots::build(
             &mut super::roots::source_command(&self.nix, prepared.root()),
-            &self.deployment_root("source")?,
+            &self.deployment_root(first_host, "source")?,
             "rooting deployment source in the Nix store",
         )?;
+        // The first host's root protects the import while the remaining hosts
+        // register their own persistent roots for the same store path.
+        for host in self.deployment_hosts.iter().skip(1) {
+            super::roots::retain(
+                &mut Command::new(&self.nix_store),
+                &store_path,
+                &self.deployment_root(host, "source")?,
+            )?;
+        }
         eprintln!(
             "Using committed deployment source {revision} at {}.",
             store_path.display()

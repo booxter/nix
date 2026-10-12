@@ -55,7 +55,7 @@ pub(super) fn run_with_backend(
         bail!("no TTY available for sudo; run deploy from a real terminal");
     }
 
-    let _deployment_lock = backend.lock_deployment()?;
+    let _deployment_lock = backend.lock_deployment(&selected)?;
     backend.ensure_local_space(20, 5)?;
     let source_selection = if arguments.local {
         SourceSelection::Local {
@@ -98,7 +98,7 @@ pub(super) fn run_with_backend(
             no_inhibit: arguments.no_inhibit,
         };
         let result = if target.host.runtime_host == local_hostname {
-            match backend.build_helper(&source.store_path, &target.host.platform) {
+            match backend.build_helper(&source.store_path, target) {
                 Ok(helper) => backend.activate_local(&helper, &source.store_path, &request),
                 Err(error) => Err(error),
             }
@@ -146,7 +146,7 @@ fn build_and_activate_remote(
     source: &Path,
     request: &ActivationRequest,
 ) -> Result<()> {
-    let helper = backend.build_helper(source, &target.host.platform)?;
+    let helper = backend.build_helper(source, target)?;
     let system = backend.build_system(source, target)?;
     backend.publish(cache, &[helper.clone(), system.clone()])?;
     backend.activate_remote_prebuilt(target, cache, &helper, &system, request)
@@ -179,10 +179,13 @@ fn select_targets(
         names.sort();
         names = backend.select(&names)?;
     }
-    names
+    let mut targets = names
         .iter()
         .map(|name| find_target(inventory, name))
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+    let mut seen = BTreeSet::new();
+    targets.retain(|target| seen.insert(target.config_name.clone()));
+    Ok(targets)
 }
 
 fn find_target(inventory: &HostInventory, requested: &str) -> Result<DeploymentTarget> {

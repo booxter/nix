@@ -23,14 +23,18 @@ pub(super) fn source_command(nix: &Path, source: &Path) -> Command {
     command
 }
 
-pub(super) fn build(command: &mut Command, root: &Path, description: &str) -> Result<PathBuf> {
+fn prepare_root(root: &Path) -> Result<()> {
     let parent = root.parent().context("deployment root has no parent")?;
     fs::create_dir_all(parent).with_context(|| {
         format!(
             "failed to create deployment root directory {}",
             parent.display()
         )
-    })?;
+    })
+}
+
+pub(super) fn build(command: &mut Command, root: &Path, description: &str) -> Result<PathBuf> {
+    prepare_root(root)?;
     let output = command
         .arg("--out-link")
         .arg(root)
@@ -42,6 +46,25 @@ pub(super) fn build(command: &mut Command, root: &Path, description: &str) -> Re
         bail!("{description} exited with {}", output.status);
     }
     super::system_backend::parse_store_path(&output.stdout, description)
+}
+
+pub(super) fn retain(command: &mut Command, path: &Path, root: &Path) -> Result<()> {
+    prepare_root(root)?;
+    let status = command
+        .arg("--add-root")
+        .arg(root)
+        .args(["--indirect", "--realise"])
+        .arg(path)
+        .stdout(Stdio::null())
+        .status()
+        .with_context(|| format!("failed to register deployment root {}", root.display()))?;
+    if !status.success() {
+        bail!(
+            "registering deployment root {} exited with {status}",
+            root.display()
+        );
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -57,7 +80,7 @@ mod tests {
     impl Store {
         fn new() -> Self {
             let directory = tempfile::tempdir().unwrap();
-            let root = directory.path().join("state/source");
+            let root = directory.path().join("state/alpha/source");
             let source = directory.path().join("source with spaces ${literal}");
             fs::create_dir(&source).unwrap();
             Self {
@@ -145,5 +168,29 @@ mod tests {
         store.collect();
         assert!(store.contains(&previous));
         assert_eq!(fs::read_link(&store.root).unwrap(), previous);
+    }
+
+    #[test]
+    fn replacing_one_hosts_source_preserves_another_hosts_gc_root() {
+        let store = Store::new();
+        let first = store.import("first revision");
+        let beta_root = store.directory.path().join("state/beta/source");
+        let mut command = Command::new(env!("DEPLOY_NIX_STORE"));
+        store.configure(&mut command);
+        retain(&mut command, &first, &beta_root).unwrap();
+
+        let second = store.import("second revision");
+        store.collect();
+        assert!(store.contains(&first));
+        assert!(store.contains(&second));
+        assert_eq!(fs::read_link(&beta_root).unwrap(), first);
+
+        let mut command = Command::new(env!("DEPLOY_NIX_STORE"));
+        store.configure(&mut command);
+        retain(&mut command, &second, &beta_root).unwrap();
+        store.collect();
+        assert!(!store.contains(&first));
+        assert!(store.contains(&second));
+        assert_eq!(fs::read_link(&beta_root).unwrap(), second);
     }
 }
