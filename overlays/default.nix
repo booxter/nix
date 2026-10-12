@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    _final: prev:
+    final: prev:
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
@@ -31,6 +31,14 @@
         ;
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex { };
+
+      gpauth = prev.gpauth.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
+      });
+
+      gpclient = (prev.gpclient.override { gpauth = final.gpauth; }).overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
+      });
 
       nix = prev.callPackage ./nix {
         nix = pkgsNixpkgsUnstable.nixVersions.latest;

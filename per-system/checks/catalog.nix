@@ -38,10 +38,16 @@ let
       python-quality = pythonQualityCheck;
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
+      gpclient = pkgs.gpclient;
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       repairr-package = pkgs.repairr;
+      nv-gpconnect = pkgs.callPackage ../../nixos/nv/pkgs/gpconnect {
+        interface = "lo";
+        portalFile = "/run/secrets/gpclient/portal";
+        port = 38080;
+      };
       media-repair-planner = pkgs.media-repair-planner;
     };
   collisions = lib.intersectLists (builtins.attrNames batchChecks) (builtins.attrNames nixosTests);

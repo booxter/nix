@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpconnect"
+version = "0.1.0"
+description = "Headless GlobalProtect browser authentication on nv"
+requires-python = ">=3.13"
+dependencies = ["psutil"]
+
+[project.scripts]
+gpconnect = "gpconnect.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gpconnect = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=gpconnect --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+patch = ["subprocess", "execv"]
+
+[tool.mypy]
+files = ["src/gpconnect"]
+strict = true
