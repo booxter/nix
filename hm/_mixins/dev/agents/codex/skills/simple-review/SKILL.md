@@ -17,12 +17,28 @@ repository, using explicit `--repo` or API owner/repository arguments. Honor an
 explicit repository or count supplied by the user instead.
 
 List open, non-draft PRs with `gh pr list`, requesting metadata such as title,
-URL, body, changed files, additions, deletions, review decision, and head SHA.
-Use metadata to prioritize inspection, not to decide logical complexity.
-Paginate through candidates rather than treating the default first page or
-the first 20 results as the shortlist. Continue until there are enough verified
-candidates or the available PRs are exhausted. Disclose any search limit or
-access failure that makes coverage incomplete.
+URL, body, creation timestamp, changed files, additions, deletions, review
+decision, and head SHA. Use metadata to prioritize inspection, not to decide
+logical complexity.
+
+Sample across creation-age bands: under 7 days, 7–30 days, 31–90 days, and
+over 90 days, measured at the readiness check. Query each band separately with
+`created:` filters; recent updates must not make an old PR count as fresh.
+Paginate metadata within each band before sampling. If a query exceeds GitHub's
+result cap, split its creation-date range into smaller ranges and paginate
+those, rather than sampling only its first results.
+
+Shuffle each band's candidate pool using fresh runtime randomness on every
+invocation, without a fixed seed. Inspect candidates in rotation across bands
+and aim for roughly equal numbers of verified selections from each. Refill a
+band when candidates fail verification; redistribute its share if it runs out
+of qualifying candidates. Apply any specialized skill's age preferences to
+this allocation. Do not stop after filling the shortlist from the newest band
+or merely shuffle the final list. Do not persist recommendation history.
+
+Continue until there are enough verified candidates with the intended age mix
+or the available PRs are exhausted. Disclose any search limit or access failure
+that makes coverage incomplete, including age bands left underexplored.
 
 ## Verify readiness
 
@@ -68,12 +84,13 @@ Exclude changes whose apparent simplicity depends on unverified assumptions.
 
 ## Return the shortlist
 
-Rank verified candidates by ease of review, simplest first. Recheck shortlisted
+Preserve the age mix when selecting the shortlist, then rank its verified
+candidates by ease of review, simplest first. Recheck shortlisted
 PRs for current head, draft state, checks, and discussion before returning;
 reassess any whose head or readiness evidence changed during inspection.
 
-Return a numbered list of 20 PRs, each with a linked PR number and title, a
-brief explanation of why the change is logically small, and a concise readiness
+Return a numbered list of 20 PRs, each with a linked PR number, title, creation
+date, a brief explanation of why the change is logically small, and a readiness
 note covering checks and blocking feedback. Keep it useful for choosing the
 next review, without performing or claiming a full correctness review.
 

@@ -9,8 +9,11 @@ Read and follow the available `simple-review` skill using its installed path.
 Apply its workflow to `NixOS/nixpkgs` with these additional preferences:
 
 - Prefer human-authored PRs over bot PRs. Give `r-ryantm` PRs lower priority.
-- Prefer PRs created more than seven days before the readiness check. Use the
-  creation timestamp, not the most recent update.
+- Allocate the shortlist roughly equally across the base skill's 7–30 day,
+  31–90 day, and over 90 day bands. Use PRs under seven days old as fallback
+  when the older bands cannot fill the requested count. Shuffle and refill
+  within each band as in the base skill; do not fill all older slots from
+  PRs just over a week old.
 
 Use author and creation metadata to prioritize candidate inspection and rank
 similarly easy candidates. These are preferences, not eligibility requirements;
