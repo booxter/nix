@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "remote-nixpkgs-runners"
 version = "0.1.0"
-description = "Run remote Linux nixpkgs applications over X11 or Waypipe"
+description = "Run nixpkgs PR applications locally or remotely over X11 or Waypipe"
 requires-python = ">=3.13"
 
 [project.scripts]
+run-nixpkgs = "remote_nixpkgs.local:main"
 xrun-nixpkgs = "remote_nixpkgs.cli:x11_main"
 wrun-nixpkgs = "remote_nixpkgs.cli:waypipe_main"
 

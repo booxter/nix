@@ -1,5 +1,6 @@
 {
   lib,
+  nix,
   openssh,
   python3,
   pythonRuffCheckHook,
@@ -24,7 +25,12 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+    "--prefix PATH : ${
+      lib.makeBinPath [
+        nix
+        openssh
+      ]
+    }"
   ];
 
   preCheck = ''
@@ -34,7 +40,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "remote_nixpkgs" ];
 
   meta = {
-    description = "Run remote Linux nixpkgs applications over X11 or Waypipe";
+    description = "Run nixpkgs PR applications locally or remotely over X11 or Waypipe";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
