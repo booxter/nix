@@ -5,7 +5,8 @@ description: Find up to 20 logically small GitHub pull requests in the current p
 
 # Simple review
 
-Find 20 very simple, open pull requests worth reviewing in the current project.
+Find up to 20 very simple, open pull requests worth reviewing in the current
+project. This is a bounded heuristic search, not an exhaustive queue audit.
 Use `gh` for GitHub access. This is a read-only shortlist: do not submit reviews,
 comment, change labels, or modify pull requests or the local checkout.
 
@@ -17,37 +18,50 @@ repository, using explicit `--repo` or API owner/repository arguments. Honor an
 explicit repository or count supplied by the user instead.
 
 List open, non-draft PRs with `gh pr list`, requesting metadata such as title,
-URL, body, creation timestamp, changed files, additions, deletions, review
+URL, creation timestamp, changed files, additions, deletions, review
 decision, and head SHA. Use metadata to prioritize inspection, not to decide
 logical complexity.
 
 Sample across creation-age bands: under 7 days, 7–30 days, 31–90 days, and
 over 90 days, measured at the readiness check. Query each band separately with
 `created:` filters; recent updates must not make an old PR count as fresh.
-Paginate metadata within each band before sampling. If a query exceeds GitHub's
-result cap, split its creation-date range into smaller ranges and paginate
-those, rather than sampling only its first results.
+Sample at most two metadata pages of up to 100 PRs per band. Vary the sampled
+pages or creation-date windows so repeated runs need not inspect the same
+newest candidates. Do not enumerate the queue or recursively split date ranges
+to work around GitHub's result cap.
 
 Shuffle each band's candidate pool using fresh runtime randomness on every
 invocation, without a fixed seed. Inspect candidates in rotation across bands
-and aim for roughly equal numbers of verified selections from each. Refill a
-band when candidates fail verification; redistribute its share if it runs out
-of qualifying candidates. Apply any specialized skill's age preferences to
-this allocation. Do not stop after filling the shortlist from the newest band
-or merely shuffle the final list. Do not persist recommendation history.
+and aim for roughly equal numbers of verified selections from each. Refill
+from the sampled pools when candidates fail verification. Apply any specialized
+skill's age preferences, but treat count and age balance as preferences, not
+reasons to expand the search indefinitely.
 
-Continue until there are enough verified candidates with the intended age mix
-or the available PRs are exhausted. Disclose any search limit or access failure
-that makes coverage incomplete, including age bands left underexplored.
+Stop when the shortlist is filled, after inspecting 60 candidates, or after
+10 minutes, whichever comes first. Honor an explicit user budget instead.
+Return the verified subset when a limit is reached; do not exhaust the queue
+to fill slots. Briefly disclose the sampling limits and underrepresented bands.
+Avoid repeated retries when access failures or rate limits consume the budget.
 
 ## Verify readiness
 
-For each promising candidate, inspect its current description, full diff,
-checks, reviews, issue comments, and review threads with `gh pr view`,
-`gh pr diff`, and `gh api` as needed. `gh pr view --json comments,reviews` does
-not expose all inline thread resolution state; use the GraphQL API to retrieve
-`reviewThreads`, including `isResolved`, `isOutdated`, and their comments.
-Paginate thread, review, and comment connections as well as the PR list.
+Filter in stages to avoid fetching expensive evidence for obvious rejects:
+
+1. Check state, labels, merge conflicts, review decision, and required checks
+   on the current head. Skip obvious blockers before fetching full discussions
+   or diffs. If required-check policy is shared, establish it once per base branch.
+2. Read the description and full diff for survivors. Reject complex changes
+   early; read surrounding code or referenced context only as needed to judge
+   whether the change is easy to review.
+3. For likely selections, read reviews, issue comments, and inline review
+   threads. `gh pr view --json comments,reviews` does not expose thread resolution;
+   use GraphQL `reviewThreads`, including `isResolved`, `isOutdated`, and comments.
+   Paginate these discussions for candidates actually recommended. Skip a PR
+   if resolving its discussion would take substantial investigation.
+
+Keep fetched evidence for this run. Read relevant discussion in full, but avoid
+dumping PR templates and long build logs into context; inspect log excerpts only
+when they affect readiness. Do not persist recommendation history.
 
 Exclude PRs with any of the following:
 
@@ -84,13 +98,14 @@ Exclude changes whose apparent simplicity depends on unverified assumptions.
 
 ## Return the shortlist
 
-Preserve the age mix when selecting the shortlist, then rank its verified
-candidates by ease of review, simplest first. Recheck shortlisted
-PRs for current head, draft state, checks, and discussion before returning;
-reassess any whose head or readiness evidence changed during inspection.
+Aim for the age mix when selecting the shortlist, then rank verified candidates
+by ease of review, simplest first. Perform one lightweight freshness check of
+the shortlisted PRs' heads, state, checks, and discussion update timestamps.
+Reuse existing evidence when unchanged; fetch changed evidence and reassess only
+affected candidates. Drop a candidate if it cannot be reverified within budget.
 
-Return a numbered list of 20 PRs, each with a linked PR number, title, creation
-date, a brief explanation of why the change is logically small, and a readiness
+Return a numbered list of up to 20 PRs, each with a linked PR number, title,
+creation date, a brief explanation of why the change is logically small, and a readiness
 note covering checks and blocking feedback. Keep it useful for choosing the
 next review, without performing or claiming a full correctness review.
 
