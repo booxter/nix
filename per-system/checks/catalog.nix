@@ -40,6 +40,7 @@ let
       media-repair-contracts = pkgs.media-repair-contracts;
       gpclient = pkgs.gpclient;
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };
+      nixpkgs-runners = pkgs.callPackage ../../hm/_mixins/remote-control/pkgs { };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       repairr-package = pkgs.repairr;

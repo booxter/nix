@@ -56,6 +56,9 @@ in
     };
   };
 
+  # GTK needs icon themes from the Home Manager user profiles at runtime.
+  environment.pathsToLink = [ "/share/icons" ];
+
   system.primaryUser = username;
 
   host.nix.rosetta.acceptLicense = true;
