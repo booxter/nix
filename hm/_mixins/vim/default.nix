@@ -51,6 +51,17 @@
       };
 
       plugins = {
+        conform-nvim = {
+          enable = true;
+          settings = {
+            formatters_by_ft.nix = [ "nixfmt" ];
+            format_on_save = {
+              timeout_ms = 2000;
+              lsp_format = "never";
+            };
+          };
+        };
+
         lualine.enable = true;
         lsp = {
           enable = true;
