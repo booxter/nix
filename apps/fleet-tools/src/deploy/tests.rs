@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use anyhow::{bail, Result};
 use clap::Parser;
@@ -16,7 +17,7 @@ struct FakeBackend {
     builds: Vec<String>,
     diskos: Vec<DiskoRequest>,
     ensure_calls: usize,
-    lock_unavailable: bool,
+    state_directory: Option<Arc<tempfile::TempDir>>,
     fail_hosts: BTreeSet<String>,
     hostname: String,
     prebuilt_activations: Vec<String>,
@@ -31,13 +32,17 @@ struct FakeBackend {
 }
 
 impl Backend for FakeBackend {
-    type DeploymentLock = ();
+    type DeploymentLock = state::DeploymentLock;
 
-    fn lock_deployment(&mut self) -> Result<()> {
-        if self.lock_unavailable {
-            bail!("another deployment is running");
-        }
-        Ok(())
+    fn lock_deployment(&mut self, targets: &[DeploymentTarget]) -> Result<Self::DeploymentLock> {
+        let directory = self
+            .state_directory
+            .get_or_insert_with(|| Arc::new(tempfile::tempdir().unwrap()));
+        let hosts = targets
+            .iter()
+            .map(|target| target.config_name.clone())
+            .collect::<Vec<_>>();
+        state::lock(directory.path(), &hosts)
     }
 
     fn activate_local(
@@ -85,7 +90,8 @@ impl Backend for FakeBackend {
         Ok(())
     }
 
-    fn build_helper(&mut self, _source: &Path, platform: &str) -> Result<PathBuf> {
+    fn build_helper(&mut self, _source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
+        let platform = &target.host.platform;
         self.builds.push(platform.to_owned());
         Ok(PathBuf::from(format!("/nix/store/helper-{platform}")))
     }
@@ -206,33 +212,74 @@ fn clap_rejects_conflicting_source_and_host_discovery_options() {
 }
 
 #[test]
-fn competing_deployment_stops_before_gc_or_staging() {
+fn different_host_deploys_while_another_host_is_locked() {
+    let directory = Arc::new(tempfile::tempdir().unwrap());
+    let _alpha = state::lock(directory.path(), &["alpha".to_owned()]).unwrap();
     let mut backend = FakeBackend {
-        hostname: "controller".to_owned(),
         terminal: true,
-        lock_unavailable: true,
+        state_directory: Some(Arc::clone(&directory)),
+        ..Default::default()
+    };
+
+    assert!(run(
+        args(&["--local", "beta"]),
+        &inventory(),
+        &mut backend,
+        &mut Vec::new()
+    )
+    .unwrap());
+    assert_eq!(backend.activations.len(), 1);
+    assert_eq!(backend.activations[0].1.config_name, "beta");
+}
+
+#[test]
+fn alias_cannot_bypass_a_busy_hosts_lock() {
+    let directory = Arc::new(tempfile::tempdir().unwrap());
+    let _alpha = state::lock(directory.path(), &["alpha".to_owned()]).unwrap();
+    let mut backend = FakeBackend {
+        terminal: true,
+        state_directory: Some(Arc::clone(&directory)),
         ..Default::default()
     };
 
     let error = run(
-        args(&["--local", "alpha"]),
+        args(&["--local", "beta", "alpha-alias"]),
         &inventory(),
         &mut backend,
         &mut Vec::new(),
     )
     .unwrap_err();
-
-    assert!(error.to_string().contains("another deployment is running"));
+    assert!(error.to_string().contains("for alpha"));
     assert_eq!(backend.ensure_calls, 0);
     assert_eq!(backend.stage_calls, 0);
     assert!(backend.activations.is_empty());
 }
 
 #[test]
+fn repeated_aliases_deploy_the_host_only_once() {
+    let mut backend = FakeBackend {
+        terminal: true,
+        ..Default::default()
+    };
+
+    assert!(run(
+        args(&["--local", "alpha", "alpha-alias", "alpha"]),
+        &inventory(),
+        &mut backend,
+        &mut Vec::new()
+    )
+    .unwrap());
+    assert_eq!(backend.activations.len(), 1);
+    assert_eq!(backend.activations[0].1.config_name, "alpha");
+}
+
+#[test]
 fn dry_run_defaults_to_current_host_without_side_effects() {
+    let directory = Arc::new(tempfile::tempdir().unwrap());
+    let _controller = state::lock(directory.path(), &["controller".to_owned()]).unwrap();
     let mut backend = FakeBackend {
         hostname: "controller".to_owned(),
-        lock_unavailable: true,
+        state_directory: Some(Arc::clone(&directory)),
         ..Default::default()
     };
     let mut output = Vec::new();

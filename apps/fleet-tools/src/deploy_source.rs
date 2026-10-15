@@ -10,6 +10,8 @@ use gix::bstr::ByteSlice;
 use gix::object::tree::EntryKind;
 use tempfile::TempDir;
 
+use crate::file_lock::FileLock;
+
 const GIT: &str = env!("DEPLOY_GIT");
 
 pub enum SourceRequest<'a> {
@@ -61,6 +63,13 @@ fn prepare_local(start: &Path, merge_master: bool) -> Result<PreparedSource> {
             start.display()
         )
     })?;
+    // Linked worktrees share refs and objects. Hold a common-repository lock
+    // through fetching, merging, and materializing the deployment snapshot.
+    let lock_path = repository.common_dir().join("fleet-deploy.lock");
+    let _source_lock = FileLock::open(&lock_path)?;
+    _source_lock
+        .lock()
+        .context("failed to lock local deployment source")?;
     let commit = repository
         .head_commit()
         .context("failed to resolve the committed HEAD for --local")?;
@@ -262,6 +271,8 @@ fn validate_flake_root(root: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use std::os::unix::fs::PermissionsExt;
+    use std::sync::mpsc;
+    use std::time::Duration;
 
     use gix::object::tree::EntryKind;
 
@@ -379,6 +390,62 @@ mod tests {
         .expect("missing origin should fail");
 
         assert!(error.to_string().contains("failed to fetch origin/master"));
+    }
+
+    #[test]
+    fn linked_worktree_source_waits_for_shared_repository_lock() {
+        let checkout = tempfile::tempdir().unwrap();
+        let repository = gix::init(checkout.path()).unwrap();
+        let committed = tree(
+            &repository,
+            None,
+            &[("flake.nix", EntryKind::Blob, b"{}\n")],
+        );
+        commit(
+            &repository,
+            "HEAD",
+            "initial",
+            committed,
+            std::iter::empty(),
+        );
+        let held = FileLock::open(&repository.common_dir().join("fleet-deploy.lock")).unwrap();
+        held.lock().unwrap();
+
+        let workspace = tempfile::tempdir().unwrap();
+        let linked = workspace.path().join("linked");
+        let status = Command::new(GIT)
+            .arg("-C")
+            .arg(checkout.path())
+            .args(["worktree", "add", "--detach"])
+            .arg(&linked)
+            .arg("HEAD")
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let (sender, receiver) = mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let prepared = prepare_source(SourceRequest::Local {
+                start: &linked,
+                merge_master: false,
+            });
+            sender.send(prepared).unwrap();
+        });
+
+        assert!(matches!(
+            receiver.recv_timeout(Duration::from_millis(100)),
+            Err(mpsc::RecvTimeoutError::Timeout)
+        ));
+        drop(held);
+        let prepared = receiver
+            .recv_timeout(Duration::from_secs(10))
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            fs::read(prepared.root().join("flake.nix")).unwrap(),
+            b"{}\n"
+        );
+        worker.join().unwrap();
     }
 
     #[test]

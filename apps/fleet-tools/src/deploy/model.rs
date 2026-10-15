@@ -133,7 +133,7 @@ pub(super) struct DiskoRequest {
 pub(super) trait Backend {
     type DeploymentLock;
 
-    fn lock_deployment(&mut self) -> Result<Self::DeploymentLock>;
+    fn lock_deployment(&mut self, targets: &[DeploymentTarget]) -> Result<Self::DeploymentLock>;
     fn activate_local(
         &mut self,
         helper: &Path,
@@ -154,7 +154,7 @@ pub(super) trait Backend {
         system: &Path,
         request: &ActivationRequest,
     ) -> Result<()>;
-    fn build_helper(&mut self, source: &Path, platform: &str) -> Result<PathBuf>;
+    fn build_helper(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf>;
     fn build_system(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf>;
     fn disko(&mut self, request: &DiskoRequest) -> Result<()>;
     fn ensure_local_space(&mut self, min_free_gib: u64, gc_headroom_gib: u64) -> Result<()>;

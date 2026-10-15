@@ -59,17 +59,9 @@ nix run .#deploy -- -A --select
 nix run .#deploy -- -A --dry-run
 ```
 
-The controller keeps GC roots in `${XDG_STATE_HOME:-$HOME/.local/state}/fleet-deploy`:
-`source`, `helper-<platform>`, and `<host>/system`. Each link retains the latest
-successful import or build, including after a failed deployment or process exit.
-The next successful import or build replaces that link; old generations do not
-accumulate. Remove an unused host's `system` link to release its retained closure.
-
-An OS lock in the same directory allows one controller deployment at a time,
-from the disk-space check through activation. A competing deployment fails
-immediately; exiting or killing the owner releases the lock. Leave the `lock`
-file in place, and only remove output links while no deployment is running.
-Dry runs do not acquire the lock or create roots.
+Deployments to different hosts can run at the same time. If a selected host is
+already being deployed from this machine, wait for that deployment to finish and
+retry.
 
 ## Secrets
 
