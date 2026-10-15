@@ -44,7 +44,9 @@
     nur.url = "github:nix-community/NUR";
     nur.inputs.nixpkgs.follows = "nixpkgs";
 
-    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
+    # Keep the previous revision until the XML-Twig backport is removed.
+    # https://github.com/SaumonNet/proxmox-nixos/pull/263
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/a296d7fb068876e71b5a9154207c1c43e5978b5e";
 
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
