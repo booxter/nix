@@ -274,16 +274,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1789231913,
-        "narHash": "sha256-emfcIv69m/nl4n+fFihEi5bja3sQENODVEJ04Y25gsM=",
-        "owner": "booxter",
+        "lastModified": 1791938526,
+        "narHash": "sha256-yNYK2pdk3bCtJrpblrNYA6hZKdybWUeyTtx74+OEJFo=",
+        "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "5e9057b968398670ab60b907784f2fa52352860d",
+        "rev": "32904dfe1cf86039f3c8c9f41f94e1cfd76dbb34",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "firefox-macos27-backport",
+        "owner": "nix-community",
+        "ref": "release-26.05",
         "repo": "home-manager",
         "type": "github"
       }
