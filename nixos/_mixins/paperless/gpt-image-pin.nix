@@ -1,8 +1,8 @@
 {
   changelog = "https://github.com/icereed/paperless-gpt/releases/tag/{tag}";
-  digest = "sha256:4127ea223e0f496c1075a3a05661df4847140974c3c3ce89a4ba991be50320cb";
-  hash = "sha256-j6qajqTJALnmYU1yUnLIoDfVGnWuE0JtW190yQuX7hs=";
+  digest = "sha256:d668941a829552cc0eddbc7c22506b3480dfbf61bd0d6eae881ad9fcfe2de70c";
+  hash = "sha256-dJHvO6E9JW7lRp19P/vvglQbgAg56CRU1Nzy1+lVw7Y=";
   image = "ghcr.io/icereed/paperless-gpt";
-  tag = "v0.29.0";
+  tag = "v0.31.0";
   tagRegex = "^v[0-9]+\\.[0-9]+\\.[0-9]+$";
 }
