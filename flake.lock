@@ -291,11 +291,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1792055574,
-        "narHash": "sha256-yJOySejBNBTFa3dL3TUXD9ImsCHygURwAr2rT3h5Lo8=",
+        "lastModified": 1792143328,
+        "narHash": "sha256-HrFMgSe3j1nr+HvUkfLDEWXNj7aIT3fUnA7/rroGF9s=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "79841f09cec272aa3882449c9694d0e9aa423aa1",
+        "rev": "e88b8cebbac7702ebd61fa6e06b64a0d8568260f",
         "type": "github"
       },
       "original": {
@@ -307,11 +307,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1792056060,
-        "narHash": "sha256-v43B64ekJ/Ro01FbehIYZShQxnW+iz+U71a9zatn5y0=",
+        "lastModified": 1792143957,
+        "narHash": "sha256-urxbv8/RvFpYNqIOZtugTZOfCJ0LHjIX3tKymxxQv6o=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "4e0107495165838e48f31a7e98a7e0ff6af5d96a",
+        "rev": "96bc7af5fa196e6d830305534ba1306df59c53ef",
         "type": "github"
       },
       "original": {
@@ -352,11 +352,11 @@
         "telegym": "telegym"
       },
       "locked": {
-        "lastModified": 1789929649,
-        "narHash": "sha256-FzY6vrrsUaQipqs7umAC4FMxGGQWFsp3RRkpIggQjcM=",
+        "lastModified": 1792140768,
+        "narHash": "sha256-dkacCEpQ2QU0Sl5ApNJgmPsoiRrF8wp//q15SqZ8lhA=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "10bc2096cc644d4113226d960c0dd86397938f1b",
+        "rev": "6a16f8f6e36572a22bf762fd80b301fc0a74b94d",
         "type": "github"
       },
       "original": {
@@ -471,11 +471,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1791883866,
-        "narHash": "sha256-MdqpFMXQX2Vz1KgQ516wgEo4eiFzm3rEMyE3Qh4wyLA=",
-        "rev": "a033e66ab94a6bedf2c3d58d93a36319d3cbbbaf",
+        "lastModified": 1792030654,
+        "narHash": "sha256-Xbsbp5m0RdCNpPFtWb7FGquw42pDJEMPtlrHownUBc8=",
+        "rev": "26f4107e47e3ad0ffd0db220469ba83b6f6d96e8",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.11829.a033e66ab94a/nixexprs.tar.zst"
+        "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.11985.26f4107e47e3/nixexprs.tar.zst"
       },
       "original": {
         "type": "tarball",
@@ -586,11 +586,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792058307,
-        "narHash": "sha256-pATcg1VinNRKPMnGaokciDk1C2Sq3ZJ/whUWWf3Amuo=",
+        "lastModified": 1792143120,
+        "narHash": "sha256-XdRp++L5hVMvSE1WSLCkTvIW3BPfdf4WlUl3mv0pG6E=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "72a6d97aa797f952068c4d4ffaa7a41b3b44adf1",
+        "rev": "e92c97376e42ef8b0cda2315b58a427a0d51377b",
         "type": "github"
       },
       "original": {
