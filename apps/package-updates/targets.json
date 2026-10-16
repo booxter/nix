@@ -72,6 +72,13 @@
       "attr": "nico-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"
+    },
+    {
+      "attr": "prometheus-paperless-exporter",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
     }
   ]
 }

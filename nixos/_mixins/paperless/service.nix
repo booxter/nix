@@ -27,6 +27,7 @@ in
       settings = {
         PAPERLESS_ADMIN_USER = bootstrapOwner;
         PAPERLESS_ADMIN_MAIL = config.host.mailer.address;
+        PAPERLESS_AI_ENABLED = false;
         PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
         PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
         PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
@@ -36,12 +37,13 @@ in
           "127.0.0.1"
           "localhost"
         ];
+        PAPERLESS_ARCHIVE_FILE_GENERATION = "auto";
         PAPERLESS_CSRF_TRUSTED_ORIGINS = paperlessService.public.url;
         PAPERLESS_DISABLE_REGULAR_LOGIN = false;
-        PAPERLESS_CONSUMER_IGNORE_PATTERN = lib.concatStringsSep "," [
-          ".DS_STORE/*"
-          "desktop.ini"
-        ];
+        PAPERLESS_CONSUMER_DELETE_DUPLICATES = true;
+        # The consume directory lives on NFS, which needs polling to detect
+        # files written by other clients reliably.
+        PAPERLESS_CONSUMER_POLLING_INTERVAL = 10;
         PAPERLESS_OCR_LANGUAGE = "eng";
         PAPERLESS_REDIRECT_LOGIN_TO_SSO = false;
         PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS = false;

@@ -29,7 +29,6 @@ pythonPackages.buildPythonPackage {
   '';
 
   PAPERLESS_SOURCE_DIR = "${paperless-ngx}/lib/paperless-ngx/src";
-  PAPERLESS_NLTK_DIR = paperless-ngx.nltkDataDir;
 
   pythonImportsCheck = [ "paperless_bootstrap" ];
 
