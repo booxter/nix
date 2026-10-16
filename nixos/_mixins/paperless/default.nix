@@ -1,12 +1,18 @@
 {
   config,
+  inputs,
   lib,
   outputs,
   pkgs,
   ...
 }:
 {
+  # The v3 package needs the matching secret-key and search-index lifecycle.
+  # Return to the release module with NixOS 26.11.
+  disabledModules = [ "services/misc/paperless.nix" ];
+
   imports = [
+    (inputs.nixpkgs-unstable + "/nixos/modules/services/misc/paperless.nix")
     ./assertions.nix
     ./bootstrap.nix
     ./gpt.nix
@@ -59,7 +65,9 @@
   config._module.args = {
     paperlessModel = import ./model.nix { inherit config lib outputs; };
     paperlessPackages = {
-      bootstrap = pkgs.callPackage ./pkgs/paperless-bootstrap { };
+      bootstrap = pkgs.callPackage ./pkgs/paperless-bootstrap {
+        paperless-ngx = config.services.paperless.package;
+      };
       gptConfigure = pkgs.callPackage ./pkgs/paperless-gpt-configure { };
       prometheusExporter = pkgs.callPackage ./pkgs/prometheus-paperless-exporter { };
     };

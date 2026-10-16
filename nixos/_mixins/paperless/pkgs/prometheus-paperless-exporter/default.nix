@@ -6,16 +6,16 @@
 
 buildGoModule rec {
   pname = "prometheus-paperless-exporter";
-  version = "0.0.9";
+  version = "0.0.10";
 
   src = fetchFromGitHub {
     owner = "hansmi";
     repo = "prometheus-paperless-exporter";
     rev = "v${version}";
-    hash = "sha256-KY2PvIvmTaM/p4v3LScAG7Q1HmZG/afEmgvy1iSGHAU=";
+    hash = "sha256-lkbys21Cg2PKD7IvkC+6ZXMJrfsN4vzCA3s3/9up7Ao=";
   };
 
-  vendorHash = "sha256-JDcGV11v2cNXaLhlcuJH0aM1v1hJADZbtZWZ9dPj894=";
+  vendorHash = "sha256-tcDvjvh8ZwxRfTD8/rZwNanIxqN7UMFd2p6F3Yid4iM=";
 
   meta = {
     description = "Paperless-ngx metrics for Prometheus";

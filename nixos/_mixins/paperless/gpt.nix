@@ -7,6 +7,8 @@
   ...
 }:
 let
+  # TODO: Compare Paperless v3's native AI suggestions and Azure OCR with
+  # this Paperless-GPT pipeline using local Ollama models.
   inherit (paperlessModel)
     cfg
     gptPort

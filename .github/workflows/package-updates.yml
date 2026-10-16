@@ -193,5 +193,4 @@ jobs:
           add-paths: |
             nixos/_mixins/paperless/gpt-image-pin.nix
             nixos/_mixins/pinepods/image-pin.nix
-            nixos/_mixins/romm/image-pin.nix
             nixos/_mixins/watchstate/image-pin.nix

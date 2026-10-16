@@ -47,11 +47,9 @@ in
 
     # Paperless' upstream module would create media and consumption
     # directories locally. They live on provider-owned storage instead.
-    systemd.tmpfiles.settings."10-paperless" = lib.mkForce {
-      "${config.services.paperless.dataDir}".d = {
-        user = config.services.paperless.user;
-        group = config.users.users.${config.services.paperless.user}.group;
-      };
+    systemd.tmpfiles.settings."10-paperless" = {
+      "${config.services.paperless.mediaDir}" = lib.mkForce { };
+      "${config.services.paperless.consumptionDir}" = lib.mkForce { };
     };
   };
 }

@@ -76,6 +76,9 @@
       # the release branch. Keep the base and ROCm variants on one revision.
       inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
 
+      # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
+      inherit (pkgsNixpkgsUnstable) paperless-ngx;
+
       lidarr = prev.lidarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Restore queue associations from grab titles, not import-failure folder names.

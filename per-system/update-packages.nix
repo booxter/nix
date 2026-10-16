@@ -26,4 +26,7 @@ lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
     inherit (sharedPackages) aiosqlitepool;
   };
   nico-cli = (import ../hm/_mixins/dev/nvidia/pkgs { pkgs = plainPkgs; }).nico-cli;
+  prometheus-paperless-exporter =
+    plainPkgs.callPackage ../nixos/_mixins/paperless/pkgs/prometheus-paperless-exporter
+      { };
 }
