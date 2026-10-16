@@ -86,10 +86,21 @@ lib.mkIf config.host.hm.env.roles.developer {
     settings.markEmptyLines = true;
   };
 
+  # TODO: Replace these shell initializers and the package below with
+  # programs.worktrunk when it is available in the pinned Home Manager release.
+  programs.bash.initExtra = ''
+    eval "$(${lib.getExe pkgs.worktrunk} config shell init bash)"
+  '';
+
+  programs.zsh.initContent = ''
+    eval "$(${lib.getExe pkgs.worktrunk} config shell init zsh)"
+  '';
+
   home.packages = with pkgs; [
     git-absorb
     git-prole
     git-pw
     git-review
+    worktrunk
   ];
 }
