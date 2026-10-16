@@ -30,7 +30,7 @@
         opencode
         ;
 
-      codex = pkgsNixpkgsUnstable.callPackage ./codex { };
+      codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
 
       gpauth = prev.gpauth.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
