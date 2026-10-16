@@ -14,6 +14,7 @@ in
 {
   imports = [
     inputs.nix-homebrew.darwinModules.nix-homebrew
+    inputs.nix-index-database.darwinModules.nix-index
     inputs.sops-nix.darwinModules.sops
     inputs.stylix.darwinModules.stylix
     ../common
