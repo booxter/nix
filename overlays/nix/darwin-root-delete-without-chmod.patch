@@ -1,0 +1,276 @@
+From b4a4090f87c15b1f033670c6aa81dd76d01a3c63 Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Fri, 16 Oct 2026 20:30:11 -0400
+Subject: [PATCH] libutil: Skip root chmod on Darwin when deleting
+
+App Management can deny changing the mode of a launched app bundle even
+when deleting it is allowed. Root does not need owner permission bits to
+traverse and remove directories on Darwin, so avoid this unnecessary
+operation.
+
+Linux root normally bypasses these mode checks too, including in a
+standard multi-user Nix daemon. However, UID 0 alone does not imply
+CAP_DAC_OVERRIDE on Linux. A root process with that capability dropped
+may still need chmod, so keep the UID-based shortcut specific to Darwin.
+
+Add deletion tests for restrictive modes and a Darwin sandbox regression
+that denies mode changes while allowing deletion. Put the regression in
+an explicit Root* suite, excluded by default, and require root when it
+is selected. It fails without this change and passes with it.
+
+Fixes #6765
+
+Assisted-by: GPT-6-Astra medium
+
+Backport of https://github.com/NixOS/nix/pull/16626 to Nix 2.35.3.
+Adapt the Meson context and add a test main that preserves the default
+GoogleTest behavior while excluding Root* suites unless selected explicitly.
+---
+ doc/manual/source/development/testing.md | 10 ++++
+ src/libutil-tests/darwin/file-system.cc  | 60 ++++++++++++++++++++++++
+ src/libutil-tests/darwin/meson.build     |  1 +
+ src/libutil-tests/main.cc                | 14 ++++++
+ src/libutil-tests/meson.build            |  8 +++-
+ src/libutil-tests/unix/file-system.cc    | 31 ++++++++++++
+ src/libutil-tests/unix/file-system.hh    |  7 +++
+ src/libutil-tests/unix/meson.build       |  1 +
+ src/libutil/unix/file-system.cc          |  9 +++-
+ 9 files changed, 138 insertions(+), 3 deletions(-)
+ create mode 100644 src/libutil-tests/darwin/file-system.cc
+ create mode 100644 src/libutil-tests/darwin/meson.build
+ create mode 100644 src/libutil-tests/main.cc
+ create mode 100644 src/libutil-tests/unix/file-system.cc
+ create mode 100644 src/libutil-tests/unix/file-system.hh
+
+diff --git a/doc/manual/source/development/testing.md b/doc/manual/source/development/testing.md
+index acd3ba845c9a..02639b9a65cc 100644
+--- a/doc/manual/source/development/testing.md
++++ b/doc/manual/source/development/testing.md
+@@ -100,6 +100,16 @@ GTEST_BRIEF=1 GTEST_FILTER='ErrorTraceTest.*' meson test nix-expr-tests -v
+ 
+ for short but comprensive output.
+ 
++### Unit tests requiring root
++
++In `nix-util-tests`, suites beginning with `Root` require root and are excluded by default.
++To run them on macOS:
++
++```bash
++nix build .#nix-util-tests
++sudo ./result/bin/nix-util-tests --gtest_filter='Root*'
++```
++
+ ### Debugging tests
+ 
+ For debugging, it is useful to combine the third option above with Meson's [`--gdb`](https://mesonbuild.com/Unit-tests.html#other-test-options) flag:
+diff --git a/src/libutil-tests/darwin/file-system.cc b/src/libutil-tests/darwin/file-system.cc
+new file mode 100644
+index 000000000000..b075ddbfe108
+--- /dev/null
++++ b/src/libutil-tests/darwin/file-system.cc
+@@ -0,0 +1,60 @@
++#include <gtest/gtest.h>
++
++#include "nix/util/file-system.hh"
++#include "unix/file-system.hh"
++
++#include <unistd.h>
++
++extern "C" int
++sandbox_init_with_parameters(const char * profile, uint64_t flags, const char * const parameters[], char ** errorbuf);
++
++namespace nix {
++
++class RootDeletePath : public ::testing::Test
++{
++protected:
++    void SetUp() override
++    {
++        ASSERT_EQ(geteuid(), 0) << "Run Root* tests as root";
++    }
++};
++
++TEST_F(RootDeletePath, restrictiveDirectoryPermissions)
++{
++    testDeletePathWithRestrictivePermissions();
++}
++
++TEST_F(RootDeletePath, modeChangesDenied)
++{
++    auto tmpDir = createTempDir();
++    AutoDelete cleanup(tmpDir);
++    auto directory = tmpDir / "directory";
++    createDirs(directory);
++    writeFile(directory / "file", "contents");
++    chmod(directory, 0555);
++
++    /* Restrict only the child so the parent can clean up after a failed test.
++       This models App Management allowing deletion but denying mode changes. */
++    ASSERT_EXIT(
++        {
++            char * error = nullptr;
++            if (sandbox_init_with_parameters("(version 1)(allow default)(deny file-write-mode)", 0, nullptr, &error)) {
++                dprintf(STDERR_FILENO, "sandbox initialization failed: %s\n", error);
++                _exit(2);
++            }
++
++            try {
++                deletePath(directory);
++            } catch (const std::exception & e) {
++                dprintf(STDERR_FILENO, "%s\n", e.what());
++                _exit(3);
++            }
++            _exit(0);
++        },
++        ::testing::ExitedWithCode(0),
++        "");
++
++    EXPECT_FALSE(pathExists(directory));
++}
++
++} // namespace nix
+diff --git a/src/libutil-tests/darwin/meson.build b/src/libutil-tests/darwin/meson.build
+new file mode 100644
+index 000000000000..c2671b1764de
+--- /dev/null
++++ b/src/libutil-tests/darwin/meson.build
+@@ -0,0 +1 @@
++sources += files('file-system.cc')
+diff --git a/src/libutil-tests/main.cc b/src/libutil-tests/main.cc
+new file mode 100644
+--- /dev/null
++++ b/src/libutil-tests/main.cc
+@@ -0,0 +1,14 @@
++#include <gtest/gtest.h>
++
++#include <cstdlib>
++
++int main(int argc, char ** argv)
++{
++    // Preserve environment filters; command-line flags are parsed below.
++    if (std::getenv("GTEST_FILTER") == nullptr)
++        GTEST_FLAG_SET(filter, "-Root*");
++
++    ::testing::InitGoogleTest(&argc, argv);
++    return RUN_ALL_TESTS();
++}
++
+diff --git a/src/libutil-tests/meson.build b/src/libutil-tests/meson.build
+index f9f13819c58e..9af009085ba9 100644
+--- a/src/libutil-tests/meson.build
++++ b/src/libutil-tests/meson.build
+@@ -32,6 +32,6 @@ rapidcheck = dependency('rapidcheck')
+ deps_private += rapidcheck
+ 
+-gtest = dependency('gtest', main : true)
++gtest = dependency('gtest')
+ deps_private += gtest
+ 
+ gmock = dependency('gmock')
+@@ -88,6 +88,7 @@ sources = files(
+   'local-keys.cc',
+   'logging.cc',
+   'lru-cache.cc',
++  'main.cc',
+   'memo.cc',
+   'memory-source-accessor.cc',
+   'monitorfdhup.cc',
+@@ -118,6 +119,10 @@ if host_machine.system() != 'windows'
+   subdir('unix')
+ endif
+ 
++if host_machine.system() == 'darwin'
++  subdir('darwin')
++endif
++
+ include_dirs = [ include_directories('.') ]
+ 
+ 
+@@ -133,7 +138,6 @@ this_exe = executable(
+   include_directories : include_dirs,
+   # TODO: -lrapidcheck, see ../libutil-support/build.meson
+   link_args : linker_export_flags + [ '-lrapidcheck' ],
+-  # get main from gtest
+   install : true,
+   cpp_pch : do_pch ? [ 'pch/precompiled-headers.hh' ] : [],
+ )
+diff --git a/src/libutil-tests/unix/file-system.cc b/src/libutil-tests/unix/file-system.cc
+new file mode 100644
+index 000000000000..37be79ef7eb1
+--- /dev/null
++++ b/src/libutil-tests/unix/file-system.cc
+@@ -0,0 +1,31 @@
++#include <gtest/gtest.h>
++
++#include "nix/util/file-system.hh"
++#include "unix/file-system.hh"
++
++namespace nix {
++
++void testDeletePathWithRestrictivePermissions()
++{
++    auto tmpDir = createTempDir();
++    AutoDelete cleanup(tmpDir);
++
++    for (mode_t mode : {0000, 0100, 0400, 0500, 0555}) {
++        auto directory = tmpDir / "directory";
++        auto child = directory / "child";
++        createDirs(child);
++        writeFile(child / "file", "contents");
++        chmod(child, mode);
++        chmod(directory, mode);
++
++        ASSERT_NO_THROW(deletePath(directory));
++        EXPECT_FALSE(pathExists(directory));
++    }
++}
++
++TEST(deletePath, restrictiveDirectoryPermissions)
++{
++    testDeletePathWithRestrictivePermissions();
++}
++
++} // namespace nix
+diff --git a/src/libutil-tests/unix/file-system.hh b/src/libutil-tests/unix/file-system.hh
+new file mode 100644
+index 000000000000..8e83b5952188
+--- /dev/null
++++ b/src/libutil-tests/unix/file-system.hh
+@@ -0,0 +1,7 @@
++#pragma once
++
++namespace nix {
++
++void testDeletePathWithRestrictivePermissions();
++
++} // namespace nix
+diff --git a/src/libutil-tests/unix/meson.build b/src/libutil-tests/unix/meson.build
+index 2c9eccb67292..68fbd3747454 100644
+--- a/src/libutil-tests/unix/meson.build
++++ b/src/libutil-tests/unix/meson.build
+@@ -1,4 +1,5 @@
+ sources += files(
+   'file-system-at.cc',
++  'file-system.cc',
+   'unix-domain-socket.cc',
+ )
+diff --git a/src/libutil/unix/file-system.cc b/src/libutil/unix/file-system.cc
+index d8072ccd99da..9489bc7e1045 100644
+--- a/src/libutil/unix/file-system.cc
++++ b/src/libutil/unix/file-system.cc
+@@ -201,7 +201,14 @@ static void _deletePath(
+     if (S_ISDIR(st.st_mode)) {
+         /* Make the directory accessible. */
+         const auto PERM_MASK = S_IRUSR | S_IWUSR | S_IXUSR;
+-        if ((st.st_mode & PERM_MASK) != PERM_MASK)
++        bool needsPermissionChange = (st.st_mode & PERM_MASK) != PERM_MASK;
++#ifdef __APPLE__
++        /* Root can traverse and remove read-only directories on Darwin. Avoid
++           chmod: App Management can deny changing a launched app bundle's mode
++           even when deleting the bundle is allowed. */
++        needsPermissionChange = needsPermissionChange && geteuid() != 0;
++#endif
++        if (needsPermissionChange)
+             try {
+                 unix::fchmodatTryNoFollow(parentfd, name, st.st_mode | PERM_MASK);
+             } catch (SysError & e) {
