@@ -120,10 +120,21 @@ def github_repository(locked: LockedInput) -> Repository | None:
             return None
         return Repository(locked.host or "github.com", locked.owner, locked.repo)
 
-    if locked.type != "git" or locked.url is None:
+    if locked.url is None:
         return None
 
     parsed = urlparse(locked.url.removeprefix("git+"))
+    if locked.type == "tarball":
+        # Channel tarballs retain the nixpkgs commit in the lock's rev field.
+        if parsed.hostname == "releases.nixos.org" and parsed.path.startswith(
+            ("/nixos/", "/nixpkgs/")
+        ):
+            return Repository("github.com", "NixOS", "nixpkgs")
+        return None
+
+    if locked.type != "git":
+        return None
+
     if parsed.hostname != "github.com":
         return None
 

@@ -116,6 +116,44 @@ def test_supports_git_urls_for_github_inputs():
     )
 
 
+@pytest.mark.parametrize(
+    "release_path",
+    [
+        "nixos/26.05/nixos-26.05.11829.a033e66ab94a",
+        "nixpkgs/26.05-darwin/nixpkgs-darwin-26.05pre1016318.7529d323f8f9",
+        "nixpkgs/nixpkgs-26.11pre1092129.319e4cebef10",
+    ],
+)
+def test_renders_channel_tarball_updates_with_compare_links(release_path):
+    old_revision = "a" * 40
+    new_revision = "b" * 40
+    old = {
+        "type": "tarball",
+        "url": f"https://releases.nixos.org/{release_path}/nixexprs.tar.zst",
+        "rev": old_revision,
+    }
+    new = {**old, "rev": new_revision}
+
+    body = app.render_body(lock({"channel": old}), lock({"channel": new}), "schedule")
+
+    assert "| `channel` | `aaaaaaa` → `bbbbbbb` | [Compare](" in body
+    assert f"https://github.com/NixOS/nixpkgs/compare/{old_revision}...{new_revision}" in body
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.org/nixpkgs/nixexprs.tar.zst",
+        "https://releases.nixos.org/other/source.tar.zst",
+    ],
+)
+def test_unrecognized_tarballs_have_no_compare_link(url):
+    old = locked({"type": "tarball", "url": url, "rev": "a" * 40})
+    new = old.model_copy(update={"rev": "b" * 40})
+
+    assert app.compare_url(old, new) is None
+
+
 def test_supports_gitlab_compare_links():
     old = locked(
         {
