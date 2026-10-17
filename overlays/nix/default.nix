@@ -1,5 +1,15 @@
 { nix, fetchpatch }:
-nix.appendPatches [
+let
+  nixWithRootTestFilter = nix.overrideScope (
+    _final: prev: {
+      # nixpkgs passes an explicit filter, overriding the test binary's default.
+      nix-util-tests = prev.nix-util-tests.overrideAttrs (old: {
+        excludedTestPatterns = (old.excludedTestPatterns or [ ]) ++ [ "Root*" ];
+      });
+    }
+  );
+in
+nixWithRootTestFilter.appendPatches [
   (fetchpatch {
     url = "https://github.com/booxter/nix-1/commit/42d741ac8140ab79d75f86e09c51f94497873441.patch";
     hash = "sha256-xOKyoupUL16v++Cy90sfWrK1g2R2kLglpJzTDza0vv0=";
@@ -59,4 +69,7 @@ nix.appendPatches [
   # Avoid inheriting a locked signal callback registry in daemon workers.
   # Drop when the packaged release includes https://github.com/NixOS/nix/pull/16581.
   ./reset-signal-callbacks-after-fork.patch
+  # Avoid App Management denying chmod when root deletes app bundles on Darwin.
+  # Drop when the packaged release includes https://github.com/NixOS/nix/pull/16626.
+  ./darwin-root-delete-without-chmod.patch
 ]
