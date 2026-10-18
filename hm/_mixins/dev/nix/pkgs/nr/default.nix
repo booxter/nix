@@ -5,6 +5,7 @@
   reviewDirectory ? "~/src/nixpkgs",
   lib,
   git,
+  nix,
   nixpkgs-reviewFull,
   openssh,
   python3,
@@ -33,6 +34,7 @@ pythonPackages.buildPythonApplication {
     pytestCheckHook
     pytest-cov
     git
+    nix
     tmux
   ];
 

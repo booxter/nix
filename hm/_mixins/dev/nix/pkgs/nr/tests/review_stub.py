@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shlex
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -28,6 +29,23 @@ build_parser.add_argument("--cores", type=int)
 build_parser.add_argument("--max-jobs", type=int)
 build_options = build_parser.parse_args(shlex.split(arguments.build_args or ""))
 report = vars(arguments) | vars(build_options) | {"directory": str(Path.cwd())}
+# Evaluating settings needs no store access inside the build sandbox.
+config = subprocess.run(
+    [
+        "nix-instantiate",
+        "--store",
+        "dummy://",
+        "--eval",
+        "--strict",
+        "--json",
+        "--expr",
+        arguments.extra_nixpkgs_config or "{}",
+    ],
+    check=True,
+    stdout=subprocess.PIPE,
+    text=True,
+)
+report["extra_nixpkgs_config"] = json.loads(config.stdout)
 Path(os.environ["NR_TEST_REPORT"]).write_text(json.dumps(report))
 print("review started", flush=True)
 

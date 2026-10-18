@@ -33,7 +33,7 @@ def test_review_process_receives_choices_and_returns_failure(
     assert report["approve_pr"]
     assert report["tests"]
     assert report["no_shell"]
-    assert "cudaSupport = true" in report["extra_nixpkgs_config"]
+    assert report["extra_nixpkgs_config"] == {"allowBroken": False, "cudaSupport": True}
     assert report["builders"] == builders
 
 
@@ -108,7 +108,39 @@ def test_build_options_preserve_fleet_and_package_selection(
     assert report["cores"] == 2
     assert report["max_jobs"] == 1
     assert report["package"] == ["python314Packages.pysail"]
-    assert report["extra_nixpkgs_config"] is None
+    assert report["extra_nixpkgs_config"] == {"allowBroken": False}
+
+
+@pytest.mark.parametrize("cuda_arguments", [[], ["-C"]])
+@pytest.mark.parametrize(
+    "config_arguments",
+    [
+        ["--extra-nixpkgs-config={ allowBroken = true; cudaSupport = false; }"],
+        ["--extra-nixpkgs-config", "{ allowBroken = true; cudaSupport = false; }"],
+    ],
+)
+def test_explicit_nixpkgs_config_overrides_defaults(
+    review_environment: dict[str, str],
+    cuda_arguments: list[str],
+    config_arguments: list[str],
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from nr.cli import main; raise SystemExit(main())",
+            *cuda_arguments,
+            "575183",
+            "--",
+            *config_arguments,
+        ],
+        env=review_environment,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(Path(review_environment["NR_TEST_REPORT"]).read_text())
+    assert report["extra_nixpkgs_config"] == {"allowBroken": True, "cudaSupport": False}
 
 
 def test_explicit_builders_override_fleet_defaults(
