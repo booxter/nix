@@ -72,4 +72,7 @@ nixWithRootTestFilter.appendPatches [
   # Avoid App Management denying chmod when root deletes app bundles on Darwin.
   # Drop when the packaged release includes https://github.com/NixOS/nix/pull/16626.
   ./darwin-root-delete-without-chmod.patch
+  # Split Darwin sandbox path tables so larger dependency closures fit.
+  # Drop when the packaged release includes https://github.com/NixOS/nix/pull/16619.
+  ./darwin-sandbox-path-buckets.patch
 ]
