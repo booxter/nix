@@ -35,6 +35,9 @@ in
       configureSsh = true;
     };
 
+    # Interactive tests use XTEST to send input through forwarded X11 sessions.
+    system.defaults.CustomUserPreferences."org.nixos.xquartz.X11".enable_test_extensions = true;
+
     launchd.agents.xquartz-startx.serviceConfig = {
       StandardOutPath = agentLogPath;
       StandardErrorPath = agentLogPath;
