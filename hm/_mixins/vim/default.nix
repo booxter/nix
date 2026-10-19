@@ -151,7 +151,10 @@
         };
 
         tmux-navigator.enable = true;
-        treesitter.enable = true;
+        treesitter = {
+          enable = true;
+          highlight.enable = true;
+        };
         toggleterm.enable = true;
         web-devicons.enable = true;
       };
