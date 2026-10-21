@@ -28,7 +28,7 @@ pythonPackages.buildPythonPackage {
     mypy src/paperless_bootstrap
   '';
 
-  PAPERLESS_SOURCE_DIR = "${paperless-ngx}/lib/paperless-ngx/src";
+  env.PAPERLESS_SOURCE_DIR = "${paperless-ngx}/lib/paperless-ngx/src";
 
   pythonImportsCheck = [ "paperless_bootstrap" ];
 
