@@ -31,7 +31,6 @@
     watch
     yq
     zip
-    bind.dnsutils
     dig
     iftop
     ipcalc
