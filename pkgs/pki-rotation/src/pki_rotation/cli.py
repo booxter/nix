@@ -110,7 +110,7 @@ class Application:
             branch=request.branch,
             base_branch=request.base_branch,
             run_timestamp_seconds=self.clock.now().timestamp(),
-            due_count=len(candidates),
+            due_count=sum(record.rotation_due for record in candidates),
             rotated_count=0,
             candidates=tuple(record.reference() for record in candidates),
         )
@@ -159,7 +159,9 @@ def parser() -> argparse.ArgumentParser:
     export.add_argument("--output", type=Path)
     export.add_argument("--inventory-manifest", type=Path, required=True)
 
-    rotate = modes.add_parser("rotate", help="rotate due leaf certificates through a PR")
+    rotate = modes.add_parser(
+        "rotate", help="open a PR renewing all leaf certificates when any is due"
+    )
     rotate.add_argument("--dry-run", action="store_true")
     rotate.add_argument("--github-token-file", type=Path)
     rotate.add_argument("--repo-url", default=DEFAULT_REPOSITORY_URL)

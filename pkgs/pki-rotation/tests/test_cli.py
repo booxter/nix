@@ -232,6 +232,9 @@ def test_rotate_dry_run_writes_summary_and_metrics(tmp_path: Path) -> None:
     metrics = tmp_path / "rotation.prom"
     output = StringIO()
     app, _, _ = application()
+    due = due_inventory().root[0]
+    fresh = due.model_copy(update={"cert_name": "fresh", "rotation_due": False})
+    app = replace(app, scanner=StaticScanner(CertificateInventory((due, fresh))))
 
     assert (
         run(
@@ -250,6 +253,10 @@ def test_rotate_dry_run_writes_summary_and_metrics(tmp_path: Path) -> None:
     )
 
     assert json.loads(output.getvalue())["due_count"] == 1
+    assert json.loads(output.getvalue())["candidates"] == [
+        due.reference().model_dump(mode="json"),
+        fresh.reference().model_dump(mode="json"),
+    ]
     assert "host_observability_pki_rotation_last_success" in metrics.read_text()
 
 

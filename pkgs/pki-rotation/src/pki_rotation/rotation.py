@@ -124,11 +124,11 @@ class ManagedCertificateRotator:
 
 
 def rotation_candidates(inventory: CertificateInventory) -> tuple[CertificateRecord, ...]:
-    return tuple(
-        record
-        for record in inventory.root
-        if record.category is not CertificateCategory.CA and record.rotation_due
+    leaves = tuple(
+        record for record in inventory.root if record.category is not CertificateCategory.CA
     )
+    # Renew the whole batch together so staggered expirations converge to one cycle.
+    return leaves if any(record.rotation_due for record in leaves) else ()
 
 
 def _expiry(record: CertificateRecord) -> str:
@@ -154,6 +154,7 @@ def pull_request_body(
     return (
         f"- Rotated {len(rotated)} managed internal PKI leaf certificate(s).\n"
         f"- Rotation window: {rotation_window_days} days.\n"
+        "- All managed leaf certificates are renewed when any leaf becomes due.\n"
         "\n"
         "| Certificate | Current expiry (UTC) | New expiry (UTC) |\n"
         "| --- | --- | --- |\n"
@@ -232,7 +233,7 @@ class RotationController:
                 branch=request.branch,
                 base_branch=request.base_branch,
                 run_timestamp_seconds=started,
-                due_count=len(candidates),
+                due_count=sum(record.rotation_due for record in candidates),
                 rotated_count=len(rotated),
                 pr_url=pull.url if pull else None,
                 candidates=tuple(record.reference() for record in candidates),
