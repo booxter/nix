@@ -142,11 +142,23 @@ def request() -> RotationRequest:
     )
 
 
-def test_controller_rotates_commits_pushes_and_creates_pull_request() -> None:
+def test_controller_renews_all_leaves_in_one_pull_request_when_one_is_due() -> None:
     current_expiry = datetime(2026, 11, 20, tzinfo=UTC).timestamp()
     new_expiry = datetime(2027, 4, 9, tzinfo=UTC).timestamp()
-    before = CertificateInventory((record(expires=current_expiry),))
-    after = CertificateInventory((record(due=False, expires=new_expiry),))
+    before = CertificateInventory(
+        (
+            record(expires=current_expiry),
+            record(CertificateCategory.OBSERVABILITY_CLIENT, due=False),
+            record(CertificateCategory.CA),
+        )
+    )
+    after = CertificateInventory(
+        (
+            record(due=False, expires=new_expiry),
+            record(CertificateCategory.OBSERVABILITY_CLIENT, due=False, expires=new_expiry),
+            record(CertificateCategory.CA),
+        )
+    )
     scanner = SequenceScanner([before, after])
     repository = RecordingRepository()
     pulls = RecordingPullRequests()
@@ -167,9 +179,32 @@ def test_controller_rotates_commits_pushes_and_creates_pull_request() -> None:
     assert repository.pushed == ["ci/pki-rotate"]
     assert len(pulls.created) == 1
     assert "| `host/internal_https_server/web` | 2026-11-20 | 2027-04-09 |" in pulls.created[0][2]
+    assert "| `host/observability_client/web` |" in pulls.created[0][2]
+    assert summary.rotated == tuple(item.reference() for item in before.root[:2])
     assert summary.due_count == 1
-    assert summary.rotated_count == 1
+    assert summary.rotated_count == 2
     assert summary.pr_url == "https://github.com/owner/repo/pull/1"
+
+
+def test_controller_does_not_open_a_pull_request_before_next_leaf_is_due() -> None:
+    inventory = CertificateInventory((record(due=False), record(CertificateCategory.CA)))
+    repository = RecordingRepository()
+    pulls = RecordingPullRequests()
+
+    summary = RotationController(
+        SequenceScanner([inventory, inventory]),
+        repository,
+        pulls,
+        RecordingRotator(),
+        FixedClock(),
+    ).run(request())
+
+    assert summary.due_count == 0
+    assert summary.rotated_count == 0
+    assert summary.pr_url is None
+    assert repository.committed == 0
+    assert repository.pushed == []
+    assert pulls.created == []
 
 
 def test_controller_reuses_open_pull_branch_without_recreating_it() -> None:
@@ -192,16 +227,21 @@ def test_controller_reuses_open_pull_branch_without_recreating_it() -> None:
     assert summary.pr_url == pull.url
 
 
-def test_candidates_exclude_ca_and_not_due_certificates() -> None:
+@pytest.mark.parametrize("leaf_due", [False, True])
+def test_candidates_batch_leaves_only_when_a_leaf_is_due(leaf_due: bool) -> None:
     inventory = CertificateInventory(
         (
             record(CertificateCategory.CA),
             record(due=False),
-            record(CertificateCategory.OBSERVABILITY_CLIENT),
+            record(CertificateCategory.OBSERVABILITY_CLIENT, due=leaf_due),
         )
     )
 
-    assert rotation_candidates(inventory) == (record(CertificateCategory.OBSERVABILITY_CLIENT),)
+    assert rotation_candidates(inventory) == (inventory.root[1:] if leaf_due else ())
+
+
+def test_empty_inventory_has_no_rotation_candidates() -> None:
+    assert rotation_candidates(CertificateInventory(())) == ()
 
 
 def test_pull_request_body_reports_unparsable_current_expiry() -> None:
