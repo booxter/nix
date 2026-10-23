@@ -45,6 +45,7 @@ pythonPackages.buildPythonApplication {
 
   nativeBuildInputs = [ makeWrapper ];
   nativeCheckInputs = [
+    git
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
