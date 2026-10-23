@@ -52,13 +52,14 @@ class GitRepository:
     def clone(self, request: CheckoutRequest) -> None:
         self._validate_branch(request.branch)
         request.target.parent.mkdir(parents=True, exist_ok=True)
+        # Keep all remote branch tips so the push lease also protects a rotation
+        # branch left behind by a closed PR when we start again from master.
         self._require(
             self.runner.run(
                 [
                     "clone",
                     "--branch",
                     request.branch,
-                    "--single-branch",
                     "--",
                     request.repo_url,
                     str(request.target),
