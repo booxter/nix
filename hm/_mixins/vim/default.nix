@@ -28,6 +28,8 @@
       vimdiffAlias = true;
       nixpkgs.useGlobalPackages = true;
 
+      extraFiles."after/queries/nix/injections.scm".source = ./nix-injections.scm;
+
       env = lib.optionalAttrs osConfig.nixpkgs.hostPlatform.isDarwin {
         LLDB_DEBUGSERVER_PATH = "/Library/Developer/CommandLineTools/Library/PrivateFrameworks/LLDB.framework/Versions/A/Resources/debugserver";
       };
