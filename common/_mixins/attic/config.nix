@@ -48,10 +48,6 @@ let
     set -f
     export HOME=${lib.escapeShellArg rootDir}
     export NIX_REMOTE=daemon
-    ${lib.optionalString pkgs.stdenv.isDarwin ''
-      export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-      export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-    ''}
     ${lib.concatStrings pushCommands}
   '';
 in
