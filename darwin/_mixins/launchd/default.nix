@@ -5,6 +5,7 @@ in
 {
   imports = [
     ./assertions.nix
+    ./certificates.nix
     ./logging.nix
     ./observability.nix
   ];

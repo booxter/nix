@@ -42,6 +42,9 @@ let
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };
       nixpkgs-runners = pkgs.callPackage ../../hm/_mixins/remote-control/pkgs { };
     }
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+      launchd-certificates = import ./launchd-certificates { inherit inputs lib pkgs; };
+    }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       repairr-package = pkgs.repairr;
       nv-gpconnect = pkgs.callPackage ../../nixos/nv/pkgs/gpconnect {
