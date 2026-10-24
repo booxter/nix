@@ -30,6 +30,13 @@
         opencode
         ;
 
+      attic-client = prev.attic-client.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Drop when the packaged client honors NIX_SSL_CERT_FILE.
+          ./attic-client-nix-ssl-cert-file.patch
+        ];
+      });
+
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
 
       gpauth = prev.gpauth.overrideAttrs (old: {
