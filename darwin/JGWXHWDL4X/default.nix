@@ -21,7 +21,10 @@ let
           "maas_teams"
         ])
         {
-          clientId.secret = "codex/mcp/maas/oauth/client_id";
+          clientIds = {
+            codex.secret = "codex/mcp/maas/oauth/client_id";
+            claude.secret = "claude/mcp/maas/oauth/client_id";
+          };
         };
   };
 in

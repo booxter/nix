@@ -15,6 +15,9 @@ let
     // lib.optionalAttrs ((server.env or { }) != { }) { inherit (server) env; };
   renderHttp =
     server:
+    let
+      clientId = mcps.clientIdFor "codex" server;
+    in
     {
       default_tools_approval_mode = "writes";
       url = resolveValue server.url;
@@ -25,8 +28,8 @@ let
     // lib.optionalAttrs (server.oauth != null) {
       auth = "oauth";
     }
-    // lib.optionalAttrs (server.oauth != null && server.oauth.clientId != null) {
-      oauth.client_id = resolveValue server.oauth.clientId;
+    // lib.optionalAttrs (clientId != null) {
+      oauth.client_id = resolveValue clientId;
     };
 in
 {

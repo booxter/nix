@@ -47,10 +47,10 @@ let
       oauth = lib.mkOption {
         type = lib.types.nullOr (
           lib.types.submodule {
-            options.clientId = lib.mkOption {
-              type = lib.types.nullOr secretValueType;
-              default = null;
-              description = "Public or SOPS-backed OAuth client ID.";
+            options.clientIds = lib.mkOption {
+              type = lib.types.attrsOf secretValueType;
+              default = { };
+              description = "Public or SOPS-backed OAuth client IDs keyed by coding client (codex or claude).";
             };
           }
         );
