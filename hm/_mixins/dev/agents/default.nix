@@ -2,11 +2,14 @@
 {
   imports = [
     ./mcp-options.nix
+    ./claude
     ./codex
     ./opencode
   ];
 
   options.host.hm.dev = {
+    claude.enable = lib.mkEnableOption "Claude coding agent";
+
     codex = {
       enable = lib.mkEnableOption "Codex coding agent";
 

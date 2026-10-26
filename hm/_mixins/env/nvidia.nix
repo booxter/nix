@@ -12,6 +12,7 @@
       env.sendEmail.transport = "nvidia";
       dev = {
         act.enable = true;
+        claude.enable = true;
         codex = {
           enable = true;
           usage.account = "corporate";
