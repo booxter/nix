@@ -46,3 +46,7 @@ validation with `--no-verify` or disable commit message hook.
 
 When creating pull requests, keep description terse. No headings and
 boilerplate such as Summary, Validation, or Testing. No slop. Be brief.
+
+Show web links as Markdown links with short descriptive text, such as
+`[pid_start.rs](https://...)`, not bare URLs; the terminal renders them as
+clickable text.
