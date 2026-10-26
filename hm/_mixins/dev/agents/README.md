@@ -4,8 +4,9 @@ Codex and Claude Code share `context.md`, `skills/`, and
 `host.hm.dev.agents.mcp` server declarations. Their packages come from unstable;
 Claude is enabled in the NVIDIA developer profile through `programs.claude-code`.
 
-MCP URLs and OAuth client IDs accept strings or `{ secret = "sops/key"; }`.
-Existing encrypted keys retain their `codex/mcp/` names. Shared `instructions`
+MCP URLs and values in `oauth.clientIds` accept strings or
+`{ secret = "sops/key"; }`. OAuth client IDs are keyed by `codex` or `claude`
+because each application has its own registered callbacks. Shared `instructions`
 are appended to both clients' context; `startupTimeoutSec` only maps to Codex.
 
 `common/_mixins/agents` renders secret-backed configuration with SOPS. Codex

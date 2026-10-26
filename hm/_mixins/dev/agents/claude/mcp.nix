@@ -6,12 +6,15 @@ let
   };
   renderHttp =
     server:
+    let
+      clientId = mcps.clientIdFor "claude" server;
+    in
     {
       type = "http";
       url = mcps.resolveValue server.url;
     }
-    // lib.optionalAttrs (server.oauth != null && server.oauth.clientId != null) {
-      oauth.clientId = mcps.resolveValue server.oauth.clientId;
+    // lib.optionalAttrs (clientId != null) {
+      oauth.clientId = mcps.resolveValue clientId;
     };
 in
 lib.mapAttrs (_: renderStdio) mcps.stdioServers // lib.mapAttrs (_: renderHttp) mcps.httpServers
