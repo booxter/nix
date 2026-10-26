@@ -7,75 +7,12 @@
 }:
 let
   cfg = config.host.hm.dev.codex;
-  secretValueType = lib.types.either lib.types.nonEmptyStr (
-    lib.types.submodule {
-      options.secret = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SOPS secret containing the MCP configuration value.";
-      };
-    }
-  );
-  stdioServerType = lib.types.submodule {
-    options = {
-      command = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Executable used to start the stdio MCP server.";
-      };
-      args = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-        description = "Arguments passed to the MCP server executable.";
-      };
-      env = lib.mkOption {
-        type = with lib.types; attrsOf str;
-        default = { };
-        description = "Environment variables passed to the MCP server.";
-      };
-      instructions = lib.mkOption {
-        type = lib.types.lines;
-        default = "";
-        description = "Default agent instructions for using the MCP server.";
-      };
-    };
-  };
-  httpServerType = lib.types.submodule {
-    options = {
-      url = lib.mkOption {
-        type = secretValueType;
-        description = "Public URL or SOPS-backed URL for the HTTP MCP server.";
-      };
-      oauth = lib.mkOption {
-        type = lib.types.nullOr (
-          lib.types.submodule {
-            options.clientId = lib.mkOption {
-              type = lib.types.nullOr secretValueType;
-              default = null;
-              description = "Public or SOPS-backed OAuth client ID.";
-            };
-          }
-        );
-        default = null;
-        description = "OAuth configuration, or null for an unauthenticated HTTP server.";
-      };
-      startupTimeoutSec = lib.mkOption {
-        type = lib.types.nullOr lib.types.ints.positive;
-        default = null;
-        description = "Seconds to wait for the MCP server to initialize.";
-      };
-      instructions = lib.mkOption {
-        type = lib.types.lines;
-        default = "";
-        description = "Default agent instructions for using the MCP server.";
-      };
-    };
-  };
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   mcps = import ./mcp.nix {
     inherit
       config
       lib
       osConfig
-      pkgs
       ;
   };
   shared = import ../shared.nix { inherit lib osConfig; };
@@ -99,7 +36,7 @@ let
     ) "Codex voice prompt contains unhandled template placeholders; update its substitutions.";
     rendered;
   oauthServerNames = builtins.attrNames (
-    lib.filterAttrs (_: server: server.oauth != null) cfg.mcp.httpServers
+    lib.filterAttrs (_: server: server.oauth != null) config.host.hm.dev.agents.mcp.httpServers
   );
   codexMcpLogin = pkgs.codex-mcp-login.override {
     codex = config.programs.codex.package;
@@ -107,26 +44,6 @@ let
   };
 in
 {
-  options.host.hm.dev.codex.mcp = {
-    stdioServers = lib.mkOption {
-      type = lib.types.attrsOf stdioServerType;
-      default = { };
-      description = "Stdio MCP servers contributed to Codex by this host.";
-    };
-    httpServers = lib.mkOption {
-      type = lib.types.attrsOf httpServerType;
-      default = { };
-      description = "HTTP MCP servers contributed to Codex by this host.";
-    };
-    requiredSecrets = lib.mkOption {
-      type = with lib.types; listOf nonEmptyStr;
-      default = mcps.requiredSecrets;
-      readOnly = true;
-      internal = true;
-      description = "SOPS secrets required by configured Codex MCP servers.";
-    };
-  };
-
   config = {
     home.packages =
       lib.optionals (config.host.hm.env.roles.developer && cfg.enable && oauthServerNames != [ ]) [

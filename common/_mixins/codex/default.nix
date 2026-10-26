@@ -10,7 +10,7 @@ let
   codexConfig = hmConfig.programs.codex;
   codexHome = hmConfig.home.sessionVariables.CODEX_HOME or "${hmConfig.home.homeDirectory}/.codex";
   codexConfigFile = lib.removePrefix "${hmConfig.home.homeDirectory}/" "${codexHome}/config.toml";
-  mcpSecrets = hmConfig.host.hm.dev.codex.mcp.requiredSecrets;
+  mcpSecrets = hmConfig.host.hm.dev.agents.mcp.requiredSecrets;
   hasMcpSecrets = mcpSecrets != [ ];
   generatedCodexConfig = (pkgs.formats.toml { }).generate "codex-system-config" codexConfig.settings;
 in

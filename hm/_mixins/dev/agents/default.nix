@@ -1,6 +1,7 @@
 { lib, ... }:
 {
   imports = [
+    ./mcp-options.nix
     ./codex
     ./opencode
   ];
