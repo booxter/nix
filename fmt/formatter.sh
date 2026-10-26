@@ -33,7 +33,7 @@ git ls-files -z -- '*.yaml' '*.yml' ':(exclude)secrets/*/*.yaml' |
 
 # Codex context is prompt text without a heading; keep MD041 on elsewhere.
 markdown_lint_excludes=(
-  hm/_mixins/dev/agents/codex/context.md
+  hm/_mixins/dev/agents/context.md
 )
 markdown_lint_exclude_pathspecs=()
 for file in "${markdown_lint_excludes[@]}"; do

@@ -78,8 +78,8 @@ let
       pkgs
       ;
   };
-  agentContext = builtins.readFile ./context.md;
-  codexContext = agentContext + mcps.instructions;
+  shared = import ../shared.nix { inherit lib osConfig; };
+  codexContext = shared.context + mcps.instructions;
   # Follow the configured Codex version and preserve its voice prompt. Overrides
   # bypass Codex's first-name substitution, so render that placeholder here.
   voicePrompt =
@@ -139,23 +139,11 @@ in
         && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.chatgpt
       ) pkgs.chatgpt;
 
-    home.file.".agents/skills/simple-review" =
-      lib.mkIf (config.host.hm.env.roles.developer && cfg.enable)
-        {
-          source = ./skills/simple-review;
-        };
-
-    home.file.".agents/skills/simple-review-nixpkgs" =
-      lib.mkIf (config.host.hm.env.roles.developer && cfg.enable)
-        {
-          source = ./skills/simple-review-nixpkgs;
-        };
-
-    home.file.".agents/skills/weekly-report" =
-      lib.mkIf (config.host.hm.env.roles.developer && cfg.enable && osConfig.host.realm == "work")
-        {
-          source = ./skills/weekly-report;
-        };
+    home.file = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) (
+      lib.mapAttrs' (
+        name: source: lib.nameValuePair ".agents/skills/${name}" { inherit source; }
+      ) shared.skills
+    );
 
     host.hm.sketchybar.codex.enable = lib.mkDefault (
       isDarwin && cfg.enable && config.host.hm.sketchybar.enable
