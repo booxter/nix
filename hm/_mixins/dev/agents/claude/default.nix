@@ -26,6 +26,10 @@ in
         mcpServers = lib.mkIf (!hasMcpSecrets) (import ./mcp.nix { inherit lib mcps; });
 
         settings = {
+          attribution = {
+            commit = "";
+            pr = "";
+          };
           env = shared.environment // {
             DISABLE_AUTOUPDATER = "1";
             ANTHROPIC_MODEL = "opus";
