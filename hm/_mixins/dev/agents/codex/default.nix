@@ -15,7 +15,7 @@ let
       osConfig
       ;
   };
-  shared = import ../shared.nix { inherit lib osConfig; };
+  shared = import ../shared.nix { inherit config lib osConfig; };
   codexContext = shared.context + mcps.instructions;
   # Follow the configured Codex version and preserve its voice prompt. Overrides
   # bypass Codex's first-name substitution, so render that placeholder here.
@@ -96,10 +96,7 @@ in
           "current-dir"
           "context-remaining"
         ];
-        shell_environment_policy.set = {
-          inherit (config.home.sessionVariables) SSH_ASKPASS;
-          SSH_ASKPASS_REQUIRE = "force";
-        };
+        shell_environment_policy.set = shared.environment;
       };
     };
   };

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  shared = import ../shared.nix { inherit lib osConfig; };
+  shared = import ../shared.nix { inherit config lib osConfig; };
   mcps = import ../mcp.nix { inherit config lib osConfig; };
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 in
@@ -23,10 +23,8 @@ in
         mcpServers = lib.mkIf (!hasMcpSecrets) (import ./mcp.nix { inherit lib mcps; });
 
         settings = {
-          env = {
+          env = shared.environment // {
             DISABLE_AUTOUPDATER = "1";
-            inherit (config.home.sessionVariables) SSH_ASKPASS;
-            SSH_ASKPASS_REQUIRE = "force";
           };
           pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles = "claude-md-and-agents-md";
         };
