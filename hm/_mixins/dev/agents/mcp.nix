@@ -19,9 +19,13 @@ in
   resolveValue =
     value: if isSecretValue value then osConfig.sops.placeholder.${value.secret} else value;
 
-  instructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
-    lib.filter (server: server.instructions != "") (
-      builtins.attrValues stdioServers ++ builtins.attrValues httpServers
+  instructions = lib.concatStringsSep "\n" (
+    lib.unique (
+      lib.filter (instructions: instructions != "") (
+        map (server: server.instructions) (
+          builtins.attrValues stdioServers ++ builtins.attrValues httpServers
+        )
+      )
     )
   );
 
