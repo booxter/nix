@@ -10,6 +10,11 @@ in
 {
   system.stateVersion = 5;
 
+  host.attic.publishCaches.beast = [
+    "default"
+    "github"
+  ];
+
   host.nix.builderClient = { };
 
   host.network.interfaces.en0 = { };
