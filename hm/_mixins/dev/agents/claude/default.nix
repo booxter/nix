@@ -64,6 +64,7 @@ in
             CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS = "2";
             CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
           };
+          editorMode = "vim";
           statusLine = {
             type = "command";
             command = lib.getExe statusLine;
