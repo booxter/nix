@@ -10,10 +10,13 @@ let
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 in
 {
+  imports = [ ./mutable-settings.nix ];
+
   programs.claude-code =
     lib.mkIf (config.host.hm.env.roles.developer && config.host.hm.dev.claude.enable)
       {
         enable = true;
+        mutableSettings = true;
         context = shared.context + mcps.instructions;
         skills = shared.skills;
 
