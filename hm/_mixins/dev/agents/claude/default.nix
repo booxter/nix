@@ -28,6 +28,7 @@ in
         settings = {
           env = shared.environment // {
             DISABLE_AUTOUPDATER = "1";
+            ANTHROPIC_MODEL = "opus";
           };
           pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles = "claude-md-and-agents-md";
         };
