@@ -33,6 +33,7 @@ in
           env = shared.environment // {
             DISABLE_AUTOUPDATER = "1";
             ANTHROPIC_MODEL = "opus";
+            CLAUDE_CODE_EFFORT_LEVEL = "high";
           };
           pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles = "claude-md-and-agents-md";
         };
