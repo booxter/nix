@@ -36,6 +36,7 @@ let
     // topologyChecks
     // {
       python-quality = pythonQualityCheck;
+      claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
       gpclient = pkgs.gpclient;

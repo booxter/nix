@@ -17,7 +17,7 @@ in
   ];
 
   home-manager.users.${username}.host.hm = {
-    dev.codex.mcp.stdioServers.firefox-devtools = {
+    dev.agents.mcp.stdioServers.firefox-devtools = {
       instructions = ''
         Only use the Firefox DevTools MCP when the user explicitly requests browser
         interaction or browser-based debugging.

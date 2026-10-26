@@ -27,6 +27,7 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
+        claude-code
         opencode
         ;
 

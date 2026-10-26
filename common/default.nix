@@ -3,7 +3,7 @@
     ./_mixins/attic
     ./_mixins/builders
     ./_mixins/cli
-    ./_mixins/codex
+    ./_mixins/agents
     ./_mixins/desktop
     ./_mixins/hardware
     ./_mixins/host

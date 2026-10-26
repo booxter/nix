@@ -51,7 +51,7 @@ in
     (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x-nix-builder.pub)
   ];
   home-manager.users.${username}.host.hm = {
-    dev.codex.mcp.httpServers = {
+    dev.agents.mcp.httpServers = {
       maas_artifactory = maasServer "maas_artifactory";
       maas_confluence = maasServer "maas_confluence";
       maas_gitlab = maasServer "maas_gitlab";
