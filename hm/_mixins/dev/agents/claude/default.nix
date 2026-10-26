@@ -65,6 +65,8 @@ in
             CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
           };
           editorMode = "vim";
+          # Draw with the terminal palette, which Stylix themes, as Codex does.
+          theme = "dark-ansi";
           statusLine = {
             type = "command";
             command = lib.getExe statusLine;
