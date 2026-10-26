@@ -10,7 +10,8 @@ let
   marketplacesPath = "${cfg.configDir}/plugins/known_marketplaces.json";
 
   # Backport https://github.com/nix-community/home-manager/pull/10031 without
-  # replacing the release module. Remove this extension when our HM pin has it.
+  # replacing the release module.
+  # TODO(26.11): Remove this extension and its import; use HM's native option.
   # Pin the merger after its atomic-write and permission fixes (#10018).
   upstreamGenerators = builtins.fetchurl {
     url = "https://raw.githubusercontent.com/nix-community/home-manager/0560d64401a6d5370732a69d08bc4a6b135962d9/modules/lib/generators.nix";
