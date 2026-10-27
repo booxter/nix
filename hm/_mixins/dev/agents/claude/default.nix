@@ -6,6 +6,11 @@
 }:
 let
   shared = import ../shared.nix { inherit config lib osConfig; };
+  models = {
+    default = "opus";
+    implementer = "sonnet";
+    specialist = "fable";
+  };
   mcps = import ../mcp.nix { inherit config lib osConfig; };
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 in
@@ -17,7 +22,7 @@ in
       {
         enable = true;
         mutableSettings = true;
-        context = shared.context + mcps.instructions;
+        context = shared.context models + mcps.instructions;
         skills = shared.skills;
 
         # Home Manager wraps Claude with --plugin-dir. Secret-backed servers use
@@ -32,8 +37,10 @@ in
           };
           env = shared.environment // {
             DISABLE_AUTOUPDATER = "1";
-            ANTHROPIC_MODEL = "opus";
+            ANTHROPIC_MODEL = models.default;
             CLAUDE_CODE_EFFORT_LEVEL = "high";
+            CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS = "2";
+            CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
           };
           pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles = "claude-md-and-agents-md";
         };
