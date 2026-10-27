@@ -82,7 +82,7 @@ in
             REVERSE_PROXY = "False";
             SEARCH_API_URL = "https://search.pinepods.online/api/search";
             PEOPLE_API_URL = "https://people.pinepods.online";
-            DEBUG_MODE = "true";
+            DEBUG_MODE = "false";
             DEFAULT_LANGUAGE = "en";
             TZ = config.host.site.timeZone;
             PUID = toString storageIdentities.users.${user}.uid;
