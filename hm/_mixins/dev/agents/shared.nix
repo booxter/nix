@@ -4,7 +4,7 @@
   osConfig,
 }:
 {
-  context = builtins.readFile ./context.md;
+  context = models: builtins.readFile ./context.md + import ./orchestration.nix models;
 
   environment = {
     inherit (config.home.sessionVariables) SSH_ASKPASS;

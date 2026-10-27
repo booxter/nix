@@ -16,7 +16,12 @@ let
       ;
   };
   shared = import ../shared.nix { inherit config lib osConfig; };
-  codexContext = shared.context + mcps.instructions;
+  models = {
+    default = "gpt-6.1-sol";
+    implementer = "gpt-6.1-terra";
+    specialist = "gpt-6-astra";
+  };
+  codexContext = shared.context models + mcps.instructions;
   # Follow the configured Codex version and preserve its voice prompt. Overrides
   # bypass Codex's first-name substitution, so render that placeholder here.
   voicePrompt =
@@ -71,8 +76,15 @@ in
       context = codexContext;
 
       settings = {
-        model = "gpt-5.6-sol";
+        model = models.default;
         model_reasoning_effort = "high";
+        agents = {
+          enabled = true;
+          default_subagent_model = models.default;
+          max_concurrent_threads_per_session = 2;
+          # V2 ignores max_depth; the shared prompt also prohibits nesting.
+          max_depth = 1;
+        };
         personality = "pragmatic";
         experimental_realtime_ws_backend_prompt = voicePrompt + ''
 
