@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-statusline"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = ["pydantic"]
+
+[project.scripts]
+claude-statusline = "claude_statusline:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=claude_statusline --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true

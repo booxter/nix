@@ -2,6 +2,7 @@
   config,
   lib,
   osConfig,
+  pkgs,
   ...
 }:
 let
@@ -13,6 +14,8 @@ let
   };
   mcps = import ../mcp.nix { inherit config lib osConfig; };
   hasMcpSecrets = mcps.requiredSecrets != [ ];
+
+  statusLine = pkgs.callPackage ./statusline { };
 in
 {
   imports = [ ./mutable-settings.nix ];
@@ -41,6 +44,13 @@ in
             CLAUDE_CODE_EFFORT_LEVEL = "high";
             CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS = "2";
             CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
+          };
+          editorMode = "vim";
+          # Draw with the terminal palette, which Stylix themes, as Codex does.
+          theme = "dark-ansi";
+          statusLine = {
+            type = "command";
+            command = lib.getExe statusLine;
           };
           pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles = "claude-md-and-agents-md";
         };

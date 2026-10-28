@@ -107,6 +107,8 @@ in
           "model-with-reasoning"
           "current-dir"
           "context-remaining"
+          "total-input-tokens"
+          "total-output-tokens"
         ];
         shell_environment_policy.set = shared.environment;
       };
