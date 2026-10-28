@@ -1,3 +1,15 @@
+diff --git a/model-provider-info/src/lib.rs b/model-provider-info/src/lib.rs
+--- a/model-provider-info/src/lib.rs
++++ b/model-provider-info/src/lib.rs
+@@ -66,7 +66,7 @@
+ }
+ 
+ const DEFAULT_STREAM_IDLE_TIMEOUT_MS: u64 = 300_000;
+-const DEFAULT_STREAM_MAX_RETRIES: u64 = 5;
++const DEFAULT_STREAM_MAX_RETRIES: u64 = 10;
+ const DEFAULT_REQUEST_MAX_RETRIES: u64 = 4;
+ const DEFAULT_AWS_CREDENTIAL_EXPORT_TIMEOUT_MS: u64 = 30_000;
+ const DEFAULT_AWS_AUTH_REFRESH_TIMEOUT_MS: u64 = 300_000;
 diff --git a/core/src/responses_retry.rs b/core/src/responses_retry.rs
 index 048a68b..717a144 100644
 --- a/core/src/responses_retry.rs
