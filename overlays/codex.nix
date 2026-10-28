@@ -7,5 +7,7 @@ codex.overrideAttrs (old: {
     ../patches/codex-context-tokens.patch
     # Retry capacity errors without server advice within the existing retry budget.
     ../patches/codex-capacity-retry.patch
+    # Allow ten stream retries by default.
+    ../patches/codex-stream-retry-limit.patch
   ];
 })
