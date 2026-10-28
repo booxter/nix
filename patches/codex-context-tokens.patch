@@ -1,0 +1,63 @@
+diff --git a/tui/src/chatwidget/status_surfaces.rs b/tui/src/chatwidget/status_surfaces.rs
+--- a/tui/src/chatwidget/status_surfaces.rs
++++ b/tui/src/chatwidget/status_surfaces.rs
+@@ -769,7 +769,17 @@
+             }
+             StatusLineItem::ContextRemaining => self
+                 .status_line_context_remaining_percent()
+-                .map(|remaining| format!("Context {remaining}% left")),
++                .map(|remaining| {
++                    let context = self.token_info.as_ref().map(|info| {
++                        format_tokens_compact(info.last_token_usage.tokens_in_context_window())
++                    });
++                    match context {
++                        Some(tokens) => {
++                            format!("Context {tokens} tokens, {remaining}% left")
++                        }
++                        None => format!("Context {remaining}% left"),
++                    }
++                }),
+             StatusLineItem::ContextUsed => self
+                 .status_line_context_used_percent()
+                 .map(|used| format!("Context {used}% used")),
+diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/tests/status_and_layout.rs
+--- a/tui/src/chatwidget/tests/status_and_layout.rs
++++ b/tui/src/chatwidget/tests/status_and_layout.rs
+@@ -3082,6 +3082,37 @@
+ }
+ 
+ #[tokio::test]
++async fn status_line_distinguishes_context_from_session_tokens() {
++    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
++    chat.thread_id = Some(ThreadId::new());
++    chat.token_info = Some(TokenUsageInfo {
++        total_token_usage: TokenUsage {
++            input_tokens: 900_000,
++            output_tokens: 100_000,
++            total_tokens: 1_000_000,
++            ..Default::default()
++        },
++        last_token_usage: TokenUsage {
++            total_tokens: 24_000,
++            ..Default::default()
++        },
++        model_context_window: Some(108_000),
++    });
++    chat.local_settings.tui.status_line = Some(vec![
++        "context-remaining".to_string(),
++        "total-input-tokens".to_string(),
++        "total-output-tokens".to_string(),
++    ]);
++
++    chat.refresh_status_line();
++
++    assert_eq!(
++        status_line_text(&chat),
++        Some("Context 24K tokens, 88% left · 900K in · 100K out".to_string())
++    );
++}
++
++#[tokio::test]
+ async fn status_line_legacy_context_usage_renders_context_used_percent() {
+     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+     chat.thread_id = Some(ThreadId::new());
