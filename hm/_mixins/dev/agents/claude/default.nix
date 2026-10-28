@@ -15,26 +15,7 @@ let
   mcps = import ../mcp.nix { inherit config lib osConfig; };
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 
-  # Mirror the Codex footer: "Opus 5.5 · high · ~/src/nix · 63% context left".
-  # Claude passes session state as JSON on stdin; absent fields are skipped.
-  statusLine = pkgs.writeShellApplication {
-    name = "claude-statusline";
-    runtimeInputs = [ pkgs.jq ];
-    text = ''
-      jq -r --arg home "$HOME" '
-        [
-          .model.display_name,
-          .effort.level,
-          (.workspace.current_dir
-            | if . == $home or startswith($home + "/") then "~" + ltrimstr($home) else . end),
-          (.context_window.used_percentage
-            | if . == null then null else "\(100 - . | floor)% context left" end)
-        ]
-        | map(select(. != null))
-        | join(" · ")
-      '
-    '';
-  };
+  statusLine = pkgs.callPackage ./statusline { };
 in
 {
   imports = [ ./mutable-settings.nix ];
