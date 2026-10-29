@@ -126,7 +126,6 @@ in
   packages = {
     inherit deploy vm;
     diff = diffConfig;
-    fleet-tools = fleetTools;
     run-check-target = runCheckTarget;
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertPackage;
