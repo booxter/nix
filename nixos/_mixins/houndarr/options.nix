@@ -183,9 +183,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ./package {
-        aiosqlitepool = pkgs.callPackage ../../../pkgs/aiosqlitepool { };
-      };
+      default = pkgs.houndarr;
     };
 
     toolsPackage = lib.mkOption {
