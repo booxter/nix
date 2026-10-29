@@ -19,6 +19,8 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # Remove when nix-homebrew pins a release supporting `zap :not_required`.
+    nix-homebrew.inputs.brew-src.url = "github:Homebrew/brew/7.0.11";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
