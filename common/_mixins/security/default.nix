@@ -49,9 +49,13 @@ in
       # https://emudhra.we-have-a-problem.com/
       security.pki.caCertificateBlacklist = [
         "Comodo AAA Services root"
+      ]
+      # NSS 3.131.1 removed these roots, and cacert fails the build when a
+      # blocklisted name is missing. Keep them only for older bundles.
+      # https://bugzilla.mozilla.org/show_bug.cgi?id=2083709
+      # TODO: drop once nixpkgs-darwin ships NSS 3.131.1.
+      ++ lib.optionals (lib.versionOlder pkgs.cacert.version "3.131.1") [
         "emSign ECC Root CA - G3"
-        # Retired roots removed alongside the compromise mitigation in NSS 3.131.1.
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=2083709
         "emSign Root CA - C1"
         "emSign ECC Root CA - C3"
       ];

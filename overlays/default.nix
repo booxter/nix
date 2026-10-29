@@ -109,6 +109,25 @@
         ];
       });
 
+      houndarr = prev.houndarr.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Upstream's test hard-codes a 2026-10-27 release date that is no
+          # longer in the future, so the movie stops being "not yet released".
+          ../patches/houndarr-relative-release-date-test.patch
+        ];
+      });
+
+      mcp-nixos = prev.mcp-nixos.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # File contents may contain "Error" without the read failing.
+          # Drop once the packaged release includes upstream #154.
+          (prev.fetchpatch {
+            url = "https://github.com/utensils/mcp-nixos/commit/d7ebc7bfae70eaf20d54e87cf42764a1d57c35ef.patch";
+            hash = "sha256-55rQhE9CfTW1KQzUNM86U4S4Efu4yCN+1tZvdOz12oc=";
+          })
+        ];
+      });
+
       # Expose Radarr's stable manual-import rejection reason beside its human
       # message so local API consumers do not have to match mutable text.
       radarr = prev.radarr.overrideAttrs (old: {
@@ -130,6 +149,24 @@
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
+          fastmcp = pythonPrev.fastmcp.overridePythonAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              # Shield proxy cleanup from AnyIO >= 4.14 cancellation.
+              # Drop once the packaged release includes upstream #4363.
+              (prev.fetchpatch {
+                url = "https://github.com/PrefectHQ/fastmcp/commit/ddcdf648131b51d605f133d13e5c942ea008ab28.patch";
+                relative = "fastmcp_slim";
+                extraPrefix = "src/";
+                hash = "sha256-A4dPqgneJRZ/TBbiZOzJTpmMFMQbS6HOaxgmtXkPJe0=";
+              })
+            ];
+            # The upstream fix uses an import absent from 3.2.3.
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace src/fastmcp/server/providers/proxy.py \
+                --replace-fail 'import mcp.types' $'import anyio\nimport mcp.types'
+            '';
+          });
+
           # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
           # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
           pystemd = pythonPrev.pystemd.overrideAttrs (old: {

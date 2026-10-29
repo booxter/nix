@@ -37,6 +37,8 @@ in
 
   git-command-runner = gitCommandRunner;
 
+  houndarr = pkgs.callPackage ./houndarr { };
+
   media-repair-contracts = mediaRepairContracts;
 
   media-repair-go-models = mediaRepairGoModels;
