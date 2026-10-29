@@ -1,0 +1,429 @@
+diff --git a/tui/src/bottom_pane/mod.rs b/tui/src/bottom_pane/mod.rs
+index 83341ee..2f7c80a 100644
+--- a/tui/src/bottom_pane/mod.rs
++++ b/tui/src/bottom_pane/mod.rs
+@@ -322,6 +322,7 @@ pub(crate) struct BottomPane {
+ 
+     /// Inline status indicator shown above the composer while a task is running.
+     status: Option<StatusIndicatorWidget>,
++    turn_output_tokens: Option<i64>,
+     /// Running-hook summary supplied by the lifecycle owner after its reveal delay.
+     hook_status_message: Option<String>,
+     inline_banner: Option<actionable_banner::InlineBanner>,
+@@ -416,6 +417,7 @@ impl BottomPane {
+             disable_paste_burst,
+             is_task_running: false,
+             status: None,
++            turn_output_tokens: None,
+             hook_status_message: None,
+             inline_banner: None,
+             status_timer: crate::status_indicator_widget::StatusTimer::default(),
+@@ -1418,6 +1420,7 @@ impl BottomPane {
+             }
+         } else {
+             // Hide the status indicator when a task completes, but keep other modal views.
++            self.turn_output_tokens = None;
+             self.hide_status_indicator();
+         }
+     }
+@@ -1792,12 +1795,19 @@ impl BottomPane {
+         }
+     }
+ 
++    pub(crate) fn set_turn_output_tokens(&mut self, tokens: Option<i64>) {
++        self.turn_output_tokens = tokens;
++        self.sync_status_inline_message();
++        self.request_redraw();
++    }
++
+     /// Copy background activity and hook text into the active status row, if any.
+     ///
+     /// This keeps status-line inline text synchronized without forcing the
+     /// standalone unified-exec footer row to be visible.
+     fn sync_status_inline_message(&mut self) {
+         if let Some(status) = self.status.as_mut() {
++            status.set_output_tokens(self.turn_output_tokens);
+             status.update_inline_message(self.unified_exec_footer.summary_text());
+             status.update_hook_status_message(self.hook_status_message.clone());
+         }
+diff --git a/tui/src/chatwidget.rs b/tui/src/chatwidget.rs
+index 4b9d285..c29cf3d 100644
+--- a/tui/src/chatwidget.rs
++++ b/tui/src/chatwidget.rs
+@@ -77,6 +77,7 @@ use crate::terminal_title::set_terminal_title;
+ use crate::text_formatting::proper_join;
+ use crate::token_usage::TokenUsage;
+ use crate::token_usage::TokenUsageInfo;
++use crate::token_usage::TurnTokenUsage;
+ use crate::version::CODEX_CLI_VERSION;
+ use codex_app_server_protocol::AddCreditsNudgeCreditType;
+ use codex_app_server_protocol::AddCreditsNudgeEmailStatus;
+@@ -1143,6 +1144,15 @@ impl ChatWidget {
+         }
+     }
+ 
++    fn update_turn_token_usage(&mut self, total: &TokenUsage) {
++        if let Some(start) = self.turn_lifecycle.token_usage_start.as_ref() {
++            let usage = TurnTokenUsage::since(total, start);
++            self.turn_lifecycle.token_usage = Some(usage);
++            self.bottom_pane
++                .set_turn_output_tokens(Some(usage.output_tokens));
++        }
++    }
++
+     fn apply_token_info(&mut self, info: TokenUsageInfo) {
+         self.token_usage_pending = false;
+         self.bottom_pane
+diff --git a/tui/src/chatwidget/protocol.rs b/tui/src/chatwidget/protocol.rs
+index 5bd2254..339bd03 100644
+--- a/tui/src/chatwidget/protocol.rs
++++ b/tui/src/chatwidget/protocol.rs
+@@ -59,9 +59,18 @@ impl ChatWidget {
+                 }
+             }
+             ServerNotification::ThreadTokenUsageUpdated(notification) => {
+-                self.set_token_info(Some(token_usage_info_from_app_server(
+-                    notification.token_usage,
+-                )));
++                // Ignore reports from other turns so stale session totals cannot become
++                // the next turn's baseline.
++                if self
++                    .turn_lifecycle
++                    .last_turn_id
++                    .as_deref()
++                    .is_none_or(|turn_id| turn_id == notification.turn_id)
++                {
++                    let info = token_usage_info_from_app_server(notification.token_usage);
++                    self.update_turn_token_usage(&info.total_token_usage);
++                    self.set_token_info(Some(info));
++                }
+             }
+             ServerNotification::ThreadNameUpdated(notification) => {
+                 match ThreadId::from_string(&notification.thread_id) {
+diff --git a/tui/src/chatwidget/tests/completion_styling_tests.rs b/tui/src/chatwidget/tests/completion_styling_tests.rs
+index 6838e3a..57392c8 100644
+--- a/tui/src/chatwidget/tests/completion_styling_tests.rs
++++ b/tui/src/chatwidget/tests/completion_styling_tests.rs
+@@ -64,6 +64,109 @@ fn saved_completion_label() -> String {
+         .to_string()
+ }
+ 
++fn report_turn_tokens(chat: &mut ChatWidget, turn_id: &str, input: i64, output: i64) {
++    let usage = codex_app_server_protocol::TokenUsageBreakdown {
++        input_tokens: input,
++        output_tokens: output,
++        total_tokens: input + output,
++        cached_input_tokens: 0,
++        cache_write_input_tokens: 0,
++        reasoning_output_tokens: 0,
++    };
++    chat.handle_server_notification(
++        ServerNotification::ThreadTokenUsageUpdated(
++            codex_app_server_protocol::ThreadTokenUsageUpdatedNotification {
++                thread_id: chat.thread_id.map(|id| id.to_string()).unwrap_or_default(),
++                turn_id: turn_id.to_string(),
++                token_usage: codex_app_server_protocol::ThreadTokenUsage {
++                    total: usage.clone(),
++                    last: usage,
++                    model_context_window: Some(200_000),
++                },
++            },
++        ),
++        /*replay_kind*/ None,
++    );
++}
++
++#[tokio::test]
++async fn turn_tokens_accumulate_across_calls_and_reset_for_the_next_turn() {
++    let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
++    report_turn_tokens(&mut chat, "previous", 50_000, 100);
++    handle_turn_started(&mut chat, "turn-1");
++    assert!(!render_bottom_first_row(&chat, 200).contains("tokens"));
++
++    report_turn_tokens(&mut chat, "turn-1", 60_000, 300);
++    assert!(render_bottom_first_row(&chat, 200).contains("↓ 200 tokens"));
++    report_turn_tokens(&mut chat, "turn-1", 60_000, 300);
++    report_turn_tokens(&mut chat, "turn-1", 62_000, 940);
++    assert!(render_bottom_first_row(&chat, 200).contains("↓ 840 tokens"));
++
++    complete_turn(&mut chat, completed_turn(Some(35_000), Some(COMPLETED_AT)));
++    let label = completion_labels(&mut rx);
++    assert!(
++        label.starts_with("Worked for 35s • 12K in · 840 out • "),
++        "{label}"
++    );
++
++    handle_turn_started(&mut chat, "turn-2");
++    assert!(!render_bottom_first_row(&chat, 200).contains("tokens"));
++    report_turn_tokens(&mut chat, "turn-2", 63_000, 945);
++    assert!(render_bottom_first_row(&chat, 200).contains("↓ 5 tokens"));
++    handle_turn_completed(&mut chat, "turn-2", Some(1_000));
++    let label = completion_labels(&mut rx);
++    assert!(label.contains("1K in · 5 out"), "{label}");
++}
++
++#[tokio::test]
++async fn turn_tokens_survive_status_recreation_and_ignore_other_turns() {
++    let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
++    handle_turn_started(&mut chat, "turn-1");
++    report_turn_tokens(&mut chat, "turn-1", 12_000, 840);
++    report_turn_tokens(&mut chat, "previous", 100, 1);
++    chat.bottom_pane.hide_status_indicator();
++    chat.bottom_pane.ensure_status_indicator();
++    chat.bottom_pane
++        .set_unified_exec_processes(vec!["sleep 10".to_string()]);
++    let row = render_bottom_first_row(&chat, 200);
++    assert!(row.contains("↓ 840 tokens"), "{row}");
++    assert!(row.contains("background"), "{row}");
++
++    complete_turn(&mut chat, completed_turn(Some(35_000), Some(COMPLETED_AT)));
++    let label = completion_labels(&mut rx);
++    assert!(label.contains("12K in · 840 out"), "{label}");
++
++    handle_turn_started(&mut chat, "turn-2");
++    report_turn_tokens(&mut chat, "turn-2", 13_000, 845);
++    handle_turn_completed(&mut chat, "turn-2", Some(1_000));
++    let label = completion_labels(&mut rx);
++    assert!(label.contains("1K in · 5 out"), "{label}");
++}
++
++#[tokio::test]
++async fn turn_tokens_are_omitted_when_unknown_or_restored() {
++    for restored in [false, true] {
++        let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
++        if restored {
++            chat.handle_server_notification(
++                ServerNotification::TurnStarted(TurnStartedNotification {
++                    thread_id: String::new(),
++                    turn: app_server_turn("turn-1", AppServerTurnStatus::InProgress, None, None),
++                }),
++                Some(ReplayKind::ThreadSnapshot),
++            );
++            report_turn_tokens(&mut chat, "turn-1", 12_000, 840);
++        } else {
++            handle_turn_started(&mut chat, "turn-1");
++        }
++        assert!(!render_bottom_first_row(&chat, 200).contains("tokens"));
++        complete_turn(&mut chat, completed_turn(Some(35_000), Some(COMPLETED_AT)));
++        let label = completion_labels(&mut rx);
++        assert!(label.starts_with("Worked for 35s • "), "{label}");
++        assert!(!label.contains(" in · "), "{label}");
++    }
++}
++
+ #[tokio::test]
+ async fn completion_follows_plain_and_streamed_tool_answers() {
+     for streamed in [false, true] {
+diff --git a/tui/src/chatwidget/turn_lifecycle.rs b/tui/src/chatwidget/turn_lifecycle.rs
+index 67ced84..53cb1e8 100644
+--- a/tui/src/chatwidget/turn_lifecycle.rs
++++ b/tui/src/chatwidget/turn_lifecycle.rs
+@@ -3,6 +3,8 @@
+ use std::collections::HashSet;
+ use std::time::Instant;
+ 
++use crate::token_usage::TokenUsage;
++use crate::token_usage::TurnTokenUsage;
+ use codex_utils_sleep_inhibitor::SleepInhibitor;
+ 
+ #[derive(Debug)]
+@@ -11,6 +13,8 @@ pub(super) struct TurnLifecycleState {
+     /// Tracks whether codex-core currently considers an agent turn to be in progress.
+     pub(super) agent_turn_running: bool,
+     pub(super) last_turn_id: Option<String>,
++    pub(super) token_usage_start: Option<TokenUsage>,
++    pub(super) token_usage: Option<TurnTokenUsage>,
+     pub(super) budget_limited_turn_ids: HashSet<String>,
+     /// Completion labels already inserted into this thread's visible history.
+     pub(super) rendered_completion_turn_ids: HashSet<String>,
+@@ -23,6 +27,8 @@ impl TurnLifecycleState {
+             sleep_inhibitor: SleepInhibitor::new(prevent_idle_sleep),
+             agent_turn_running: false,
+             last_turn_id: None,
++            token_usage_start: None,
++            token_usage: None,
+             budget_limited_turn_ids: HashSet::new(),
+             rendered_completion_turn_ids: HashSet::new(),
+             goal_status_active_turn_started_at: None,
+@@ -37,6 +43,8 @@ impl TurnLifecycleState {
+ 
+     pub(super) fn finish(&mut self) {
+         self.agent_turn_running = false;
++        self.token_usage_start = None;
++        self.token_usage = None;
+         self.goal_status_active_turn_started_at = None;
+         self.sleep_inhibitor
+             .set_turn_running(/*turn_running*/ false);
+diff --git a/tui/src/chatwidget/turn_runtime.rs b/tui/src/chatwidget/turn_runtime.rs
+index d9726d2..f53107a 100644
+--- a/tui/src/chatwidget/turn_runtime.rs
++++ b/tui/src/chatwidget/turn_runtime.rs
+@@ -82,6 +82,9 @@ impl ChatWidget {
+         self.input_queue.user_turn_pending_start = false;
+         self.reset_safety_buffering_for_turn_start();
+         self.turn_lifecycle.start(Instant::now());
++        self.turn_lifecycle.token_usage_start = Some(self.token_usage());
++        self.turn_lifecycle.token_usage = None;
++        self.bottom_pane.set_turn_output_tokens(None);
+         self.transcript.reset_turn_flags();
+         self.adaptive_chunking.reset();
+         if self.plan_stream_controller.take().is_some() {
+@@ -118,6 +121,9 @@ impl ChatWidget {
+ 
+     pub(super) fn on_replayed_task_started(&mut self, started_at: Option<i64>) {
+         self.on_task_started();
++        // A restored turn has no saved starting totals. Counting from now would omit
++        // its earlier model calls, so leave usage unknown until the next new turn.
++        self.turn_lifecycle.token_usage_start = None;
+         if let Some(started_at) = started_at {
+             let elapsed_secs = chrono::Utc::now().timestamp().saturating_sub(started_at);
+             self.bottom_pane.reset_status_timer(Duration::from_secs(
+@@ -166,7 +172,14 @@ impl ChatWidget {
+         let runtime_metrics = (!from_replay && !self.turn_runtime_metrics.is_empty())
+             .then_some(self.turn_runtime_metrics);
+         if let Some(completion) = completion {
+-            self.add_to_history(completion.with_runtime_metrics(runtime_metrics));
++            let usage = (!from_replay)
++                .then_some(self.turn_lifecycle.token_usage)
++                .flatten();
++            self.add_to_history(
++                completion
++                    .with_runtime_metrics(runtime_metrics)
++                    .with_token_usage(usage),
++            );
+         } else if let Some(runtime_metrics) = runtime_metrics {
+             self.add_to_history(history_cell::FinalMessageSeparator::new(
+                 /*elapsed_seconds*/ None,
+diff --git a/tui/src/history_cell/separators.rs b/tui/src/history_cell/separators.rs
+index 7c39887..c788910 100644
+--- a/tui/src/history_cell/separators.rs
++++ b/tui/src/history_cell/separators.rs
+@@ -2,6 +2,7 @@
+ 
+ use super::*;
+ use crate::clock_format::ClockFormat;
++use crate::token_usage::TurnTokenUsage;
+ use chrono::DateTime;
+ use chrono::Datelike;
+ use chrono::Local;
+@@ -19,6 +20,7 @@ use chrono::NaiveDate;
+ pub struct FinalMessageSeparator {
+     elapsed_seconds: Option<u64>,
+     runtime_metrics: Option<RuntimeMetricsSummary>,
++    token_usage: Option<TurnTokenUsage>,
+     completed_at: Option<DateTime<Local>>,
+     display_date: NaiveDate,
+     clock_format: ClockFormat,
+@@ -32,6 +34,7 @@ impl FinalMessageSeparator {
+         Self {
+             elapsed_seconds,
+             runtime_metrics,
++            token_usage: None,
+             completed_at: None,
+             display_date: Local::now().date_naive(),
+             clock_format: ClockFormat::TwelveHour,
+@@ -56,6 +59,11 @@ impl FinalMessageSeparator {
+         self
+     }
+ 
++    pub(crate) fn with_token_usage(mut self, usage: Option<TurnTokenUsage>) -> Self {
++        self.token_usage = usage;
++        self
++    }
++
+     fn label(&self, today: NaiveDate) -> Option<String> {
+         let mut label_parts = Vec::new();
+         if let Some(elapsed_seconds) = self.elapsed_seconds {
+@@ -73,6 +81,9 @@ impl FinalMessageSeparator {
+             };
+             label_parts.push(format!("Worked for {elapsed}"));
+         }
++        if let Some(usage) = self.token_usage {
++            label_parts.push(usage.label());
++        }
+         if let Some(completed_at) = self.completed_at {
+             let date_format = if completed_at.date_naive() == today {
+                 ""
+diff --git a/tui/src/status_indicator_widget.rs b/tui/src/status_indicator_widget.rs
+index 3cb54b2..de1dfb7 100644
+--- a/tui/src/status_indicator_widget.rs
++++ b/tui/src/status_indicator_widget.rs
+@@ -60,6 +60,7 @@ pub(crate) struct StatusIndicatorWidget {
+     details_max_lines: usize,
+     /// Optional suffix rendered after the elapsed/interrupt segment.
+     inline_message: Option<String>,
++    output_tokens: Option<i64>,
+     /// Hook activity may move below the status row when it cannot fit in full.
+     hook_status_message: Option<String>,
+     show_interrupt_hint: bool,
+@@ -101,6 +102,7 @@ impl StatusIndicatorWidget {
+             details: None,
+             details_max_lines: STATUS_DETAILS_DEFAULT_MAX_LINES,
+             inline_message: None,
++            output_tokens: None,
+             hook_status_message: None,
+             show_interrupt_hint: true,
+             interrupt_binding: Some(key_hint::plain(KeyCode::Esc).into()),
+@@ -158,6 +160,10 @@ impl StatusIndicatorWidget {
+             .filter(|message| !message.is_empty());
+     }
+ 
++    pub(crate) fn set_output_tokens(&mut self, tokens: Option<i64>) {
++        self.output_tokens = tokens;
++    }
++
+     pub(crate) fn update_hook_status_message(&mut self, message: Option<String>) {
+         self.hook_status_message = message;
+     }
+@@ -232,6 +238,13 @@ impl StatusIndicator<'_> {
+             |started_at| now.saturating_duration_since(started_at),
+         );
+         let pretty_elapsed = fmt_elapsed_compact(elapsed_duration.as_secs());
++        let pretty_elapsed = match row.output_tokens {
++            Some(tokens) => format!(
++                "{pretty_elapsed} · ↓ {} tokens",
++                crate::status::format_tokens_compact(tokens),
++            ),
++            None => pretty_elapsed,
++        };
+         let progress =
+             MotionMode::from_animations_enabled(row.animations_enabled && row.effects.progress);
+         let shimmer =
+diff --git a/tui/src/token_usage.rs b/tui/src/token_usage.rs
+index ac9a20b..540c9b3 100644
+--- a/tui/src/token_usage.rs
++++ b/tui/src/token_usage.rs
+@@ -8,6 +8,33 @@ use serde::Serialize;
+ 
+ const BASELINE_TOKENS: i64 = 12000;
+ 
++/// Usage across all model calls in one turn, measured from session totals.
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub(crate) struct TurnTokenUsage {
++    pub(crate) input_tokens: i64,
++    pub(crate) output_tokens: i64,
++}
++
++impl TurnTokenUsage {
++    pub(crate) fn since(total: &TokenUsage, start: &TokenUsage) -> Self {
++        Self {
++            input_tokens: total.input_tokens.saturating_sub(start.input_tokens).max(0),
++            output_tokens: total
++                .output_tokens
++                .saturating_sub(start.output_tokens)
++                .max(0),
++        }
++    }
++
++    pub(crate) fn label(self) -> String {
++        format!(
++            "{} in · {} out",
++            crate::status::format_tokens_compact(self.input_tokens),
++            crate::status::format_tokens_compact(self.output_tokens),
++        )
++    }
++}
++
+ #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct TokenUsage {
+     pub input_tokens: i64,

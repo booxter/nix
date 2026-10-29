@@ -23,6 +23,15 @@ diff --git a/tui/src/chatwidget/status_surfaces.rs b/tui/src/chatwidget/status_s
 diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/tests/status_and_layout.rs
 --- a/tui/src/chatwidget/tests/status_and_layout.rs
 +++ b/tui/src/chatwidget/tests/status_and_layout.rs
+@@ -116,7 +116,7 @@
+     chat.refresh_status_line();
+     assert_eq!(
+         status_line_text(&chat),
+-        Some("Context 30% left · Context 70% used · 0 in · 0 out".to_string())
++        Some("Context 12.7K tokens, 30% left · Context 70% used · 0 in · 0 out".to_string())
+     );
+ }
+ 
 @@ -3082,6 +3082,37 @@
  }
  
