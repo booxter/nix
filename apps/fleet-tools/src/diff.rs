@@ -22,3 +22,6 @@ use workflow::run_with_backend;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod integration_tests;
