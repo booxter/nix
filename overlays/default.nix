@@ -109,6 +109,14 @@
         ];
       });
 
+      houndarr = prev.houndarr.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Upstream's test hard-codes a 2026-10-27 release date that is no
+          # longer in the future, so the movie stops being "not yet released".
+          ../patches/houndarr-relative-release-date-test.patch
+        ];
+      });
+
       # Expose Radarr's stable manual-import rejection reason beside its human
       # message so local API consumers do not have to match mutable text.
       radarr = prev.radarr.overrideAttrs (old: {

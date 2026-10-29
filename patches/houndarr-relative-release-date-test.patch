@@ -1,0 +1,23 @@
+diff --git a/tests/test_engine/test_search_loop.py b/tests/test_engine/test_search_loop.py
+index 766dc0e..76d3819 100644
+--- a/tests/test_engine/test_search_loop.py
++++ b/tests/test_engine/test_search_loop.py
+@@ -579,6 +579,9 @@ async def test_radarr_announced_unavailable_with_null_digital_release_is_skipped
+     seeded_instances: None,
+ ) -> None:
+     """Radarr movies flagged unavailable should not be searched."""
++    from datetime import UTC, datetime, timedelta
++
++    future_release = (datetime.now(UTC) + timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+     unreleased_movie = {
+         **_MOVIE_RECORD,
+         "id": 226,
+@@ -586,7 +589,7 @@ async def test_radarr_announced_unavailable_with_null_digital_release_is_skipped
+         "year": 2026,
+         "status": "announced",
+         "isAvailable": False,
+-        "releaseDate": "2026-10-27T00:00:00Z",
++        "releaseDate": future_release,
+         "inCinemas": "2026-07-29T00:00:00Z",
+         "physicalRelease": None,
+         "digitalRelease": None,
