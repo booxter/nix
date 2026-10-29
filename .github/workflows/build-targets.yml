@@ -183,114 +183,13 @@ jobs:
           stdout_file="$(mktemp)"
           stderr_file="$(mktemp)"
 
-          is_noop_diff() {
-            local file="$1"
-
-            if [ ! -s "${file}" ]; then
-              return 0
-            fi
-
-            awk '
-              NF {
-                line = $0
-                gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
-                lines[++n] = line
-              }
-              END {
-                i = 1
-
-                if (lines[i] ~ /^PATHS: /) {
-                  paths = lines[i]
-                  sub(/^PATHS: /, "", paths)
-
-                  if (paths !~ /^[0-9]+ -> [0-9]+ \(\+0, -0\)$/) {
-                    exit 1
-                  }
-
-                  old_paths = paths
-                  sub(/ -> .*/, "", old_paths)
-                  new_paths = paths
-                  sub(/^[0-9]+ -> /, "", new_paths)
-                  sub(/ \(\+0, -0\)$/, "", new_paths)
-                  if (old_paths != new_paths) {
-                    exit 1
-                  }
-
-                  i++
-                }
-
-                if (lines[i] !~ /^SIZE: / || lines[i + 1] != "DIFF: 0 bytes") {
-                  exit 1
-                }
-
-                size = lines[i]
-                i += 2
-
-                if (i <= n && lines[i] == "No generated config differences.") {
-                  i++
-                }
-                if (i <= n) {
-                  exit 1
-                }
-
-                sub(/^SIZE: /, "", size)
-                count = split(size, parts, / -> /)
-                if (count != 2 || parts[1] != parts[2]) {
-                  exit 1
-                }
-              }
-            ' "${file}"
-          }
-
-          has_package_or_version_rows() {
-            local file="$1"
-
-            awk '
-              /^\[[^]]+\][[:space:]]+[^[:space:]]/ {
-                line = $0
-                sub(/^\[[^]]+\][[:space:]]+/, "", line)
-
-                # dix 2.x emits size-only package rows such as:
-                # [C.] source         +85.8 KiB
-                # Keep those in the minor bucket; rows with versions,
-                # additions, removals, or upgrades still count as major.
-                if (line ~ /^[^[:space:]]+[[:space:]]+[+-]?[0-9]+([.][0-9]+)?[[:space:]]+([KMGTPEZY]iB|bytes?)$/) {
-                  next
-                }
-
-                found = 1
-              }
-              END {
-                exit found ? 0 : 1
-              }
-            ' "${file}"
-          }
-
-          has_generated_config_diff() {
-            local file="$1"
-
-            if grep -Fq 'No generated config differences.' "${file}"; then
-              return 1
-            fi
-
-            grep -Eq '^(diff -ruN |Only in |Files .* differ|Binary files .* differ|--- |\+\+\+ |@@ )' "${file}"
-          }
-
-          is_size_only_diff() {
-            local file="$1"
-
-            grep -Eq '^SIZE: .+ -> .+$' "${file}" \
-              && grep -Eq '^DIFF: .+$' "${file}" \
-              && ! has_package_or_version_rows "${file}" \
-              && ! has_generated_config_diff "${file}"
-          }
-
           set +e
           nix run .#diff -- --details "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
           status="$?"
           set -e
 
-          if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
+          classification="$(nix run .#diff-classify -- --exit-code "${status}" "${stdout_file}")"
+          if [ "${classification}" = unchanged ]; then
             printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
             printf 'Config diff for %s: no changes\n\n' "${MACHINE_NAME}"
             cat "${stdout_file}"
@@ -299,7 +198,7 @@ jobs:
 
           diff_file="${package_or_config_file}"
           details_tag="<details open>"
-          if [ "${status}" -eq 0 ] && is_size_only_diff "${stdout_file}"; then
+          if [ "${classification}" = minor ]; then
             diff_file="${size_only_file}"
             details_tag="<details>"
           fi
