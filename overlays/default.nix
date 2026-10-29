@@ -138,6 +138,24 @@
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
+          fastmcp = pythonPrev.fastmcp.overridePythonAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              # Shield proxy cleanup from AnyIO >= 4.14 cancellation.
+              # Drop once the packaged release includes upstream #4363.
+              (prev.fetchpatch {
+                url = "https://github.com/PrefectHQ/fastmcp/commit/ddcdf648131b51d605f133d13e5c942ea008ab28.patch";
+                relative = "fastmcp_slim";
+                extraPrefix = "src/";
+                hash = "sha256-A4dPqgneJRZ/TBbiZOzJTpmMFMQbS6HOaxgmtXkPJe0=";
+              })
+            ];
+            # The upstream fix uses an import absent from 3.2.3.
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace src/fastmcp/server/providers/proxy.py \
+                --replace-fail 'import mcp.types' $'import anyio\nimport mcp.types'
+            '';
+          });
+
           # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
           # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
           pystemd = pythonPrev.pystemd.overrideAttrs (old: {
