@@ -182,6 +182,8 @@ impl DiffBackend for NativeBackend {
         command
             .arg("--color")
             .arg(color)
+            // CI must see small size changes and changes in package counts.
+            .args(["diff", "--full"])
             .arg(old_link)
             .arg(new_link);
         let output = command

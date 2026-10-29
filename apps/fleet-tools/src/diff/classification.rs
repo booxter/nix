@@ -55,13 +55,10 @@ fn is_unchanged(output: &str) -> bool {
         first = lines.next();
     }
 
-    let Some((old, new)) = first
-        .and_then(|line| line.strip_prefix("SIZE: "))
-        .and_then(|size| size.split_once(" -> "))
-    else {
+    let Some((old, new, delta)) = first.and_then(parse_size_summary) else {
         return false;
     };
-    if old != new || lines.next() != Some("DIFF: 0 bytes") {
+    if old != new || delta != "0 bytes" {
         return false;
     }
 
@@ -73,20 +70,28 @@ fn is_unchanged(output: &str) -> bool {
 }
 
 fn is_size_only(output: &str) -> bool {
-    let has_size = output.lines().any(|line| {
-        line.strip_prefix("SIZE: ")
-            .and_then(|size| size.split_once(" -> "))
-            .is_some_and(|(old, new)| !old.is_empty() && !new.is_empty())
-    });
-    let has_delta = output.lines().any(|line| {
-        line.strip_prefix("DIFF: ")
-            .is_some_and(|delta| !delta.is_empty())
-    });
+    let has_size = output
+        .lines()
+        .any(|line| parse_size_summary(line).is_some());
 
-    has_size
-        && has_delta
-        && !output.lines().any(is_package_change)
-        && !has_generated_config_diff(output)
+    has_size && !output.lines().any(is_package_change) && !has_generated_config_diff(output)
+}
+
+fn parse_size_summary(line: &str) -> Option<(&str, &str, &str)> {
+    let (sizes, delta) = line
+        .strip_prefix("SIZE: ")?
+        .strip_suffix(')')?
+        .rsplit_once(" (")?;
+    let (old, new) = sizes.split_once(" -> ")?;
+    [old, new, delta]
+        .into_iter()
+        .all(is_size)
+        .then_some((old, new, delta))
+}
+
+fn is_size(value: &str) -> bool {
+    let fields: Vec<_> = value.split_whitespace().collect();
+    matches!(fields.as_slice(), [amount, unit] if is_decimal(amount) && is_size_unit(unit))
 }
 
 fn is_package_change(line: &str) -> bool {
@@ -140,39 +145,39 @@ mod tests {
     use super::{classify, Classification};
 
     #[test]
-    fn classifies_existing_diff_reports() {
+    fn classifies_diff_reports() {
         let cases = [
             ("", Classification::Unchanged),
             (
-                "PATHS: 2 -> 2 (+0, -0)\nSIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\nNo generated config differences.\n",
+                "PATHS: 2 -> 2 (+0, -0)\nSIZE: 1 MiB -> 1 MiB (0 bytes)\nNo generated config differences.\n",
                 Classification::Unchanged,
             ),
             (
-                "SIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\n",
+                "SIZE: 1 MiB -> 1 MiB (0 bytes)\n",
                 Classification::Unchanged,
             ),
             (
-                "[C.] example +2 MiB\nPATHS: 2 -> 2 (+1, -1)\nSIZE: 1 MiB -> 3 MiB\nDIFF: +2 MiB\n",
+                "[C.] example +2 MiB\nPATHS: 2 -> 2 (+1, -1)\nSIZE: 1 MiB -> 3 MiB (+2 MiB)\n",
                 Classification::Minor,
             ),
             (
-                "PATHS: 2 -> 2 (+1, -1)\nSIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\n",
+                "PATHS: 2 -> 2 (+1, -1)\nSIZE: 1 MiB -> 1 MiB (0 bytes)\n",
                 Classification::Minor,
             ),
             (
-                "[U.] example 1.0 -> 2.0\nSIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\n",
+                "[U.] example 1.0 -> 2.0\nSIZE: 1 MiB -> 1 MiB (0 bytes)\n",
                 Classification::Major,
             ),
             (
-                "[A.] example 1.0\nSIZE: 1 MiB -> 2 MiB\nDIFF: +1 MiB\n",
+                "[A.] example 1.0\nSIZE: 1 MiB -> 2 MiB (+1 MiB)\n",
                 Classification::Major,
             ),
             (
-                "[R.] example 1.0\nSIZE: 2 MiB -> 1 MiB\nDIFF: -1 MiB\n",
+                "[R.] example 1.0\nSIZE: 2 MiB -> 1 MiB (-1 MiB)\n",
                 Classification::Major,
             ),
             (
-                "SIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\n--- old/etc/config\n+++ new/etc/config\n@@ -1 +1 @@\n-before\n+after\n",
+                "SIZE: 1 MiB -> 1 MiB (0 bytes)\n--- old/etc/config\n+++ new/etc/config\n@@ -1 +1 @@\n-before\n+after\n",
                 Classification::Major,
             ),
         ];
@@ -183,7 +188,7 @@ mod tests {
 
     #[test]
     fn failed_comparisons_are_errors_even_with_empty_or_partial_output() {
-        for output in ["", "SIZE: 1 MiB -> 1 MiB\nDIFF: 0 bytes\n"] {
+        for output in ["", "SIZE: 1 MiB -> 1 MiB (0 bytes)\n"] {
             assert_eq!(classify(output, 1), Classification::Error);
         }
     }

@@ -91,6 +91,32 @@ fn packaged_dix_reports_size_only_changes_as_minor() {
 }
 
 #[test]
+fn packaged_dix_reports_small_size_changes() {
+    let old = Snapshot::new(1, vec![Package::new(2, "example-1.0", MIB)]);
+    // Below the default 1 MiB display cutoff, but above dix's 8 KiB report floor.
+    let new = Snapshot::new(3, vec![Package::new(4, "example-1.0", MIB + 64 * 1024)]);
+
+    let output = assert_classification(&old, &new, Classification::Minor);
+    assert!(
+        output.contains("example"),
+        "small package changes must be reported"
+    );
+}
+
+#[test]
+fn packaged_dix_reports_package_count_changes_as_major() {
+    let package = Package::new(2, "example-1.0", 128);
+    let old = Snapshot::new(1, vec![package.clone()]);
+    let new = Snapshot::new(3, vec![package, Package::new(4, "example-1.0", 128)]);
+
+    let output = assert_classification(&old, &new, Classification::Major);
+    assert!(
+        output.contains("example"),
+        "the additional package must be reported"
+    );
+}
+
+#[test]
 fn packaged_dix_reports_an_upgrade_as_major() {
     let old = Snapshot::new(1, vec![Package::new(2, "example-1.0", MIB)]);
     let new = Snapshot::new(3, vec![Package::new(4, "example-2.0", MIB)]);

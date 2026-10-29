@@ -124,10 +124,8 @@
         ];
       });
 
-      # CI renders two-revision config diffs by calling standalone dix, not
-      # nh's internal dix library. Stable dix 1.4.x omits the per-package size
-      # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
-      # on unstable until the stable branch catches up.
+      # The config diff helper uses dix 3's CLI and inline size summaries.
+      # Keep unstable until the stable branch provides that interface.
       inherit (pkgsNixpkgsUnstable) dix;
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
