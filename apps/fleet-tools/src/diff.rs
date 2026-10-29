@@ -1,4 +1,5 @@
 mod backend;
+mod classification;
 mod details;
 mod output;
 mod revision;
@@ -7,6 +8,7 @@ mod tree;
 mod workflow;
 
 use backend::{DiffBackend, HomebrewManifest, NativeBackend, RecursiveDiff};
+pub use classification::{classify, Classification};
 use details::run_detail_diff;
 #[cfg(test)]
 use details::{canonical_tap, find_recipe, materialize_homebrew_revision};
@@ -20,3 +22,6 @@ use workflow::run_with_backend;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod integration_tests;
