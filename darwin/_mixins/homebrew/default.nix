@@ -51,6 +51,14 @@ in
 
   nix-homebrew = {
     enable = true;
+    # nix-homebrew derives this metadata from its own lock, ignoring our override.
+    package = lib.mkForce (
+      inputs.nix-homebrew.inputs.brew-src
+      // {
+        name = "brew-7.0.11";
+        version = "7.0.11";
+      }
+    );
     mutableTaps = false;
     user = username;
     taps = {
