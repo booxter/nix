@@ -117,6 +117,17 @@
         ];
       });
 
+      mcp-nixos = prev.mcp-nixos.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # File contents may contain "Error" without the read failing.
+          # Drop once the packaged release includes upstream #154.
+          (prev.fetchpatch {
+            url = "https://github.com/utensils/mcp-nixos/commit/d7ebc7bfae70eaf20d54e87cf42764a1d57c35ef.patch";
+            hash = "sha256-55rQhE9CfTW1KQzUNM86U4S4Efu4yCN+1tZvdOz12oc=";
+          })
+        ];
+      });
+
       # Expose Radarr's stable manual-import rejection reason beside its human
       # message so local API consumers do not have to match mutable text.
       radarr = prev.radarr.overrideAttrs (old: {
