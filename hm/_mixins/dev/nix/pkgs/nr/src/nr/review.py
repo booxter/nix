@@ -90,21 +90,17 @@ def review_arguments(options: ReviewOptions) -> list[str]:
     # Keep explicit Nix options last so they can override fleet defaults.
     build_arguments.extend(supplied_build_arguments)
 
-    # Match nixpkgs-review 3.9's initial evaluation when it recreates the review shell.
-    nixpkgs_config = ["allowBroken = false;"]
-    if request.cuda:
-        nixpkgs_config.append("cudaSupport = true;")
-
     arguments = [
         "nixpkgs-review",
         "pr",
         *request.pull_requests,
-        f"--extra-nixpkgs-config={{ {' '.join(nixpkgs_config)} }}",
         *extra_arguments,
         "--no-shell",
     ]
     for pull_request in request.included_pull_requests:
         arguments.extend(("--include-pr", pull_request))
+    if request.cuda:
+        arguments.append("--extra-nixpkgs-config={ cudaSupport = true; }")
     if request.post_result:
         arguments.append("--post-result")
     if request.approve:
