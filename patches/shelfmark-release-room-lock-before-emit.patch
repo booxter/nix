@@ -1,0 +1,17 @@
+diff --git a/shelfmark/api/websocket.py b/shelfmark/api/websocket.py
+--- a/shelfmark/api/websocket.py
++++ b/shelfmark/api/websocket.py
+@@ -182,8 +182,11 @@ class WebSocketManager:
+             if user_id is not None:
+                 room = f"user_{user_id}"
+                 with self._rooms_lock:
+-                    if room in self._user_rooms:
+-                        socketio.emit("download_progress", data, to=room)
++                    has_clients = room in self._user_rooms
++                # emit() can synchronously disconnect an expired client; its
++                # cleanup takes _rooms_lock again when removing the client.
++                if has_clients:
++                    socketio.emit("download_progress", data, to=room)
+             logger.debug("Broadcasted progress for book %s: %s%%", book_id, progress)
+         except Exception:
+             logger.exception("Error broadcasting download progress")
