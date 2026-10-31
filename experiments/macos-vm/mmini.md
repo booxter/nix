@@ -165,3 +165,36 @@ appropriate for this experiment, not a durable cache.
 No experimental VM is running. The existing QEMU Linux builder remained running,
 and the host still had about 473 GiB free disk at the end. Nix installation and
 nix-darwin activation inside the guest remain subsequent milestones.
+
+## Integrated `.#vm` acceptance checks
+
+The [integrated runner](../../apps/macos-vm/README.md) was tested on the same
+host on 2026-10-31, using an isolated checkout and state directory. The normal
+managed checkout and the earlier proof-of-concept base remained separate.
+
+The public `nix run .#vm -- macos` command completed these checks:
+
+- Resumed the final 1 MiB of a deliberately shortened copy of the cached IPSW
+  from Apple, then verified the full SHA-256.
+- Restored and prepared a fresh base, shut it down, and booted a working clone.
+- Printed a working key-based SSH command for `vmadmin`; the guest reported
+  macOS 27.2, 4 CPUs, 4 GiB RAM and HTTP 200 from the Nix cache.
+- Preserved a guest-created marker across a normal restart.
+- Removed that marker with `--reset`, reusing the base without another restore.
+- Rejected a concurrent reset while another invocation held the instance lock.
+- Reached SSH readiness with `--gui`; the display itself was not inspected.
+- Shut down on Ctrl-C and stopped after the outer SSH terminal disconnected.
+
+Both the base and working VM were left stopped. Swap remained unused and the
+existing QEMU builder stayed running. To resume the retained working VM:
+
+```sh
+ssh mmini
+cd /private/tmp/macos-vm-app-c810
+XDG_STATE_HOME=/private/tmp/macos-vm-app-state-c810 nix run .#vm -- macos
+```
+
+Keep the environment override to reuse this experiment's cache and disk. The
+runner normally uses persistent user state under `~/.local/state/fleet-vm/macos`.
+The temporary checkout contains the implementation and terminal-disconnect fix;
+its use does not deploy either physical host's Darwin configuration.
