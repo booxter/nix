@@ -2,6 +2,7 @@
   callPackage,
   curl,
   lib,
+  nix,
   openssh,
   python3,
   pythonRuffCheckHook,
@@ -56,6 +57,7 @@ pythonPackages.buildPythonApplication {
       lib.makeBinPath (
         [
           curl
+          nix
           openssh
           sshpass
         ]

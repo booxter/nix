@@ -11,7 +11,31 @@ from pathlib import Path
 from typing import Protocol
 
 from atomic_file_writes import write_text_atomic
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class Configuration(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    system: Path
+    cores: int = Field(strict=True, gt=0)
+    memory_size: int = Field(strict=True, ge=1024)
+    graphics: bool = Field(default=False, strict=True)
+
+    @field_validator("name")
+    @classmethod
+    def target_name(cls, value: str) -> str:
+        if value == "macos":
+            raise ValueError("macos is reserved for the plain VM")
+        return value
+
+    @field_validator("system")
+    @classmethod
+    def store_path(cls, value: Path) -> Path:
+        if value.parent != Path("/nix/store") or value.name in ("", ".", ".."):
+            raise ValueError("system must be a direct child of /nix/store")
+        return value
 
 
 class Image(BaseModel):
@@ -73,10 +97,14 @@ class Guest:
 class State:
     root: Path
     checkout: Path
+    target: str = "macos"
 
     @property
     def instance(self) -> Guest:
-        identity = hashlib.sha256(os.fsencode(self.checkout.resolve())).hexdigest()[:24]
+        key = os.fsencode(self.checkout.resolve())
+        if self.target != "macos":
+            key += b"\0" + self.target.encode()
+        identity = hashlib.sha256(key).hexdigest()[:24]
         return Guest(f"worktree-{identity}", self.root / "instances" / identity)
 
     def base(self, image: Image) -> Guest:
@@ -98,7 +126,9 @@ class Hypervisor(Protocol):
 
     def clone(self, base: Guest, guest: Guest) -> None: ...
 
-    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int: ...
+    def run(
+        self, guest: Guest, *, gui: bool, nix: bool, configuration: Configuration | None = None
+    ) -> int: ...
 
 
 @contextmanager
@@ -164,7 +194,14 @@ def ensure_nix_base(state: State, backend: Hypervisor, image: Image, bootstrap: 
 
 
 def run_vm(
-    state: State, backend: Hypervisor, image: Image, bootstrap: Bootstrap, *, gui: bool, reset: bool
+    state: State,
+    backend: Hypervisor,
+    image: Image,
+    bootstrap: Bootstrap,
+    *,
+    gui: bool,
+    reset: bool,
+    configuration: Configuration | None = None,
 ) -> int:
     guest = state.instance
     with lock(state.root / "locks" / f"{guest.name}.lock"):
@@ -178,10 +215,10 @@ def run_vm(
         if ready.exists():
             instance = Instance.model_validate_json(ready.read_text())
             if not backend.exists(guest):
-                raise RuntimeError("working VM disk is missing; use --reset macos to recreate it")
+                raise RuntimeError("working VM disk is missing; use --reset to recreate it")
         else:
             if backend.exists(guest) or guest.directory.exists():
-                raise RuntimeError("working VM preparation is incomplete; use --reset macos")
+                raise RuntimeError("working VM preparation is incomplete; use --reset")
             nix_base = state.nix_base(image, bootstrap)
             with lock(state.root / "locks" / f"{nix_base.name}.lock"):
                 base = ensure_nix_base(state, backend, image, bootstrap)
@@ -190,4 +227,6 @@ def run_vm(
                 write_text_atomic(ready, instance.model_dump_json())
 
         # Base updates affect new/reset VMs, never an existing disk.
-        return backend.run(guest, gui=gui, nix=instance.nix)
+        if configuration is not None and not instance.nix:
+            raise RuntimeError("configured VMs require Nix; use --reset to recreate the VM")
+        return backend.run(guest, gui=gui, nix=instance.nix, configuration=configuration)

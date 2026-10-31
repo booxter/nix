@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from fleet_macos_vm.state import (
     Bootstrap,
+    Configuration,
     Guest,
     Image,
     Instance,
@@ -54,7 +55,9 @@ class FakeHypervisor:
         if self.fail_clone:
             raise RuntimeError("clone interrupted")
 
-    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int:
+    def run(
+        self, guest: Guest, *, gui: bool, nix: bool, configuration: Configuration | None = None
+    ) -> int:
         assert (guest.credentials / "key").read_text() == "dedicated VM key"
         assert nix == ("nix" in self.disks[guest.name])
         return 0
@@ -67,8 +70,51 @@ def launch(
     reset: bool = False,
     image: Image = IMAGE,
     bootstrap: Bootstrap = BOOTSTRAP,
+    configuration: Configuration | None = None,
 ) -> int:
-    return run_vm(state, backend, image, bootstrap, gui=False, reset=reset)
+    return run_vm(
+        state, backend, image, bootstrap, gui=False, reset=reset, configuration=configuration
+    )
+
+
+def test_targets_share_base_and_keep_disks_when_configuration_changes(tmp_path: Path) -> None:
+    first = State(tmp_path / "state", tmp_path / "checkout", "one")
+    second = State(first.root, first.checkout, "two")
+    backend = FakeHypervisor()
+    configuration = Configuration(
+        name="one", system=Path("/nix/store/system"), cores=2, memory_size=2048
+    )
+    launch(first, backend, configuration=configuration)
+    backend.disks[first.instance.name]["user-file"] = "keep"
+    launch(first, backend, configuration=configuration.model_copy(update={"cores": 4}))
+    launch(second, backend, configuration=configuration.model_copy(update={"name": "two"}))
+    assert backend.disks[first.instance.name]["user-file"] == "keep"
+    assert "user-file" not in backend.disks[second.instance.name]
+    assert backend.preparations == backend.nix_preparations == 1
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"name": "../bad"},
+        {"name": "macos"},
+        {"system": "/tmp/system"},
+        {"system": "/nix/store/a/b"},
+        {"cores": 0},
+        {"memory_size": 1023},
+        {"extra": True},
+    ],
+)
+def test_invalid_configuration_is_rejected(change: dict[str, object]) -> None:
+    values: dict[str, object] = {
+        "name": "test",
+        "system": "/nix/store/system",
+        "cores": 2,
+        "memory_size": 2048,
+    }
+    values.update(change)
+    with pytest.raises(ValueError):
+        Configuration.model_validate(values)
 
 
 def test_resume_preserves_work_and_reset_reuses_the_base(tmp_path: Path) -> None:

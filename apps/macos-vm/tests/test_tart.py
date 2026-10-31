@@ -9,7 +9,7 @@ from threading import Event
 
 import pytest
 from fleet_macos_vm.process import Cancelled, Result
-from fleet_macos_vm.state import Bootstrap, Guest, Image
+from fleet_macos_vm.state import Bootstrap, Configuration, Guest, Image
 from fleet_macos_vm.tart import Tart, check_host, configure_ssh, progress, verified_restore
 
 RESTORE = b"test restore contents"
@@ -71,6 +71,11 @@ class GuestCommands:
         self.fail_build_on_boot: int | None = None
         self.nix_startup_probes = 0
         self.nix_probes = 0
+        self.profile = ""
+        self.current_system = ""
+        self.system_copies = 0
+        self.cache_cleanups = 0
+        self.fail_activation = False
 
     def check_cancelled(self) -> None:
         if self.cancelled.is_set():
@@ -107,6 +112,8 @@ class GuestCommands:
         elif program == "scp":
             if self.fail_copy:
                 return Result(1, "", "transfer failed")
+        elif program == "nix":
+            self.system_copies += 1
         elif program in ("ssh", "sshpass"):
             return self._ssh(arguments[-1], input_data)
         elif program == "tart":
@@ -115,7 +122,27 @@ class GuestCommands:
             raise AssertionError(f"unsupported fake executable {program}")
         return Result(0, "", "")
 
+    def _activation_command(self, command: str) -> Result | None:
+        if command == "readlink -f /nix/var/nix/profiles/system":
+            return Result(0, self.profile, "")
+        if command == "readlink -f /run/current-system":
+            return Result(0, self.current_system, "")
+        if command == "rm -rf /private/tmp/fleet-vm-cache":
+            self.cache_cleanups += 1
+        elif " build --no-link --profile " in command:
+            self.profile = command.split()[-1]
+        elif "darwin-rebuild activate" in command:
+            if self.fail_activation:
+                return Result(1, "", "activation failed")
+            self.current_system = self.profile
+        else:
+            return None
+        return Result(0, "", "")
+
     def _ssh(self, command: str, input_data: bytes | None) -> Result:
+        activation = self._activation_command(command)
+        if activation is not None:
+            return activation
         if "authorized_keys" in command:
             self.installed_key = input_data or b""
         elif "shutdown" in command:
@@ -130,14 +157,14 @@ class GuestCommands:
             self.sudo_password = input_data or b""
         elif "fleet-nix-check/nonce" in command:
             self.build_nonce = input_data or b""
-        elif command.startswith("nix store info "):
+        elif command.startswith("nix --option min-free 0 store info "):
             self.nix_probes += 1
             if not self.nix_installed or self.nix_probes <= self.nix_startup_probes:
                 return Result(127, "", "nix is not mounted yet")
             self.nix_ready = True
             if self.interrupt_when_ready:
                 self.cancelled.set()
-        elif command.startswith("nix build "):
+        elif command.startswith("nix --option min-free 0 build "):
             if not self.nix_ready or self.fail_build_on_boot == len(self.children):
                 return Result(1, "", "Nix unavailable")
             if self.build_nonce not in self.nix_builds:
@@ -171,6 +198,36 @@ def new_guest(root: Path) -> Guest:
     guest.credentials.mkdir(parents=True)
     (guest.credentials / "password").write_text("temporary-password\n")
     return guest
+
+
+def test_activation_skips_matching_system_and_retries_failures(tmp_path: Path) -> None:
+    commands = GuestCommands(tmp_path)
+    commands.nix_installed = commands.nix_ready = True
+    guest = new_guest(tmp_path)
+    backend = Tart(tmp_path, commands)
+    config = Configuration(name="test", system=Path("/nix/store/system"), cores=2, memory_size=2048)
+    commands.fail_activation = True
+    with pytest.raises(RuntimeError, match="activation failed"):
+        backend._activate(guest, config)
+    assert commands.cache_cleanups == 2
+    commands.fail_activation = False
+    backend._activate(guest, config)
+    assert commands.current_system == str(config.system)
+    assert commands.system_copies == 2
+    backend._activate(guest, config)
+    assert commands.system_copies == 2
+    commands.current_system = "/nix/store/other"
+    backend._activate(guest, config)
+    assert commands.system_copies == 3
+
+
+def test_failed_system_transfer_cleans_guest_cache(tmp_path: Path) -> None:
+    commands = GuestCommands(tmp_path)
+    commands.fail_copy = True
+    config = Configuration(name="test", system=Path("/nix/store/system"), cores=2, memory_size=2048)
+    with pytest.raises(RuntimeError, match="transfer failed"):
+        Tart(tmp_path, commands)._activate(new_guest(tmp_path), config)
+    assert commands.cache_cleanups == 2
 
 
 @pytest.mark.parametrize("ssh_status", [0, 255])

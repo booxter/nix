@@ -6,6 +6,7 @@ import secrets
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -13,7 +14,7 @@ from typing import TextIO
 
 from atomic_file_writes import write_text_atomic
 from fleet_macos_vm.process import Child, CommandRunner, Result
-from fleet_macos_vm.state import Bootstrap, Guest, Image
+from fleet_macos_vm.state import Bootstrap, Configuration, Guest, Image
 from pydantic import BaseModel, Field, TypeAdapter
 
 BOOT_TIMEOUT = 300
@@ -21,6 +22,8 @@ SHUTDOWN_TIMEOUT = 45
 USERNAME = "vmadmin"
 INSTALL_KEY = 'umask 077; mkdir -p "$HOME/.ssh"; cat > "$HOME/.ssh/authorized_keys"'
 SHUTDOWN = "sudo -S -p '' /sbin/shutdown -h now"
+GUEST_CACHE = "/private/tmp/fleet-vm-cache"
+GUEST_NIX = "/nix/var/nix/profiles/default/bin/nix"
 NIX_CHECK_FLAKE = b"""{
   outputs = { self }: {
     packages.aarch64-darwin.default = derivation {
@@ -248,17 +251,135 @@ class Tart:
         ).require_success("preparing the Nix verification build")
         self._ssh(
             guest,
-            "nix build --store daemon --no-link --no-write-lock-file"
+            "nix --option min-free 0 build --store daemon --no-link --no-write-lock-file"
             " path:/private/tmp/fleet-nix-check",
             timeout=120,
         ).require_success("verifying Nix flakes and a daemon build over SSH")
 
-    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int:
-        child = self.commands.start(self._boot_arguments(guest, gui=gui))
+    def _set_resources(self, guest: Guest, configuration: Configuration) -> None:
+        self.commands.run(
+            [
+                "tart",
+                "set",
+                guest.name,
+                "--cpu",
+                str(configuration.cores),
+                "--memory",
+                str(configuration.memory_size),
+            ]
+        ).require_success("setting VM resources")
+
+    def _system_matches(self, guest: Guest, system: Path) -> bool:
+        for path in ("/nix/var/nix/profiles/system", "/run/current-system"):
+            result = self._ssh(guest, shlex.join(["readlink", "-f", path]))
+            if result.code != 0 or result.stdout.strip() != str(system):
+                return False
+        return True
+
+    def _sudo(self, guest: Guest, arguments: list[str], operation: str) -> None:
+        self._ssh(
+            guest,
+            shlex.join(["sudo", "-S", "-p", "", *arguments]),
+            input_data=(guest.credentials / "password").read_bytes(),
+            timeout=1800,
+            capture=False,
+        ).require_success(operation)
+
+    def _activate(self, guest: Guest, configuration: Configuration) -> None:
+        system = configuration.system
+        if self._system_matches(guest, system):
+            return
+        progress(f"Applying {configuration.name}…")
+        try:
+            self._ssh(guest, shlex.join(["rm", "-rf", GUEST_CACHE])).require_success(
+                "removing the old guest cache"
+            )
+            with tempfile.TemporaryDirectory(prefix="fleet-vm-cache-") as temporary:
+                cache = Path(temporary) / "cache"
+                cache.mkdir()
+                self.commands.run(
+                    [
+                        "nix",
+                        "--option",
+                        "min-free",
+                        "0",
+                        "copy",
+                        "--to",
+                        cache.as_uri(),
+                        str(system),
+                    ],
+                    timeout=1800,
+                    capture=False,
+                ).require_success("copying the system closure to a temporary cache")
+                self.commands.run(
+                    [
+                        "scp",
+                        "-r",
+                        "-F",
+                        str(guest.ssh_config),
+                        str(cache),
+                        f"macos-vm:{GUEST_CACHE}",
+                    ],
+                    timeout=1800,
+                    capture=False,
+                ).require_success("copying the system cache into the guest")
+                self._sudo(
+                    guest,
+                    [
+                        GUEST_NIX,
+                        "--option",
+                        "min-free",
+                        "0",
+                        "copy",
+                        "--from",
+                        f"file://{GUEST_CACHE}",
+                        "--no-check-sigs",
+                        str(system),
+                    ],
+                    "importing the system closure",
+                )
+            self._sudo(
+                guest,
+                [
+                    GUEST_NIX,
+                    "--option",
+                    "min-free",
+                    "0",
+                    "build",
+                    "--no-link",
+                    "--profile",
+                    "/nix/var/nix/profiles/system",
+                    str(system),
+                ],
+                "updating the system profile",
+            )
+            self._sudo(
+                guest, [str(system / "sw/bin/darwin-rebuild"), "activate"], "activating the system"
+            )
+            if not self._system_matches(guest, system):
+                raise RuntimeError("activated system does not match the requested configuration")
+            self._ssh(guest, "nix --option min-free 0 store info --store daemon").require_success(
+                "verifying Nix after activation"
+            )
+        finally:
+            self._ssh(
+                guest, shlex.join(["rm", "-rf", GUEST_CACHE]), cancellable=False
+            ).require_success("removing the guest cache")
+
+    def run(
+        self, guest: Guest, *, gui: bool, nix: bool, configuration: Configuration | None = None
+    ) -> int:
+        if configuration is not None:
+            self._set_resources(guest, configuration)
+        child = self.commands.start(
+            self._boot_arguments(guest, gui=gui or bool(configuration and configuration.graphics))
+        )
         try:
             self._wait_for_guest(guest, child, nix=nix)
+            if configuration is not None:
+                self._activate(guest, configuration)
             progress(f"Ready: ssh -F {shlex.quote(str(guest.ssh_config))} macos-vm")
-            progress("Ctrl-C shuts down the VM; its disk is retained. --reset macos starts fresh.")
+            progress("Ctrl-C shuts down the VM; its disk is retained. --reset starts fresh.")
             while child.poll() is None:
                 if self.commands.cancelled.wait(0.2):
                     progress("Shutting down macOS…")
@@ -338,7 +459,7 @@ class Tart:
         service = "Nix" if nix else "SSH"
         # SSH can start before launchd mounts /nix. Each attempt opens a new
         # shell so it can pick up the Nix profile once that mount is ready.
-        command = "nix store info --store daemon" if nix else "true"
+        command = "nix --option min-free 0 store info --store daemon" if nix else "true"
         deadline = time.monotonic() + self.boot_timeout
         last_error = "no DHCP address yet"
         while time.monotonic() < deadline:
