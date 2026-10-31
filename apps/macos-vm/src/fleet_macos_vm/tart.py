@@ -175,7 +175,7 @@ class Tart:
             ]
         )
         try:
-            self._wait_for_ssh(guest, child, password=True)
+            self._wait_for_guest(guest, child, password=True)
             self._ssh(
                 guest,
                 INSTALL_KEY,
@@ -198,9 +198,10 @@ class Tart:
 
             child = self.commands.start(self._boot_arguments(guest, gui=False))
             try:
-                self._wait_for_ssh(guest, child)
+                self._wait_for_guest(guest, child)
                 if first_boot:
                     self._install_nix(guest, bootstrap)
+                self._wait_for_guest(guest, child, nix=True)
                 self._verify_nix(guest)
                 self._shutdown(guest, child)
             finally:
@@ -252,10 +253,10 @@ class Tart:
             timeout=120,
         ).require_success("verifying Nix flakes and a daemon build over SSH")
 
-    def run(self, guest: Guest, *, gui: bool) -> int:
+    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int:
         child = self.commands.start(self._boot_arguments(guest, gui=gui))
         try:
-            self._wait_for_ssh(guest, child)
+            self._wait_for_guest(guest, child, nix=nix)
             progress(f"Ready: ssh -F {shlex.quote(str(guest.ssh_config))} macos-vm")
             progress("Ctrl-C shuts down the VM; its disk is retained. --reset macos starts fresh.")
             while child.poll() is None:
@@ -326,31 +327,40 @@ class Tart:
             capture=capture,
         )
 
-    def _wait_for_ssh(
+    def _wait_for_guest(
         self,
         guest: Guest,
         child: Child,
         *,
         password: bool = False,
+        nix: bool = False,
     ) -> None:
+        service = "Nix" if nix else "SSH"
+        # SSH can start before launchd mounts /nix. Each attempt opens a new
+        # shell so it can pick up the Nix profile once that mount is ready.
+        command = "nix store info --store daemon" if nix else "true"
         deadline = time.monotonic() + self.boot_timeout
         last_error = "no DHCP address yet"
         while time.monotonic() < deadline:
             self.commands.check_cancelled()
             if child.poll() is not None:
-                raise RuntimeError(f"Tart exited before SSH was ready (status {child.returncode})")
+                raise RuntimeError(
+                    f"Tart exited before {service} was ready (status {child.returncode})"
+                )
             address = self.commands.run(["tart", "ip", guest.name], timeout=10)
             if address.code == 0 and address.stdout.strip():
                 configure_ssh(guest, address.stdout.strip())
                 try:
-                    result = self._ssh(guest, "true", password=password)
+                    result = self._ssh(guest, command, password=password)
                     if result.code == 0:
                         return
                     last_error = result.stderr.strip()
                 except TimeoutError as error:
                     last_error = str(error)
             self.commands.cancelled.wait(1)
-        raise TimeoutError(f"SSH was not ready after {self.boot_timeout:g} seconds: {last_error}")
+        raise TimeoutError(
+            f"{service} was not ready after {self.boot_timeout:g} seconds: {last_error}"
+        )
 
     def _shutdown(self, guest: Guest, child: Child) -> None:
         result = self._ssh(

@@ -20,7 +20,7 @@ nix run .#vm -- gw
 nix run .#vm -- org
 nix run .#vm -- beast
 
-# Plain macOS VM (run on an Apple silicon Mac with macOS 27+)
+# macOS VM with Nix (run on an Apple silicon Mac with macOS 27+)
 nix run .#vm -- macos
 nix run .#vm -- --gui macos
 nix run .#vm -- --reset macos

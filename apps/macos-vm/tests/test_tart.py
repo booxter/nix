@@ -62,12 +62,15 @@ class GuestCommands:
         self.machine_name = "test"
         self.children: list[FakeChild] = []
         self.nix_installed = False
+        self.nix_ready = False
         self.nix_installs = 0
         self.nix_builds: list[bytes] = []
         self.build_nonce = b""
         self.fail_install = False
         self.fail_copy = False
         self.fail_build_on_boot: int | None = None
+        self.nix_startup_probes = 0
+        self.nix_probes = 0
 
     def check_cancelled(self) -> None:
         if self.cancelled.is_set():
@@ -76,6 +79,8 @@ class GuestCommands:
     def start(self, arguments: Sequence[str]) -> FakeChild:
         self.child = FakeChild()
         self.children.append(self.child)
+        self.nix_probes = 0
+        self.nix_ready = False
         if self.fail_boot:
             self.child.returncode = 1
         return self.child
@@ -125,8 +130,15 @@ class GuestCommands:
             self.sudo_password = input_data or b""
         elif "fleet-nix-check/nonce" in command:
             self.build_nonce = input_data or b""
+        elif command.startswith("nix store info "):
+            self.nix_probes += 1
+            if not self.nix_installed or self.nix_probes <= self.nix_startup_probes:
+                return Result(127, "", "nix is not mounted yet")
+            self.nix_ready = True
+            if self.interrupt_when_ready:
+                self.cancelled.set()
         elif command.startswith("nix build "):
-            if not self.nix_installed or self.fail_build_on_boot == len(self.children):
+            if not self.nix_ready or self.fail_build_on_boot == len(self.children):
                 return Result(1, "", "Nix unavailable")
             if self.build_nonce not in self.nix_builds:
                 self.nix_builds.append(self.build_nonce)
@@ -178,6 +190,7 @@ def test_prepare_proves_key_login_and_shutdown(tmp_path: Path, ssh_status: int) 
 
 def test_nix_preparation_proves_a_fresh_build_after_restart(tmp_path: Path) -> None:
     commands = GuestCommands(tmp_path)
+    commands.nix_startup_probes = 1
     bootstrap = Bootstrap(installer=tmp_path / "installer", version="2.35.3", recipe=1)
     Tart(tmp_path, commands).prepare_nix(new_guest(tmp_path), bootstrap)
 
@@ -221,10 +234,20 @@ def test_interrupt_after_readiness_requests_guest_shutdown(tmp_path: Path, ssh_s
     commands = GuestCommands(tmp_path)
     commands.shutdown_result = Result(ssh_status, "", "")
     commands.interrupt_when_ready = True
-    assert Tart(tmp_path, commands).run(new_guest(tmp_path), gui=True) == 130
+    assert Tart(tmp_path, commands).run(new_guest(tmp_path), gui=True, nix=False) == 130
     assert commands.sudo_password == b"temporary-password\n"
     assert commands.child.returncode == 0
     assert not commands.child.killed
+    assert not commands.forced_stop
+
+
+def test_working_vm_waits_for_nix_before_reporting_ready(tmp_path: Path) -> None:
+    commands = GuestCommands(tmp_path)
+    commands.nix_installed = True
+    commands.nix_startup_probes = 1
+    commands.interrupt_when_ready = True
+    assert Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False, nix=True) == 130
+    assert commands.nix_ready
     assert not commands.forced_stop
 
 
@@ -247,7 +270,7 @@ def test_shutdown_failure_is_reported_and_guest_is_stopped(
     commands.shutdown_result = ssh_result
     commands.shutdown_status = guest_status
     with pytest.raises((RuntimeError, TimeoutError), match=error):
-        Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False)
+        Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False, nix=False)
     assert commands.child.returncode is not None
     assert commands.forced_stop == (guest_status is None)
 
@@ -256,13 +279,15 @@ def test_boot_failure_does_not_report_ready(tmp_path: Path) -> None:
     commands = GuestCommands(tmp_path)
     commands.fail_boot = True
     with pytest.raises(RuntimeError, match="exited before SSH"):
-        Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False)
+        Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False, nix=False)
 
 
-def test_readiness_deadline_stops_unfinished_guest(tmp_path: Path) -> None:
+@pytest.mark.parametrize("nix", [False, True])
+def test_readiness_deadline_stops_unfinished_guest(tmp_path: Path, nix: bool) -> None:
     commands = GuestCommands(tmp_path)
-    with pytest.raises(TimeoutError, match="SSH was not ready"):
-        Tart(tmp_path, commands, boot_timeout=0).run(new_guest(tmp_path), gui=False)
+    service = "Nix" if nix else "SSH"
+    with pytest.raises(TimeoutError, match=f"{service} was not ready"):
+        Tart(tmp_path, commands, boot_timeout=0).run(new_guest(tmp_path), gui=False, nix=nix)
     assert commands.child.returncode == 0
 
 

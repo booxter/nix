@@ -51,6 +51,8 @@ class Instance(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     base: str
+    # Existing macOS-only disks must still reach SSH without waiting for Nix.
+    nix: bool = False
 
 
 @dataclass(frozen=True)
@@ -96,7 +98,7 @@ class Hypervisor(Protocol):
 
     def clone(self, base: Guest, guest: Guest) -> None: ...
 
-    def run(self, guest: Guest, *, gui: bool) -> int: ...
+    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int: ...
 
 
 @contextmanager
@@ -174,7 +176,7 @@ def run_vm(
 
         ready = guest.directory / "ready.json"
         if ready.exists():
-            Instance.model_validate_json(ready.read_text())
+            instance = Instance.model_validate_json(ready.read_text())
             if not backend.exists(guest):
                 raise RuntimeError("working VM disk is missing; use --reset macos to recreate it")
         else:
@@ -184,7 +186,8 @@ def run_vm(
             with lock(state.root / "locks" / f"{nix_base.name}.lock"):
                 base = ensure_nix_base(state, backend, image, bootstrap)
                 clone_guest(backend, base, guest)
-                write_text_atomic(ready, Instance(base=base.name).model_dump_json())
+                instance = Instance(base=base.name, nix=True)
+                write_text_atomic(ready, instance.model_dump_json())
 
-        # An image pin change affects new/reset VMs, never an existing disk.
-        return backend.run(guest, gui=gui)
+        # Base updates affect new/reset VMs, never an existing disk.
+        return backend.run(guest, gui=gui, nix=instance.nix)

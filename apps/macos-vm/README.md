@@ -9,15 +9,24 @@ nix run .#vm -- --gui macos
 
 The command runs locally. For example, use a checkout on `mmini` through normal
 SSH. The `macos` target creates a plain macOS guest with 4 CPUs, 4 GiB RAM and a
-50 GB disk. It does not yet install Nix or apply a Darwin host configuration.
+50 GB disk, multi-user Nix, and flakes enabled. It does not yet apply a Darwin
+host configuration.
 Existing NixOS host targets keep their previous behavior.
 
 On first use, the runner downloads and verifies the pinned Apple restore image,
 installs macOS, creates `vmadmin` through native provisioning, installs a
-dedicated SSH public key, and shuts down the prepared base. It then clones that
-base for the current checkout. Later runs resume that checkout's working disk.
+dedicated SSH public key, and shuts down the macOS base. It clones that base to
+install Nix, then verifies a fresh daemon build over SSH before and after a
+cold restart. Only after those checks and a clean shutdown does it cache the
+Nix base. A final clone becomes the current checkout's working VM. Later runs
+resume that checkout's working disk.
 
-The terminal prints an SSH command after authenticated access succeeds:
+The macOS and Nix bases are cached separately. Updating or retrying Nix
+preparation reuses the macOS base without another restore. Both bases are
+shared between checkouts; working disks remain separate.
+
+The terminal prints an SSH command after authenticated access and the Nix
+daemon are ready:
 
 ```text
 Ready: ssh -F /path/to/instance/ssh_config macos-vm
@@ -43,18 +52,23 @@ To discard that checkout's guest changes and clone a fresh base:
 nix run .#vm -- --reset macos
 ```
 
-Reset keeps the cached restore image and prepared base. It refuses to reset an
-active VM. An interrupted instance preparation requires an explicit reset;
+Reset keeps the cached restore image and both prepared bases. It refuses to
+reset an active VM. An interrupted instance preparation requires an explicit reset;
 interrupted base preparation is retried automatically.
+
+VMs created before Nix preparation was added continue to boot their existing
+disks. To get Nix from the new base, use `--reset macos`; this discards that
+working VM's files and changes.
 
 ## Storage and prerequisites
 
 State lives under `${XDG_STATE_HOME:-$HOME/.local/state}/fleet-vm/macos`:
 
 - `images/`: verified IPSWs and resumable partial downloads.
-- `bases/`: prepared-base metadata and private bootstrap credentials.
+- `bases/`: macOS-base metadata and private bootstrap credentials.
+- `nix-bases/`: metadata and credentials for bases with verified Nix installations.
 - `instances/`: credentials and SSH configuration for each checkout/worktree.
-- `tart/`: stopped bases and working VM disks.
+- `tart/`: macOS bases, Nix bases, and working VM disks.
 - `locks/`: exclusive base-preparation and instance-session locks.
 
 Bases are shared between worktrees. Working disks are separate, keyed by the
@@ -62,9 +76,10 @@ canonical checkout path. Use `XDG_STATE_HOME` to choose a different state root;
 keep it on APFS for fast copy-on-write cloning. Temporary directories are useful
 for tests but do not provide durable VM storage.
 
-The first restore image is about 25.6 GB; the prepared base occupies about
-27 GB. Working clones initially share disk blocks, then grow as you change
-them. Leave room for both the base and guest writes. The runner disables Tart's
+The first restore image is about 25.6 GB; the macOS base occupies about
+27 GB. Nix bases and working clones initially share disk blocks, then grow as
+they change. Leave room for the base, Nix installation, and guest writes.
+The runner disables Tart's
 automatic cache pruning within its dedicated state directory.
 
 Virtualization.framework needs the host's login keychain unlocked. If startup
@@ -87,6 +102,14 @@ SSH. Increment `recipe` when changing bootstrap behavior. Both the image digest
 and recipe version identify a base. An existing working VM keeps its current OS
 until explicitly reset; a pin update never replaces its disk automatically.
 
+[installer.nix](installer.nix) pins the standalone
+[NixOS installer](https://github.com/NixOS/nix-installer), including its embedded
+Nix release. It is tracked by the repository's `update-packages` machinery.
+The bootstrap recipe in [default.nix](default.nix) covers installation and
+verification behavior. Changing either creates a new Nix base from the same
+macOS base, leaving existing working disks intact. Failed Nix preparation is
+discarded and retried from that macOS base on the next invocation.
+
 Tart comes from the flake's locked unstable nixpkgs input. The bootstrap password
 is passed through Tart's provisioning option during initial setup and is
 therefore briefly visible in that process's arguments. Credentials stay outside
@@ -94,6 +117,7 @@ the Nix store and repository.
 
 The Rust `vm` entry point selects the NixOS runner or this Python backend. The
 backend's package checks exercise persistence, reset, worktree isolation,
-preparation failures, locking, SSH configuration, cancellation and shutdown.
+preparation failures, Nix cache reuse, restart verification, locking, SSH
+configuration, cancellation and shutdown.
 Nix builds run strict mypy, Ruff and pytest with an 85% coverage floor on both
 Darwin and Linux; running a macOS guest requires the supported Darwin host.

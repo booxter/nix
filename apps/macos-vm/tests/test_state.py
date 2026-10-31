@@ -54,8 +54,9 @@ class FakeHypervisor:
         if self.fail_clone:
             raise RuntimeError("clone interrupted")
 
-    def run(self, guest: Guest, *, gui: bool) -> int:
+    def run(self, guest: Guest, *, gui: bool, nix: bool) -> int:
         assert (guest.credentials / "key").read_text() == "dedicated VM key"
+        assert nix == ("nix" in self.disks[guest.name])
         return 0
 
 
