@@ -77,6 +77,10 @@ not require enabling Screen Sharing or disabling Gatekeeper. The upstream
 uses the same provisioning API but includes additional UI customization that
 this narrower workflow does not need.
 
+The [follow-up on `mmini`](mmini.md) uses its existing macOS 27.2 installation.
+The initial restore attempt hit the host keychain requirement before guest
+installation; the verified Apple IPSW is cached for a retry.
+
 ## Reproduce the Tart experiment
 
 Run from this checkout. Tools come from its locked nixpkgs input and are not
@@ -241,8 +245,8 @@ beyond a personal local tool.
 
 ## Remaining checks
 
-- Verify the native macOS 27 IPSW-to-SSH path after a host upgrade; running a
-  prepared image does not prove image construction.
+- Verify the native macOS 27 IPSW-to-SSH path on `mmini`; running a prepared
+  image does not prove image construction.
 - Test Nix installation and activation inside a disposable guest.
 - Exercise operation after host logout/reboot. Tart documents an
   [unlocked login keychain requirement](https://tart.run/faq/#headless-machines)
