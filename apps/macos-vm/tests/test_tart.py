@@ -1,5 +1,7 @@
 import hashlib
+import io
 import json
+import os
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
@@ -8,7 +10,7 @@ from threading import Event
 import pytest
 from fleet_macos_vm.process import Cancelled, Result
 from fleet_macos_vm.state import Guest, Image
-from fleet_macos_vm.tart import Tart, check_host, configure_ssh, verified_restore
+from fleet_macos_vm.tart import Tart, check_host, configure_ssh, progress, verified_restore
 
 RESTORE = b"test restore contents"
 IMAGE = Image(
@@ -242,3 +244,10 @@ def test_invalid_ssh_address_and_path_are_rejected(tmp_path: Path) -> None:
         configure_ssh(new_guest(tmp_path), "address\nProxyCommand bad")
     with pytest.raises(ValueError, match="line breaks"):
         configure_ssh(new_guest(tmp_path / "line\nbreak"), "192.168.64.2")
+
+
+def test_progress_survives_a_disconnected_terminal() -> None:
+    reader, writer = os.pipe()
+    os.close(reader)
+    with io.TextIOWrapper(os.fdopen(writer, "wb", buffering=0), write_through=True) as stream:
+        progress("Shutting down macOS…", stream=stream)

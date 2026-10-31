@@ -5,8 +5,11 @@ import ipaddress
 import secrets
 import shlex
 import subprocess
+import sys
 import time
+from contextlib import suppress
 from pathlib import Path
+from typing import TextIO
 
 from atomic_file_writes import write_text_atomic
 from fleet_macos_vm.process import Child, CommandRunner, Result
@@ -23,6 +26,12 @@ SHUTDOWN = "sudo -S -p '' /sbin/shutdown -h now"
 class VmInfo(BaseModel):
     name: str = Field(alias="Name")
     state: str = Field(alias="State")
+
+
+def progress(message: str, *, stream: TextIO | None = None) -> None:
+    # Losing an SSH terminal must not prevent shutdown or failure cleanup.
+    with suppress(OSError):
+        print(message, file=stream if stream is not None else sys.stdout, flush=True)
 
 
 def check_host(system: str, machine: str, version: str) -> None:
@@ -68,7 +77,7 @@ def verified_restore(commands: CommandRunner, directory: Path, image: Image) -> 
     partial = destination.with_suffix(".part")
     candidate = destination
     if not destination.exists():
-        print(f"Downloading macOS {image.version} ({image.build}) from Apple…", flush=True)
+        progress(f"Downloading macOS {image.version} ({image.build}) from Apple…")
         result = commands.run(
             [
                 "curl",
@@ -90,7 +99,7 @@ def verified_restore(commands: CommandRunner, directory: Path, image: Image) -> 
         result.require_success("downloading the Apple restore image")
         candidate = partial
 
-    print("Verifying the restore image…", flush=True)
+    progress("Verifying the restore image…")
     digest = hashlib.sha256()
     with candidate.open("rb") as handle:
         while chunk := handle.read(8 * 1024 * 1024):
@@ -124,7 +133,7 @@ class Tart:
         self.commands.run(["tart", "delete", guest.name]).require_success("deleting the VM")
 
     def clone(self, base: Guest, guest: Guest) -> None:
-        print("Cloning the prepared macOS base…", flush=True)
+        progress("Cloning the prepared macOS base…")
         self.commands.run(["tart", "clone", base.name, guest.name], timeout=300).require_success(
             "cloning the prepared base"
         )
@@ -132,7 +141,7 @@ class Tart:
     def prepare_base(self, guest: Guest, image: Image) -> None:
         restore = verified_restore(self.commands, self.root / "images", image)
         self._create_credentials(guest)
-        print("Restoring macOS; this can take several minutes…", flush=True)
+        progress("Restoring macOS; this can take several minutes…")
         self.commands.run(
             ["tart", "create", "--from-ipsw", str(restore), "--disk-size", "50", guest.name],
             timeout=1800,
@@ -170,14 +179,11 @@ class Tart:
         child = self.commands.start(self._boot_arguments(guest, gui=gui))
         try:
             self._wait_for_ssh(guest, child)
-            print(f"Ready: ssh -F {shlex.quote(str(guest.ssh_config))} macos-vm", flush=True)
-            print(
-                "Ctrl-C shuts down the VM; its disk is retained. --reset macos starts fresh.",
-                flush=True,
-            )
+            progress(f"Ready: ssh -F {shlex.quote(str(guest.ssh_config))} macos-vm")
+            progress("Ctrl-C shuts down the VM; its disk is retained. --reset macos starts fresh.")
             while child.poll() is None:
                 if self.commands.cancelled.wait(0.2):
-                    print("Shutting down macOS…", flush=True)
+                    progress("Shutting down macOS…")
                     self._shutdown(guest, child)
                     return 130
             return child.wait()
@@ -283,7 +289,7 @@ class Tart:
     def _stop_remaining(self, guest: Guest, child: Child) -> None:
         if child.poll() is not None:
             return
-        print("Stopping the unfinished VM session…", flush=True)
+        progress("Stopping the unfinished VM session…")
         try:
             self.commands.run(
                 ["tart", "stop", "--timeout", "10", guest.name],
