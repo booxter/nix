@@ -198,3 +198,45 @@ Keep the environment override to reuse this experiment's cache and disk. The
 runner normally uses persistent user state under `~/.local/state/fleet-vm/macos`.
 The temporary checkout contains the implementation and terminal-disconnect fix;
 its use does not deploy either physical host's Darwin configuration.
+
+## Cached Nix preparation
+
+The Nix preparation stage was tested on 2026-10-31 in
+`/private/tmp/macos-vm-nix-c810`, using the existing experimental state directory
+`/private/tmp/macos-vm-app-state-c810`. It reused the stopped macOS base without
+another restore. The standalone
+[NixOS installer 2.35.3](https://github.com/NixOS/nix-installer/releases/tag/2.35.3)
+was transferred over SSH and ran unattended with the guest's administrator
+password. Nix installation needed no host sudo.
+
+The first attempt exposed a startup ordering issue. After a cold boot, SSH
+worked at 6.42 seconds while `/nix` was still unmounted and `nix` was absent
+from PATH. At 8.66 seconds, a fresh SSH connection found the mounted store and
+connected to the daemon, without any configuration changes. The runner now
+waits for Nix through fresh SSH connections before checking a prepared base or
+reporting a working VM ready. Actual build failures are not retried.
+
+The corrected public `.#vm` command completed these checks:
+
+- Recovered the interrupted Nix preparation by cloning the macOS base again.
+- Built a fresh flake derivation through the daemon before and after a cold
+  restart, then published the Nix base's readiness metadata.
+- Booted a working clone and exposed Nix 2.35.3 over noninteractive SSH.
+- Fetched and ran `hello` from the repository's pinned Darwin nixpkgs as
+  `vmadmin`, an ordinary untrusted Nix client.
+- Preserved a test file and the fetched package across a normal restart.
+- Removed those working-disk changes with `--reset`, reusing the Nix base
+  without restoring macOS or installing Nix again.
+- Shut down cleanly on Ctrl-C after each working session.
+
+The retained Nix base and working clone are stopped. The existing QEMU Linux
+builder stayed running and host swap remained unused. To resume this test VM:
+
+```sh
+ssh mmini
+cd /private/tmp/macos-vm-nix-c810
+XDG_STATE_HOME=/private/tmp/macos-vm-app-state-c810 nix run .#vm -- macos
+```
+
+The implementation also passed 51 Python tests with 88.65% coverage and 92
+fleet-tools tests on both Darwin and Linux, including strict typing and lint.
