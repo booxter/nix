@@ -273,15 +273,20 @@ class Tart:
         raise TimeoutError(f"SSH was not ready after {self.boot_timeout:g} seconds: {last_error}")
 
     def _shutdown(self, guest: Guest, child: Child) -> None:
-        self._ssh(
+        result = self._ssh(
             guest,
             SHUTDOWN,
             input_data=(guest.credentials / "password").read_bytes(),
             cancellable=False,
-        ).require_success("requesting guest shutdown")
+        )
+        # Shutdown can close SSH before it sends an exit status (255). Only
+        # accept that disconnect once Tart confirms the guest stopped cleanly.
+        if result.code != 255:
+            result.require_success("requesting guest shutdown")
         try:
             code = child.wait(timeout=SHUTDOWN_TIMEOUT)
         except subprocess.TimeoutExpired as error:
+            result.require_success("requesting guest shutdown")
             raise TimeoutError("macOS did not finish shutting down") from error
         if code:
             raise RuntimeError(f"Tart failed during guest shutdown (status {code})")

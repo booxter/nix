@@ -25,12 +25,15 @@ IMAGE = Image(
 class FakeChild:
     def __init__(self) -> None:
         self.returncode: int | None = None
+        self.exit_on_wait: int | None = None
         self.killed = False
 
     def poll(self) -> int | None:
         return self.returncode
 
     def wait(self, timeout: float | None = None) -> int:
+        if self.returncode is None:
+            self.returncode = self.exit_on_wait
         if self.returncode is None:
             raise subprocess.TimeoutExpired("guest", timeout)
         return self.returncode
@@ -50,10 +53,11 @@ class GuestCommands:
         self.downloads = 0
         self.installed_key = b""
         self.sudo_password = b""
-        self.reject_shutdown = False
+        self.shutdown_result = Result(0, "", "")
+        self.shutdown_status: int | None = 0
+        self.forced_stop = False
         self.interrupt_when_ready = False
         self.fail_boot = False
-        self.hang_shutdown = False
         self.machine_state = "stopped"
         self.machine_name = "test"
 
@@ -91,11 +95,9 @@ class GuestCommands:
             if "authorized_keys" in command:
                 self.installed_key = input_data or b""
             elif "shutdown" in command:
-                if self.reject_shutdown:
-                    return Result(1, "", "sudo refused")
                 self.sudo_password = input_data or b""
-                if not self.hang_shutdown:
-                    self.child.returncode = 0
+                self.child.exit_on_wait = self.shutdown_status
+                return self.shutdown_result
             elif self.interrupt_when_ready:
                 self.cancelled.set()
         elif program == "tart":
@@ -113,6 +115,7 @@ class GuestCommands:
                 0, json.dumps([{"Name": self.machine_name, "State": self.machine_state}]), ""
             )
         if action == "stop":
+            self.forced_stop = True
             self.child.returncode = 0
         elif action == "create":
             (self.root / "tart/vms" / arguments[-1]).mkdir(parents=True)
@@ -130,8 +133,10 @@ def new_guest(root: Path) -> Guest:
     return guest
 
 
-def test_prepare_proves_key_login_and_shutdown(tmp_path: Path) -> None:
+@pytest.mark.parametrize("ssh_status", [0, 255])
+def test_prepare_proves_key_login_and_shutdown(tmp_path: Path, ssh_status: int) -> None:
     commands = GuestCommands(tmp_path)
+    commands.shutdown_result = Result(ssh_status, "", "")
     guest = new_guest(tmp_path)
     backend = Tart(tmp_path, commands)
     backend.prepare_base(guest, IMAGE)
@@ -139,26 +144,44 @@ def test_prepare_proves_key_login_and_shutdown(tmp_path: Path) -> None:
     assert commands.sudo_password == (guest.credentials / "password").read_bytes()
     assert commands.child.returncode == 0
     assert not commands.child.killed
+    assert not commands.forced_stop
     assert (guest.credentials / "password").stat().st_mode & 0o777 == 0o600
 
 
-def test_interrupt_after_readiness_requests_guest_shutdown(tmp_path: Path) -> None:
+@pytest.mark.parametrize("ssh_status", [0, 255])
+def test_interrupt_after_readiness_requests_guest_shutdown(tmp_path: Path, ssh_status: int) -> None:
     commands = GuestCommands(tmp_path)
+    commands.shutdown_result = Result(ssh_status, "", "")
     commands.interrupt_when_ready = True
     assert Tart(tmp_path, commands).run(new_guest(tmp_path), gui=True) == 130
     assert commands.sudo_password == b"temporary-password\n"
     assert commands.child.returncode == 0
     assert not commands.child.killed
+    assert not commands.forced_stop
 
 
-@pytest.mark.parametrize("failure", ["reject_shutdown", "hang_shutdown"])
-def test_shutdown_failure_is_reported_and_guest_is_stopped(tmp_path: Path, failure: str) -> None:
+@pytest.mark.parametrize(
+    ("ssh_result", "guest_status", "error"),
+    [
+        (Result(1, "", "sudo refused"), None, "sudo refused"),
+        (Result(0, "", ""), None, "macOS did not finish shutting down"),
+        (Result(255, "", "Connection closed by remote host"), None, "Connection closed"),
+        (Result(255, "", "Permission denied"), None, "Permission denied"),
+        (Result(255, "", "Connection closed by remote host"), 1, "Tart failed"),
+        (Result(0, "", ""), 1, "Tart failed"),
+    ],
+)
+def test_shutdown_failure_is_reported_and_guest_is_stopped(
+    tmp_path: Path, ssh_result: Result, guest_status: int | None, error: str
+) -> None:
     commands = GuestCommands(tmp_path)
     commands.interrupt_when_ready = True
-    setattr(commands, failure, True)
-    with pytest.raises((RuntimeError, TimeoutError), match=r"shutdown|shutting down"):
+    commands.shutdown_result = ssh_result
+    commands.shutdown_status = guest_status
+    with pytest.raises((RuntimeError, TimeoutError), match=error):
         Tart(tmp_path, commands).run(new_guest(tmp_path), gui=False)
-    assert commands.child.returncode == 0
+    assert commands.child.returncode is not None
+    assert commands.forced_stop == (guest_status is None)
 
 
 def test_boot_failure_does_not_report_ready(tmp_path: Path) -> None:
