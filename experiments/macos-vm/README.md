@@ -55,31 +55,30 @@ with an Apple IPSW and native first-boot provisioning the preferred direction
 for our own base. The existing host does not need an upgrade to prove headless
 boot, SSH and clone reuse with a prepared image.
 
-The intended macOS 27 experiment is:
+The macOS 27 experiment uses:
 
 ```sh
 tart create --from-ipsw /path/to/pinned-macos-27.ipsw macos-base
-tart set macos-base --cpu 2 --memory 4096
+tart set macos-base --cpu 4 --memory 4096
 
 provisioning_opts='fullName=VM Administrator,username=vmadmin'
 provisioning_opts="$provisioning_opts,password=temporary-bootstrap-password"
-provisioning_opts="$provisioning_opts,enablesRemoteLogin=true"
+provisioning_opts="$provisioning_opts,logsInAutomatically=false,enablesRemoteLogin=true"
 tart run --no-graphics --no-audio --no-clipboard \
   --provisioning-opts="$provisioning_opts" \
   macos-base
 ```
 
-This command is a source-checked proposal, not a successful local test. Use a
-generated temporary password in an implementation; Tart's option exposes it
-in the process arguments. SSH is sufficient for subsequent bootstrap and does
-not require enabling Screen Sharing or disabling Gatekeeper. The upstream
+The [follow-up on `mmini`](mmini.md) verified this path on its existing macOS
+27.2 installation: Apple IPSW restore, native provisioning, authenticated SSH,
+password-authenticated sudo, clean shutdown and clone reuse all succeeded.
+The host login keychain had to be unlocked; all VM commands ran over SSH
+without guest UI interaction. Use a generated temporary password; Tart's option
+exposes it in the process arguments. SSH is sufficient for subsequent bootstrap
+and does not require enabling Screen Sharing or disabling Gatekeeper. The upstream
 [macOS 27 template](https://github.com/cirruslabs/macos-image-templates/blob/main/templates/vanilla-golden-gate.pkr.hcl)
 uses the same provisioning API but includes additional UI customization that
 this narrower workflow does not need.
-
-The [follow-up on `mmini`](mmini.md) uses its existing macOS 27.2 installation.
-The initial restore attempt hit the host keychain requirement before guest
-installation; the verified Apple IPSW is cached for a retry.
 
 ## Reproduce the Tart experiment
 
@@ -245,8 +244,6 @@ beyond a personal local tool.
 
 ## Remaining checks
 
-- Verify the native macOS 27 IPSW-to-SSH path on `mmini`; running a prepared
-  image does not prove image construction.
 - Test Nix installation and activation inside a disposable guest.
 - Exercise operation after host logout/reboot. Tart documents an
   [unlocked login keychain requirement](https://tart.run/faq/#headless-machines)
