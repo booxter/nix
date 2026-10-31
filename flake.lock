@@ -616,8 +616,8 @@
       },
       "original": {
         "owner": "SaumonNet",
+        "ref": "main",
         "repo": "proxmox-nixos",
-        "rev": "a296d7fb068876e71b5a9154207c1c43e5978b5e",
         "type": "github"
       }
     },
