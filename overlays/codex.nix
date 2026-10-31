@@ -11,5 +11,8 @@ codex.overrideAttrs (old: {
     ../patches/codex-capacity-retry.patch
     # Allow ten stream retries by default.
     ../patches/codex-stream-retry-limit.patch
+    # Name checkout directories with /worktree <name>; keep managed hash buckets.
+    # https://github.com/openai/codex/issues/38326
+    ../patches/codex-named-worktrees.patch
   ];
 })

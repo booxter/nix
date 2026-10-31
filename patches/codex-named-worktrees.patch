@@ -1,0 +1,152 @@
+diff --git a/tui/src/app/managed_worktree_creation.rs b/tui/src/app/managed_worktree_creation.rs
+index 7b53366..247de0c 100644
+--- a/tui/src/app/managed_worktree_creation.rs
++++ b/tui/src/app/managed_worktree_creation.rs
+@@ -189,12 +189,16 @@ impl App {
+                     let sender = self.app_event_tx.clone();
+                     tokio::spawn(async move {
+                         let create_cwd = source_cwd.to_path_buf();
++                        let directory_name = name.clone();
+                         let result = tokio::task::spawn_blocking(move || {
+                             manager
+-                                .create(&codex_worktree::CreateWorktree {
+-                                    source_cwd: create_cwd,
+-                                    base: None,
+-                                })
++                                .create_with_name(
++                                    &codex_worktree::CreateWorktree {
++                                        source_cwd: create_cwd,
++                                        base: None,
++                                    },
++                                    directory_name.as_deref(),
++                                )
+                                 .map(|checkout| (manager, checkout))
+                                 .map_err(|error| error.to_string())
+                         })
+diff --git a/tui/src/chatwidget/slash_dispatch.rs b/tui/src/chatwidget/slash_dispatch.rs
+index e9ea6e4..b125a10 100644
+--- a/tui/src/chatwidget/slash_dispatch.rs
++++ b/tui/src/chatwidget/slash_dispatch.rs
+@@ -313,7 +313,7 @@ impl ChatWidget {
+                 self.show_session_checkout_picker(ManagedWorktreeMode::Fork, /*name*/ None);
+             }
+             SlashCommand::Worktree => {
+-                self.show_managed_worktree_picker();
++                self.show_managed_worktree_picker(None);
+             }
+             SlashCommand::App => {
+                 let Some(thread_id) = self.thread_id else {
+@@ -943,6 +943,9 @@ impl ChatWidget {
+                     Some(trimmed.to_string()),
+                 );
+             }
++            SlashCommand::Worktree if !trimmed.is_empty() => {
++                self.show_managed_worktree_picker(Some(trimmed.to_string()));
++            }
+             SlashCommand::Plan if !trimmed.is_empty() => {
+                 let plan_available = self.apply_plan_slash_command();
+                 let mut user_message = self.prepared_inline_user_message(
+diff --git a/tui/src/chatwidget/worktree_picker.rs b/tui/src/chatwidget/worktree_picker.rs
+index d40d2a8..5d4c07b 100644
+--- a/tui/src/chatwidget/worktree_picker.rs
++++ b/tui/src/chatwidget/worktree_picker.rs
+@@ -82,22 +82,23 @@ impl ChatWidget {
+         self.request_redraw();
+     }
+ 
+-    pub(super) fn show_managed_worktree_picker(&mut self) {
++    pub(super) fn show_managed_worktree_picker(&mut self, name: Option<String>) {
+         if !self.managed_worktree_available() {
+             self.add_error_message("Managed worktrees require a local Git repository.".to_string());
+             return;
+         }
+ 
++        let fork_name = name.clone();
+         self.bottom_pane.show_selection_view(SelectionViewParams {
+             title: Some("Worktrees".into()),
+             items: vec![
+                 SelectionItem {
+                     name: "Continue current conversation".to_string(),
+                     description: Some("Preserve this conversation in the new checkout".to_string()),
+-                    actions: vec![Box::new(|tx| {
++                    actions: vec![Box::new(move |tx| {
+                         tx.send(AppEvent::StartManagedWorktree {
+                             mode: ManagedWorktreeMode::Fork,
+-                            name: None,
++                            name: fork_name.clone(),
+                         });
+                     })],
+                     dismiss_on_select: true,
+@@ -106,10 +107,10 @@ impl ChatWidget {
+                 SelectionItem {
+                     name: "Start new conversation".to_string(),
+                     description: Some("Open a fresh conversation in the new checkout".to_string()),
+-                    actions: vec![Box::new(|tx| {
++                    actions: vec![Box::new(move |tx| {
+                         tx.send(AppEvent::StartManagedWorktree {
+                             mode: ManagedWorktreeMode::New,
+-                            name: None,
++                            name: name.clone(),
+                         });
+                     })],
+                     dismiss_on_select: true,
+diff --git a/tui/src/slash_command.rs b/tui/src/slash_command.rs
+index dfd0538..0d02daf 100644
+--- a/tui/src/slash_command.rs
++++ b/tui/src/slash_command.rs
+@@ -181,6 +181,7 @@ impl SlashCommand {
+                 | SlashCommand::New
+                 | SlashCommand::Clear
+                 | SlashCommand::Fork
++                | SlashCommand::Worktree
+                 | SlashCommand::Plan
+                 | SlashCommand::Goal
+                 | SlashCommand::Voice
+diff --git a/worktree/src/lib.rs b/worktree/src/lib.rs
+index c52bb55..a878cbd 100644
+--- a/worktree/src/lib.rs
++++ b/worktree/src/lib.rs
+@@ -60,6 +60,14 @@ impl WorktreeManager {
+     }
+ 
+     pub fn create(&self, request: &CreateWorktree) -> Result<ManagedWorktree> {
++        self.create_with_name(request, None)
++    }
++
++    pub fn create_with_name(
++        &self,
++        request: &CreateWorktree,
++        name: Option<&str>,
++    ) -> Result<ManagedWorktree> {
+         if !self.settings.root.is_absolute() {
+             bail!("managed worktree root must be an absolute path");
+         }
+@@ -83,7 +91,27 @@ impl WorktreeManager {
+                 revision.as_str(),
+             ],
+         )?;
+-        let root = allocate_worktree_root(&self.settings.root, repository_name)?;
++        // Keep the managed bucket layout; only the checkout's basename uses the
++        // chat name. Limit it to a short path component, even for arbitrary titles.
++        let directory_name = name.map(|name| {
++            name.chars()
++                .take(64)
++                .map(|ch| {
++                    if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_') {
++                        ch
++                    } else {
++                        '-'
++                    }
++                })
++                .collect::<String>()
++        });
++        let directory_name = directory_name
++            .as_deref()
++            .map(|name| name.trim_matches('-'))
++            .filter(|name| !name.is_empty())
++            .map(OsStr::new)
++            .unwrap_or(repository_name);
++        let root = allocate_worktree_root(&self.settings.root, directory_name)?;
+ 
+         let result = git_output(
+             &source_root,
