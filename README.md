@@ -37,6 +37,9 @@ nix run .#deploy -- --disko frame /dev/sdX
 Local VM and disk provisioning commands resolve the enclosing Git checkout at
 runtime and must be run from inside one.
 
+The [macOS VM exploration](experiments/macos-vm/README.md) compares runners and
+records a separate Tart boot-and-SSH proof of concept.
+
 ## Fleet updates
 
 Update multiple machines over SSH with `nix run .#deploy` (defaults to
