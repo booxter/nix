@@ -15,7 +15,10 @@ let
   allTargetsFile = targetsFile pkgs "darwin-managed-etc" (targets (builtins.attrValues enabledEtc));
 in
 {
-  imports = [ ./assertions.nix ];
+  imports = [
+    ./assertions.nix
+    ./symlinks.nix
+  ];
 
   options.environment.etc = lib.mkOption {
     type = lib.types.attrsOf (

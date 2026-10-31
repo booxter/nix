@@ -87,12 +87,6 @@ in
       esac
     '';
 
-    system.activationScripts.preActivation.text = lib.mkAfter ''
-      if [ -L /etc/nut/upsmon.conf ] && [ ! -e /etc/nut/upsmon.conf ]; then
-        rm /etc/nut/upsmon.conf
-      fi
-    '';
-
     system.tmpfiles.settings.ups."/var/lib/nut".d = {
       mode = "0700";
       user = "root";

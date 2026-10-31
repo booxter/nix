@@ -38,6 +38,7 @@ let
       python-quality = pythonQualityCheck;
       claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
+      darwin-etc = import ./darwin-etc.nix { inherit inputs lib pkgs; };
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
       gpclient = pkgs.gpclient;
