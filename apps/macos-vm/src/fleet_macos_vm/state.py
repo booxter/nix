@@ -28,6 +28,25 @@ class Image(BaseModel):
         return f"{self.sha256}-r{self.recipe}"
 
 
+class Bootstrap(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    installer: Path
+    version: str
+    recipe: int = Field(ge=1)
+
+    @property
+    def key(self) -> str:
+        return hashlib.sha256(self.model_dump_json().encode()).hexdigest()
+
+
+class NixBase(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    image: str
+    bootstrap: str
+
+
 class Instance(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -61,6 +80,10 @@ class State:
     def base(self, image: Image) -> Guest:
         return Guest(f"base-{image.key}", self.root / "bases" / image.key)
 
+    def nix_base(self, image: Image, bootstrap: Bootstrap) -> Guest:
+        identity = hashlib.sha256(f"{image.key}:{bootstrap.key}".encode()).hexdigest()
+        return Guest(f"nix-{identity}", self.root / "nix-bases" / identity)
+
 
 class Hypervisor(Protocol):
     def exists(self, guest: Guest) -> bool: ...
@@ -68,6 +91,8 @@ class Hypervisor(Protocol):
     def delete(self, guest: Guest) -> None: ...
 
     def prepare_base(self, guest: Guest, image: Image) -> None: ...
+
+    def prepare_nix(self, guest: Guest, bootstrap: Bootstrap) -> None: ...
 
     def clone(self, base: Guest, guest: Guest) -> None: ...
 
@@ -109,7 +134,36 @@ def ensure_base(state: State, backend: Hypervisor, image: Image) -> Guest:
     return base
 
 
-def run_vm(state: State, backend: Hypervisor, image: Image, *, gui: bool, reset: bool) -> int:
+def clone_guest(backend: Hypervisor, base: Guest, guest: Guest) -> None:
+    guest.directory.mkdir(parents=True, mode=0o700)
+    shutil.copytree(base.credentials, guest.credentials)
+    backend.clone(base, guest)
+
+
+def ensure_nix_base(state: State, backend: Hypervisor, image: Image, bootstrap: Bootstrap) -> Guest:
+    base = state.nix_base(image, bootstrap)
+    ready = base.directory / "ready.json"
+    identity = NixBase(image=image.key, bootstrap=bootstrap.key)
+    if ready.exists() and backend.exists(base):
+        if NixBase.model_validate_json(ready.read_text()) != identity:
+            raise RuntimeError(f"Nix base metadata does not match its inputs: {ready}")
+        return base
+
+    if backend.exists(base):
+        backend.delete(base)
+    if base.directory.exists():
+        shutil.rmtree(base.directory)
+    with lock(state.root / "locks" / f"base-{image.key}.lock"):
+        macos_base = ensure_base(state, backend, image)
+        clone_guest(backend, macos_base, base)
+    backend.prepare_nix(base, bootstrap)
+    write_text_atomic(ready, identity.model_dump_json())
+    return base
+
+
+def run_vm(
+    state: State, backend: Hypervisor, image: Image, bootstrap: Bootstrap, *, gui: bool, reset: bool
+) -> int:
     guest = state.instance
     with lock(state.root / "locks" / f"{guest.name}.lock"):
         if reset:
@@ -126,12 +180,11 @@ def run_vm(state: State, backend: Hypervisor, image: Image, *, gui: bool, reset:
         else:
             if backend.exists(guest) or guest.directory.exists():
                 raise RuntimeError("working VM preparation is incomplete; use --reset macos")
-            with lock(state.root / "locks" / f"base-{image.key}.lock"):
-                base = ensure_base(state, backend, image)
-                guest.directory.mkdir(parents=True, mode=0o700)
-                shutil.copytree(base.credentials, guest.credentials)
-                backend.clone(base, guest)
-                write_text_atomic(ready, Instance(base=image.key).model_dump_json())
+            nix_base = state.nix_base(image, bootstrap)
+            with lock(state.root / "locks" / f"{nix_base.name}.lock"):
+                base = ensure_nix_base(state, backend, image, bootstrap)
+                clone_guest(backend, base, guest)
+                write_text_atomic(ready, Instance(base=base.name).model_dump_json())
 
         # An image pin change affects new/reset VMs, never an existing disk.
         return backend.run(guest, gui=gui)

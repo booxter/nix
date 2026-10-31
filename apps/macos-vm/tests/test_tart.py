@@ -9,7 +9,7 @@ from threading import Event
 
 import pytest
 from fleet_macos_vm.process import Cancelled, Result
-from fleet_macos_vm.state import Guest, Image
+from fleet_macos_vm.state import Bootstrap, Guest, Image
 from fleet_macos_vm.tart import Tart, check_host, configure_ssh, progress, verified_restore
 
 RESTORE = b"test restore contents"
@@ -60,6 +60,14 @@ class GuestCommands:
         self.fail_boot = False
         self.machine_state = "stopped"
         self.machine_name = "test"
+        self.children: list[FakeChild] = []
+        self.nix_installed = False
+        self.nix_installs = 0
+        self.nix_builds: list[bytes] = []
+        self.build_nonce = b""
+        self.fail_install = False
+        self.fail_copy = False
+        self.fail_build_on_boot: int | None = None
 
     def check_cancelled(self) -> None:
         if self.cancelled.is_set():
@@ -67,6 +75,7 @@ class GuestCommands:
 
     def start(self, arguments: Sequence[str]) -> FakeChild:
         self.child = FakeChild()
+        self.children.append(self.child)
         if self.fail_boot:
             self.child.returncode = 1
         return self.child
@@ -90,20 +99,39 @@ class GuestCommands:
             key = Path(arguments[arguments.index("-f") + 1])
             key.write_text("private key")
             key.with_suffix(".pub").write_bytes(b"ssh-ed25519 test-public-key")
+        elif program == "scp":
+            if self.fail_copy:
+                return Result(1, "", "transfer failed")
         elif program in ("ssh", "sshpass"):
-            command = arguments[-1]
-            if "authorized_keys" in command:
-                self.installed_key = input_data or b""
-            elif "shutdown" in command:
-                self.sudo_password = input_data or b""
-                self.child.exit_on_wait = self.shutdown_status
-                return self.shutdown_result
-            elif self.interrupt_when_ready:
-                self.cancelled.set()
+            return self._ssh(arguments[-1], input_data)
         elif program == "tart":
             return self._tart(arguments)
         else:
             raise AssertionError(f"unsupported fake executable {program}")
+        return Result(0, "", "")
+
+    def _ssh(self, command: str, input_data: bytes | None) -> Result:
+        if "authorized_keys" in command:
+            self.installed_key = input_data or b""
+        elif "shutdown" in command:
+            self.sudo_password = input_data or b""
+            self.child.exit_on_wait = self.shutdown_status
+            return self.shutdown_result
+        elif "fleet-nix-installer install" in command:
+            if self.fail_install:
+                return Result(1, "", "installer failed")
+            self.nix_installed = True
+            self.nix_installs += 1
+            self.sudo_password = input_data or b""
+        elif "fleet-nix-check/nonce" in command:
+            self.build_nonce = input_data or b""
+        elif command.startswith("nix build "):
+            if not self.nix_installed or self.fail_build_on_boot == len(self.children):
+                return Result(1, "", "Nix unavailable")
+            if self.build_nonce not in self.nix_builds:
+                self.nix_builds.append(self.build_nonce)
+        elif self.interrupt_when_ready:
+            self.cancelled.set()
         return Result(0, "", "")
 
     def _tart(self, arguments: Sequence[str]) -> Result:
@@ -146,6 +174,46 @@ def test_prepare_proves_key_login_and_shutdown(tmp_path: Path, ssh_status: int) 
     assert not commands.child.killed
     assert not commands.forced_stop
     assert (guest.credentials / "password").stat().st_mode & 0o777 == 0o600
+
+
+def test_nix_preparation_proves_a_fresh_build_after_restart(tmp_path: Path) -> None:
+    commands = GuestCommands(tmp_path)
+    bootstrap = Bootstrap(installer=tmp_path / "installer", version="2.35.3", recipe=1)
+    Tart(tmp_path, commands).prepare_nix(new_guest(tmp_path), bootstrap)
+
+    assert commands.nix_installs == 1
+    assert len(commands.nix_builds) == 2
+    assert len(commands.children) == 2
+    assert all(child.returncode == 0 for child in commands.children)
+    assert not commands.forced_stop
+    assert commands.sudo_password == b"temporary-password\n"
+
+
+@pytest.mark.parametrize(
+    ("fail_copy", "fail_install", "fail_build_on_boot", "error"),
+    [
+        (True, False, None, "transfer failed"),
+        (False, True, None, "installer failed"),
+        (False, False, 1, "Nix unavailable"),
+        (False, False, 2, "Nix unavailable"),
+    ],
+)
+def test_nix_preparation_failure_stops_the_guest(
+    tmp_path: Path,
+    fail_copy: bool,
+    fail_install: bool,
+    fail_build_on_boot: int | None,
+    error: str,
+) -> None:
+    commands = GuestCommands(tmp_path)
+    commands.fail_copy = fail_copy
+    commands.fail_install = fail_install
+    commands.fail_build_on_boot = fail_build_on_boot
+    bootstrap = Bootstrap(installer=tmp_path / "installer", version="2.35.3", recipe=1)
+    with pytest.raises(RuntimeError, match=error):
+        Tart(tmp_path, commands).prepare_nix(new_guest(tmp_path), bootstrap)
+    assert all(child.returncode is not None for child in commands.children)
+    assert commands.forced_stop
 
 
 @pytest.mark.parametrize("ssh_status", [0, 255])

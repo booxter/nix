@@ -13,7 +13,7 @@ from typing import TextIO
 
 from atomic_file_writes import write_text_atomic
 from fleet_macos_vm.process import Child, CommandRunner, Result
-from fleet_macos_vm.state import Guest, Image
+from fleet_macos_vm.state import Bootstrap, Guest, Image
 from pydantic import BaseModel, Field, TypeAdapter
 
 BOOT_TIMEOUT = 300
@@ -21,6 +21,18 @@ SHUTDOWN_TIMEOUT = 45
 USERNAME = "vmadmin"
 INSTALL_KEY = 'umask 077; mkdir -p "$HOME/.ssh"; cat > "$HOME/.ssh/authorized_keys"'
 SHUTDOWN = "sudo -S -p '' /sbin/shutdown -h now"
+NIX_CHECK_FLAKE = b"""{
+  outputs = { self }: {
+    packages.aarch64-darwin.default = derivation {
+      name = "fleet-vm-nix-check";
+      system = "aarch64-darwin";
+      builder = "/bin/sh";
+      args = [ "-c" "echo ready > $out" ];
+      nonce = builtins.readFile ./nonce;
+    };
+  };
+}
+"""
 
 
 class VmInfo(BaseModel):
@@ -133,7 +145,7 @@ class Tart:
         self.commands.run(["tart", "delete", guest.name]).require_success("deleting the VM")
 
     def clone(self, base: Guest, guest: Guest) -> None:
-        progress("Cloning the prepared macOS base…")
+        progress("Cloning the prepared base…")
         self.commands.run(["tart", "clone", base.name, guest.name], timeout=300).require_success(
             "cloning the prepared base"
         )
@@ -174,6 +186,71 @@ class Tart:
             self._shutdown(guest, child)
         finally:
             self._stop_remaining(guest, child)
+
+    def prepare_nix(self, guest: Guest, bootstrap: Bootstrap) -> None:
+        # A second cold boot proves that /nix mounts and the daemon starts
+        # without relying on the installer's live session.
+        for first_boot in (True, False):
+            if first_boot:
+                progress(f"Preparing Nix {bootstrap.version}…")
+            else:
+                progress("Verifying Nix after restarting macOS…")
+
+            child = self.commands.start(self._boot_arguments(guest, gui=False))
+            try:
+                self._wait_for_ssh(guest, child)
+                if first_boot:
+                    self._install_nix(guest, bootstrap)
+                self._verify_nix(guest)
+                self._shutdown(guest, child)
+            finally:
+                self._stop_remaining(guest, child)
+
+    def _install_nix(self, guest: Guest, bootstrap: Bootstrap) -> None:
+        self.commands.run(
+            [
+                "scp",
+                "-F",
+                str(guest.ssh_config),
+                str(bootstrap.installer),
+                "macos-vm:/private/tmp/fleet-nix-installer",
+            ],
+            timeout=120,
+        ).require_success("copying the Nix installer into the guest")
+        self._ssh(guest, "chmod 700 /private/tmp/fleet-nix-installer").require_success(
+            "making the Nix installer executable"
+        )
+        self._ssh(
+            guest,
+            "sudo -S -H -p '' /private/tmp/fleet-nix-installer"
+            " install --no-confirm --enable-flakes",
+            input_data=(guest.credentials / "password").read_bytes(),
+            timeout=600,
+            capture=False,
+        ).require_success("installing Nix in the guest")
+        self._ssh(guest, "rm /private/tmp/fleet-nix-installer").require_success(
+            "removing the temporary Nix installer"
+        )
+
+    def _verify_nix(self, guest: Guest) -> None:
+        self._ssh(
+            guest,
+            "mkdir -p /private/tmp/fleet-nix-check; cat > /private/tmp/fleet-nix-check/flake.nix",
+            input_data=NIX_CHECK_FLAKE,
+        ).require_success("copying the Nix verification flake")
+        # Force a fresh build after each boot, so a cached result cannot hide
+        # broken build users or a daemon that cannot write to the store.
+        self._ssh(
+            guest,
+            "cat > /private/tmp/fleet-nix-check/nonce",
+            input_data=secrets.token_hex(16).encode(),
+        ).require_success("preparing the Nix verification build")
+        self._ssh(
+            guest,
+            "nix build --store daemon --no-link --no-write-lock-file"
+            " path:/private/tmp/fleet-nix-check",
+            timeout=120,
+        ).require_success("verifying Nix flakes and a daemon build over SSH")
 
     def run(self, guest: Guest, *, gui: bool) -> int:
         child = self.commands.start(self._boot_arguments(guest, gui=gui))
@@ -220,6 +297,8 @@ class Tart:
         password: bool = False,
         input_data: bytes | None = None,
         cancellable: bool = True,
+        timeout: float = 15,
+        capture: bool = True,
     ) -> Result:
         arguments = ["ssh", "-F", str(guest.ssh_config)]
         if password:
@@ -242,8 +321,9 @@ class Tart:
         return self.commands.run(
             [*arguments, "macos-vm", command],
             input_data=input_data,
-            timeout=15,
+            timeout=timeout,
             cancellable=cancellable,
+            capture=capture,
         )
 
     def _wait_for_ssh(

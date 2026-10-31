@@ -1,4 +1,5 @@
 {
+  callPackage,
   curl,
   lib,
   openssh,
@@ -7,6 +8,7 @@
   sshpass,
   stdenv,
   tart ? null,
+  writeText,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -14,6 +16,15 @@ let
     inherit pythonRuffCheckHook;
   };
   image = builtins.toFile "macos-vm-image.json" (builtins.toJSON (import ./image.nix));
+  installer = callPackage ./installer.nix { };
+  bootstrap = writeText "macos-vm-bootstrap.json" (
+    builtins.toJSON {
+      installer = "${installer}/share/fleet-macos-vm/nix-installer";
+      inherit (installer) version;
+      # Bump when the Nix installation or its verification changes.
+      recipe = 1;
+    }
+  );
 in
 pythonPackages.buildPythonApplication {
   pname = "fleet-macos-vm";
@@ -40,6 +51,7 @@ pythonPackages.buildPythonApplication {
 
   makeWrapperArgs = [
     "--set FLEET_VM_IMAGE ${image}"
+    "--set FLEET_VM_BOOTSTRAP ${bootstrap}"
     "--prefix PATH : ${
       lib.makeBinPath (
         [

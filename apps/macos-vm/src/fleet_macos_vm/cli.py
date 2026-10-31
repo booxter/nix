@@ -10,7 +10,7 @@ from threading import Event
 from types import FrameType
 
 from fleet_macos_vm.process import Cancelled, Commands
-from fleet_macos_vm.state import Image, State, run_vm
+from fleet_macos_vm.state import Bootstrap, Image, State, run_vm
 from fleet_macos_vm.tart import Tart, check_host
 
 
@@ -37,8 +37,11 @@ def execute(checkout: Path, *, gui: bool, reset: bool) -> int:
     commands = Commands(environment, cancelled)
     check_host(platform.system(), platform.machine(), platform.mac_ver()[0])
     image = Image.model_validate_json(Path(os.environ["FLEET_VM_IMAGE"]).read_text())
+    bootstrap = Bootstrap.model_validate_json(Path(os.environ["FLEET_VM_BOOTSTRAP"]).read_text())
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    return run_vm(State(root, checkout), Tart(root, commands), image, gui=gui, reset=reset)
+    return run_vm(
+        State(root, checkout), Tart(root, commands), image, bootstrap, gui=gui, reset=reset
+    )
 
 
 def main() -> int:
