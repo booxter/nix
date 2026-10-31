@@ -11,11 +11,12 @@ const NIX_PROGRAM: &str = match option_env!("VM_NIX") {
 };
 const RUNNER_NIX: &str = env!("VM_RUNNER_NIX");
 const TARGETS_JSON: &str = env!("VM_TARGETS_JSON");
+const MACOS_RUNNER: &str = env!("VM_MACOS_RUNNER");
 
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Run a local VM for a NixOS fleet host",
+    about = "Run a local NixOS host VM or a plain macOS development VM",
     after_help = env!("VM_HELP")
 )]
 pub struct VmArgs {
@@ -23,15 +24,26 @@ pub struct VmArgs {
     #[arg(long)]
     pub gui: bool,
 
-    /// Inventory host whose NixOS VM variant should run.
-    #[arg(value_name = "TARGET_HOST")]
+    /// Recreate the macOS working disk from its cached base (discards guest changes).
+    #[arg(long)]
+    pub reset: bool,
+
+    /// NixOS inventory host, or macos for a plain macOS VM.
+    #[arg(value_name = "TARGET")]
     pub target_host: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum VmTarget {
+    Nixos(String),
+    Macos,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VmRequest {
-    pub target_config: String,
+    pub target: VmTarget,
     pub gui: bool,
+    pub reset: bool,
 }
 
 pub trait VmRunner {
@@ -58,6 +70,30 @@ impl NativeVmRunner {
 
 impl VmRunner for NativeVmRunner {
     fn run(&self, request: &VmRequest) -> Result<i32> {
+        match &request.target {
+            VmTarget::Nixos(configuration) => self.run_nixos(configuration, request.gui),
+            VmTarget::Macos => self.run_macos(request),
+        }
+    }
+}
+
+impl NativeVmRunner {
+    fn run_macos(&self, request: &VmRequest) -> Result<i32> {
+        // Replace this dispatcher so signals reach the lifecycle owner directly.
+        use std::os::unix::process::CommandExt;
+
+        let mut command = Command::new(MACOS_RUNNER);
+        command.arg("--checkout").arg(&self.repo_root);
+        if request.gui {
+            command.arg("--gui");
+        }
+        if request.reset {
+            command.arg("--reset");
+        }
+        Err(command.exec()).context("failed to start the macOS VM runner")
+    }
+
+    fn run_nixos(&self, configuration: &str, gui: bool) -> Result<i32> {
         let status = Command::new(&self.nix)
             .args([
                 "run",
@@ -70,8 +106,8 @@ impl VmRunner for NativeVmRunner {
                 "--show-trace",
             ])
             .env("VM_REPO_ROOT", &self.repo_root)
-            .env("VM_TARGET_CONFIG", &request.target_config)
-            .env("VM_GUI", if request.gui { "1" } else { "0" })
+            .env("VM_TARGET_CONFIG", configuration)
+            .env("VM_GUI", if gui { "1" } else { "0" })
             .status()
             .with_context(|| format!("failed to start {}", self.nix.display()))?;
         status
@@ -86,16 +122,24 @@ pub fn compiled_targets() -> Result<BTreeMap<String, String>> {
 
 pub fn run(arguments: VmArgs, runner: &impl VmRunner) -> Result<i32> {
     let targets = compiled_targets()?;
-    let Some(target_config) = targets.get(&arguments.target_host) else {
+    let target = if arguments.target_host == "macos" {
+        VmTarget::Macos
+    } else if let Some(configuration) = targets.get(&arguments.target_host) {
+        if arguments.reset {
+            bail!("--reset is supported only for the macos target");
+        }
+        VmTarget::Nixos(configuration.clone())
+    } else {
         let known = targets.keys().cloned().collect::<Vec<_>>().join(", ");
         bail!(
-            "unknown target host: {}; available target hosts: {known}",
+            "unknown target: {}; available targets: macos, {known}",
             arguments.target_host
         );
     };
     runner.run(&VmRequest {
-        target_config: target_config.clone(),
+        target,
         gui: arguments.gui,
+        reset: arguments.reset,
     })
 }
 
@@ -106,7 +150,7 @@ mod tests {
     use anyhow::Result;
     use clap::{CommandFactory, Parser};
 
-    use super::{compiled_targets, run, VmArgs, VmRequest, VmRunner};
+    use super::{compiled_targets, run, VmArgs, VmRequest, VmRunner, VmTarget};
 
     struct FakeRunner {
         exit_code: i32,
@@ -124,7 +168,7 @@ mod tests {
     fn help_lists_available_inventory_targets() {
         let help = VmArgs::command().render_long_help().to_string();
 
-        for target in ["builder1", "srvarr", "beast", "prx1-lab"] {
+        for target in ["builder1", "srvarr", "beast", "prx1-lab", "macos"] {
             assert!(help.lines().any(|line| line.trim() == target));
         }
     }
@@ -139,6 +183,7 @@ mod tests {
         let code = run(
             VmArgs {
                 gui: true,
+                reset: false,
                 target_host: "builder1".to_owned(),
             },
             &runner,
@@ -149,9 +194,11 @@ mod tests {
         assert_eq!(
             *runner.requests.borrow(),
             [VmRequest {
-                target_config: compiled_targets().expect("targets should parse")["builder1"]
-                    .clone(),
+                target: VmTarget::Nixos(
+                    compiled_targets().expect("targets should parse")["builder1"].clone()
+                ),
                 gui: true,
+                reset: false,
             }]
         );
     }
@@ -166,15 +213,14 @@ mod tests {
         let error = run(
             VmArgs {
                 gui: false,
+                reset: false,
                 target_host: "does-not-exist".to_owned(),
             },
             &runner,
         )
         .expect_err("unknown target should fail");
 
-        assert!(error
-            .to_string()
-            .contains("unknown target host: does-not-exist"));
+        assert!(error.to_string().contains("unknown target: does-not-exist"));
         assert!(runner.requests.borrow().is_empty());
     }
 
@@ -182,5 +228,37 @@ mod tests {
     fn clap_rejects_missing_target_and_unknown_options() {
         assert!(VmArgs::try_parse_from(["vm"]).is_err());
         assert!(VmArgs::try_parse_from(["vm", "--unknown", "builder1"]).is_err());
+    }
+
+    #[test]
+    fn macos_selects_its_backend_with_reset_and_graphics() {
+        let runner = FakeRunner {
+            exit_code: 0,
+            requests: RefCell::new(Vec::new()),
+        };
+        let arguments = VmArgs::try_parse_from(["vm", "--reset", "--gui", "macos"]).unwrap();
+        assert_eq!(run(arguments, &runner).unwrap(), 0);
+        assert_eq!(
+            *runner.requests.borrow(),
+            [VmRequest {
+                target: VmTarget::Macos,
+                gui: true,
+                reset: true,
+            }]
+        );
+    }
+
+    #[test]
+    fn reset_cannot_discard_a_nixos_disk() {
+        let runner = FakeRunner {
+            exit_code: 0,
+            requests: RefCell::new(Vec::new()),
+        };
+        let arguments = VmArgs::try_parse_from(["vm", "--reset", "builder1"]).unwrap();
+        assert!(run(arguments, &runner)
+            .unwrap_err()
+            .to_string()
+            .contains("only for the macos"));
+        assert!(runner.requests.borrow().is_empty());
     }
 }

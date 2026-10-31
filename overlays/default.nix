@@ -352,6 +352,9 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      # Native macOS 27 account provisioning requires Tart's newer interface.
+      inherit (pkgsNixpkgsUnstable) tart;
+
       # Bun 1.3.13 produces invalid signatures rejected by macOS 27.
       # https://github.com/oven-sh/bun/pull/39837
       inherit (pkgsNixpkgsUnstable) bun;

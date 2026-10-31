@@ -10,6 +10,7 @@
   git,
   lib,
   makeWrapper,
+  macosVmRunner,
   nh,
   nix,
   nix-output-monitor,
@@ -67,13 +68,17 @@ rustPlatform.buildRustPackage {
   CHECK_SYSTEM = stdenv.hostPlatform.system;
   VM_NIX = lib.getExe nix;
   VM_RUNNER_NIX = ./vm-runner.nix;
+  VM_MACOS_RUNNER = lib.getExe macosVmRunner;
   VM_TARGETS_JSON = builtins.toJSON vmTargets;
   VM_HELP = ''
     Examples:
       vm builder1
       vm --gui frame
+      vm macos
+      vm --reset macos
 
-    Available target hosts:
+    Available targets:
+      macos
     ${lib.concatMapStringsSep "\n" (name: "  ${name}") (builtins.attrNames vmTargets)}
   '';
 

@@ -61,6 +61,7 @@ let
   vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
   fleetTools = pkgs.callPackage ./fleet-tools {
     fleetInventory = toolInventory;
+    macosVmRunner = pkgs.callPackage ./macos-vm { };
     inherit vmTargets wireguardHome;
   };
 

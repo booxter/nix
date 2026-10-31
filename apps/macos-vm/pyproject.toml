@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fleet-macos-vm"
+version = "0.1.0"
+description = "Local macOS VM lifecycle for the fleet vm app"
+requires-python = ">=3.13"
+dependencies = ["pydantic>=2"]
+
+[project.scripts]
+fleet-macos-vm = "fleet_macos_vm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=fleet_macos_vm --cov-report=term-missing --cov-fail-under=85"
+
+[tool.mypy]
+files = ["src/fleet_macos_vm"]
+strict = true

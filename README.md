@@ -20,6 +20,11 @@ nix run .#vm -- gw
 nix run .#vm -- org
 nix run .#vm -- beast
 
+# Plain macOS VM (run on an Apple silicon Mac with macOS 27+)
+nix run .#vm -- macos
+nix run .#vm -- --gui macos
+nix run .#vm -- --reset macos
+
 # Config diff between two Git revisions
 nix run .#diff -- frame <old-rev> <new-rev>
 nix run .#diff -- mair <old-rev> <new-rev>
@@ -37,8 +42,10 @@ nix run .#deploy -- --disko frame /dev/sdX
 Local VM and disk provisioning commands resolve the enclosing Git checkout at
 runtime and must be run from inside one.
 
-The [macOS VM exploration](experiments/macos-vm/README.md) compares runners and
-records a separate Tart boot-and-SSH proof of concept.
+The [macOS VM guide](apps/macos-vm/README.md) covers SSH access, persistent disks,
+base reuse and host prerequisites. The
+[exploration notes](experiments/macos-vm/README.md) record the runner comparison
+and native provisioning experiments.
 
 ## Fleet updates
 
