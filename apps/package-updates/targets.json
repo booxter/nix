@@ -69,6 +69,13 @@
       "system": "aarch64-darwin"
     },
     {
+      "attr": "macos-vm-nix-installer",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "aarch64-darwin"
+    },
+    {
       "attr": "nico-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

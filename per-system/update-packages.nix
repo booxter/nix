@@ -10,6 +10,7 @@ let
   degoogPackages = import ../nixos/_mixins/degoog/packages.nix { pkgs = plainPkgs; };
 in
 lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
+  macos-vm-nix-installer = plainPkgs.callPackage ../apps/macos-vm/installer.nix { };
   ismc = plainPkgs.callPackage ../darwin/_mixins/thermal-accounting/pkgs/ismc { };
   jiratui = pkgs.jiratui;
 }
