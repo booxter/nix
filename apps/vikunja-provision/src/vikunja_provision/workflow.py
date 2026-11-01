@@ -53,7 +53,7 @@ def plan(
 
     credentials = store.load()
     if rotate_token and credentials is not None and credentials.previous_token_id is not None:
-        raise ProvisionError("A token rotation is pending; retry apply without --rotate-token")
+        raise ProvisionError("A token rotation is pending; retry without --rotate-token")
 
     bot = next((bot for bot in api.bots() if bot.username == desired.bot.username), None)
     if credentials is not None and (
@@ -219,7 +219,7 @@ def apply(
         except ProvisionError as error:
             raise ProvisionError(
                 f"New credentials saved, but previous token {retiring_token.id} was not revoked; "
-                "retry apply without --rotate-token"
+                "retry without --rotate-token"
             ) from error
 
     if credentials.previous_token_id is not None:

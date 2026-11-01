@@ -86,7 +86,7 @@ def test_connection_failure_is_actionable() -> None:
         HttpVikunja(client, url, SESSION).bots()
 
 
-def test_cli_sso_plan_apply_and_repeat(
+def test_cli_sso_provisioning_and_repeat(
     declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     config_path = tmp_path / "declarations.json"
@@ -101,11 +101,8 @@ def test_cli_sso_plan_apply_and_repeat(
             str(config_path),
         ]
 
-        assert run(["plan", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
-        assert server.backend.bots() == []
-        assert secrets.values == {}
-        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
-        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
+        assert run(options, prompt=BrowserPrompt(), secrets=secrets) == 0
+        assert run(options, prompt=BrowserPrompt(), secrets=secrets) == 0
 
     assert SopsCredentials(declaration.state, secrets).load() is not None
     output = capsys.readouterr()
@@ -127,7 +124,6 @@ def test_cli_can_use_a_private_session_file(
         )
         result = run(
             [
-                "apply",
                 "org",
                 "agents",
                 "--declarations-file",
@@ -148,7 +144,6 @@ def test_cli_reports_invalid_declarations_and_missing_files(
 ) -> None:
     path = tmp_path / "declarations.json"
     options = [
-        "plan",
         "org",
         "agents",
         "--declarations-file",
@@ -166,7 +161,6 @@ def test_cli_handles_interrupted_sso(declaration: Declaration, tmp_path: Path) -
     assert (
         run(
             [
-                "plan",
                 "org",
                 "agents",
                 "--declarations-file",
@@ -192,7 +186,6 @@ def test_cli_rejects_unknown_targets_before_login(
     assert (
         run(
             [
-                "plan",
                 host,
                 bot,
                 "--declarations-file",
@@ -205,7 +198,7 @@ def test_cli_rejects_unknown_targets_before_login(
     assert "No Vikunja bot declaration" in capsys.readouterr().err
 
 
-def test_cli_plans_and_distributes_to_declared_seats(
+def test_cli_distributes_to_declared_seats(
     declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     declaration.seats = seat_targets()
@@ -220,11 +213,8 @@ def test_cli_plans_and_distributes_to_declared_seats(
             "--declarations-file",
             str(path),
         ]
-        assert run(["plan", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
-        assert token_store.values == {}
-        assert server.backend.bots() == []
-        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
-        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
+        assert run(options, prompt=BrowserPrompt(), secrets=token_store) == 0
+        assert run(options, prompt=BrowserPrompt(), secrets=token_store) == 0
         assert len(server.backend.tokens(1)) == 1
 
     assert set(token_store.values) == {"org", "frame", "mair", "mmini"}
@@ -249,7 +239,6 @@ def test_cli_sops_preflight_failure_prevents_provisioning(
         assert (
             run(
                 [
-                    "apply",
                     "org",
                     "agents",
                     "--declarations-file",

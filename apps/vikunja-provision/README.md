@@ -27,15 +27,13 @@ in the connection name and secret key.
 
 The flake app generates and bundles the declarations from configured Vikunja
 hosts, including each instance's public URL. No separate JSON file is needed.
-Preview and apply a declaration by host and bot name:
+Reconcile a declaration by host and bot name:
 
 ```sh
-nix run .#vikunja-provision -- plan org agents
-
-nix run .#vikunja-provision -- apply org agents
+nix run .#vikunja-provision -- org agents
 ```
 
-Each command prints a login URL on stderr. Open it in a browser on the same
+The command prints a login URL on stderr. Open it in a browser on the same
 machine, sign in through your normal Vikunja SSO, and return to the terminal.
 The signed-in user must own the bot and administer projects whose sharing
 changes. OAuth authorization uses PKCE and a temporary loopback callback
@@ -44,13 +42,13 @@ are not saved. An existing raw user-session JWT can instead be supplied with
 `--session-token-file`; the file must be accessible only by its owner. A `tk_`
 API token cannot manage bots or mint credentials.
 
-`plan` reads Vikunja and decrypts the selected SOPS files without modifying them.
-Both commands print a JSON list of changes without secrets. SOPS access is
-checked for every seat before provisioning writes begin; allow the usual age or
-Secure Enclave approval prompts. `apply` creates the bot if absent, sets its
-display name and active status, and reconciles the declared direct project
-shares. Undeclared shares, other bots, and unrelated tokens are preserved.
-Removing a project from the declaration does not revoke an earlier share.
+The command reads Vikunja and checks SOPS access for every seat before
+provisioning writes begin; allow the usual age or Secure Enclave approval
+prompts. It creates the bot if absent, sets its display name and active status,
+and reconciles the declared direct project shares, then prints a JSON list of
+changes without secrets. Undeclared shares, other bots, and unrelated tokens are
+preserved. Removing a project from the declaration does not revoke an earlier
+share.
 
 The server, bot ID, token ID, raw token, and pending rotation state are stored
 together as encrypted JSON at `agents/vikunja/org/agents/credentials` in `org`'s
@@ -59,7 +57,7 @@ are selected. Decrypted values stay in memory; no local credential file is
 needed. An empty lock file in the temporary directory serializes local runs for
 the same server and bot. Run provisioning from only one machine at a time.
 
-On apply, the token is also written to each declared seat's encrypted file
+The token is also written to each declared seat's encrypted file
 through the repository's SOPS library. Matching values are left unchanged.
 Writes are sequential and stop at the first failure, reporting which seats are
 complete and which remain.
@@ -69,19 +67,19 @@ then deploy the selected seats normally to activate their MCP configuration.
 The app does not push or deploy. Removing a seat stops managing its configuration
 and secret; it does not erase an earlier secret or revoke a copied shared token.
 
-Repeat applies preserve the token. To change its title, permissions, or expiry,
-or to replace lost/revoked credentials, preview and apply with `--rotate-token`.
+Repeat runs preserve the token. To change its title, permissions, or expiry,
+or to replace lost/revoked credentials, run with `--rotate-token`.
 Rotation saves the replacement in the encrypted record, updates all selected
 SOPS files, and only then revokes the previous token. Activate the updated seats
 to load the new token. If distribution or revocation fails, the encrypted record
-retains the pending rotation: retry `apply` without `--rotate-token` to resume
+retains the pending rotation: rerun without `--rotate-token` to resume
 using the saved replacement. A second rotation is refused while one is pending.
 If the initial SOPS save fails, the app attempts to revoke the newly issued token
 and keeps the previous credentials. Unrelated duplicate token titles are
 rejected rather than choosing a token to revoke.
 
-API writes are not transactional across endpoints. A failed apply may leave a
-created bot or updated shares; a later apply reads those resources and resumes.
+API writes are not transactional across endpoints. A failed run may leave a
+created bot or updated shares; a later run reads those resources and resumes.
 Keep the encrypted state and seat files together when committing or transferring
 changes to another checkout.
 
