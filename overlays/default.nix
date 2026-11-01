@@ -348,6 +348,7 @@
           ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
           ../patches/shelfmark-redact-sabnzbd-api-key.patch
           ../patches/shelfmark-truncate-filenames-bytes.patch
+          ../patches/shelfmark-release-room-lock-before-emit.patch
         ];
       });
     }
