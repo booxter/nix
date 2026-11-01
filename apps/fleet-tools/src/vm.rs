@@ -135,7 +135,12 @@ impl NativeVmRunner {
         if kind == "darwin" {
             use std::os::unix::process::CommandExt;
 
-            command.arg("--").arg("--checkout").arg(&self.repo_root);
+            // With --file, select the root value before passing program arguments.
+            command
+                .arg("")
+                .arg("--")
+                .arg("--checkout")
+                .arg(&self.repo_root);
             if request.gui {
                 command.arg("--gui");
             }
