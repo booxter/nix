@@ -12,6 +12,7 @@ from vikunja_provision.models import Bot, Declaration, Declarations, ProvisionEr
 from vikunja_provision.storage import FileCredentials
 from vikunja_provision.workflow import apply, plan
 
+from .fakes import MemoryTokenStore, seat_targets
 from .server import SESSION, BrowserPrompt, InterruptedPrompt, UnusedPrompt, running_server
 
 
@@ -213,3 +214,72 @@ def test_cli_rejects_unknown_targets_before_login(
         == 1
     )
     assert "No Vikunja bot declaration" in capsys.readouterr().err
+
+
+def test_cli_plans_and_distributes_to_declared_seats(
+    declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    declaration.seats = seat_targets()
+    token_store = MemoryTokenStore()
+    path = tmp_path / "declarations.json"
+    credentials = tmp_path / "credentials.json"
+    with running_server() as server:
+        declaration.server = AnyHttpUrl(server.url)
+        write_declarations(path, declaration)
+        options = [
+            "org",
+            "agents",
+            "--declarations-file",
+            str(path),
+            "--credentials-file",
+            str(credentials),
+        ]
+        assert run(["plan", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
+        assert token_store.values == {}
+        assert not credentials.exists()
+        assert server.backend.bots() == []
+        assert run(["apply", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
+        assert run(["apply", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
+        assert len(server.backend.tokens(1)) == 1
+
+    assert set(token_store.values) == {"frame", "mair", "mmini"}
+    assert all(
+        value.get_secret_value() == "Bearer tk_secret_1" for value in token_store.values.values()
+    )
+    output = capsys.readouterr()
+    assert "update SOPS secret mair:" in output.out
+    assert "tk_secret_1" not in output.out + output.err
+
+
+def test_cli_sops_preflight_failure_prevents_provisioning(
+    declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    declaration.seats = seat_targets()
+    token_store = MemoryTokenStore(failing_reads={"mair"})
+    path = tmp_path / "declarations.json"
+    credentials = tmp_path / "credentials.json"
+    with running_server() as server:
+        declaration.server = AnyHttpUrl(server.url)
+        write_declarations(path, declaration)
+        assert (
+            run(
+                [
+                    "apply",
+                    "org",
+                    "agents",
+                    "--declarations-file",
+                    str(path),
+                    "--credentials-file",
+                    str(credentials),
+                ],
+                prompt=BrowserPrompt(),
+                token_store=token_store,
+            )
+            == 1
+        )
+        assert server.backend.bots() == []
+        assert server.backend.tokens(1) == []
+
+    assert not credentials.exists()
+    assert token_store.values == {}
+    assert "Could not read SOPS" in capsys.readouterr().err

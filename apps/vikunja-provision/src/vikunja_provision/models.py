@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import (
     AnyHttpUrl,
@@ -48,11 +48,19 @@ class TokenSpec(DeclarationModel):
         return value
 
 
+class SopsTarget(DeclarationModel):
+    realm: str = Field(pattern=r"^[a-z][a-z0-9-]*$")
+    key: str = Field(min_length=1)
+
+
 class Declaration(DeclarationModel):
     server: AnyHttpUrl
     bot: BotSpec
     projects: list[ProjectSpec]
     token: TokenSpec
+    seats: dict[Annotated[str, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")], SopsTarget] = Field(
+        default_factory=dict
+    )
 
     @field_validator("server")
     @classmethod
@@ -131,6 +139,7 @@ class Credentials(DeclarationModel):
     bot_id: PositiveInt
     token_id: PositiveInt
     token: SecretStr = Field(min_length=4)
+    previous_token_id: PositiveInt | None = None
 
 
 class Report(BaseModel):

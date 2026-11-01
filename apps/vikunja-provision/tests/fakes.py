@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from pydantic import SecretStr
 from vikunja_provision.models import (
     Bot,
     BotSpec,
     Credentials,
+    Declaration,
     IssuedToken,
     Project,
     ProvisionError,
     Share,
+    SopsTarget,
     Token,
     TokenSpec,
 )
+from vikunja_provision.workflow import Plan, apply, plan
 
 
 @dataclass
@@ -97,3 +101,43 @@ class MemoryCredentials:
             raise OSError("Disk is full")
 
         self.credentials = credentials
+
+
+@dataclass
+class MemoryTokenStore:
+    values: dict[str, SecretStr] = field(default_factory=dict)
+    failing_reads: set[str] = field(default_factory=set)
+    failing_writes: set[str] = field(default_factory=set)
+
+    def read(self, host: str, target: SopsTarget) -> SecretStr | None:
+        if host in self.failing_reads:
+            raise ProvisionError(f"Could not read SOPS secret for {host}")
+
+        return self.values.get(host)
+
+    def write(self, host: str, target: SopsTarget, value: SecretStr) -> None:
+        if host in self.failing_writes:
+            raise ProvisionError(f"Could not update SOPS secret for {host}")
+
+        self.values[host] = value
+
+
+def seat_targets() -> dict[str, SopsTarget]:
+    return {
+        host: SopsTarget(realm="home", key="agents/vikunja/org/agents/authorization")
+        for host in ("frame", "mair", "mmini")
+    }
+
+
+def prepare(
+    declaration: Declaration,
+    api: MemoryVikunja,
+    store: MemoryCredentials,
+    *,
+    rotate: bool = False,
+) -> Plan:
+    return plan(declaration, api, store, rotate_token=rotate, now=datetime(2026, 11, 1, tzinfo=UTC))
+
+
+def provision(declaration: Declaration, api: MemoryVikunja, store: MemoryCredentials) -> None:
+    apply(declaration, prepare(declaration, api, store), api, store)

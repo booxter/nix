@@ -1,9 +1,12 @@
 {
   atomicFileWrites,
+  age,
   declarations ? { },
   lib,
   python3,
   pythonRuffCheckHook,
+  sops,
+  sopsTools,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -22,9 +25,12 @@ pythonPackages.buildPythonApplication {
     pythonPackages.authlib
     pythonPackages.httpx2
     pythonPackages.pydantic
+    sopsTools
   ];
 
   nativeCheckInputs = [
+    age
+    sops
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
@@ -37,7 +43,10 @@ pythonPackages.buildPythonApplication {
 
   pythonImportsCheck = [ "vikunja_provision" ];
 
-  makeWrapperArgs = [ "--set VIKUNJA_DECLARATIONS_FILE ${declarationsFile}" ];
+  makeWrapperArgs = [
+    "--set VIKUNJA_DECLARATIONS_FILE ${declarationsFile}"
+    "--prefix PATH : ${sopsTools.runtimePath}"
+  ];
 
   __darwinAllowLocalNetworking = true;
 

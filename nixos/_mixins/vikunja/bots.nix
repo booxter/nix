@@ -24,6 +24,11 @@ let
           default = { };
           description = "Direct project grants keyed by exact, unique project title.";
         };
+        seats = lib.mkOption {
+          type = with lib.types; listOf nonEmptyStr;
+          default = [ ];
+          description = "Hosts receiving this bot's token through SOPS and coding-agent MCP configuration.";
+        };
         token = {
           title = lib.mkOption {
             type = lib.types.nonEmptyStr;
