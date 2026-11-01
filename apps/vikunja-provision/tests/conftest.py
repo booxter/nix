@@ -9,7 +9,7 @@ def declaration() -> Declaration:
     return Declaration(
         server="https://vi.example.test",
         bot=BotSpec(username="bot-agents", name="Coding agents"),
-        projects=[ProjectSpec(id=10, permission=1)],
+        projects=[ProjectSpec(title="Homelab", permission=1)],
         token=TokenSpec(
             title="agents",
             permissions={

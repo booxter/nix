@@ -8,6 +8,7 @@ from vikunja_provision.models import (
     Bot,
     Credentials,
     Declaration,
+    Project,
     ProjectSpec,
     ProvisionError,
     Share,
@@ -19,6 +20,7 @@ from vikunja_provision.storage import CredentialStore
 @dataclass(frozen=True)
 class ProjectAccess:
     desired: ProjectSpec
+    project: Project
     current: Share | None
 
     @property
@@ -53,20 +55,7 @@ def plan(
     ):
         raise ProvisionError("Credentials belong to a different server or bot; use another file")
 
-    projects = tuple(
-        ProjectAccess(
-            project,
-            next(
-                (
-                    share
-                    for share in api.shares(project.id)
-                    if share.username == desired.bot.username
-                ),
-                None,
-            ),
-        )
-        for project in desired.projects
-    )
+    projects = _project_access(desired, api)
     tokens = api.tokens(bot.id) if bot is not None else []
     token = _managed_token(tokens, credentials, desired.token.title)
     issue_token = rotate_token or token is None
@@ -78,6 +67,29 @@ def plan(
         changes.append(f"{'rotate' if token else 'issue'} token {desired.token.title}")
 
     return Plan(bot, projects, token, issue_token, changes)
+
+
+def _project_access(desired: Declaration, api: Vikunja) -> tuple[ProjectAccess, ...]:
+    projects = api.projects()
+    access = []
+    for grant in desired.projects:
+        matches = [project for project in projects if project.title == grant.title]
+        if not matches:
+            raise ProvisionError(f"Project {grant.title!r} was not found among accessible projects")
+
+        if len(matches) > 1:
+            raise ProvisionError(
+                f"Project title {grant.title!r} is ambiguous; titles must be unique"
+            )
+
+        project = matches[0]
+        current = next(
+            (share for share in api.shares(project.id) if share.username == desired.bot.username),
+            None,
+        )
+        access.append(ProjectAccess(grant, project, current))
+
+    return tuple(access)
 
 
 def _check_existing_token(
@@ -123,7 +135,8 @@ def _changes(
         changes.append(f"update bot {desired.bot.username} (name and active status)")
 
     changes.extend(
-        f"set project {access.desired.id} permission to {access.desired.permission}"
+        f"set project {access.project.title!r} ({access.project.id}) permission "
+        f"to {access.desired.permission}"
         for access in projects
         if access.needs_update
     )
@@ -141,7 +154,7 @@ def apply(desired: Declaration, prepared: Plan, api: Vikunja, store: CredentialS
     for access in prepared.projects:
         if access.needs_update:
             api.set_share(
-                access.desired.id,
+                access.project.id,
                 Share(username=bot.username, permission=access.desired.permission),
                 exists=access.current is not None,
             )

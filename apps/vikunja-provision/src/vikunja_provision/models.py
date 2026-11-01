@@ -9,6 +9,7 @@ from pydantic import (
     ConfigDict,
     Field,
     PositiveInt,
+    RootModel,
     SecretStr,
     field_validator,
     model_validator,
@@ -29,7 +30,7 @@ class BotSpec(DeclarationModel):
 
 
 class ProjectSpec(DeclarationModel):
-    id: PositiveInt
+    title: str = Field(min_length=1)
     permission: int = Field(ge=0, le=2)
 
 
@@ -66,14 +67,30 @@ class Declaration(DeclarationModel):
 
     @model_validator(mode="after")
     def require_unique_projects(self) -> Self:
-        if len({project.id for project in self.projects}) != len(self.projects):
-            raise ValueError("project IDs must be unique")
+        if len({project.title for project in self.projects}) != len(self.projects):
+            raise ValueError("project titles must be unique")
 
         return self
 
     @property
     def server_url(self) -> str:
         return str(self.server).rstrip("/")
+
+
+class Declarations(RootModel[dict[str, dict[str, Declaration]]]):
+    def select(self, host: str, bot: str) -> Declaration:
+        if host not in self.root:
+            raise ProvisionError(f"No Vikunja bot declarations for host {host}")
+
+        if bot not in self.root[host]:
+            raise ProvisionError(f"No Vikunja bot declaration {host}/{bot}")
+
+        return self.root[host][bot]
+
+
+class Project(BaseModel):
+    id: PositiveInt
+    title: str
 
 
 class Bot(BaseModel):

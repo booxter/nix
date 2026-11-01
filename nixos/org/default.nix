@@ -69,5 +69,28 @@ in
     };
   };
 
-  host.vikunja = { };
+  host.vikunja.bots.agents = {
+    displayName = "Coding agents";
+    projects.Homelab = "read-write";
+    token = {
+      expiresAt = "2027-11-01T00:00:00Z";
+      permissions = {
+        mcp = [ "access" ];
+        projects = [
+          "read_all"
+          "read_one"
+        ];
+        tasks = [
+          "read_all"
+          "read_one"
+          "create"
+          "update"
+        ];
+        tasks_comments = [
+          "read_all"
+          "create"
+        ];
+      };
+    };
+  };
 }

@@ -108,6 +108,8 @@ class Handler(BaseHTTPRequestHandler):
         backend = self.server.backend
         if parsed.path == "/api/v2/user/bots":
             self.paginated(list(backend.bots()))
+        elif parsed.path == "/api/v2/projects":
+            self.paginated(list(backend.projects()))
         elif parsed.path == "/api/v2/tokens":
             self.paginated(list(backend.tokens(int(query["owner_id"][0]))))
         elif parsed.path.startswith("/api/v2/projects/"):
