@@ -339,9 +339,19 @@
       # https://github.com/oven-sh/bun/pull/39837
       inherit (pkgsNixpkgsUnstable) bun;
 
+      vzvm = pkgsNixpkgsUnstable.callPackage ./vzvm.nix { };
+
       darwin = prev.darwin.overrideScope (
         _: _: {
-          inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
+          linux-builder-vz = pkgsNixpkgsUnstable.darwin.linux-builder-vz.override (old: {
+            modules = old.modules ++ [
+              {
+                virtualisation.vz.package = final.vzvm;
+                # Use the 1.1.0 setting until nixpkgs exposes the idleTimeout option.
+                virtualisation.vz.extraConfig.idleTimeoutSeconds = 10 * 60;
+              }
+            ];
+          });
         }
       );
     };
