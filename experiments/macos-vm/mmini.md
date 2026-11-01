@@ -282,3 +282,22 @@ The final packages passed 61 Python tests with 88.68% coverage and 93 fleet-tool
 tests on both Darwin and Linux, including strict typing and lint. The runnable
 `darwinConfigurations.vm-test.config.system.build.vm` package also built
 successfully. No physical host configuration was activated.
+
+## Incremental system transfer
+
+The direct Nix SSH transfer was verified on 2026-10-31 using the same stopped
+test guest. Changing only `/etc/fleet-vm-test` copied three missing store paths,
+about 103 KiB, instead of exporting and uploading the full 1.8 GiB closure.
+The requested marker and system became active, and `hello` remained available.
+
+The normal `nix run .#vm -- vm-test` command then applied the Home Manager and
+Starship fixture update. It copied 38 missing paths, about 24.9 MiB, and completed
+both nix-darwin and Home Manager activation. Starship reported version 1.25.1.
+
+After each transfer, the private sudo askpass directory was absent. Nix still
+listed only `root` as trusted, and passwordless sudo remained unavailable to
+`vmadmin`. No persistent guest trust or sudo configuration was added.
+
+The backend passed 65 tests with 88.61% coverage on both Darwin and Linux,
+including failed authentication, failed transfer, cancellation, and helper
+cleanup. The fleet-tools package checks and repository lint also passed.
