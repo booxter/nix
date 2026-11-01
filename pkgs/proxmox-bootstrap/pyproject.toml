@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proxmox-bootstrap"
+version = "0.1.0"
+description = "Validate and stage Proxmox guest installation identities"
+requires-python = ">=3.13"
+dependencies = ["atomic-file-writes", "cryptography"]
+
+[project.scripts]
+proxmox-install-identity = "proxmox_bootstrap.identity:entrypoint"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+proxmox_bootstrap = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=proxmox_bootstrap --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true
+files = ["src/proxmox_bootstrap"]

@@ -3,6 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+from proxmox_bootstrap.identity import IdentityError, validate_identity
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ProxDeployError(RuntimeError):
+    """An expected deployment setup or installation error."""
+
+
+class VmSpec(BaseModel):
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    nodes: tuple[str, ...] = Field(min_length=1)
+    public_key: str = Field(min_length=1)
+
 
 @dataclass(frozen=True)
 class DeployRequest:
@@ -12,6 +26,10 @@ class DeployRequest:
     @property
     def password_reference(self) -> str:
         return f"host/{self.node}/root"
+
+    @property
+    def identity_reference(self) -> str:
+        return f"host/{self.vm_type}/ssh_host_ed25519_key"
 
 
 @dataclass(frozen=True)
@@ -35,16 +53,31 @@ class PasswordStore(Protocol):
 
 
 class VmDeployer(Protocol):
-    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> None: ...
+    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> int: ...
+
+
+class GuestInstaller(Protocol):
+    def prepare(self, request: DeployRequest) -> None: ...
+
+    def install(self, request: DeployRequest, vmid: int, identity: bytes) -> None: ...
 
 
 def deploy_vm(
     request: DeployRequest,
+    spec: VmSpec,
     password_store: PasswordStore,
     deployer: VmDeployer,
-) -> None:
-    password = password_store.read(request.password_reference)
-    deployer.deploy(
+    installer: GuestInstaller,
+) -> int:
+    identity = password_store.read(request.identity_reference).encode()
+    try:
+        validate_identity(identity, spec.public_key)
+    except IdentityError as error:
+        raise ProxDeployError(str(error)) from error
+
+    password = password_store.read(request.password_reference).rstrip("\r\n")
+    installer.prepare(request)
+    vmid = deployer.deploy(
         request,
         ProxmoxCredentials(
             host=request.node,
@@ -52,3 +85,5 @@ def deploy_vm(
             password=password,
         ),
     )
+    installer.install(request, vmid, identity)
+    return vmid

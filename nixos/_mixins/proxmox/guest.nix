@@ -1,6 +1,9 @@
 {
   config,
+  extendModules,
+  inputs,
   lib,
+  pkgs,
   proxmoxTopology,
   ...
 }:
@@ -25,6 +28,15 @@ in
         inherit (guest) cores;
         name = config.networking.hostName;
         autoInstall = true;
+        iso = lib.mkForce (
+          (pkgs.nixos (
+            import ./installer.nix {
+              inherit inputs pkgs;
+              publicHostKey = config.host.ssh.publicHostKey;
+              installedSystem = { inherit config extendModules; };
+            }
+          )).config.system.build.isoImage
+        );
         memory = guest.memoryGiB * 1024;
         balloon = if guest.balloonGiB == null then null else guest.balloonGiB * 1024;
         cpu.cputype = "host";

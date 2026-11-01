@@ -11,10 +11,7 @@ use model::{
 };
 pub use system_backend::SystemBackend;
 #[cfg(test)]
-use system_backend::{
-    config_uses_proxy, dns_candidates, parse_store_path, prebuilt_activation_arguments,
-    prebuilt_prepare_arguments, remote_helper_arguments,
-};
+use system_backend::{config_uses_proxy, dns_candidates, parse_store_path};
 pub use workflow::run;
 #[cfg(test)]
 use workflow::{run_with_backend, REPO_URL};
