@@ -37,7 +37,6 @@ def run(
     secrets: SecretStore | None = None,
 ) -> int:
     parser = argparse.ArgumentParser(description="Reconcile a Vikunja bot and its MCP access")
-    parser.add_argument("operation", choices=("plan", "apply"))
     parser.add_argument("host", help="Host carrying the Vikunja declaration")
     parser.add_argument("bot", help="Bot name in host.vikunja.bots")
     parser.add_argument(
@@ -87,8 +86,7 @@ def run(
             changes.extend(
                 distribution.plan(None if prepared.issue_token else prepared.credentials)
             )
-            if args.operation == "apply":
-                apply(desired, prepared, api, store, distribution)
+            apply(desired, prepared, api, store, distribution)
 
         print(Report(changes=changes).model_dump_json(indent=2))
     except ValidationError as error:

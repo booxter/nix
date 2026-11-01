@@ -36,7 +36,7 @@ class TokenDistribution:
                 remaining = ", ".join(hosts[index:])
                 raise ProvisionError(
                     f"{error}. SOPS distribution stopped. Completed: {completed}. "
-                    f"Not updated: {remaining}. Retry apply without --rotate-token."
+                    f"Not updated: {remaining}. Retry without --rotate-token."
                 ) from error
 
     @staticmethod
