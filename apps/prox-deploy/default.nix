@@ -1,10 +1,13 @@
 {
   lib,
+  nix,
   nixmoxer,
+  openssh,
   pass,
+  proxmox-bootstrap,
   python3,
   pythonRuffCheckHook,
-  vmNodes,
+  vmSpecs,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -17,7 +20,11 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
-  dependencies = [ nixmoxer ];
+  dependencies = [
+    nixmoxer
+    proxmox-bootstrap
+    pythonPackages.pydantic
+  ];
 
   nativeCheckInputs = [
     pythonRuffCheckHook
@@ -27,8 +34,10 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ nix ]}"
     "--set PROX_DEPLOY_PASS ${lib.escapeShellArg (lib.getExe pass)}"
-    "--set PROX_DEPLOY_VM_NODES_JSON ${lib.escapeShellArg (builtins.toJSON vmNodes)}"
+    "--set PROX_DEPLOY_SSH ${lib.escapeShellArg (lib.getExe openssh)}"
+    "--set PROX_DEPLOY_VM_SPECS_JSON ${lib.escapeShellArg (builtins.toJSON vmSpecs)}"
   ];
 
   preCheck = ''

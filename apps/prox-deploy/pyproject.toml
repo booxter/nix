@@ -7,7 +7,7 @@ name = "prox-deploy"
 version = "0.1.0"
 description = "Deploy inventory-backed NixOS VMs through nixmoxer"
 requires-python = ">=3.13"
-dependencies = ["nixmoxer"]
+dependencies = ["nixmoxer", "proxmox-bootstrap", "pydantic"]
 
 [project.scripts]
 prox-deploy = "prox_deploy.cli:entrypoint"

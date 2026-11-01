@@ -2,7 +2,6 @@
   fleetInventory,
   inputs,
   pkgs,
-  system,
   ...
 }:
 {
@@ -12,7 +11,6 @@
         fleetInventory
         inputs
         pkgs
-        system
         ;
     }).packages.prox-deploy;
   description = "Deploy a prox VM via nixmoxer.";

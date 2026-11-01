@@ -127,8 +127,24 @@ CI matrix selection rules and skip behavior are documented in
 
 ## Machines
 
-All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper
-around `nixmoxer`).
+All VMs run on Proxmox hosts. Use `prox-deploy` (a wrapper around `nixmoxer`)
+for installation and `deploy` for subsequent updates.
+
+Before installing a guest, store its unencrypted Ed25519 SSH host private key
+in `pass` at `host/<guest>/ssh_host_ed25519_key`. Its public key must match
+`nixos/<guest>/ssh_host_ed25519_key.pub`; prepare the host's SOPS recipients,
+passwords, and builder credentials before installation. Keep the private key
+outside the checkout and store only the key itself in the password-store entry.
+
+`prox-deploy` validates that identity before creating a VM. It then delivers
+the key over SSH to the Proxmox node and through the guest agent to the installer.
+The installer waits for the validated identity before formatting, places it in
+the installed system using disko's post-mount hook, and continues the existing
+offline installation. The command waits for the installed host's SSH access and
+SOPS decryption to succeed. On nodes that require a sudo password, deploy the
+updated node configuration first: it grants the operator passwordless sudo for
+the two required guest-agent commands. Access is checked before VM creation.
+Normal SSH host-key verification applies to both the node and the guest.
 
 ### Infra (DHCP, Proxmox)
 

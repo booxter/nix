@@ -8,11 +8,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Protocol, cast
 
-from .core import DeployRequest, ProxmoxCredentials
-
-
-class ProxDeployError(RuntimeError):
-    """An expected deployment setup error."""
+from .core import DeployRequest, ProxDeployError, ProxmoxCredentials
 
 
 @dataclass(frozen=True)
@@ -23,12 +19,36 @@ class CommandResult:
 
 
 class CommandRunner(Protocol):
-    def run(self, arguments: Sequence[str]) -> CommandResult: ...
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        input_data: str | None = None,
+        timeout: float | None = None,
+    ) -> CommandResult: ...
 
 
 class SubprocessRunner:
-    def run(self, arguments: Sequence[str]) -> CommandResult:
-        result = subprocess.run(arguments, check=False, capture_output=True, text=True)
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        input_data: str | None = None,
+        timeout: float | None = None,
+    ) -> CommandResult:
+        try:
+            result = subprocess.run(
+                arguments,
+                input=input_data,
+                timeout=timeout,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.TimeoutExpired:
+            return CommandResult(124, "", "command timed out")
+        except OSError as error:
+            raise ProxDeployError(f"cannot run {arguments[0]}: {error}") from error
         return CommandResult(result.returncode, result.stdout, result.stderr)
 
 
@@ -43,10 +63,10 @@ class PassPasswordStore:
             detail = result.stderr.strip() or f"exit status {result.returncode}"
             raise ProxDeployError(f"failed to read password-store entry {reference}: {detail}")
 
-        password = result.stdout.rstrip("\r\n")
-        if not password:
+        if not result.stdout.strip():
             raise ProxDeployError(f"password-store entry is empty: {reference}")
-        return password
+        # Keep the terminating newline required by OpenSSH private keys.
+        return result.stdout
 
 
 class NixmoxerCallback(Protocol):
@@ -57,12 +77,7 @@ def load_nixmoxer_callback() -> NixmoxerCallback:
     # nixmoxer currently installs an unnamespaced `main` module and does not
     # expose a supported library API. Fix this in the upstream package; keep
     # the compatibility boundary isolated here until then.
-    module = import_module("main")
-    command = getattr(module, "bootstrap", None)
-    callback = getattr(command, "callback", None)
-    if not callable(callback):
-        raise ProxDeployError("nixmoxer does not expose its bootstrap callback")
-    return cast(NixmoxerCallback, callback)
+    return cast(NixmoxerCallback, import_module("main").bootstrap.callback)
 
 
 class NixmoxerDeployer:
@@ -74,12 +89,15 @@ class NixmoxerDeployer:
         self._callback_loader = callback_loader
         self._environment = environment
 
-    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> None:
+    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> int:
         with _temporary_environment(
             self._environment,
             credentials.as_nixmoxer_environment(),
         ):
-            self._callback_loader()(True, request.vm_type, request.node)
+            vmid = self._callback_loader()(True, request.vm_type, request.node)
+        if type(vmid) is not int or not 100 <= vmid <= 999999999:
+            raise ProxDeployError("nixmoxer did not return a valid created VM ID")
+        return vmid
 
 
 @contextmanager

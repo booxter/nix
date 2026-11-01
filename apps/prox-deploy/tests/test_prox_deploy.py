@@ -1,224 +1,406 @@
 from __future__ import annotations
 
 import io
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from prox_deploy.adapters import (
     CommandResult,
     NixmoxerDeployer,
     PassPasswordStore,
-    ProxDeployError,
-    load_nixmoxer_callback,
+    SubprocessRunner,
 )
-from prox_deploy.cli import load_vm_nodes, main, run_cli
-from prox_deploy.core import DeployRequest, ProxmoxCredentials
+from prox_deploy.cli import load_vm_specs, main, run_cli
+from prox_deploy.core import DeployRequest, ProxDeployError, ProxmoxCredentials, VmSpec
+from prox_deploy.installer import SshGuestInstaller, SystemClock
+from pydantic import TypeAdapter, ValidationError
+
+
+@pytest.fixture
+def identity() -> tuple[str, str]:
+    key = Ed25519PrivateKey.generate()
+    private = key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.OpenSSH,
+        serialization.NoEncryption(),
+    )
+    public = key.public_key().public_bytes(
+        serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH
+    )
+    return private.decode(), public.decode()
 
 
 @dataclass
-class FakePasswordStore:
-    password: str
-    references: list[str] = field(default_factory=list)
+class MemoryPasswords:
+    entries: dict[str, str]
 
     def read(self, reference: str) -> str:
-        self.references.append(reference)
-        return self.password
+        if reference not in self.entries:
+            raise ProxDeployError(f"cannot read {reference}")
+        return self.entries[reference]
 
 
 @dataclass
 class RecordingDeployer:
     deployments: list[tuple[DeployRequest, ProxmoxCredentials]] = field(default_factory=list)
 
-    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> None:
+    def deploy(self, request: DeployRequest, credentials: ProxmoxCredentials) -> int:
         self.deployments.append((request, credentials))
+        return 123
+
+
+@dataclass
+class RecordingInstaller:
+    identities: list[tuple[DeployRequest, int, bytes]] = field(default_factory=list)
+
+    def prepare(self, request: DeployRequest) -> None:
+        pass
+
+    def install(self, request: DeployRequest, vmid: int, identity: bytes) -> None:
+        self.identities.append((request, vmid, identity))
 
 
 @dataclass
 class StubRunner:
-    result: CommandResult
-    calls: list[list[str]] = field(default_factory=list)
+    responses: list[CommandResult]
+    payloads: list[str] = field(default_factory=list)
 
-    def run(self, arguments: Sequence[str]) -> CommandResult:
-        self.calls.append(list(arguments))
-        return self.result
-
-
-class FailingPasswordStore:
-    def read(self, reference: str) -> str:
-        raise ProxDeployError(f"cannot read {reference}")
-
-
-def test_cli_resolves_password_reference_and_deploys() -> None:
-    passwords = FakePasswordStore("secret-pass")
-    deployer = RecordingDeployer()
-
-    status = run_cli(
-        ["srvarr", "prx1-lab"],
-        vm_nodes={"srvarr": ("prx1-lab", "prx2-lab"), "builder1": ("prx1-lab",)},
-        password_store=passwords,
-        deployer=deployer,
-        stderr=io.StringIO(),
-    )
-
-    assert status == 0
-    assert passwords.references == ["host/prx1-lab/root"]
-    assert deployer.deployments == [
-        (
-            DeployRequest(vm_type="srvarr", node="prx1-lab"),
-            ProxmoxCredentials(host="prx1-lab", user="root", password="secret-pass"),
-        )
-    ]
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        input_data: str | None = None,
+        timeout: float | None = None,
+    ) -> CommandResult:
+        if input_data is not None:
+            self.payloads.append(input_data)
+        return self.responses.pop(0) if len(self.responses) > 1 else self.responses[0]
 
 
-def test_cli_reports_expected_setup_errors() -> None:
-    stderr = io.StringIO()
+@dataclass
+class FakeClock:
+    elapsed: float = 0
 
-    status = run_cli(
-        ["srvarr", "prx1-lab"],
-        vm_nodes={"srvarr": ("prx1-lab",)},
-        password_store=FailingPasswordStore(),
-        deployer=RecordingDeployer(),
-        stderr=stderr,
-    )
+    def now(self) -> float:
+        return self.elapsed
 
-    assert status == 1
-    assert stderr.getvalue() == "prox-deploy: cannot read host/prx1-lab/root\n"
+    def sleep(self, seconds: float) -> None:
+        self.elapsed += seconds
 
 
-def test_pass_adapter_uses_show_and_strips_line_endings() -> None:
-    runner = StubRunner(CommandResult(0, "secret-pass\r\n", ""))
-    passwords = PassPasswordStore(Path("/nix/store/pass/bin/pass"), runner)
-
-    assert passwords.read("host/prx1-lab/root") == "secret-pass"
-    assert runner.calls == [["/nix/store/pass/bin/pass", "show", "host/prx1-lab/root"]]
+def specs(public: str) -> dict[str, VmSpec]:
+    return {"srvarr": VmSpec(nodes=("prx1-lab", "prx2-lab"), public_key=public)}
 
 
-@pytest.mark.parametrize(
-    ("result", "message"),
-    [
-        (CommandResult(7, "", "entry missing\n"), "entry missing"),
-        (CommandResult(0, "\n", ""), "entry is empty"),
-    ],
-)
-def test_pass_adapter_reports_expected_failures(result: CommandResult, message: str) -> None:
-    passwords = PassPasswordStore(Path("pass"), StubRunner(result))
-
-    with pytest.raises(ProxDeployError, match=message):
-        passwords.read("host/prx1-lab/root")
-
-
-def test_nixmoxer_adapter_sets_and_restores_environment() -> None:
-    environment = {"PROXMOX_USER": "previous", "UNRELATED": "kept"}
-    calls: list[tuple[bool, str, str | None, dict[str, str]]] = []
-
-    def callback(flake: bool, machine: str, node: str | None = None) -> object:
-        calls.append((flake, machine, node, dict(environment)))
-        return None
-
-    deployer = NixmoxerDeployer(lambda: callback, environment)
-    deployer.deploy(
-        DeployRequest("srvarr", "prx1-lab"),
-        ProxmoxCredentials("prx1-lab", "root", "secret-pass"),
-    )
-
-    assert calls == [
-        (
-            True,
-            "srvarr",
-            "prx1-lab",
-            {
-                "PROXMOX_HOST": "prx1-lab:8006",
-                "PROXMOX_USER": "root@pam",
-                "PROXMOX_PASSWORD": "secret-pass",
-                "PROXMOX_VERIFY_SSL": "0",
-                "UNRELATED": "kept",
-            },
-        )
-    ]
-    assert environment == {"PROXMOX_USER": "previous", "UNRELATED": "kept"}
-
-
-def test_pinned_nixmoxer_exposes_bootstrap_callback() -> None:
-    assert callable(load_nixmoxer_callback())
-
-
-def test_vm_nodes_are_loaded_with_json_and_validated() -> None:
-    assert load_vm_nodes('{"srvarr":["prx1-lab","prx2-lab"]}') == {
-        "srvarr": ("prx1-lab", "prx2-lab")
+def environment(public: str) -> dict[str, str]:
+    return {
+        "PROX_DEPLOY_VM_SPECS_JSON": TypeAdapter(dict[str, VmSpec])
+        .dump_json(specs(public))
+        .decode(),
+        "PROX_DEPLOY_PASS": "pass",
+        "PROX_DEPLOY_SSH": "ssh",
     }
 
-    with pytest.raises(ProxDeployError, match="map VM names"):
-        load_vm_nodes('{"srvarr": []}')
 
-
-def test_packaged_main_loads_settings_and_injected_dependencies() -> None:
-    passwords = FakePasswordStore("secret-pass")
+def test_deploy_validates_identity_and_installs_the_created_vm(identity: tuple[str, str]) -> None:
+    private, public = identity
+    passwords = MemoryPasswords(
+        {
+            "host/prx1-lab/root": "api-password\n",
+            "host/srvarr/ssh_host_ed25519_key": private,
+        }
+    )
     deployer = RecordingDeployer()
+    installer = RecordingInstaller()
+    errors = io.StringIO()
 
-    status = main(
-        ["srvarr", "prx1-lab"],
-        environment={
-            "PROX_DEPLOY_VM_NODES_JSON": '{"srvarr":["prx1-lab"]}',
-            "PROX_DEPLOY_PASS": "/nix/store/pass/bin/pass",
-        },
-        stderr=io.StringIO(),
-        password_store=passwords,
-        deployer=deployer,
+    assert (
+        main(
+            ["srvarr", "prx1-lab"],
+            environment=environment(public),
+            stderr=errors,
+            password_store=passwords,
+            deployer=deployer,
+            installer=installer,
+        )
+        == 0
     )
 
-    assert status == 0
-    assert len(deployer.deployments) == 1
+    request = DeployRequest("srvarr", "prx1-lab")
+    assert deployer.deployments == [
+        (request, ProxmoxCredentials("prx1-lab", "root", "api-password"))
+    ]
+    assert installer.identities == [(request, 123, private.encode())]
+    assert "Installed srvarr" in errors.getvalue()
+    assert private not in errors.getvalue()
 
 
-@pytest.mark.parametrize(
-    ("environment", "message"),
-    [
-        ({}, "missing packaged setting PROX_DEPLOY_VM_NODES_JSON"),
-        (
-            {
-                "PROX_DEPLOY_VM_NODES_JSON": "not-json",
-                "PROX_DEPLOY_PASS": "pass",
-            },
-            "Expecting value",
-        ),
-    ],
-)
-def test_packaged_main_reports_invalid_settings(environment: dict[str, str], message: str) -> None:
-    stderr = io.StringIO()
+@pytest.mark.parametrize("private", [None, "invalid-private-key"])
+def test_missing_or_invalid_identity_cannot_create_a_vm(
+    identity: tuple[str, str],
+    private: str | None,
+) -> None:
+    _, public = identity
+    passwords = MemoryPasswords(
+        {} if private is None else {"host/srvarr/ssh_host_ed25519_key": private}
+    )
+    deployer = RecordingDeployer()
+    installer = RecordingInstaller()
+    errors = io.StringIO()
 
-    status = main([], environment=environment, stderr=stderr)
+    assert (
+        run_cli(
+            ["srvarr", "prx1-lab"],
+            vm_specs=specs(public),
+            password_store=passwords,
+            deployer=deployer,
+            installer=installer,
+            stderr=errors,
+        )
+        == 1
+    )
+    assert deployer.deployments == []
+    assert installer.identities == []
 
-    assert status == 1
-    assert message in stderr.getvalue()
+
+def test_wrong_identity_cannot_create_a_vm(identity: tuple[str, str]) -> None:
+    private, _ = identity
+    other = (
+        Ed25519PrivateKey.generate()
+        .public_key()
+        .public_bytes(serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH)
+        .decode()
+    )
+    errors = io.StringIO()
+    deployer = RecordingDeployer()
+    assert (
+        run_cli(
+            ["srvarr", "prx1-lab"],
+            vm_specs=specs(other),
+            password_store=MemoryPasswords({"host/srvarr/ssh_host_ed25519_key": private}),
+            deployer=deployer,
+            installer=RecordingInstaller(),
+            stderr=errors,
+        )
+        == 1
+    )
+    assert "does not match" in errors.getvalue()
+    assert deployer.deployments == []
 
 
-def test_cli_rejects_unknown_vm_types() -> None:
+def test_missing_guest_agent_permissions_cannot_create_a_vm(identity: tuple[str, str]) -> None:
+    private, public = identity
+    deployer = RecordingDeployer()
+    runner = StubRunner([CommandResult(1, "", "permission denied")])
+    errors = io.StringIO()
+    installer = SshGuestInstaller(Path("ssh"), runner, FakeClock(), errors)
+
+    assert (
+        run_cli(
+            ["srvarr", "prx1-lab"],
+            vm_specs=specs(public),
+            password_store=MemoryPasswords(
+                {
+                    "host/prx1-lab/root": "api-password",
+                    "host/srvarr/ssh_host_ed25519_key": private,
+                }
+            ),
+            deployer=deployer,
+            installer=installer,
+            stderr=errors,
+        )
+        == 1
+    )
+    assert deployer.deployments == []
+    assert runner.payloads == []
+    assert "permission denied" in errors.getvalue()
+
+
+def test_node_outside_cluster_is_rejected_before_reading_secrets(identity: tuple[str, str]) -> None:
+    _, public = identity
+    errors = io.StringIO()
+    assert (
+        run_cli(
+            ["srvarr", "nvws"],
+            vm_specs=specs(public),
+            password_store=MemoryPasswords({}),
+            deployer=RecordingDeployer(),
+            installer=RecordingInstaller(),
+            stderr=errors,
+        )
+        == 1
+    )
+    assert "not in VM srvarr's cluster" in errors.getvalue()
+
+
+def test_unknown_host_is_rejected(identity: tuple[str, str]) -> None:
+    _, public = identity
     with pytest.raises(SystemExit) as error:
         run_cli(
             ["unknown", "prx1-lab"],
-            vm_nodes={"srvarr": ("prx1-lab",)},
-            password_store=FakePasswordStore("unused"),
+            vm_specs=specs(public),
+            password_store=MemoryPasswords({}),
             deployer=RecordingDeployer(),
+            installer=RecordingInstaller(),
             stderr=io.StringIO(),
         )
-
     assert error.value.code == 2
 
 
-def test_cli_rejects_node_outside_vm_cluster() -> None:
-    stderr = io.StringIO()
+def test_pass_preserves_private_key_line_endings(identity: tuple[str, str]) -> None:
+    private, _ = identity
+    store = PassPasswordStore(Path("pass"), StubRunner([CommandResult(0, private, "")]))
+    assert store.read("host/srvarr/ssh_host_ed25519_key") == private
 
-    status = run_cli(
-        ["srvarr", "nvws"],
-        vm_nodes={"srvarr": ("prx1-lab", "prx2-lab")},
-        password_store=FakePasswordStore("unused"),
-        deployer=RecordingDeployer(),
-        stderr=stderr,
-    )
 
-    assert status == 1
-    assert stderr.getvalue() == (
-        "prox-deploy: node nvws is not in VM srvarr's cluster; choose one of: prx1-lab, prx2-lab\n"
+@pytest.mark.parametrize(
+    "result", [CommandResult(1, "", "entry missing"), CommandResult(0, "\n", "")]
+)
+def test_pass_failures_are_reported(result: CommandResult) -> None:
+    store = PassPasswordStore(Path("pass"), StubRunner([result]))
+    with pytest.raises(ProxDeployError):
+        store.read("missing")
+
+
+def test_command_runner_preserves_stdin_and_reports_failures(tmp_path: Path) -> None:
+    runner = SubprocessRunner()
+    result = runner.run(
+        [sys.executable, "-c", "import sys; sys.stdout.write(sys.stdin.read())"],
+        input_data="fixture\n",
     )
+    assert result.stdout == "fixture\n"
+    assert result.returncode == 0
+    assert (
+        runner.run([sys.executable, "-c", "import time; time.sleep(1)"], timeout=0.01).returncode
+        == 124
+    )
+    with pytest.raises(ProxDeployError, match="cannot run"):
+        runner.run([str(tmp_path / "missing")])
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_nixmoxer_restores_credentials_after_creation_or_failure(fail: bool) -> None:
+    values = {"PROXMOX_USER": "previous", "UNRELATED": "kept"}
+
+    def callback(flake: bool, machine: str, node: str | None = None) -> object:
+        assert values["PROXMOX_PASSWORD"] == "api-password"
+        if fail:
+            raise ProxDeployError("API unavailable")
+        return 123
+
+    deployer = NixmoxerDeployer(lambda: callback, values)
+    request = DeployRequest("srvarr", "prx1-lab")
+    credentials = ProxmoxCredentials("prx1-lab", "root", "api-password")
+    if fail:
+        with pytest.raises(ProxDeployError, match="API unavailable"):
+            deployer.deploy(request, credentials)
+    else:
+        assert deployer.deploy(request, credentials) == 123
+    assert values == {"PROXMOX_USER": "previous", "UNRELATED": "kept"}
+
+
+@pytest.mark.parametrize("vmid", [None, True, 99])
+def test_nixmoxer_requires_the_created_vm_id(vmid: object) -> None:
+    def callback(flake: bool, machine: str, node: str | None = None) -> object:
+        return vmid
+
+    deployer = NixmoxerDeployer(lambda: callback, {})
+    with pytest.raises(ProxDeployError, match="valid created VM ID"):
+        deployer.deploy(
+            DeployRequest("srvarr", "prx1-lab"), ProxmoxCredentials("prx1-lab", "root", "pw")
+        )
+
+
+def test_packaged_inventory_is_validated(identity: tuple[str, str]) -> None:
+    _, public = identity
+    assert load_vm_specs(environment(public)["PROX_DEPLOY_VM_SPECS_JSON"]) == specs(public)
+    with pytest.raises(ValidationError):
+        load_vm_specs('{"srvarr":{"nodes":[],"public_key":"fixture"}}')
+
+
+@pytest.mark.parametrize("settings", [{}, {"PROX_DEPLOY_VM_SPECS_JSON": "invalid-json"}])
+def test_invalid_packaged_settings_are_reported(settings: dict[str, str]) -> None:
+    errors = io.StringIO()
+    assert main([], environment=settings, stderr=errors) == 1
+    assert errors.getvalue().startswith("prox-deploy:")
+
+
+def test_packaged_main_constructs_real_adapters_for_help(identity: tuple[str, str]) -> None:
+    _, public = identity
+    with pytest.raises(SystemExit) as error:
+        main(["--help"], environment=environment(public), stderr=io.StringIO())
+    assert error.value.code == 0
+
+
+def test_guest_installation_waits_for_agent_and_boot_and_preserves_payload() -> None:
+    runner = StubRunner(
+        [
+            CommandResult(1, "", "not running"),
+            CommandResult(0, "", ""),
+            CommandResult(0, '{"exited":1,"exitcode":0}', ""),
+            CommandResult(1, "inactive", ""),
+            CommandResult(0, "active", ""),
+        ]
+    )
+    clock = FakeClock()
+    installer = SshGuestInstaller(Path("ssh"), runner, clock, io.StringIO())
+    installer.install(DeployRequest("srvarr", "prx1-lab"), 123, b"fixture\n")
+    assert runner.payloads == ["fixture\n"]
+    assert clock.elapsed > 0
+
+
+@pytest.mark.parametrize("allowed", [True, False])
+def test_guest_agent_permissions_are_checked_without_delivering_a_key(allowed: bool) -> None:
+    runner = StubRunner([CommandResult(0 if allowed else 1, "", "permission denied")])
+    installer = SshGuestInstaller(Path("ssh"), runner, FakeClock(), io.StringIO())
+    if allowed:
+        installer.prepare(DeployRequest("srvarr", "prx1-lab"))
+    else:
+        with pytest.raises(ProxDeployError, match="cannot use the guest agent"):
+            installer.prepare(DeployRequest("srvarr", "prx1-lab"))
+    assert runner.payloads == []
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        CommandResult(1, "", "SSH failed"),
+        CommandResult(0, "not-json", ""),
+        CommandResult(0, '{"exited":1,"exitcode":1,"err-data":"wrong identity"}', ""),
+        CommandResult(0, '{"pid":123}', ""),
+    ],
+)
+def test_guest_receiver_failures_are_reported(response: CommandResult) -> None:
+    installer = SshGuestInstaller(
+        Path("ssh"), StubRunner([CommandResult(0, "", ""), response]), FakeClock(), io.StringIO()
+    )
+    with pytest.raises(ProxDeployError):
+        installer.install(DeployRequest("srvarr", "prx1-lab"), 123, b"fixture\n")
+
+
+def test_agent_and_boot_waits_are_bounded() -> None:
+    for responses in [
+        [CommandResult(1, "", "agent unavailable")],
+        [
+            CommandResult(0, "", ""),
+            CommandResult(0, '{"exited":1,"exitcode":0}', ""),
+            CommandResult(1, "failed", ""),
+        ],
+    ]:
+        installer = SshGuestInstaller(
+            Path("ssh"), StubRunner(responses), FakeClock(), io.StringIO()
+        )
+        with pytest.raises(ProxDeployError, match="Waiting for"):
+            installer.install(DeployRequest("srvarr", "prx1-lab"), 123, b"fixture\n")
+
+
+def test_system_clock_tracks_elapsed_time() -> None:
+    clock = SystemClock()
+    before = clock.now()
+    clock.sleep(0)
+    assert clock.now() >= before

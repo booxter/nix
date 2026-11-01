@@ -1,0 +1,26 @@
+Return the ID of the VM actually created, so the caller can deliver its
+installation identity to that VM without a name lookup or an API race.
+Drop when nixmoxer's bootstrap API returns the created VM ID upstream.
+
+diff --git a/main.py b/main.py
+--- a/main.py
++++ b/main.py
+@@ -302,6 +302,7 @@ class Proxmox:
+                 fg="green",
+             )
+         )
++        return api_params["vmid"]
+ 
+ 
+ def eval_config(machine, flake):
+@@ -660,8 +661,9 @@ def bootstrap(flake, machine, node=None):
+     config["cdrom"] = f"local:iso/{iso_file}"
+ 
+     config.pop("iso", None)
+-    proxmox.create_vm(node, config)
++    vmid = proxmox.create_vm(node, config)
+     logging.info(click.style("Virtual machine successfully created!", fg="green"))
++    return vmid
+ 
+ 
+ def run_main():

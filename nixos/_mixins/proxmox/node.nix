@@ -72,6 +72,28 @@ in
     # Some packages useful when debugging Proxmox VE.
     environment.systemPackages = with pkgs; [ bridge-utils ];
 
+    # The identity travels on stdin, so these two guest-agent operations must
+    # not prompt for a sudo password. Keep guest execution fixed to the receiver.
+    security.sudo.extraRules = [
+      {
+        users = [ config.host.username ];
+        runAs = "root";
+        commands =
+          map
+            (arguments: {
+              command = "/run/current-system/sw/bin/qm ${arguments}";
+              options = [
+                "NOPASSWD"
+                "NOSETENV"
+              ];
+            })
+            [
+              "^guest cmd [0-9]+ ping$"
+              "^guest exec [0-9]+ --pass-stdin --timeout 60 -- /run/current-system/sw/bin/proxmox-install-identity$"
+            ];
+      }
+    ];
+
     # Bridge to the LAN, while retaining the IP address and MAC address on
     # the main interface as expected by the DHCP server.
     networking.useNetworkd = true;
