@@ -148,6 +148,7 @@
       darwinConfigurations = builtins.mapAttrs mkDarwin hosts.darwin // {
         vm-test = inputs.nix-darwin.lib.darwinSystem {
           modules = [
+            inputs.home-manager.darwinModules.home-manager
             outputs.darwinModules.vm
             ./tests/darwin-vm.nix
           ];
