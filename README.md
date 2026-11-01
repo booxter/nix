@@ -63,6 +63,11 @@ Deployments to different hosts can run at the same time. If a selected host is
 already being deployed from this machine, wait for that deployment to finish and
 retry.
 
+Remote deployments copy the committed source to the target, where Nix builds the
+deployment helper and system using the target's configured caches and builders.
+The controller does not build or publish the remote system closure. Signature
+checks remain enabled when copying the content-addressed source.
+
 ## Secrets
 
 Secrets for non-work machines are managed via sops-nix, with one encrypted YAML

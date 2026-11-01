@@ -11,14 +11,13 @@ use rustix::system::uname;
 
 use crate::deploy_remote::DeployAction;
 use crate::deploy_source::{prepare_source, SourceRequest};
-use crate::{DeploymentCache, HostInventory};
+use crate::HostInventory;
 
 use super::{
     ActivationRequest, Backend, DeploymentTarget, DiskoRequest, SourceSelection, StagedSource,
 };
 
 const DIG: &str = env!("DEPLOY_DIG");
-const ATTIC: &str = env!("DEPLOY_ATTIC");
 const FZF: &str = env!("DEPLOY_FZF");
 const NIX: &str = env!("DEPLOY_NIX");
 const NIX_STORE: &str = env!("DEPLOY_NIX_STORE");
@@ -34,7 +33,6 @@ const SUDO: &str = "/run/wrappers/bin/sudo";
 pub struct SystemBackend {
     deployment_directory: Option<PathBuf>,
     deployment_hosts: Vec<String>,
-    attic: PathBuf,
     dig: PathBuf,
     fzf: PathBuf,
     lan_dns_server: String,
@@ -56,7 +54,6 @@ impl SystemBackend {
         Ok(Self {
             deployment_directory: None,
             deployment_hosts: Vec::new(),
-            attic: ATTIC.into(),
             dig: DIG.into(),
             fzf: FZF.into(),
             lan_dns_server: inventory.lan_dns_server.clone(),
@@ -151,52 +148,6 @@ impl SystemBackend {
             resolved_options,
         })
     }
-
-    fn copy_from_cache(
-        &self,
-        connection: &SshConnection,
-        cache: &DeploymentCache,
-        paths: &[&Path],
-        description: &str,
-    ) -> Result<()> {
-        let mut nix_ssh_options = self.ssh_options.clone();
-        nix_ssh_options.extend(connection.resolved_options.clone());
-        let mut copy = Command::new(&self.nix);
-        // A failed deployment may have cached misses for paths that the
-        // immediately preceding publish has since added.
-        copy.args([
-            "copy",
-            "--option",
-            "narinfo-cache-negative-ttl",
-            "0",
-            "--from",
-            &cache.store_uri,
-            "--to",
-            &format!("ssh-ng://{}", connection.destination),
-        ])
-        .args(paths)
-        .env("NIX_SSHOPTS", shell_words::join(&nix_ssh_options));
-        self.checked_status(&mut copy, description)
-    }
-
-    fn run_remote_helper(
-        &self,
-        connection: &SshConnection,
-        helper: &Path,
-        arguments: Vec<String>,
-        description: &str,
-    ) -> Result<()> {
-        let executable = helper.join("bin/fleet-deploy-remote");
-        let remote_command =
-            shell_words::join(std::iter::once(executable.display().to_string()).chain(arguments));
-        let mut ssh = Command::new(&self.ssh);
-        ssh.args(&self.ssh_options)
-            .args(&connection.resolved_options)
-            .arg("-tt")
-            .arg(&connection.destination)
-            .arg(remote_command);
-        self.checked_status(&mut ssh, description)
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -275,41 +226,6 @@ impl Backend for SystemBackend {
         )
     }
 
-    fn activate_remote_prebuilt(
-        &mut self,
-        target: &DeploymentTarget,
-        cache: &DeploymentCache,
-        helper: &Path,
-        system: &Path,
-        request: &ActivationRequest,
-    ) -> Result<()> {
-        let connection = self.resolve_connection(target)?;
-        self.copy_from_cache(
-            &connection,
-            cache,
-            &[helper],
-            &format!("signed helper copy to {}", target.host.display_name),
-        )?;
-        self.run_remote_helper(
-            &connection,
-            helper,
-            prebuilt_prepare_arguments(request),
-            &format!("deployment preflight for {}", target.host.display_name),
-        )?;
-        self.copy_from_cache(
-            &connection,
-            cache,
-            &[system],
-            &format!("signed system copy to {}", target.host.display_name),
-        )?;
-        self.run_remote_helper(
-            &connection,
-            helper,
-            prebuilt_activation_arguments(system, request),
-            &format!("remote activation for {}", target.host.display_name),
-        )
-    }
-
     fn build_helper(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
         let platform = &target.host.platform;
         let attribute = format!(
@@ -320,26 +236,6 @@ impl Backend for SystemBackend {
             Command::new(&self.nix).args(["build", &attribute]),
             &self.deployment_root(&target.config_name, &format!("helper-{platform}"))?,
             &format!("fleet deploy helper build for {platform}"),
-        )
-    }
-
-    fn build_system(&mut self, source: &Path, target: &DeploymentTarget) -> Result<PathBuf> {
-        let attribute = match target.kind {
-            super::HostKind::Nixos => format!(
-                "{}#nixosConfigurations.{}.config.system.build.toplevel",
-                source.display(),
-                target.config_name
-            ),
-            super::HostKind::Darwin => format!(
-                "{}#darwinConfigurations.{}.system",
-                source.display(),
-                target.config_name
-            ),
-        };
-        super::roots::build(
-            Command::new(&self.nix).args(["build", &attribute]),
-            &self.deployment_root(&target.config_name, "system")?,
-            &format!("system build for {}", target.host.display_name),
         )
     }
 
@@ -413,29 +309,6 @@ impl Backend for SystemBackend {
         let system = uname();
         let hostname = system.nodename().to_string_lossy();
         Ok(hostname.split('.').next().unwrap_or(&hostname).to_owned())
-    }
-
-    fn publish(&mut self, cache: &DeploymentCache, paths: &[PathBuf]) -> Result<()> {
-        let mut arguments = vec![
-            "push".to_owned(),
-            "--jobs".to_owned(),
-            "1".to_owned(),
-            "--ignore-upstream-cache-filter".to_owned(),
-            cache.push_target.clone(),
-        ];
-        arguments.extend(paths.iter().map(|path| path.display().to_string()));
-
-        if getuid().as_raw() == 0 {
-            let attic = self.attic.clone();
-            self.checked_status(
-                Command::new(attic).args(&arguments),
-                "Attic deployment publish",
-            )
-        } else {
-            let mut command = Command::new(SUDO);
-            command.arg("-H").arg(&self.attic).args(&arguments);
-            self.checked_status(&mut command, "Attic deployment publish")
-        }
     }
 
     fn select(&mut self, candidates: &[String]) -> Result<Vec<String>> {
@@ -546,50 +419,6 @@ fn activation_arguments(source: &Path, request: &ActivationRequest) -> Vec<Strin
         arguments.push("--no-inhibit".to_owned());
     }
     arguments
-}
-
-pub(super) fn prebuilt_activation_arguments(
-    system: &Path,
-    request: &ActivationRequest,
-) -> Vec<String> {
-    let action = match request.action {
-        DeployAction::Switch => "switch",
-        DeployAction::Boot => "boot",
-        DeployAction::DryActivate => "dry-activate",
-    };
-    let mut arguments = vec![
-        "activate".to_owned(),
-        "--action".to_owned(),
-        action.to_owned(),
-        "--config-name".to_owned(),
-        request.config_name.clone(),
-        "--expected-runtime-host".to_owned(),
-        request.expected_runtime_host.clone(),
-        "--gc-headroom-gib".to_owned(),
-        "5".to_owned(),
-        "--min-free-gib".to_owned(),
-        "30".to_owned(),
-        "--system-config".to_owned(),
-        system.display().to_string(),
-    ];
-    if request.no_inhibit {
-        arguments.push("--no-inhibit".to_owned());
-    }
-    arguments
-}
-
-pub(super) fn prebuilt_prepare_arguments(request: &ActivationRequest) -> Vec<String> {
-    vec![
-        "prepare".to_owned(),
-        "--config-name".to_owned(),
-        request.config_name.clone(),
-        "--expected-runtime-host".to_owned(),
-        request.expected_runtime_host.clone(),
-        "--gc-headroom-gib".to_owned(),
-        "5".to_owned(),
-        "--min-free-gib".to_owned(),
-        "30".to_owned(),
-    ]
 }
 
 pub(super) fn remote_helper_arguments(source: &Path) -> Vec<String> {
