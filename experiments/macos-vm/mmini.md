@@ -240,3 +240,45 @@ XDG_STATE_HOME=/private/tmp/macos-vm-app-state-c810 nix run .#vm -- macos
 
 The implementation also passed 51 Python tests with 88.65% coverage and 92
 fleet-tools tests on both Darwin and Linux, including strict typing and lint.
+
+## Darwin configuration activation
+
+The standalone [Darwin test configuration](../../tests/darwin-vm.nix) was tested
+on 2026-10-31 in the same isolated checkout and state directory. It imports
+`darwinModules.vm`, exposes `system.build.vm`, and adds `hello` and an `/etc`
+marker through `virtualisation.vmVariant`.
+
+The public `nix run .#vm -- vm-test` command completed these checks:
+
+- Cloned the prepared Nix base, transferred the built system closure, and
+  activated nix-darwin. Both `/run/current-system` and the system profile
+  pointed to the requested closure; `hello` and the `/etc` marker were present.
+- Cold-booted the same disk without repeating transfer or activation, preserved
+  a guest-created file, and built a fresh derivation through the Nix daemon.
+- Applied a changed configuration to the existing disk: an updated `/etc`
+  marker and two CPUs replaced the original marker and four CPUs. The
+  guest-created file survived.
+- Reset the target after restoring the original configuration. The guest file
+  disappeared, the original marker and four CPUs returned, and `hello` ran.
+  Reset reused the Nix base without restoring macOS or installing Nix again.
+- Shut down cleanly on Ctrl-C after each session.
+
+The installer-created base needed no migration before nix-darwin activation.
+The activated configuration manages its own Nix version, 2.34.9+1, while the
+shared Nix base retains the bootstrap installer's version. A changed
+configuration currently transfers its full closure, about 1.8 GiB for this
+fixture, through a temporary binary cache; this takes several minutes.
+
+All experimental guests are stopped, the existing QEMU builder remains running,
+and host swap remains unused. To resume the retained configured guest:
+
+```sh
+ssh mmini
+cd /private/tmp/macos-vm-nix-c810
+XDG_STATE_HOME=/private/tmp/macos-vm-app-state-c810 nix run .#vm -- vm-test
+```
+
+The final packages passed 61 Python tests with 88.68% coverage and 93 fleet-tools
+tests on both Darwin and Linux, including strict typing and lint. The runnable
+`darwinConfigurations.vm-test.config.system.build.vm` package also built
+successfully. No physical host configuration was activated.
