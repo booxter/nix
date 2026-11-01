@@ -4,25 +4,11 @@ from datetime import UTC, datetime
 
 import pytest
 from vikunja_provision.models import Bot, Declaration, Project, ProvisionError, Share, Token
-from vikunja_provision.workflow import Plan, apply, plan
+from vikunja_provision.workflow import apply
 
-from .fakes import MemoryCredentials, MemoryVikunja
+from .fakes import MemoryCredentials, MemoryVikunja, prepare, provision
 
 NOW = datetime(2026, 11, 1, tzinfo=UTC)
-
-
-def prepare(
-    declaration: Declaration,
-    api: MemoryVikunja,
-    store: MemoryCredentials,
-    *,
-    rotate: bool = False,
-) -> Plan:
-    return plan(declaration, api, store, rotate_token=rotate, now=NOW)
-
-
-def provision(declaration: Declaration, api: MemoryVikunja, store: MemoryCredentials) -> None:
-    apply(declaration, prepare(declaration, api, store), api, store)
 
 
 def test_plan_does_not_change_remote_or_local_state(declaration: Declaration) -> None:
@@ -265,3 +251,12 @@ def test_revocation_failure_leaves_replacement_credentials_available(
     assert store.credentials is not None
     assert store.credentials.token_id == 2
     assert len(api.tokens(1)) == 2
+    assert store.credentials.previous_token_id == 1
+
+    with pytest.raises(ProvisionError, match="rotation is pending"):
+        prepare(declaration, api, store, rotate=True)
+
+    api.fail_revoke = False
+    provision(declaration, api, store)
+    assert [token.id for token in api.tokens(1)] == [2]
+    assert store.credentials.previous_token_id is None

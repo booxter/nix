@@ -72,6 +72,11 @@ in
   host.vikunja.bots.agents = {
     displayName = "Coding agents";
     projects.Homelab = "read-write";
+    seats = [
+      "mair"
+      "frame"
+      "mmini"
+    ];
     token = {
       expiresAt = "2027-11-01T00:00:00Z";
       permissions = {

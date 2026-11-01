@@ -9,7 +9,10 @@ from pathlib import Path
 
 import httpx2
 from pydantic import ValidationError
+from sops_tools.cli import Application
+from sops_tools.errors import ToolError
 from vikunja_provision.api import HttpVikunja
+from vikunja_provision.distribution import SopsTokenStore, TokenDistribution, TokenStore
 from vikunja_provision.login import AuthorizationPrompt, login
 from vikunja_provision.models import Declarations, ProvisionError, Report
 from vikunja_provision.storage import FileCredentials, read_session
@@ -21,7 +24,12 @@ class ConsoleAuthorizationPrompt:
         print(f"Open this URL to sign in through Vikunja SSO:\n{url}", file=sys.stderr)
 
 
-def run(argv: Sequence[str] | None = None, *, prompt: AuthorizationPrompt | None = None) -> int:
+def run(
+    argv: Sequence[str] | None = None,
+    *,
+    prompt: AuthorizationPrompt | None = None,
+    token_store: TokenStore | None = None,
+) -> int:
     parser = argparse.ArgumentParser(description="Reconcile a Vikunja bot and its MCP access")
     parser.add_argument("operation", choices=("plan", "apply"))
     parser.add_argument("host", help="Host carrying the Vikunja declaration")
@@ -52,6 +60,11 @@ def run(argv: Sequence[str] | None = None, *, prompt: AuthorizationPrompt | None
             args.declarations_file.read_text(encoding="utf-8")
         )
         desired = declarations.select(args.host, args.bot)
+        distribution = None
+        if desired.seats:
+            distribution = TokenDistribution(
+                desired.seats, token_store or SopsTokenStore(Application.discover())
+            )
         session = (
             read_session(args.session_token_file)
             if args.session_token_file is not None
@@ -67,17 +80,22 @@ def run(argv: Sequence[str] | None = None, *, prompt: AuthorizationPrompt | None
                 rotate_token=args.rotate_token,
                 now=datetime.now(UTC),
             )
+            changes = list(prepared.changes)
+            if distribution is not None:
+                changes.extend(
+                    distribution.plan(None if prepared.issue_token else prepared.credentials)
+                )
             if args.operation == "apply":
-                apply(desired, prepared, api, store)
+                apply(desired, prepared, api, store, distribution)
 
-        print(Report(changes=prepared.changes).model_dump_json(indent=2))
+        print(Report(changes=changes).model_dump_json(indent=2))
     except ValidationError as error:
         print("Invalid declaration:", file=sys.stderr)
         for detail in error.errors(include_input=False, include_context=False):
             location = ".".join(str(part) for part in detail["loc"]) or "declaration"
             print(f"  {location}: {detail['msg']}", file=sys.stderr)
         return 1
-    except (OSError, ProvisionError) as error:
+    except (OSError, ProvisionError, ToolError) as error:
         print(f"vikunja-provision: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from vikunja_provision.api import Vikunja
+from vikunja_provision.distribution import TokenDistribution
 from vikunja_provision.models import (
     Bot,
     Credentials,
@@ -33,6 +34,8 @@ class Plan:
     bot: Bot | None
     projects: tuple[ProjectAccess, ...]
     token: Token | None
+    credentials: Credentials | None
+    retiring_token: Token | None
     issue_token: bool
     changes: list[str]
 
@@ -49,6 +52,9 @@ def plan(
         raise ProvisionError("Token expiry must be in the future")
 
     credentials = store.load()
+    if rotate_token and credentials is not None and credentials.previous_token_id is not None:
+        raise ProvisionError("A token rotation is pending; retry apply without --rotate-token")
+
     bot = next((bot for bot in api.bots() if bot.username == desired.bot.username), None)
     if credentials is not None and (
         credentials.server != desired.server_url or bot is None or credentials.bot_id != bot.id
@@ -58,6 +64,14 @@ def plan(
     projects = _project_access(desired, api)
     tokens = api.tokens(bot.id) if bot is not None else []
     token = _managed_token(tokens, credentials, desired.token.title)
+    retiring_token = next(
+        (
+            item
+            for item in tokens
+            if credentials is not None and item.id == credentials.previous_token_id
+        ),
+        None,
+    )
     issue_token = rotate_token or token is None
     if not rotate_token:
         _check_existing_token(token, credentials, desired)
@@ -65,8 +79,18 @@ def plan(
     changes = _changes(desired, bot, projects)
     if issue_token:
         changes.append(f"{'rotate' if token else 'issue'} token {desired.token.title}")
+    if retiring_token is not None:
+        changes.append(f"revoke previous token {retiring_token.id}")
 
-    return Plan(bot, projects, token, issue_token, changes)
+    return Plan(
+        bot=bot,
+        projects=projects,
+        token=token,
+        credentials=credentials,
+        retiring_token=retiring_token,
+        issue_token=issue_token,
+        changes=changes,
+    )
 
 
 def _project_access(desired: Declaration, api: Vikunja) -> tuple[ProjectAccess, ...]:
@@ -108,7 +132,12 @@ def _check_existing_token(
 def _managed_token(
     tokens: list[Token], credentials: Credentials | None, title: str
 ) -> Token | None:
-    named = [token for token in tokens if token.title == title]
+    named = [
+        token
+        for token in tokens
+        if token.title == title
+        and (credentials is None or token.id != credentials.previous_token_id)
+    ]
     if len(named) > 1:
         raise ProvisionError(
             "Multiple tokens have the declared title; resolve the duplicates first"
@@ -144,7 +173,13 @@ def _changes(
     return changes
 
 
-def apply(desired: Declaration, prepared: Plan, api: Vikunja, store: CredentialStore) -> None:
+def apply(
+    desired: Declaration,
+    prepared: Plan,
+    api: Vikunja,
+    store: CredentialStore,
+    distribution: TokenDistribution | None = None,
+) -> None:
     bot = prepared.bot
     if bot is None:
         bot = api.create_bot(desired.bot)
@@ -159,34 +194,49 @@ def apply(desired: Declaration, prepared: Plan, api: Vikunja, store: CredentialS
                 exists=access.current is not None,
             )
 
-    if not prepared.issue_token:
-        return
+    credentials = prepared.credentials
+    retiring_token = prepared.retiring_token
+    if prepared.issue_token:
+        issued = api.issue_token(bot.id, desired.token)
+        retiring_token = prepared.token
+        credentials = Credentials(
+            server=desired.server_url,
+            bot_id=bot.id,
+            token_id=issued.id,
+            token=issued.token,
+            previous_token_id=retiring_token.id if retiring_token is not None else None,
+        )
+        _save_issued(credentials, api, store)
 
-    issued = api.issue_token(bot.id, desired.token)
-    credentials = Credentials(
-        server=desired.server_url,
-        bot_id=bot.id,
-        token_id=issued.id,
-        token=issued.token,
-    )
+    assert credentials is not None
+    if distribution is not None:
+        distribution.publish(credentials)
+
+    # Keep the old token active until the replacement is saved on every selected seat.
+    if retiring_token is not None:
+        try:
+            api.delete_token(retiring_token.id)
+        except ProvisionError as error:
+            raise ProvisionError(
+                f"New credentials saved, but previous token {retiring_token.id} was not revoked; "
+                "retry apply without --rotate-token"
+            ) from error
+
+    if credentials.previous_token_id is not None:
+        store.save(credentials.model_copy(update={"previous_token_id": None}))
+
+
+def _save_issued(credentials: Credentials, api: Vikunja, store: CredentialStore) -> None:
     try:
         store.save(credentials)
     except OSError as error:
         try:
-            api.delete_token(issued.id)
+            api.delete_token(credentials.token_id)
         except ProvisionError:
             raise ProvisionError(
-                f"Could not save credentials; newly issued token {issued.id} may remain active"
+                f"Could not save credentials; newly issued token {credentials.token_id} "
+                "may remain active"
             ) from error
         raise ProvisionError(
             "Could not save credentials; revoked the newly issued token"
         ) from error
-
-    # Never invalidate the old credential until its replacement is durably saved.
-    if prepared.token is not None:
-        try:
-            api.delete_token(prepared.token.id)
-        except ProvisionError as error:
-            raise ProvisionError(
-                f"New credentials saved, but previous token {prepared.token.id} was not revoked"
-            ) from error
