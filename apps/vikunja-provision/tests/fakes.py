@@ -8,6 +8,7 @@ from vikunja_provision.models import (
     BotSpec,
     Credentials,
     IssuedToken,
+    Project,
     ProvisionError,
     Share,
     Token,
@@ -18,6 +19,9 @@ from vikunja_provision.models import (
 @dataclass
 class MemoryVikunja:
     bot_records: list[Bot] = field(default_factory=list)
+    project_records: list[Project] = field(
+        default_factory=lambda: [Project(id=9, title="Other"), Project(id=10, title="Homelab")]
+    )
     project_shares: dict[int, list[Share]] = field(default_factory=dict)
     token_records: list[Token] = field(default_factory=list)
     fail_issue: bool = False
@@ -26,6 +30,9 @@ class MemoryVikunja:
 
     def bots(self) -> list[Bot]:
         return self.bot_records.copy()
+
+    def projects(self) -> list[Project]:
+        return self.project_records.copy()
 
     def shares(self, project_id: int) -> list[Share]:
         return self.project_shares.get(project_id, []).copy()

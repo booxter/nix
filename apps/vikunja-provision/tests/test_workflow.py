@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from vikunja_provision.models import Bot, Declaration, ProvisionError, Share, Token
+from vikunja_provision.models import Bot, Declaration, Project, ProvisionError, Share, Token
 from vikunja_provision.workflow import Plan, apply, plan
 
 from .fakes import MemoryCredentials, MemoryVikunja
@@ -35,6 +35,26 @@ def test_plan_does_not_change_remote_or_local_state(declaration: Declaration) ->
     assert api.bots() == []
     assert api.tokens(1) == []
     assert api.shares(10) == []
+    assert store.load() is None
+
+
+@pytest.mark.parametrize("ambiguous", [False, True])
+def test_project_names_must_resolve_uniquely_before_any_changes(
+    declaration: Declaration, ambiguous: bool
+) -> None:
+    api = MemoryVikunja()
+    store = MemoryCredentials()
+    if ambiguous:
+        api.project_records.append(Project(id=20, title="Homelab"))
+    else:
+        api.project_records = [Project(id=9, title="homelab")]
+
+    with pytest.raises(ProvisionError, match=r"not found|ambiguous"):
+        prepare(declaration, api, store)
+
+    assert api.bots() == []
+    assert api.shares(10) == []
+    assert api.tokens(1) == []
     assert store.load() is None
 
 

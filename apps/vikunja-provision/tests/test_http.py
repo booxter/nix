@@ -8,11 +8,16 @@ import pytest
 from pydantic import AnyHttpUrl
 from vikunja_provision.api import HttpVikunja
 from vikunja_provision.cli import run
-from vikunja_provision.models import Bot, Declaration, ProvisionError, Share
+from vikunja_provision.models import Bot, Declaration, Declarations, ProvisionError, Share
 from vikunja_provision.storage import FileCredentials
 from vikunja_provision.workflow import apply, plan
 
 from .server import SESSION, BrowserPrompt, InterruptedPrompt, UnusedPrompt, running_server
+
+
+def write_declarations(path: Path, desired: Declaration) -> None:
+    declarations = Declarations({"org": {"agents": desired}})
+    path.write_text(declarations.model_dump_json(), encoding="utf-8")
 
 
 def test_http_reconciliation_and_rotation_with_paginated_lists(
@@ -85,12 +90,19 @@ def test_connection_failure_is_actionable() -> None:
 def test_cli_sso_plan_apply_and_repeat(
     declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    config_path = tmp_path / "bot.json"
+    config_path = tmp_path / "declarations.json"
     credentials_path = tmp_path / "credentials.json"
     with running_server() as server:
         desired = declaration.model_copy(update={"server": AnyHttpUrl(server.url)})
-        config_path.write_text(desired.model_dump_json(), encoding="utf-8")
-        options = ["--config", str(config_path), "--credentials-file", str(credentials_path)]
+        write_declarations(config_path, desired)
+        options = [
+            "org",
+            "agents",
+            "--declarations-file",
+            str(config_path),
+            "--credentials-file",
+            str(credentials_path),
+        ]
 
         assert run(["plan", *options], prompt=BrowserPrompt()) == 0
         assert server.backend.bots() == []
@@ -112,16 +124,17 @@ def test_cli_can_use_a_private_session_file(
     session_path = tmp_path / "session"
     session_path.write_text(SESSION.get_secret_value(), encoding="utf-8")
     session_path.chmod(0o600)
-    config_path = tmp_path / "bot.json"
+    config_path = tmp_path / "declarations.json"
     with running_server() as server:
-        config_path.write_text(
-            declaration.model_copy(update={"server": AnyHttpUrl(server.url)}).model_dump_json(),
-            encoding="utf-8",
+        write_declarations(
+            config_path, declaration.model_copy(update={"server": AnyHttpUrl(server.url)})
         )
         result = run(
             [
                 "apply",
-                "--config",
+                "org",
+                "agents",
+                "--declarations-file",
                 str(config_path),
                 "--credentials-file",
                 str(tmp_path / "credentials.json"),
@@ -138,21 +151,65 @@ def test_cli_can_use_a_private_session_file(
 def test_cli_reports_invalid_declarations_and_missing_files(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    path = tmp_path / "bot.json"
-    options = ["plan", "--config", str(path), "--credentials-file", str(tmp_path / "credentials")]
+    path = tmp_path / "declarations.json"
+    options = [
+        "plan",
+        "org",
+        "agents",
+        "--declarations-file",
+        str(path),
+        "--credentials-file",
+        str(tmp_path / "credentials"),
+    ]
     assert run(options) == 1
-    path.write_text('{"server":"https://example.test"}', encoding="utf-8")
+    path.write_text('{"org":{"agents":{"server":"https://example.test"}}}', encoding="utf-8")
     assert run(options) == 1
     assert "Invalid declaration" in capsys.readouterr().err
 
 
 def test_cli_handles_interrupted_sso(declaration: Declaration, tmp_path: Path) -> None:
-    path = tmp_path / "bot.json"
-    path.write_text(declaration.model_dump_json(), encoding="utf-8")
+    path = tmp_path / "declarations.json"
+    write_declarations(path, declaration)
     assert (
         run(
-            ["plan", "--config", str(path), "--credentials-file", str(tmp_path / "credentials")],
+            [
+                "plan",
+                "org",
+                "agents",
+                "--declarations-file",
+                str(path),
+                "--credentials-file",
+                str(tmp_path / "credentials"),
+            ],
             prompt=InterruptedPrompt(),
         )
         == 130
     )
+
+
+@pytest.mark.parametrize("host,bot", [("missing", "agents"), ("org", "missing")])
+def test_cli_rejects_unknown_targets_before_login(
+    declaration: Declaration,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    host: str,
+    bot: str,
+) -> None:
+    path = tmp_path / "declarations.json"
+    write_declarations(path, declaration)
+    assert (
+        run(
+            [
+                "plan",
+                host,
+                bot,
+                "--declarations-file",
+                str(path),
+                "--credentials-file",
+                str(tmp_path / "credentials"),
+            ],
+            prompt=UnusedPrompt(),
+        )
+        == 1
+    )
+    assert "No Vikunja bot declaration" in capsys.readouterr().err

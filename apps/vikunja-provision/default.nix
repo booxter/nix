@@ -1,11 +1,13 @@
 {
   atomicFileWrites,
+  declarations ? { },
   lib,
   python3,
   pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
+  declarationsFile = builtins.toFile "vikunja-bots.json" (builtins.toJSON declarations);
 in
 pythonPackages.buildPythonApplication {
   pname = "vikunja-provision";
@@ -34,6 +36,8 @@ pythonPackages.buildPythonApplication {
   '';
 
   pythonImportsCheck = [ "vikunja_provision" ];
+
+  makeWrapperArgs = [ "--set VIKUNJA_DECLARATIONS_FILE ${declarationsFile}" ];
 
   __darwinAllowLocalNetworking = true;
 

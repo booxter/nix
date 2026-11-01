@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -10,7 +11,7 @@ import httpx2
 from pydantic import ValidationError
 from vikunja_provision.api import HttpVikunja
 from vikunja_provision.login import AuthorizationPrompt, login
-from vikunja_provision.models import Declaration, ProvisionError, Report
+from vikunja_provision.models import Declarations, ProvisionError, Report
 from vikunja_provision.storage import FileCredentials, read_session
 from vikunja_provision.workflow import apply, plan
 
@@ -23,7 +24,14 @@ class ConsoleAuthorizationPrompt:
 def run(argv: Sequence[str] | None = None, *, prompt: AuthorizationPrompt | None = None) -> int:
     parser = argparse.ArgumentParser(description="Reconcile a Vikunja bot and its MCP access")
     parser.add_argument("operation", choices=("plan", "apply"))
-    parser.add_argument("--config", type=Path, required=True, help="JSON declaration")
+    parser.add_argument("host", help="Host carrying the Vikunja declaration")
+    parser.add_argument("bot", help="Bot name in host.vikunja.bots")
+    parser.add_argument(
+        "--declarations-file",
+        type=Path,
+        default=os.environ.get("VIKUNJA_DECLARATIONS_FILE"),
+        help="Override the declarations generated from the Nix configuration",
+    )
     parser.add_argument(
         "--session-token-file",
         type=Path,
@@ -36,9 +44,14 @@ def run(argv: Sequence[str] | None = None, *, prompt: AuthorizationPrompt | None
         "--rotate-token", action="store_true", help="Replace and revoke the old token"
     )
     args = parser.parse_args(argv)
+    if args.declarations_file is None:
+        parser.error("Run the packaged app or supply --declarations-file")
 
     try:
-        desired = Declaration.model_validate_json(args.config.read_text(encoding="utf-8"))
+        declarations = Declarations.model_validate_json(
+            args.declarations_file.read_text(encoding="utf-8")
+        )
+        desired = declarations.select(args.host, args.bot)
         session = (
             read_session(args.session_token_file)
             if args.session_token_file is not None

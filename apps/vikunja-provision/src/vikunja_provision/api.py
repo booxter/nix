@@ -10,6 +10,7 @@ from vikunja_provision.models import (
     Bot,
     BotSpec,
     IssuedToken,
+    Project,
     ProvisionError,
     Share,
     Token,
@@ -19,6 +20,8 @@ from vikunja_provision.models import (
 
 class Vikunja(Protocol):
     def bots(self) -> list[Bot]: ...
+
+    def projects(self) -> list[Project]: ...
 
     def shares(self, project_id: int) -> list[Share]: ...
 
@@ -115,6 +118,9 @@ class HttpVikunja:
 
     def bots(self) -> list[Bot]:
         return list(self._pages("/user/bots", Page[Bot]))
+
+    def projects(self) -> list[Project]:
+        return list(self._pages("/projects", Page[Project]))
 
     def shares(self, project_id: int) -> list[Share]:
         return list(self._pages(f"/projects/{project_id}/users", Page[Share]))
