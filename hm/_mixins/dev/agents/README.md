@@ -14,7 +14,7 @@ Codex model IDs are centralized in its mapping; update them when adopting a new
 generation. Claude uses its rolling family aliases. Codex V2 enforces the worker
 limit but leaves the no-nesting rule to the prompt.
 
-MCP URLs and values in `oauth.clientIds` accept strings or
+MCP URLs, header values, and values in `oauth.clientIds` accept strings or
 `{ secret = "sops/key"; }`. OAuth client IDs are keyed by `codex` or `claude`
 because each application has its own registered callbacks. Shared `instructions`
 are appended to both clients' context; `startupTimeoutSec` only maps to Codex.
