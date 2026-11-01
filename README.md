@@ -25,6 +25,9 @@ nix run .#vm -- macos
 nix run .#vm -- --gui macos
 nix run .#vm -- --reset macos
 
+# Tiny nix-darwin configuration inside a macOS VM
+nix run .#vm -- vm-test
+
 # Config diff between two Git revisions
 nix run .#diff -- frame <old-rev> <new-rev>
 nix run .#diff -- mair <old-rev> <new-rev>

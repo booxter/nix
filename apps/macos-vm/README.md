@@ -9,8 +9,8 @@ nix run .#vm -- --gui macos
 
 The command runs locally. For example, use a checkout on `mmini` through normal
 SSH. The `macos` target creates a plain macOS guest with 4 CPUs, 4 GiB RAM and a
-50 GB disk, multi-user Nix, and flakes enabled. It does not yet apply a Darwin
-host configuration.
+50 GB disk, multi-user Nix, and flakes enabled. This target does not apply a Darwin
+configuration; use `vm-test` to exercise nix-darwin activation.
 Existing NixOS host targets keep their previous behavior.
 
 On first use, the runner downloads and verifies the pinned Apple restore image,
@@ -60,6 +60,46 @@ VMs created before Nix preparation was added continue to boot their existing
 disks. To get Nix from the new base, use `--reset macos`; this discards that
 working VM's files and changes.
 
+## Darwin configurations
+
+The tiny [test configuration](../../tests/darwin-vm.nix) uses the exported
+`darwinModules.vm` module:
+
+```sh
+nix run .#vm -- vm-test
+nix run .#vm -- --gui vm-test
+nix run .#vm -- --reset vm-test
+
+# Build the runnable package without starting a VM:
+nix build .#darwinConfigurations.vm-test.config.system.build.vm
+./result/bin/run-vm-test-vm
+```
+
+`virtualisation.vmVariant` accepts ordinary nix-darwin configuration, plus
+`virtualisation.cores`, `memorySize` (MiB), `graphics`, and `name`. These settings
+apply only to the VM variant. Defaults are 4 CPUs, 4096 MiB, no display, and the
+configuration's hostname. The disk remains 50 GB. The module must be imported
+into a configuration to expose `config.system.build.vm` and make it a `vm` target.
+
+The runner builds the variant's system closure, starts a working clone of the
+cached Nix base, copies the closure into its private store, and activates it.
+Transfers use a temporary file binary cache over authenticated SSH; only that
+import bypasses signature checking. No host store or credentials are shared.
+The guest reports readiness after the requested system is active and Nix is
+available. The test variant provides `hello` and `/etc/fleet-vm-test`.
+
+Working disks are separate for each checkout and target. A changed configuration
+is applied on the next run without replacing the disk. An already active
+configuration skips transfer and activation. Failed activation can be retried;
+it is never recorded as successful. Reset discards that target's working disk,
+reuses the cached Nix base, and applies the current configuration.
+
+The bootstrap administrator remains `vmadmin`, including for SSH and shutdown.
+The test configuration uses this existing account as `system.primaryUser`.
+The module does not strip services, secrets, or hardware-specific settings.
+Real fleet configurations are not yet opted into this module; `vm-test` is a
+standalone configuration and is excluded from managed-host deployment inventory.
+
 ## Storage and prerequisites
 
 State lives under `${XDG_STATE_HOME:-$HOME/.local/state}/fleet-vm/macos`:
@@ -67,12 +107,13 @@ State lives under `${XDG_STATE_HOME:-$HOME/.local/state}/fleet-vm/macos`:
 - `images/`: verified IPSWs and resumable partial downloads.
 - `bases/`: macOS-base metadata and private bootstrap credentials.
 - `nix-bases/`: metadata and credentials for bases with verified Nix installations.
-- `instances/`: credentials and SSH configuration for each checkout/worktree.
+- `instances/`: credentials and SSH configuration for each checkout and target.
 - `tart/`: macOS bases, Nix bases, and working VM disks.
 - `locks/`: exclusive base-preparation and instance-session locks.
 
 Bases are shared between worktrees. Working disks are separate, keyed by the
-canonical checkout path. Use `XDG_STATE_HOME` to choose a different state root;
+canonical checkout path and target. Use `XDG_STATE_HOME` to choose a different
+state root;
 keep it on APFS for fast copy-on-write cloning. Temporary directories are useful
 for tests but do not provide durable VM storage.
 

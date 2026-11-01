@@ -145,8 +145,17 @@
       selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
     in
     {
-      darwinConfigurations = builtins.mapAttrs mkDarwin hosts.darwin;
+      darwinConfigurations = builtins.mapAttrs mkDarwin hosts.darwin // {
+        vm-test = inputs.nix-darwin.lib.darwinSystem {
+          modules = [
+            outputs.darwinModules.vm
+            ./tests/darwin-vm.nix
+          ];
+        };
+      };
       nixosConfigurations = builtins.mapAttrs mkNixos hosts.nixos;
+
+      darwinModules.vm = import ./darwin/_mixins/vm { inherit inputs; };
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";

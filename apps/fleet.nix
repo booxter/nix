@@ -14,7 +14,11 @@ let
     runtimeHost = name;
     sshHost = name;
   };
-  darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
+  darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") (
+    pkgs.lib.filterAttrs (
+      name: _: builtins.hasAttr name fleetInventory.hosts
+    ) outputs.darwinConfigurations
+  );
   nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
   fleetHosts = nixosHosts // darwinHosts;
   deploymentCaches = pkgs.lib.mapAttrs' (
@@ -39,7 +43,7 @@ let
   toolInventory = {
     aliases =
       pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations
-      // pkgs.lib.mapAttrs (name: _: name) outputs.darwinConfigurations;
+      // pkgs.lib.mapAttrs (name: _: name) darwinHosts;
     darwin = pkgs.lib.mapAttrs (
       _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
     ) darwinHosts;
@@ -59,10 +63,15 @@ let
     gatewaySshHost = wgHome.server.host;
   };
   vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
+  darwinVmTargets = pkgs.lib.mapAttrs (name: _: name) (
+    pkgs.lib.filterAttrs (
+      _: configuration: configuration.config.system.build ? vm
+    ) outputs.darwinConfigurations
+  );
   fleetTools = pkgs.callPackage ./fleet-tools {
     fleetInventory = toolInventory;
     macosVmRunner = pkgs.callPackage ./macos-vm { };
-    inherit vmTargets wireguardHome;
+    inherit darwinVmTargets vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {

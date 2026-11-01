@@ -6,7 +6,7 @@
 let
   categories = import ./categories.nix;
   participating = lib.filterAttrs (
-    _: entry: entry.value.config.host.pki.authority != null
+    _: entry: (entry.value.config.host.pki.authority or null) != null
   ) configurations;
   authorityHosts = lib.filterAttrs (
     name: entry: entry.value.config.host.pki.authority.hostName == name

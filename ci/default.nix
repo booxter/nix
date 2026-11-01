@@ -55,6 +55,12 @@ in
     ++ lib.mapAttrsToList mkDarwinTarget hosts.darwin
     ++ [
       (mkTarget {
+        attr = "darwinConfigurations.vm-test.config.system.build.vm";
+        host = "mmini";
+        name = "darwin vm test (${darwinSystem})";
+        system = darwinSystem;
+      })
+      (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vm";
         host = "builder1";
         name = "nixos vm builder1 (${nixosSystem})";

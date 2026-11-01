@@ -3,6 +3,7 @@
   bind,
   clippy,
   curl,
+  darwinVmTargets,
   diffutils,
   dix,
   fleetInventory,
@@ -69,17 +70,23 @@ rustPlatform.buildRustPackage {
   VM_NIX = lib.getExe nix;
   VM_RUNNER_NIX = ./vm-runner.nix;
   VM_MACOS_RUNNER = lib.getExe macosVmRunner;
-  VM_TARGETS_JSON = builtins.toJSON vmTargets;
+  VM_TARGETS_JSON = builtins.toJSON {
+    nixos = vmTargets;
+    darwin = darwinVmTargets;
+  };
   VM_HELP = ''
     Examples:
       vm builder1
       vm --gui frame
       vm macos
+      vm vm-test
       vm --reset macos
 
     Available targets:
       macos
-    ${lib.concatMapStringsSep "\n" (name: "  ${name}") (builtins.attrNames vmTargets)}
+    ${lib.concatMapStringsSep "\n" (name: "  ${name}") (
+      builtins.attrNames (vmTargets // darwinVmTargets)
+    )}
   '';
 
   nativeCheckInputs = [

@@ -4,6 +4,7 @@ use std::process::Command;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
+use serde::Deserialize;
 
 const NIX_PROGRAM: &str = match option_env!("VM_NIX") {
     Some(path) => path,
@@ -16,7 +17,7 @@ const MACOS_RUNNER: &str = env!("VM_MACOS_RUNNER");
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Run a local NixOS host VM or a plain macOS development VM",
+    about = "Run a local NixOS or Darwin configuration, or a plain macOS VM",
     after_help = env!("VM_HELP")
 )]
 pub struct VmArgs {
@@ -28,7 +29,7 @@ pub struct VmArgs {
     #[arg(long)]
     pub reset: bool,
 
-    /// NixOS inventory host, or macos for a plain macOS VM.
+    /// NixOS or Darwin configuration, or macos for a plain macOS VM.
     #[arg(value_name = "TARGET")]
     pub target_host: String,
 }
@@ -36,7 +37,14 @@ pub struct VmArgs {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum VmTarget {
     Nixos(String),
+    Darwin(String),
     Macos,
+}
+
+#[derive(Deserialize)]
+pub struct VmTargets {
+    pub nixos: BTreeMap<String, String>,
+    pub darwin: BTreeMap<String, String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -71,7 +79,12 @@ impl NativeVmRunner {
 impl VmRunner for NativeVmRunner {
     fn run(&self, request: &VmRequest) -> Result<i32> {
         match &request.target {
-            VmTarget::Nixos(configuration) => self.run_nixos(configuration, request.gui),
+            VmTarget::Nixos(configuration) => {
+                self.run_configuration("nixos", configuration, request)
+            }
+            VmTarget::Darwin(configuration) => {
+                self.run_configuration("darwin", configuration, request)
+            }
             VmTarget::Macos => self.run_macos(request),
         }
     }
@@ -93,10 +106,19 @@ impl NativeVmRunner {
         Err(command.exec()).context("failed to start the macOS VM runner")
     }
 
-    fn run_nixos(&self, configuration: &str, gui: bool) -> Result<i32> {
-        let status = Command::new(&self.nix)
+    fn run_configuration(
+        &self,
+        kind: &str,
+        configuration: &str,
+        request: &VmRequest,
+    ) -> Result<i32> {
+        let mut command = Command::new(&self.nix);
+        command
             .args([
                 "run",
+                "--option",
+                "min-free",
+                "0",
                 "--impure",
                 "--file",
                 self.runner_nix
@@ -107,7 +129,24 @@ impl NativeVmRunner {
             ])
             .env("VM_REPO_ROOT", &self.repo_root)
             .env("VM_TARGET_CONFIG", configuration)
-            .env("VM_GUI", if gui { "1" } else { "0" })
+            .env("VM_TARGET_KIND", kind)
+            .env("VM_GUI", if request.gui { "1" } else { "0" });
+
+        if kind == "darwin" {
+            use std::os::unix::process::CommandExt;
+
+            command.arg("--").arg("--checkout").arg(&self.repo_root);
+            if request.gui {
+                command.arg("--gui");
+            }
+            if request.reset {
+                command.arg("--reset");
+            }
+            // Keep the terminal attached to the lifecycle owner during shutdown.
+            return Err(command.exec()).context("failed to start the Darwin VM runner");
+        }
+
+        let status = command
             .status()
             .with_context(|| format!("failed to start {}", self.nix.display()))?;
         status
@@ -116,7 +155,7 @@ impl NativeVmRunner {
     }
 }
 
-pub fn compiled_targets() -> Result<BTreeMap<String, String>> {
+pub fn compiled_targets() -> Result<VmTargets> {
     serde_json::from_str(TARGETS_JSON).context("compiled VM target inventory is invalid")
 }
 
@@ -124,13 +163,21 @@ pub fn run(arguments: VmArgs, runner: &impl VmRunner) -> Result<i32> {
     let targets = compiled_targets()?;
     let target = if arguments.target_host == "macos" {
         VmTarget::Macos
-    } else if let Some(configuration) = targets.get(&arguments.target_host) {
+    } else if let Some(configuration) = targets.darwin.get(&arguments.target_host) {
+        VmTarget::Darwin(configuration.clone())
+    } else if let Some(configuration) = targets.nixos.get(&arguments.target_host) {
         if arguments.reset {
-            bail!("--reset is supported only for the macos target");
+            bail!("--reset is supported only for macOS VMs");
         }
         VmTarget::Nixos(configuration.clone())
     } else {
-        let known = targets.keys().cloned().collect::<Vec<_>>().join(", ");
+        let known = targets
+            .nixos
+            .keys()
+            .chain(targets.darwin.keys())
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
         bail!(
             "unknown target: {}; available targets: macos, {known}",
             arguments.target_host
@@ -195,7 +242,7 @@ mod tests {
             *runner.requests.borrow(),
             [VmRequest {
                 target: VmTarget::Nixos(
-                    compiled_targets().expect("targets should parse")["builder1"].clone()
+                    compiled_targets().expect("targets should parse").nixos["builder1"].clone()
                 ),
                 gui: true,
                 reset: false,
@@ -258,7 +305,25 @@ mod tests {
         assert!(run(arguments, &runner)
             .unwrap_err()
             .to_string()
-            .contains("only for the macos"));
+            .contains("only for macOS"));
         assert!(runner.requests.borrow().is_empty());
+    }
+
+    #[test]
+    fn darwin_configuration_supports_reset_and_graphics() {
+        let runner = FakeRunner {
+            exit_code: 0,
+            requests: RefCell::new(Vec::new()),
+        };
+        let arguments = VmArgs::try_parse_from(["vm", "--reset", "--gui", "vm-test"]).unwrap();
+        assert_eq!(run(arguments, &runner).unwrap(), 0);
+        assert_eq!(
+            *runner.requests.borrow(),
+            [VmRequest {
+                target: VmTarget::Darwin("vm-test".to_owned()),
+                gui: true,
+                reset: true,
+            }]
+        );
     }
 }
