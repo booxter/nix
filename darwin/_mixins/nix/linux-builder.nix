@@ -51,38 +51,38 @@ in
       StandardErrorPath = "/var/log/nix-darwin/linux-builder.log";
     };
 
-    # Temporary migration: remove once hosts have retired their QEMU disks.
+    # Temporary migration: remove once hosts have retired their old builder state.
     # launchd reload failures are ignored upstream, so check the loaded service
     # and open files before deleting anything in postActivation.
     system.activationScripts.postActivation.text = lib.mkAfter ''
-      cleanup_old_builder_disk() {
-        local disk=/var/lib/linux-builder/nixos.qcow2
-        local service disk_users
+      cleanup_old_builder_state() {
+        local directory=/var/lib/linux-builder
+        local service open_files
 
-        [ -f "$disk" ] || return 0
+        [ -d "$directory" ] || return 0
 
         if ! service=$(/bin/launchctl print system/org.nixos.linux-builder); then
-          echo "Skipping old builder disk cleanup: cannot inspect the service." >&2
+          echo "Skipping old builder cleanup: cannot inspect the service." >&2
           return 0
         fi
 
         if ! echo "$service" | /usr/bin/grep -Fxq $'\tstate = running' ||
            ! echo "$service" | /usr/bin/grep -Fxq $'\tworking directory = /var/lib/linux-builder-vz'; then
-          echo "Skipping old builder disk cleanup: vz builder is not running." >&2
+          echo "Skipping old builder cleanup: vz builder is not running." >&2
           return 0
         fi
 
-        if disk_users=$(/usr/sbin/lsof -nP -F p -- "$disk" 2>&1); then
-          echo "Skipping old builder disk cleanup: disk is still open." >&2
-        elif [ -n "$disk_users" ]; then
-          echo "Skipping old builder disk cleanup: lsof failed: $disk_users" >&2
+        if open_files=$(/usr/sbin/lsof -nP -F p +D "$directory" 2>&1); then
+          echo "Skipping old builder cleanup: files are still open." >&2
+        elif [ -n "$open_files" ]; then
+          echo "Skipping old builder cleanup: lsof failed: $open_files" >&2
         else
-          echo "Removing unused QEMU builder disk: $disk"
-          /bin/rm -f -- "$disk"
+          echo "Removing unused builder state: $directory"
+          /bin/rm -rf -- "$directory"
         fi
       }
 
-      cleanup_old_builder_disk
+      cleanup_old_builder_state
     '';
 
     system.activationScripts.preActivation.text = lib.mkIf cfg.acceptLicense (
