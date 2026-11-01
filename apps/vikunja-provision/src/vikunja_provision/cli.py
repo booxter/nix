@@ -12,10 +12,16 @@ from pydantic import ValidationError
 from sops_tools.cli import Application
 from sops_tools.errors import ToolError
 from vikunja_provision.api import HttpVikunja
-from vikunja_provision.distribution import SopsTokenStore, TokenDistribution, TokenStore
+from vikunja_provision.distribution import TokenDistribution
 from vikunja_provision.login import AuthorizationPrompt, login
 from vikunja_provision.models import Declarations, ProvisionError, Report
-from vikunja_provision.storage import FileCredentials, read_session
+from vikunja_provision.storage import (
+    SecretStore,
+    SopsCredentials,
+    SopsSecrets,
+    provision_lock,
+    read_session,
+)
 from vikunja_provision.workflow import apply, plan
 
 
@@ -28,7 +34,7 @@ def run(
     argv: Sequence[str] | None = None,
     *,
     prompt: AuthorizationPrompt | None = None,
-    token_store: TokenStore | None = None,
+    secrets: SecretStore | None = None,
 ) -> int:
     parser = argparse.ArgumentParser(description="Reconcile a Vikunja bot and its MCP access")
     parser.add_argument("operation", choices=("plan", "apply"))
@@ -46,9 +52,6 @@ def run(
         help="Use an existing private user-session JWT instead of SSO",
     )
     parser.add_argument(
-        "--credentials-file", type=Path, required=True, help="Private bot token state"
-    )
-    parser.add_argument(
         "--rotate-token", action="store_true", help="Replace and revoke the old token"
     )
     args = parser.parse_args(argv)
@@ -60,18 +63,18 @@ def run(
             args.declarations_file.read_text(encoding="utf-8")
         )
         desired = declarations.select(args.host, args.bot)
-        distribution = None
-        if desired.seats:
-            distribution = TokenDistribution(
-                desired.seats, token_store or SopsTokenStore(Application.discover())
-            )
+        secret_store = secrets or SopsSecrets(Application.discover())
+        store = SopsCredentials(desired.state, secret_store)
+        distribution = TokenDistribution(desired.seats, secret_store)
         session = (
             read_session(args.session_token_file)
             if args.session_token_file is not None
             else login(desired.server_url, prompt or ConsoleAuthorizationPrompt())
         )
-        store = FileCredentials(args.credentials_file)
-        with store.locked(), httpx2.Client(timeout=20) as client:
+        with (
+            provision_lock(desired.server_url, desired.bot.username),
+            httpx2.Client(timeout=20) as client,
+        ):
             api = HttpVikunja(client, desired.server_url, session)
             prepared = plan(
                 desired,
@@ -81,10 +84,9 @@ def run(
                 now=datetime.now(UTC),
             )
             changes = list(prepared.changes)
-            if distribution is not None:
-                changes.extend(
-                    distribution.plan(None if prepared.issue_token else prepared.credentials)
-                )
+            changes.extend(
+                distribution.plan(None if prepared.issue_token else prepared.credentials)
+            )
             if args.operation == "apply":
                 apply(desired, prepared, api, store, distribution)
 

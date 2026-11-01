@@ -30,11 +30,9 @@ hosts, including each instance's public URL. No separate JSON file is needed.
 Preview and apply a declaration by host and bot name:
 
 ```sh
-nix run .#vikunja-provision -- plan org agents \
-  --credentials-file ~/.config/vikunja/agents.json
+nix run .#vikunja-provision -- plan org agents
 
-nix run .#vikunja-provision -- apply org agents \
-  --credentials-file ~/.config/vikunja/agents.json
+nix run .#vikunja-provision -- apply org agents
 ```
 
 Each command prints a login URL on stderr. Open it in a browser on the same
@@ -54,13 +52,17 @@ display name and active status, and reconciles the declared direct project
 shares. Undeclared shares, other bots, and unrelated tokens are preserved.
 Removing a project from the declaration does not revoke an earlier share.
 
-The credentials file contains the server, bot ID, token ID, and raw token. It is
-written atomically with mode `0600`; keep it outside the repository. Preserve
-this file between runs. A sibling lock file serializes commands using the same
-credentials path. On apply, the token is also written to each declared seat's
-encrypted file through the repository's SOPS library. Matching values are left
-unchanged. Writes are sequential and stop at the first failure, reporting which
-seats are complete and which remain.
+The server, bot ID, token ID, raw token, and pending rotation state are stored
+together as encrypted JSON at `agents/vikunja/org/agents/credentials` in `org`'s
+SOPS file. This record belongs to the service host, independently of which seats
+are selected. Decrypted values stay in memory; no local credential file is
+needed. An empty lock file in the temporary directory serializes local runs for
+the same server and bot. Run provisioning from only one machine at a time.
+
+On apply, the token is also written to each declared seat's encrypted file
+through the repository's SOPS library. Matching values are left unchanged.
+Writes are sequential and stop at the first failure, reporting which seats are
+complete and which remain.
 
 Run the app from this checkout. Review and commit the changed encrypted files,
 then deploy the selected seats normally to activate their MCP configuration.
@@ -69,18 +71,19 @@ and secret; it does not erase an earlier secret or revoke a copied shared token.
 
 Repeat applies preserve the token. To change its title, permissions, or expiry,
 or to replace lost/revoked credentials, preview and apply with `--rotate-token`.
-Rotation saves the replacement locally, updates all selected SOPS files, and
-only then revokes the previous token. Activate the updated seats to load the new
-token. If distribution or revocation fails, the credentials file records the
-pending rotation: retry `apply` without `--rotate-token` to resume using the saved
-replacement. A second rotation is refused while one is pending. If the initial
-local save fails, the app attempts to revoke the newly issued token and keeps
-the previous credentials. Unrelated duplicate token titles are rejected rather
-than choosing a token to revoke.
+Rotation saves the replacement in the encrypted record, updates all selected
+SOPS files, and only then revokes the previous token. Activate the updated seats
+to load the new token. If distribution or revocation fails, the encrypted record
+retains the pending rotation: retry `apply` without `--rotate-token` to resume
+using the saved replacement. A second rotation is refused while one is pending.
+If the initial SOPS save fails, the app attempts to revoke the newly issued token
+and keeps the previous credentials. Unrelated duplicate token titles are
+rejected rather than choosing a token to revoke.
 
 API writes are not transactional across endpoints. A failed apply may leave a
 created bot or updated shares; a later apply reads those resources and resumes.
-Use a single credentials path for each declared token.
+Keep the encrypted state and seat files together when committing or transferring
+changes to another checkout.
 
 Protocol references: [bot accounts](https://vikunja.io/docs/bot-users/),
 [API v2](https://vikunja.io/docs/api-v2/), and

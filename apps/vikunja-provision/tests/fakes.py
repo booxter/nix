@@ -17,6 +17,7 @@ from vikunja_provision.models import (
     Token,
     TokenSpec,
 )
+from vikunja_provision.storage import CredentialStore
 from vikunja_provision.workflow import Plan, apply, plan
 
 
@@ -132,12 +133,12 @@ def seat_targets() -> dict[str, SopsTarget]:
 def prepare(
     declaration: Declaration,
     api: MemoryVikunja,
-    store: MemoryCredentials,
+    store: CredentialStore,
     *,
     rotate: bool = False,
 ) -> Plan:
     return plan(declaration, api, store, rotate_token=rotate, now=datetime(2026, 11, 1, tzinfo=UTC))
 
 
-def provision(declaration: Declaration, api: MemoryVikunja, store: MemoryCredentials) -> None:
+def provision(declaration: Declaration, api: MemoryVikunja, store: CredentialStore) -> None:
     apply(declaration, prepare(declaration, api, store), api, store)

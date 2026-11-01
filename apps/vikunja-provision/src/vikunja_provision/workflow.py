@@ -59,7 +59,7 @@ def plan(
     if credentials is not None and (
         credentials.server != desired.server_url or bot is None or credentials.bot_id != bot.id
     ):
-        raise ProvisionError("Credentials belong to a different server or bot; use another file")
+        raise ProvisionError("SOPS credentials belong to a different server or bot")
 
     projects = _project_access(desired, api)
     tokens = api.tokens(bot.id) if bot is not None else []
@@ -229,7 +229,7 @@ def apply(
 def _save_issued(credentials: Credentials, api: Vikunja, store: CredentialStore) -> None:
     try:
         store.save(credentials)
-    except OSError as error:
+    except (OSError, ProvisionError) as error:
         try:
             api.delete_token(credentials.token_id)
         except ProvisionError:

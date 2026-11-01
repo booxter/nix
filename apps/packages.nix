@@ -29,7 +29,7 @@ in
   issue-proxmox-exporter-token = issueProxmoxExporterToken;
 
   vikunja-provision = pkgs.callPackage ./vikunja-provision {
-    inherit atomicFileWrites sopsTools;
+    inherit sopsTools;
   };
 
   seerr-request-storage = seerrTools.requestStorage;
