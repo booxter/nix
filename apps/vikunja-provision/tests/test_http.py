@@ -9,10 +9,10 @@ from pydantic import AnyHttpUrl
 from vikunja_provision.api import HttpVikunja
 from vikunja_provision.cli import run
 from vikunja_provision.models import Bot, Declaration, Declarations, ProvisionError, Share
-from vikunja_provision.storage import FileCredentials
+from vikunja_provision.storage import SopsCredentials
 from vikunja_provision.workflow import apply, plan
 
-from .fakes import MemoryTokenStore, seat_targets
+from .fakes import MemoryCredentials, MemoryTokenStore, seat_targets
 from .server import SESSION, BrowserPrompt, InterruptedPrompt, UnusedPrompt, running_server
 
 
@@ -21,10 +21,8 @@ def write_declarations(path: Path, desired: Declaration) -> None:
     path.write_text(declarations.model_dump_json(), encoding="utf-8")
 
 
-def test_http_reconciliation_and_rotation_with_paginated_lists(
-    declaration: Declaration, tmp_path: Path
-) -> None:
-    store = FileCredentials(tmp_path / "credentials.json")
+def test_http_reconciliation_and_rotation_with_paginated_lists(declaration: Declaration) -> None:
+    store = MemoryCredentials()
     with running_server() as server, httpx2.Client() as client:
         server.backend.bot_records = [
             Bot(id=1, username="bot-other", name="Other", status=0),
@@ -92,7 +90,7 @@ def test_cli_sso_plan_apply_and_repeat(
     declaration: Declaration, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     config_path = tmp_path / "declarations.json"
-    credentials_path = tmp_path / "credentials.json"
+    secrets = MemoryTokenStore()
     with running_server() as server:
         desired = declaration.model_copy(update={"server": AnyHttpUrl(server.url)})
         write_declarations(config_path, desired)
@@ -101,18 +99,15 @@ def test_cli_sso_plan_apply_and_repeat(
             "agents",
             "--declarations-file",
             str(config_path),
-            "--credentials-file",
-            str(credentials_path),
         ]
 
-        assert run(["plan", *options], prompt=BrowserPrompt()) == 0
+        assert run(["plan", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
         assert server.backend.bots() == []
-        assert not credentials_path.exists()
-        assert run(["apply", *options], prompt=BrowserPrompt()) == 0
-        assert run(["apply", *options], prompt=BrowserPrompt()) == 0
+        assert secrets.values == {}
+        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
+        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=secrets) == 0
 
-    assert credentials_path.stat().st_mode & 0o777 == 0o600
-    assert FileCredentials(credentials_path).load() is not None
+    assert SopsCredentials(declaration.state, secrets).load() is not None
     output = capsys.readouterr()
     assert "create bot bot-agents" in output.out
     assert '"changes": []' in output.out
@@ -137,12 +132,11 @@ def test_cli_can_use_a_private_session_file(
                 "agents",
                 "--declarations-file",
                 str(config_path),
-                "--credentials-file",
-                str(tmp_path / "credentials.json"),
                 "--session-token-file",
                 str(session_path),
             ],
             prompt=UnusedPrompt(),
+            secrets=MemoryTokenStore(),
         )
 
     assert result == 0
@@ -159,8 +153,6 @@ def test_cli_reports_invalid_declarations_and_missing_files(
         "agents",
         "--declarations-file",
         str(path),
-        "--credentials-file",
-        str(tmp_path / "credentials"),
     ]
     assert run(options) == 1
     path.write_text('{"org":{"agents":{"server":"https://example.test"}}}', encoding="utf-8")
@@ -179,10 +171,9 @@ def test_cli_handles_interrupted_sso(declaration: Declaration, tmp_path: Path) -
                 "agents",
                 "--declarations-file",
                 str(path),
-                "--credentials-file",
-                str(tmp_path / "credentials"),
             ],
             prompt=InterruptedPrompt(),
+            secrets=MemoryTokenStore(),
         )
         == 130
     )
@@ -206,8 +197,6 @@ def test_cli_rejects_unknown_targets_before_login(
                 bot,
                 "--declarations-file",
                 str(path),
-                "--credentials-file",
-                str(tmp_path / "credentials"),
             ],
             prompt=UnusedPrompt(),
         )
@@ -222,7 +211,6 @@ def test_cli_plans_and_distributes_to_declared_seats(
     declaration.seats = seat_targets()
     token_store = MemoryTokenStore()
     path = tmp_path / "declarations.json"
-    credentials = tmp_path / "credentials.json"
     with running_server() as server:
         declaration.server = AnyHttpUrl(server.url)
         write_declarations(path, declaration)
@@ -231,20 +219,18 @@ def test_cli_plans_and_distributes_to_declared_seats(
             "agents",
             "--declarations-file",
             str(path),
-            "--credentials-file",
-            str(credentials),
         ]
-        assert run(["plan", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
+        assert run(["plan", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
         assert token_store.values == {}
-        assert not credentials.exists()
         assert server.backend.bots() == []
-        assert run(["apply", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
-        assert run(["apply", *options], prompt=BrowserPrompt(), token_store=token_store) == 0
+        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
+        assert run(["apply", *options], prompt=BrowserPrompt(), secrets=token_store) == 0
         assert len(server.backend.tokens(1)) == 1
 
-    assert set(token_store.values) == {"frame", "mair", "mmini"}
+    assert set(token_store.values) == {"org", "frame", "mair", "mmini"}
     assert all(
-        value.get_secret_value() == "Bearer tk_secret_1" for value in token_store.values.values()
+        token_store.values[host].get_secret_value() == "Bearer tk_secret_1"
+        for host in seat_targets()
     )
     output = capsys.readouterr()
     assert "update SOPS secret mair:" in output.out
@@ -257,7 +243,6 @@ def test_cli_sops_preflight_failure_prevents_provisioning(
     declaration.seats = seat_targets()
     token_store = MemoryTokenStore(failing_reads={"mair"})
     path = tmp_path / "declarations.json"
-    credentials = tmp_path / "credentials.json"
     with running_server() as server:
         declaration.server = AnyHttpUrl(server.url)
         write_declarations(path, declaration)
@@ -269,17 +254,14 @@ def test_cli_sops_preflight_failure_prevents_provisioning(
                     "agents",
                     "--declarations-file",
                     str(path),
-                    "--credentials-file",
-                    str(credentials),
                 ],
                 prompt=BrowserPrompt(),
-                token_store=token_store,
+                secrets=token_store,
             )
             == 1
         )
         assert server.backend.bots() == []
         assert server.backend.tokens(1) == []
 
-    assert not credentials.exists()
     assert token_store.values == {}
     assert "Could not read SOPS" in capsys.readouterr().err

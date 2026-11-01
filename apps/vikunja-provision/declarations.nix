@@ -38,6 +38,11 @@ lib.mapAttrs (
         inherit (bot.token) title permissions;
         expires_at = bot.token.expiresAt;
       };
+      state = {
+        inherit host;
+        realm = fleetInventory.hosts.${host}.realm;
+        key = "agents/vikunja/${host}/${name}/credentials";
+      };
       seats = lib.genAttrs bot.seats (seat: {
         realm = fleetInventory.hosts.${seat}.realm;
         key = "agents/vikunja/${host}/${name}/authorization";

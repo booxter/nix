@@ -7,7 +7,7 @@ name = "vikunja-provision"
 version = "0.1.0"
 description = "Reconcile Vikunja bots, project access, and MCP tokens"
 requires-python = ">=3.13"
-dependencies = ["atomic-file-writes", "authlib", "httpx2", "pydantic", "sops-tools"]
+dependencies = ["authlib", "httpx2", "pydantic", "sops-tools"]
 
 [project.scripts]
 vikunja-provision = "vikunja_provision.cli:main"

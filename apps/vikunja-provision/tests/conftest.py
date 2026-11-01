@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from vikunja_provision.models import BotSpec, Declaration, ProjectSpec, TokenSpec
+from vikunja_provision.models import BotSpec, Declaration, ProjectSpec, SopsState, TokenSpec
 
 
 @pytest.fixture
@@ -10,6 +10,7 @@ def declaration() -> Declaration:
         server="https://vi.example.test",
         bot=BotSpec(username="bot-agents", name="Coding agents"),
         projects=[ProjectSpec(title="Homelab", permission=1)],
+        state=SopsState(host="org", realm="home", key="agents/vikunja/org/agents/credentials"),
         token=TokenSpec(
             title="agents",
             permissions={

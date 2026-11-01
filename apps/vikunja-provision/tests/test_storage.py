@@ -5,43 +5,45 @@ from pathlib import Path
 import pytest
 from pydantic import SecretStr, ValidationError
 from vikunja_provision.models import Credentials, Declaration, ProvisionError
-from vikunja_provision.storage import FileCredentials, read_session
+from vikunja_provision.storage import SopsCredentials, read_session
+
+from .fakes import MemoryTokenStore
 
 
-def test_private_credentials_survive_reload(tmp_path: Path) -> None:
-    path = tmp_path / "state" / "credentials.json"
-    store = FileCredentials(path)
+def test_credentials_survive_reload(declaration: Declaration) -> None:
+    secrets = MemoryTokenStore()
+    store = SopsCredentials(declaration.state, secrets)
     credentials = Credentials(
-        server="https://example.test", bot_id=1, token_id=2, token=SecretStr("tk_private")
+        server="https://example.test",
+        bot_id=1,
+        token_id=2,
+        token=SecretStr("tk_private"),
+        previous_token_id=1,
     )
 
-    with store.locked():
-        assert store.load() is None
-        store.save(credentials)
+    assert store.load() is None
+    store.save(credentials)
 
-    assert FileCredentials(path).load() == credentials
-    assert path.stat().st_mode & 0o777 == 0o600
+    assert SopsCredentials(declaration.state, secrets).load() == credentials
     assert "tk_private" not in repr(credentials)
 
 
-def test_malformed_credentials_are_reported_without_secret_values(tmp_path: Path) -> None:
-    path = tmp_path / "credentials.json"
-    path.write_text('{"token": "tk_private"}', encoding="utf-8")
-    path.chmod(0o600)
+def test_malformed_credentials_are_reported_without_secret_values(declaration: Declaration) -> None:
+    secrets = MemoryTokenStore(values={"org": SecretStr('{"token": "tk_private"}')})
 
     with pytest.raises(ProvisionError, match="Invalid credentials") as error:
-        FileCredentials(path).load()
+        SopsCredentials(declaration.state, secrets).load()
 
     assert "tk_private" not in str(error.value)
 
 
-def test_credentials_with_broad_permissions_are_rejected(tmp_path: Path) -> None:
-    path = tmp_path / "credentials.json"
+def test_session_with_broad_permissions_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "session"
     path.write_text("private", encoding="utf-8")
     path.chmod(0o644)
 
     with pytest.raises(ProvisionError, match="accessible only by its owner"):
-        FileCredentials(path).load()
+        read_session(path)
 
 
 @pytest.mark.parametrize("value", ["", "tk_api_token", "Bearer session", "session\nother"])

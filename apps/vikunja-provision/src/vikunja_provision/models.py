@@ -53,11 +53,16 @@ class SopsTarget(DeclarationModel):
     key: str = Field(min_length=1)
 
 
+class SopsState(SopsTarget):
+    host: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
+
+
 class Declaration(DeclarationModel):
     server: AnyHttpUrl
     bot: BotSpec
     projects: list[ProjectSpec]
     token: TokenSpec
+    state: SopsState
     seats: dict[Annotated[str, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")], SopsTarget] = Field(
         default_factory=dict
     )

@@ -1,5 +1,4 @@
 {
-  atomicFileWrites,
   age,
   declarations ? { },
   lib,
@@ -21,7 +20,6 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
   dependencies = [
-    atomicFileWrites
     pythonPackages.authlib
     pythonPackages.httpx2
     pythonPackages.pydantic
