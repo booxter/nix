@@ -29,6 +29,14 @@ def test_failed_command_does_not_print_secret_arguments() -> None:
         Result(2, "", "refused\n").require_success("operation")
 
 
+def test_environment_overrides_apply_to_one_command() -> None:
+    commands = Commands(os.environ | {"FLEET_TEST_VALUE": "original"}, Event())
+    arguments = [sys.executable, "-c", "import os; print(os.environ['FLEET_TEST_VALUE'])"]
+    result = commands.run(arguments, environment={"FLEET_TEST_VALUE": "temporary"})
+    assert result.stdout == "temporary\n"
+    assert commands.run(arguments).stdout == "original\n"
+
+
 def test_command_deadline_terminates_child() -> None:
     with pytest.raises(TimeoutError, match="timed out"):
         Commands(os.environ, Event()).run(

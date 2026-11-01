@@ -52,6 +52,7 @@ class CommandRunner(Protocol):
         input_data: bytes | None = None,
         capture: bool = True,
         cancellable: bool = True,
+        environment: Mapping[str, str] | None = None,
     ) -> Result: ...
 
 
@@ -81,13 +82,14 @@ class Commands:
         input_data: bytes | None = None,
         capture: bool = True,
         cancellable: bool = True,
+        environment: Mapping[str, str] | None = None,
     ) -> Result:
         if cancellable:
             self.check_cancelled()
         deadline = time.monotonic() + timeout
         with subprocess.Popen(
             arguments,
-            env=self.environment,
+            env=self.environment | dict(environment or {}),
             stdin=subprocess.PIPE if input_data is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE if capture else None,
             stderr=subprocess.PIPE if capture else None,

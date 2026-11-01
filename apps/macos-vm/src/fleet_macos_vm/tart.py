@@ -6,11 +6,11 @@ import secrets
 import shlex
 import subprocess
 import sys
-import tempfile
 import time
 from contextlib import suppress
 from pathlib import Path
 from typing import TextIO
+from urllib.parse import quote, urlencode
 
 from atomic_file_writes import write_text_atomic
 from fleet_macos_vm.process import Child, CommandRunner, Result
@@ -22,7 +22,6 @@ SHUTDOWN_TIMEOUT = 45
 USERNAME = "vmadmin"
 INSTALL_KEY = 'umask 077; mkdir -p "$HOME/.ssh"; cat > "$HOME/.ssh/authorized_keys"'
 SHUTDOWN = "sudo -S -p '' /sbin/shutdown -h now"
-GUEST_CACHE = "/private/tmp/fleet-vm-cache"
 GUEST_NIX = "/nix/var/nix/profiles/default/bin/nix"
 NIX_CHECK_FLAKE = b"""{
   outputs = { self }: {
@@ -285,86 +284,92 @@ class Tart:
             capture=False,
         ).require_success(operation)
 
+    def _copy_system(self, guest: Guest, system: Path) -> None:
+        result = self._ssh(guest, "mktemp -d /private/tmp/fleet-vm-copy.XXXXXX")
+        result.require_success("creating the guest transfer directory")
+        directory = Path(result.stdout.strip())
+        if directory.parent != Path("/private/tmp") or not directory.name.startswith(
+            "fleet-vm-copy."
+        ):
+            raise RuntimeError("invalid guest transfer directory")
+
+        try:
+            # sudo must leave stdin available for the Nix protocol. Its askpass
+            # helper carries the password privately, without changing guest trust.
+            askpass = directory / "askpass"
+            password = (guest.credentials / "password").read_text().strip()
+            helper = f"#!/bin/sh\nprintf '%s\\n' {shlex.quote(password)}\n"
+            self._ssh(
+                guest,
+                f"umask 077; cat > {shlex.quote(str(askpass))}"
+                f" && chmod 700 {shlex.quote(str(askpass))}",
+                input_data=helper.encode(),
+            ).require_success("preparing guest transfer authentication")
+
+            remote_program = shlex.join(
+                [
+                    "/usr/bin/env",
+                    f"SUDO_ASKPASS={askpass}",
+                    "/usr/bin/sudo",
+                    "-A",
+                    "-p",
+                    "",
+                    str(Path(GUEST_NIX).with_name("nix-daemon")),
+                ]
+            )
+            destination = "ssh-ng://macos-vm?" + urlencode(
+                {"remote-program": remote_program, "remote-store": "daemon"}, quote_via=quote
+            )
+            self.commands.run(
+                [
+                    "nix",
+                    "--option",
+                    "min-free",
+                    "0",
+                    "copy",
+                    "--no-check-sigs",
+                    "--to",
+                    destination,
+                    str(system),
+                ],
+                environment={"NIX_SSHOPTS": shlex.join(["-F", str(guest.ssh_config)])},
+                timeout=1800,
+                capture=False,
+            ).require_success("copying missing system paths into the guest")
+        finally:
+            self._ssh(
+                guest, shlex.join(["rm", "-rf", str(directory)]), cancellable=False
+            ).require_success("removing guest transfer authentication")
+
     def _activate(self, guest: Guest, configuration: Configuration) -> None:
         system = configuration.system
         if self._system_matches(guest, system):
             return
         progress(f"Applying {configuration.name}…")
-        try:
-            self._ssh(guest, shlex.join(["rm", "-rf", GUEST_CACHE])).require_success(
-                "removing the old guest cache"
-            )
-            with tempfile.TemporaryDirectory(prefix="fleet-vm-cache-") as temporary:
-                cache = Path(temporary) / "cache"
-                cache.mkdir()
-                self.commands.run(
-                    [
-                        "nix",
-                        "--option",
-                        "min-free",
-                        "0",
-                        "copy",
-                        "--to",
-                        cache.as_uri(),
-                        str(system),
-                    ],
-                    timeout=1800,
-                    capture=False,
-                ).require_success("copying the system closure to a temporary cache")
-                self.commands.run(
-                    [
-                        "scp",
-                        "-r",
-                        "-F",
-                        str(guest.ssh_config),
-                        str(cache),
-                        f"macos-vm:{GUEST_CACHE}",
-                    ],
-                    timeout=1800,
-                    capture=False,
-                ).require_success("copying the system cache into the guest")
-                self._sudo(
-                    guest,
-                    [
-                        GUEST_NIX,
-                        "--option",
-                        "min-free",
-                        "0",
-                        "copy",
-                        "--from",
-                        f"file://{GUEST_CACHE}",
-                        "--no-check-sigs",
-                        str(system),
-                    ],
-                    "importing the system closure",
-                )
-            self._sudo(
-                guest,
-                [
-                    GUEST_NIX,
-                    "--option",
-                    "min-free",
-                    "0",
-                    "build",
-                    "--no-link",
-                    "--profile",
-                    "/nix/var/nix/profiles/system",
-                    str(system),
-                ],
-                "updating the system profile",
-            )
-            self._sudo(
-                guest, [str(system / "sw/bin/darwin-rebuild"), "activate"], "activating the system"
-            )
-            if not self._system_matches(guest, system):
-                raise RuntimeError("activated system does not match the requested configuration")
-            self._ssh(guest, "nix --option min-free 0 store info --store daemon").require_success(
-                "verifying Nix after activation"
-            )
-        finally:
-            self._ssh(
-                guest, shlex.join(["rm", "-rf", GUEST_CACHE]), cancellable=False
-            ).require_success("removing the guest cache")
+        self._copy_system(guest, system)
+        self._sudo(
+            guest,
+            [
+                GUEST_NIX,
+                "--option",
+                "min-free",
+                "0",
+                "build",
+                "--no-link",
+                "--profile",
+                "/nix/var/nix/profiles/system",
+                str(system),
+            ],
+            "updating the system profile",
+        )
+        self._sudo(
+            guest, [str(system / "sw/bin/darwin-rebuild"), "activate"], "activating the system"
+        )
+        if not self._system_matches(guest, system):
+            raise RuntimeError("activated system does not match the requested configuration")
+        self._ssh(guest, "nix --option min-free 0 store info --store daemon").require_success(
+            "verifying Nix after activation"
+        )
 
     def run(
         self, guest: Guest, *, gui: bool, nix: bool, configuration: Configuration | None = None

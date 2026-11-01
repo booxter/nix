@@ -83,8 +83,10 @@ into a configuration to expose `config.system.build.vm` and make it a `vm` targe
 
 The runner builds the variant's system closure, starts a working clone of the
 cached Nix base, copies the closure into its private store, and activates it.
-Transfers use a temporary file binary cache over authenticated SSH; only that
-import bypasses signature checking. No host store or credentials are shared.
+Nix transfers only store paths missing from the guest, directly over
+authenticated SSH. A private temporary sudo askpass helper authorizes the
+import, then is removed even when the transfer fails. Only this import bypasses
+signature checking; guest trust settings remain unchanged. No host store is mounted.
 The guest reports readiness after the requested system is active and Nix is
 available. The test variant provides `hello` and `/etc/fleet-vm-test`.
 
