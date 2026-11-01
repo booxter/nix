@@ -13,6 +13,9 @@ let
       type = "http";
       url = mcps.resolveValue server.url;
     }
+    // lib.optionalAttrs (server.headers != { }) {
+      headers = lib.mapAttrs (_: mcps.resolveValue) server.headers;
+    }
     // lib.optionalAttrs (clientId != null) {
       oauth.clientId = mcps.resolveValue clientId;
     };

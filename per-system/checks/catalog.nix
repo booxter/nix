@@ -36,6 +36,7 @@ let
     // topologyChecks
     // {
       python-quality = pythonQualityCheck;
+      agent-mcp = import ./agent-mcp.nix { inherit lib pkgs; };
       claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
       darwin-etc = import ./darwin-etc.nix { inherit inputs lib pkgs; };
