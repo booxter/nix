@@ -41,6 +41,7 @@ let
       darwin-etc = import ./darwin-etc.nix { inherit inputs lib pkgs; };
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
+      proxmox-bootstrap = pkgs.proxmox-bootstrap;
       gpclient = pkgs.gpclient;
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };
       nixpkgs-runners = pkgs.callPackage ../../hm/_mixins/remote-control/pkgs { };

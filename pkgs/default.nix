@@ -58,6 +58,10 @@ in
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
+  proxmox-bootstrap = pkgs.callPackage ./proxmox-bootstrap {
+    inherit atomicFileWrites;
+  };
+
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
 
   storage-observability = pkgs.callPackage ./storage-observability {
