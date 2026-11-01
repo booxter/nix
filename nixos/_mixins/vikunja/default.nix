@@ -15,7 +15,7 @@ in
   ];
 
   options.host.vikunja = lib.mkOption {
-    type = lib.types.nullOr (lib.types.submodule { });
+    type = lib.types.nullOr (lib.types.submodule { imports = [ ./bots.nix ]; });
     default = null;
     description = "Vikunja task management service configuration.";
   };

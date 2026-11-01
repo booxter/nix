@@ -44,6 +44,11 @@ let
         type = secretValueType;
         description = "Public URL or SOPS-backed URL for the HTTP MCP server.";
       };
+      headers = lib.mkOption {
+        type = lib.types.attrsOf secretValueType;
+        default = { };
+        description = "Public or SOPS-backed HTTP headers sent to the MCP server.";
+      };
       oauth = lib.mkOption {
         type = lib.types.nullOr (
           lib.types.submodule {
@@ -55,7 +60,7 @@ let
           }
         );
         default = null;
-        description = "OAuth configuration, or null for an unauthenticated HTTP server.";
+        description = "OAuth configuration, or null when the server does not use OAuth.";
       };
       startupTimeoutSec = lib.mkOption {
         type = lib.types.nullOr lib.types.ints.positive;

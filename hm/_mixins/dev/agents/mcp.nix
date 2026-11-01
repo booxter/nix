@@ -8,12 +8,14 @@ let
   isSecretValue = builtins.isAttrs;
   secretsFor =
     server:
-    lib.optional (isSecretValue server.url) server.url.secret
-    ++ lib.optionals (server.oauth != null) (
-      map (value: value.secret) (
-        builtins.filter isSecretValue (builtins.attrValues server.oauth.clientIds)
-      )
-    );
+    let
+      values = [
+        server.url
+      ]
+      ++ builtins.attrValues server.headers
+      ++ lib.optionals (server.oauth != null) (builtins.attrValues server.oauth.clientIds);
+    in
+    map (value: value.secret) (builtins.filter isSecretValue values);
 in
 {
   inherit stdioServers httpServers;

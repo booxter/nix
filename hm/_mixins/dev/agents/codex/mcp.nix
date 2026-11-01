@@ -22,6 +22,9 @@ let
       default_tools_approval_mode = "writes";
       url = resolveValue server.url;
     }
+    // lib.optionalAttrs (server.headers != { }) {
+      http_headers = lib.mapAttrs (_: resolveValue) server.headers;
+    }
     // lib.optionalAttrs (server.startupTimeoutSec != null) {
       startup_timeout_sec = server.startupTimeoutSec;
     }

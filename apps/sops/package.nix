@@ -66,6 +66,8 @@ pythonPackages.buildPythonApplication {
 
   pythonImportsCheck = [ "sops_tools" ];
 
+  passthru = { inherit runtimePath; };
+
   postFixup = ''
     for program in "$out"/bin/*; do
       wrapProgram "$program" \

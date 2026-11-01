@@ -1,0 +1,1 @@
+"""Declarative Vikunja bot provisioning."""

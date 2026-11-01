@@ -12,6 +12,7 @@ in
   imports = [
     ./codex.nix
     ./claude.nix
+    ./vikunja.nix
   ];
 
   config.sops.secrets = lib.mkIf enabled (lib.genAttrs mcpSecrets (_: { }));
