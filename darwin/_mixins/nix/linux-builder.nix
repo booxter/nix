@@ -27,22 +27,24 @@ in
     nix.linux-builder = {
       enable = true;
       maxJobs = 4;
-      #package = pkgs.darwin.linux-builder-vz;
-      package = pkgs.darwin.linux-builder;
+      package = pkgs.darwin.linux-builder-vz;
+      # Both backends name their incompatible data disks nixos.qcow2. Keep
+      # separate state so switching back to QEMU can reuse its store safely.
+      workingDirectory = "/var/lib/linux-builder-vz";
       systems = [
         "aarch64-linux"
-        #"x86_64-linux"
+        "x86_64-linux"
       ];
       supportedFeatures = [
         "benchmark"
         "big-parallel"
-        #"kvm"
-        #"nixos-test"
+        "kvm"
+        "nixos-test"
       ];
       config.virtualisation.cores = 8;
       config.virtualisation.diskSize = lib.mkForce (40 * 1024);
       config.virtualisation.memorySize = lib.mkForce 8192;
-      #config.virtualisation.vz.nestedVirtualization = true;
+      config.virtualisation.vz.nestedVirtualization = true;
     };
 
     launchd.daemons.linux-builder.serviceConfig = {
