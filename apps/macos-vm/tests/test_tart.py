@@ -74,7 +74,7 @@ class GuestCommands:
         self.profile = ""
         self.current_system = ""
         self.system_copies = 0
-        self.cache_cleanups = 0
+        self.guest_cache_exists = False
         self.fail_activation = False
 
     def check_cancelled(self) -> None:
@@ -110,6 +110,8 @@ class GuestCommands:
             key.write_text("private key")
             key.with_suffix(".pub").write_bytes(b"ssh-ed25519 test-public-key")
         elif program == "scp":
+            if arguments[-1] == "macos-vm:/private/tmp/fleet-vm-cache":
+                self.guest_cache_exists = True
             if self.fail_copy:
                 return Result(1, "", "transfer failed")
         elif program == "nix":
@@ -128,7 +130,7 @@ class GuestCommands:
         if command == "readlink -f /run/current-system":
             return Result(0, self.current_system, "")
         if command == "rm -rf /private/tmp/fleet-vm-cache":
-            self.cache_cleanups += 1
+            self.guest_cache_exists = False
         elif " build --no-link --profile " in command:
             self.profile = command.split()[-1]
         elif "darwin-rebuild activate" in command:
@@ -209,10 +211,11 @@ def test_activation_skips_matching_system_and_retries_failures(tmp_path: Path) -
     commands.fail_activation = True
     with pytest.raises(RuntimeError, match="activation failed"):
         backend._activate(guest, config)
-    assert commands.cache_cleanups == 2
+    assert not commands.guest_cache_exists
     commands.fail_activation = False
     backend._activate(guest, config)
     assert commands.current_system == str(config.system)
+    assert not commands.guest_cache_exists
     assert commands.system_copies == 2
     backend._activate(guest, config)
     assert commands.system_copies == 2
@@ -227,7 +230,7 @@ def test_failed_system_transfer_cleans_guest_cache(tmp_path: Path) -> None:
     config = Configuration(name="test", system=Path("/nix/store/system"), cores=2, memory_size=2048)
     with pytest.raises(RuntimeError, match="transfer failed"):
         Tart(tmp_path, commands)._activate(new_guest(tmp_path), config)
-    assert commands.cache_cleanups == 2
+    assert not commands.guest_cache_exists
 
 
 @pytest.mark.parametrize("ssh_status", [0, 255])
