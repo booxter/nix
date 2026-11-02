@@ -2,5 +2,6 @@ result*
 keys
 *.qcow2
 *.sd
+/*-vm/
 nixmoxer.conf
 **/__pycache__/

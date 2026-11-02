@@ -45,7 +45,7 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wgHome.server.host;
   };
-  vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
+  vmTargets = toolInventory.aliases;
   fleetTools = pkgs.callPackage ./fleet-tools {
     fleetInventory = toolInventory;
     inherit vmTargets wireguardHome;

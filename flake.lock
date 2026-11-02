@@ -405,6 +405,29 @@
         "type": "github"
       }
     },
+    "nix-darwin-vm": {
+      "inputs": {
+        "nix-darwin": [
+          "nix-darwin"
+        ],
+        "nixpkgs": [
+          "nixpkgs-darwin"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793589969,
+        "narHash": "sha256-ZP2qju7d7YNuJ/D6EvixqZ4Kd06hZAUHB0uHO4rXT8Y=",
+        "owner": "booxter",
+        "repo": "nix-darwin-vm",
+        "rev": "b657bd7045cd6e69c965f13eb7410432aed8c644",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "repo": "nix-darwin-vm",
+        "type": "github"
+      }
+    },
     "nix-homebrew": {
       "inputs": {
         "brew-src": "brew-src"
@@ -627,6 +650,7 @@
         "lolek": "lolek",
         "motion-captcha-bot": "motion-captcha-bot",
         "nix-darwin": "nix-darwin",
+        "nix-darwin-vm": "nix-darwin-vm",
         "nix-homebrew": "nix-homebrew",
         "nix-index-database": "nix-index-database",
         "nixos-hardware": "nixos-hardware",

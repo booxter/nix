@@ -19,6 +19,7 @@ nix run .#vm -- fana
 nix run .#vm -- gw
 nix run .#vm -- org
 nix run .#vm -- beast
+nix run .#vm -- --gui mair
 
 # Config diff between two Git revisions
 nix run .#diff -- frame <old-rev> <new-rev>
@@ -36,6 +37,24 @@ nix run .#deploy -- --disko frame /dev/sdX
 
 Local VM and disk provisioning commands resolve the enclosing Git checkout at
 runtime and must be run from inside one.
+
+Darwin VMs use [nix-darwin-vm](https://github.com/booxter/nix-darwin-vm)
+and require an Apple silicon Mac with macOS 27 or newer. They run headless by
+default; `--gui` opens a display. The first run downloads a macOS restore image
+and installs Nix. Later runs reuse the disk and activate the current configuration.
+Guest settings belong under `virtualisation.vmVariant` in the host configuration.
+The guest inherits the host's services and secret requirements. Provision its
+SOPS decryption keys separately before configuration activation can succeed;
+hardware credentials also need separate setup.
+
+After the launcher reports that activation is ready, connect from another terminal:
+
+```sh
+nix run .#darwinConfigurations.mair.config.system.build.vmSsh
+```
+
+Run both commands from the same directory. VM disks and credentials are stored in
+`./<hostname>-vm`; Ctrl-C stops the VM and preserves that state.
 
 ## Fleet updates
 

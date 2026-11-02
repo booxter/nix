@@ -11,6 +11,11 @@
     nix-darwin.url = "github:booxter/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
 
+    # No releases yet; follow main through the daily flake input updates.
+    nix-darwin-vm.url = "github:booxter/nix-darwin-vm";
+    nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    nix-darwin-vm.inputs.nix-darwin.follows = "nix-darwin";
+
     # Follow upstream's weekly database snapshots through flake updates.
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs-darwin";

@@ -47,9 +47,11 @@ in
       config.virtualisation.vz.idleTimeout = 10 * 60;
     };
 
-    launchd.daemons.linux-builder.serviceConfig = {
-      StandardOutPath = "/var/log/nix-darwin/linux-builder.log";
-      StandardErrorPath = "/var/log/nix-darwin/linux-builder.log";
+    launchd.daemons.linux-builder = lib.mkIf config.nix.linux-builder.enable {
+      serviceConfig = {
+        StandardOutPath = "/var/log/nix-darwin/linux-builder.log";
+        StandardErrorPath = "/var/log/nix-darwin/linux-builder.log";
+      };
     };
 
     # Temporary migration: remove once hosts have retired their old builder state.

@@ -14,6 +14,7 @@ let
 in
 {
   imports = [
+    inputs.nix-darwin-vm.darwinModules.vm
     inputs.nix-homebrew.darwinModules.nix-homebrew
     inputs.nix-index-database.darwinModules.nix-index
     inputs.sops-nix.darwinModules.sops
@@ -45,6 +46,7 @@ in
     ./_mixins/tmpfiles
     ./_mixins/ups-client
     ./_mixins/browser
+    ./_mixins/vm.nix
   ];
 
   home-manager = {

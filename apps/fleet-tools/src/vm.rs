@@ -15,7 +15,7 @@ const TARGETS_JSON: &str = env!("VM_TARGETS_JSON");
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Run a local VM for a NixOS fleet host",
+    about = "Run a local VM for a NixOS or nix-darwin fleet host",
     after_help = env!("VM_HELP")
 )]
 pub struct VmArgs {
@@ -23,7 +23,7 @@ pub struct VmArgs {
     #[arg(long)]
     pub gui: bool,
 
-    /// Inventory host whose NixOS VM variant should run.
+    /// Inventory host whose VM variant should run.
     #[arg(value_name = "TARGET_HOST")]
     pub target_host: String,
 }
@@ -124,36 +124,38 @@ mod tests {
     fn help_lists_available_inventory_targets() {
         let help = VmArgs::command().render_long_help().to_string();
 
-        for target in ["builder1", "srvarr", "beast", "prx1-lab"] {
+        for target in ["builder1", "srvarr", "beast", "prx1-lab", "mair", "mmini"] {
             assert!(help.lines().any(|line| line.trim() == target));
         }
     }
 
     #[test]
     fn passes_resolved_target_and_gui_selection_to_runner() {
-        let runner = FakeRunner {
-            exit_code: 7,
-            requests: RefCell::new(Vec::new()),
-        };
+        for (target, gui) in [("builder1", true), ("mair", false), ("mmini", true)] {
+            let runner = FakeRunner {
+                exit_code: 7,
+                requests: RefCell::new(Vec::new()),
+            };
 
-        let code = run(
-            VmArgs {
-                gui: true,
-                target_host: "builder1".to_owned(),
-            },
-            &runner,
-        )
-        .expect("known target should run");
+            let code = run(
+                VmArgs {
+                    gui,
+                    target_host: target.to_owned(),
+                },
+                &runner,
+            )
+            .expect("known target should run");
 
-        assert_eq!(code, 7);
-        assert_eq!(
-            *runner.requests.borrow(),
-            [VmRequest {
-                target_config: compiled_targets().expect("targets should parse")["builder1"]
-                    .clone(),
-                gui: true,
-            }]
-        );
+            assert_eq!(code, 7);
+            assert_eq!(
+                *runner.requests.borrow(),
+                [VmRequest {
+                    target_config: compiled_targets().expect("targets should parse")[target]
+                        .clone(),
+                    gui,
+                }]
+            );
+        }
     }
 
     #[test]

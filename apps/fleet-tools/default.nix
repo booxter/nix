@@ -70,6 +70,7 @@ rustPlatform.buildRustPackage {
     Examples:
       vm builder1
       vm --gui frame
+      vm --gui mair
 
     Available target hosts:
     ${lib.concatMapStringsSep "\n" (name: "  ${name}") (builtins.attrNames vmTargets)}
