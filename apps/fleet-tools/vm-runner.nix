@@ -1,5 +1,6 @@
 let
-  flake = builtins.getFlake (builtins.getEnv "VM_REPO_ROOT");
+  # Exclude ignored VM disks and control sockets from the flake source.
+  flake = builtins.getFlake ("git+file://" + builtins.getEnv "VM_REPO_ROOT");
   inherit (flake.inputs.nixpkgs) lib;
   targetConfig = builtins.getEnv "VM_TARGET_CONFIG";
   isDarwin = builtins.hasAttr targetConfig flake.darwinConfigurations;
