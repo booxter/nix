@@ -28,6 +28,8 @@ in
         incomplete-dir = model.incompleteDir;
         lpd-enabled = false;
         message-level = 3;
+        # Pending download handshakes share this budget with incoming and seeding peers.
+        peer-limit-global = 1024;
         peer-port = cfg.vpn.peerPort;
         pex-enabled = true;
         port-forwarding-enabled = false;
