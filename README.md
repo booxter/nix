@@ -50,6 +50,10 @@ The guest inherits the host's services and secret requirements. Provision its
 SOPS decryption keys separately before configuration activation can succeed;
 hardware credentials also need separate setup.
 
+New Darwin VM disks are 100 GiB, rounded up to 108 decimal GB by Tart. Disk size
+changes only apply when creating a VM. For an existing guest that needs a larger
+disk, set a fresh `virtualisation.vmVariant.virtualisation.stateDirectory`.
+
 For an additional connection from another terminal:
 
 ```sh

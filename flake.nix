@@ -11,8 +11,8 @@
     nix-darwin.url = "github:booxter/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
 
-    # No releases yet; follow main through the daily flake input updates.
-    nix-darwin-vm.url = "github:booxter/nix-darwin-vm";
+    # Return to main after https://github.com/booxter/nix-darwin-vm/pull/4 merges.
+    nix-darwin-vm.url = "github:booxter/nix-darwin-vm?ref=refs/pull/4/head";
     nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs-darwin";
     nix-darwin-vm.inputs.nix-darwin.follows = "nix-darwin";
 
