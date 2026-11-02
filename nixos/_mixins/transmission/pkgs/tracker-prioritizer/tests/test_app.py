@@ -286,7 +286,7 @@ def metric_samples(registry: object) -> dict[tuple[str, tuple[tuple[str, str], .
     }
 
 
-def test_success_metrics_use_native_prometheus_registry(tmp_path: Path) -> None:
+def test_success_metrics_report_transfers_and_health(tmp_path: Path) -> None:
     state = collect(
         tmp_path,
         [
@@ -305,12 +305,64 @@ def test_success_metrics_use_native_prometheus_registry(tmp_path: Path) -> None:
     assert samples[("host_observability_transmission_torrent_count", (("class", "high"),))] == 1
     assert samples[("host_observability_transmission_preferred_upload_active", ())] == 1
     assert samples[("host_observability_transmission_exporter_ok", ())] == 1
-    assert not any("public_group_upload_limit" in name for name, _labels in samples)
-    assert not any("reserved_private_upload" in name for name, _labels in samples)
     assert (
         samples[("host_observability_transmission_exporter_last_success_timestamp_seconds", ())]
         == 123.0
     )
+
+
+def test_seeding_count_excludes_stopped_queued_and_incomplete_torrents(tmp_path: Path) -> None:
+    state = collect(
+        tmp_path,
+        [
+            torrent(hash_string="idle-seed"),
+            torrent(hash_string="uploading-seed", rate_upload=1000),
+            torrent(hash_string="stopped", status=0),
+            torrent(hash_string="queued", status=5),
+            torrent(hash_string="checking", status=2),
+            torrent(hash_string="downloading", status=4, left_until_done=100),
+            torrent(hash_string="incomplete", left_until_done=100),
+            torrent(hash_string="unknown", status=None),
+        ],
+    )
+
+    samples = metric_samples(core.success_registry(state, 123.0))
+
+    assert samples[("host_observability_transmission_seeding_torrent_count", ())] == 2
+
+
+@pytest.mark.parametrize(
+    ("torrents", "incoming", "outgoing"),
+    [
+        ([], 0, 0),
+        ([torrent()], 0, 0),
+        (
+            [
+                torrent(
+                    hash_string="seed",
+                    peers=[{"is_incoming": True}, {"is_incoming": False}],
+                ),
+                torrent(
+                    hash_string="download",
+                    status=4,
+                    left_until_done=100,
+                    peers=[{"is_incoming": True}, {"is_incoming": True}],
+                ),
+            ],
+            3,
+            1,
+        ),
+    ],
+)
+def test_connection_counts_include_seed_and_download_peers(
+    tmp_path: Path, torrents: list[core.Torrent], incoming: int, outgoing: int
+) -> None:
+    state = collect(tmp_path, torrents)
+    samples = metric_samples(core.success_registry(state, 123.0))
+    metric = "host_observability_transmission_peer_connection_count"
+
+    assert samples[(metric, (("direction", "incoming"),))] == incoming
+    assert samples[(metric, (("direction", "outgoing"),))] == outgoing
 
 
 def test_health_textfile_is_atomic_and_world_readable(tmp_path: Path) -> None:

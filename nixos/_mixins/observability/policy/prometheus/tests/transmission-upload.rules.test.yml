@@ -1,0 +1,140 @@
+rule_files:
+  - ../rules/media-policy.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: Low upload warns after an hour and clears when transfers recover
+    interval: 1m
+    input_series:
+      - &upload
+        series: 'host_observability_transmission_upload_bytes_per_second{instance="srvarr",class="high"}'
+        values: "10000x60 200000x15"
+      - &normal_upload
+        series: 'host_observability_transmission_upload_bytes_per_second{instance="srvarr",class="normal"}'
+        values: "20000x75"
+      - &seeds
+        series: 'host_observability_transmission_seeding_torrent_count{instance="srvarr"}'
+        values: "100x75"
+      - &cap
+        series: 'host_observability_adaptive_upload_target_mbit{instance="srvarr"}'
+        values: "5x75"
+      - &health
+        series: 'host_observability_transmission_exporter_ok{instance="srvarr"}'
+        values: "1x75"
+      - &last_success
+        series: 'host_observability_transmission_exporter_last_success_timestamp_seconds{instance="srvarr"}'
+        values: "0+60x75"
+    alert_rule_test:
+      - eval_time: 59m30s
+        alertname: TransmissionUploadLow
+      - eval_time: 60m
+        alertname: TransmissionUploadLow
+        exp_alerts:
+          - exp_labels:
+              instance: srvarr
+              severity: warning
+              category: media
+            exp_annotations:
+              summary: "Transmission upload persistently low on srvarr"
+              description: "Transmission upload has averaged below 1 Mbps for an hour with at least 100 completed torrents enabled for seeding and an upload cap of at least 5 Mbps. Check incoming peers and connection-slot exhaustion."
+      - eval_time: 66m
+        alertname: TransmissionUploadLow
+
+  - name: Upload is summed across priority classes
+    interval: 1m
+    input_series:
+      - <<: *upload
+        values: "80000x75"
+      - <<: *normal_upload
+        values: "80000x75"
+      - *seeds
+      - *cap
+      - *health
+      - *last_success
+    alert_rule_test:
+      - eval_time: 70m
+        alertname: TransmissionUploadLow
+
+  - name: A short quiet period does not warn
+    interval: 1m
+    input_series:
+      - <<: *upload
+        values: "10000x29 200000x46"
+      - *normal_upload
+      - *seeds
+      - *cap
+      - *health
+      - *last_success
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: TransmissionUploadLow
+      - eval_time: 70m
+        alertname: TransmissionUploadLow
+
+  - name: Few enabled seeds do not imply expected upload
+    interval: 1m
+    input_series:
+      - *upload
+      - *normal_upload
+      - <<: *seeds
+        values: "99x75"
+      - *cap
+      - *health
+      - *last_success
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: TransmissionUploadLow
+
+  - name: A low adaptive cap suppresses the warning
+    interval: 1m
+    input_series:
+      - *upload
+      - *normal_upload
+      - *seeds
+      - <<: *cap
+        values: "4.9x75"
+      - *health
+      - *last_success
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: TransmissionUploadLow
+
+  - name: Failed collection is handled by the collector alert
+    interval: 1m
+    input_series:
+      - *upload
+      - *normal_upload
+      - *seeds
+      - *cap
+      - <<: *health
+        values: "0x75"
+      - *last_success
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: TransmissionUploadLow
+
+  - name: Stale successful collection cannot trigger a throughput warning
+    interval: 1m
+    input_series:
+      - *upload
+      - *normal_upload
+      - *seeds
+      - *cap
+      - *health
+      - <<: *last_success
+        values: "0x75"
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: TransmissionUploadLow
+
+  - name: Missing throughput is handled by the collector alert
+    interval: 1m
+    input_series:
+      - *seeds
+      - *cap
+      - *health
+      - *last_success
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: TransmissionUploadLow

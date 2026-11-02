@@ -2,6 +2,20 @@ groups:
   - name: media-policy
     interval: 30s
     rules:
+      - alert: TransmissionUploadLow
+        expr: |
+          (sum by(instance) (avg_over_time(host_observability_transmission_upload_bytes_per_second{instance="srvarr"}[5m])) * 8 < 1000000)
+          and on(instance) (host_observability_transmission_seeding_torrent_count{instance="srvarr"} >= 100)
+          and on(instance) (host_observability_adaptive_upload_target_mbit{instance="srvarr"} >= 5)
+          and on(instance) (host_observability_transmission_exporter_ok{instance="srvarr"} == 1)
+          and on(instance) (time() - host_observability_transmission_exporter_last_success_timestamp_seconds{instance="srvarr"} < 120)
+        for: 1h
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Transmission upload persistently low on srvarr"
+          description: "Transmission upload has averaged below 1 Mbps for an hour with at least 100 completed torrents enabled for seeding and an upload cap of at least 5 Mbps. Check incoming peers and connection-slot exhaustion."
       - alert: MediaPolicyUnitDown
         expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name=~"(adaptive-upload-policy|adaptive-upload-policy-transmission|adaptive-upload-policy-qos|transmission-prioritizer)\\.service",state="active"} < 1
         for: 5m

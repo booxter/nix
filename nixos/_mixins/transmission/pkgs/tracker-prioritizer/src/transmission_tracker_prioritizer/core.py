@@ -28,6 +28,7 @@ TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
 TR_STATUS_STOPPED = 0
+TR_STATUS_SEEDING = 6
 PriorityClass = Literal["low", "normal", "high"]
 PRIORITY_CLASSES: tuple[PriorityClass, ...] = ("low", "normal", "high")
 PRIORITY_VALUES = {
@@ -43,6 +44,7 @@ TORRENT_FIELDS = [
     "peers_connected",
     "peers_getting_from_us",
     "peers_sending_to_us",
+    "peers",
     "left_until_done",
     "status",
     "upload_ratio",
@@ -50,6 +52,12 @@ TORRENT_FIELDS = [
     "rate_upload",
     "tracker_stats",
 ]
+
+
+class Peer(BaseModel):
+    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
+
+    is_incoming: bool
 
 
 class Torrent(BaseModel):
@@ -60,6 +68,7 @@ class Torrent(BaseModel):
     peers_connected: int = 0
     peers_getting_from_us: int = 0
     peers_sending_to_us: int = 0
+    peers: list[Peer] = Field(default_factory=list)
     left_until_done: int | None = None
     status: int | None = None
     upload_ratio: int | float | None = None
@@ -155,6 +164,9 @@ class IterationState:
     preferred_upload_active: bool
     preferred_upload_bytes_per_second: int
     torrent_counts: PriorityCounts
+    seeding_torrent_count: int
+    incoming_peer_count: int
+    outgoing_peer_count: int
     torrent_activity_counts: dict[str, dict[str, int]]
     bandwidth_active_torrent_counts: NestedCounts
     peer_counts: PeerCounts
@@ -300,6 +312,16 @@ def collect_iteration_state(
         preferred_upload_active=preferred_upload_active,
         preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
         torrent_counts=torrent_counts,
+        seeding_torrent_count=sum(
+            torrent.status == TR_STATUS_SEEDING and torrent_is_complete(torrent)
+            for torrent, _is_preferred in entries
+        ),
+        incoming_peer_count=sum(
+            peer.is_incoming for torrent, _is_preferred in entries for peer in torrent.peers
+        ),
+        outgoing_peer_count=sum(
+            not peer.is_incoming for torrent, _is_preferred in entries for peer in torrent.peers
+        ),
         torrent_activity_counts=activity_counts,
         bandwidth_active_torrent_counts=bandwidth_counts,
         peer_counts=peer_counts,
@@ -393,6 +415,14 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
         "Current aggregate upload rate by torrent priority class.",
         ["class"],
     )
+    connections = _gauge(
+        registry,
+        "host_observability_transmission_peer_connection_count",
+        "Connected Transmission peers by connection direction; excludes pending handshakes.",
+        ["direction"],
+    )
+    connections.labels("incoming").set(state.incoming_peer_count)
+    connections.labels("outgoing").set(state.outgoing_peer_count)
     for torrent_class in PRIORITY_CLASSES:
         torrent_count.labels(torrent_class).set(state.torrent_counts[torrent_class])
         download_rate.labels(torrent_class).set(state.download_bytes_per_second[torrent_class])
@@ -432,6 +462,11 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
             fair_share.labels(direction, torrent_class).set(ratio)
 
     scalar_metrics = (
+        (
+            "host_observability_transmission_seeding_torrent_count",
+            "Number of completed Transmission torrents currently enabled for seeding.",
+            state.seeding_torrent_count,
+        ),
         (
             "host_observability_transmission_preferred_upload_active",
             "Whether any preferred torrent is actively uploading to peers.",
