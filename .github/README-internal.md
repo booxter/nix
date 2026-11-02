@@ -26,6 +26,9 @@ locally; Nix delegates Linux builds to the builder hosts and macOS builds to
 `mmini`. The `mmini-ci` service provides the `nix-ci-darwin` label for checks
 and update jobs that must execute on macOS.
 
+The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
+`nix-vm-darwin` label.
+
 Completed CI builds are published to both the private `default` Attic cache
 and the public `github` cache. Other managed hosts publish only to their
 realm's default cache.
