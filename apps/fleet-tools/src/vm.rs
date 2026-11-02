@@ -70,6 +70,8 @@ impl VmRunner for NativeVmRunner {
                     .context("VM runner path is not UTF-8")?,
                 "-L",
                 "--show-trace",
+                // Select the root expression before passing launcher arguments.
+                "",
             ])
             .env("VM_REPO_ROOT", &self.repo_root)
             .env("VM_TARGET_CONFIG", &request.target_config)
