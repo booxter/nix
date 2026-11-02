@@ -72,6 +72,8 @@ rustPlatform.buildRustPackage {
       vm --gui frame
       vm --gui mair
 
+    Darwin VMs open a guest shell after activation and require a terminal.
+
     Available target hosts:
     ${lib.concatMapStringsSep "\n" (name: "  ${name}") (builtins.attrNames vmTargets)}
   '';

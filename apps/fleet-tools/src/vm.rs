@@ -32,6 +32,7 @@ pub struct VmArgs {
 pub struct VmRequest {
     pub target_config: String,
     pub gui: bool,
+    pub interactive: bool,
 }
 
 pub trait VmRunner {
@@ -58,7 +59,8 @@ impl NativeVmRunner {
 
 impl VmRunner for NativeVmRunner {
     fn run(&self, request: &VmRequest) -> Result<i32> {
-        let status = Command::new(&self.nix)
+        let mut command = Command::new(&self.nix);
+        command
             .args([
                 "run",
                 "--impure",
@@ -71,7 +73,13 @@ impl VmRunner for NativeVmRunner {
             ])
             .env("VM_REPO_ROOT", &self.repo_root)
             .env("VM_TARGET_CONFIG", &request.target_config)
-            .env("VM_GUI", if request.gui { "1" } else { "0" })
+            .env("VM_GUI", if request.gui { "1" } else { "0" });
+
+        if request.interactive {
+            command.args(["--", "--interactive"]);
+        }
+
+        let status = command
             .status()
             .with_context(|| format!("failed to start {}", self.nix.display()))?;
         status
@@ -93,9 +101,11 @@ pub fn run(arguments: VmArgs, runner: &impl VmRunner) -> Result<i32> {
             arguments.target_host
         );
     };
+    let inventory = crate::compiled_inventory().context("compiled fleet inventory is invalid")?;
     runner.run(&VmRequest {
         target_config: target_config.clone(),
         gui: arguments.gui,
+        interactive: inventory.darwin.contains_key(target_config),
     })
 }
 
@@ -130,8 +140,12 @@ mod tests {
     }
 
     #[test]
-    fn passes_resolved_target_and_gui_selection_to_runner() {
-        for (target, gui) in [("builder1", true), ("mair", false), ("mmini", true)] {
+    fn opens_darwin_shells_with_or_without_graphics() {
+        for (target, gui, interactive) in [
+            ("builder1", true, false),
+            ("mair", false, true),
+            ("mmini", true, true),
+        ] {
             let runner = FakeRunner {
                 exit_code: 7,
                 requests: RefCell::new(Vec::new()),
@@ -153,6 +167,7 @@ mod tests {
                     target_config: compiled_targets().expect("targets should parse")[target]
                         .clone(),
                     gui,
+                    interactive,
                 }]
             );
         }

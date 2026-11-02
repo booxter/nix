@@ -42,19 +42,22 @@ Darwin VMs use [nix-darwin-vm](https://github.com/booxter/nix-darwin-vm)
 and require an Apple silicon Mac with macOS 27 or newer. They run headless by
 default; `--gui` opens a display. The first run downloads a macOS restore image
 and installs Nix. Later runs reuse the disk and activate the current configuration.
+The wrapper opens an interactive guest shell after activation, so run it from a
+terminal. This also works with `--gui`. After logout, press Enter to reconnect,
+or Ctrl-C or Ctrl-D at the reconnect prompt to stop the VM.
 Guest settings belong under `virtualisation.vmVariant` in the host configuration.
 The guest inherits the host's services and secret requirements. Provision its
 SOPS decryption keys separately before configuration activation can succeed;
 hardware credentials also need separate setup.
 
-After the launcher reports that activation is ready, connect from another terminal:
+For an additional connection from another terminal:
 
 ```sh
 nix run .#darwinConfigurations.mair.config.system.build.vmSsh
 ```
 
 Run both commands from the same directory. VM disks and credentials are stored in
-`./<hostname>-vm`; Ctrl-C stops the VM and preserves that state.
+`./<hostname>-vm` and preserved when the VM stops.
 
 ## Fleet updates
 
