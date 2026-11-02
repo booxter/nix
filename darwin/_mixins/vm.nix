@@ -1,7 +1,10 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   virtualisation.vmVariant = {
     virtualisation = {
+      # nix-darwin requires this account before activation. Drop once
+      # nix-darwin-vm defaults to the primary user itself.
+      bootstrapUser = config.system.primaryUser;
       diskSize = 100 * 1024;
       graphics = lib.mkDefault false;
     };
