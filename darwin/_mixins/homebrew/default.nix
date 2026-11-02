@@ -43,9 +43,6 @@ in
     ++ lib.optionals hmConfig.protonvpn.enable [
       "protonvpn"
     ]
-    ++ lib.optionals hmConfig.wireshark.enable [
-      "wireshark-chmodbpf"
-    ]
     ++ lib.optionals env.homerow.enable [
       "homerow"
     ];
