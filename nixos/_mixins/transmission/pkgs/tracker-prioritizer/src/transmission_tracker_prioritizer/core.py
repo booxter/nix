@@ -28,6 +28,7 @@ TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
 TR_STATUS_STOPPED = 0
+TR_STATUS_SEEDING = 6
 PriorityClass = Literal["low", "normal", "high"]
 PRIORITY_CLASSES: tuple[PriorityClass, ...] = ("low", "normal", "high")
 PRIORITY_VALUES = {
@@ -155,6 +156,7 @@ class IterationState:
     preferred_upload_active: bool
     preferred_upload_bytes_per_second: int
     torrent_counts: PriorityCounts
+    seeding_torrent_count: int
     torrent_activity_counts: dict[str, dict[str, int]]
     bandwidth_active_torrent_counts: NestedCounts
     peer_counts: PeerCounts
@@ -300,6 +302,10 @@ def collect_iteration_state(
         preferred_upload_active=preferred_upload_active,
         preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
         torrent_counts=torrent_counts,
+        seeding_torrent_count=sum(
+            torrent.status == TR_STATUS_SEEDING and torrent_is_complete(torrent)
+            for torrent, _is_preferred in entries
+        ),
         torrent_activity_counts=activity_counts,
         bandwidth_active_torrent_counts=bandwidth_counts,
         peer_counts=peer_counts,
@@ -432,6 +438,11 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
             fair_share.labels(direction, torrent_class).set(ratio)
 
     scalar_metrics = (
+        (
+            "host_observability_transmission_seeding_torrent_count",
+            "Number of completed Transmission torrents currently enabled for seeding.",
+            state.seeding_torrent_count,
+        ),
         (
             "host_observability_transmission_preferred_upload_active",
             "Whether any preferred torrent is actively uploading to peers.",
