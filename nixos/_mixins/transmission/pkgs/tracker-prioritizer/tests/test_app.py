@@ -331,6 +331,40 @@ def test_seeding_count_excludes_stopped_queued_and_incomplete_torrents(tmp_path:
     assert samples[("host_observability_transmission_seeding_torrent_count", ())] == 2
 
 
+@pytest.mark.parametrize(
+    ("torrents", "incoming", "outgoing"),
+    [
+        ([], 0, 0),
+        ([torrent()], 0, 0),
+        (
+            [
+                torrent(
+                    hash_string="seed",
+                    peers=[{"is_incoming": True}, {"is_incoming": False}],
+                ),
+                torrent(
+                    hash_string="download",
+                    status=4,
+                    left_until_done=100,
+                    peers=[{"is_incoming": True}, {"is_incoming": True}],
+                ),
+            ],
+            3,
+            1,
+        ),
+    ],
+)
+def test_connection_counts_include_seed_and_download_peers(
+    tmp_path: Path, torrents: list[core.Torrent], incoming: int, outgoing: int
+) -> None:
+    state = collect(tmp_path, torrents)
+    samples = metric_samples(core.success_registry(state, 123.0))
+    metric = "host_observability_transmission_peer_connection_count"
+
+    assert samples[(metric, (("direction", "incoming"),))] == incoming
+    assert samples[(metric, (("direction", "outgoing"),))] == outgoing
+
+
 def test_health_textfile_is_atomic_and_world_readable(tmp_path: Path) -> None:
     destination = tmp_path / "transmission.prom"
 

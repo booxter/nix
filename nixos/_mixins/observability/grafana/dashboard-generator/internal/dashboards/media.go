@@ -140,6 +140,16 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 			legend:     "{{class}}",
 		},
 		{
+			title: "Transmission Peer Connections", unit: units.Short,
+			expression: node("host_observability_transmission_peer_connection_count"),
+			legend:     "{{direction}}",
+		},
+		{
+			title: "Transmission Enabled Seeds", unit: units.Short,
+			expression: node("host_observability_transmission_seeding_torrent_count"),
+			legend:     "enabled seeds",
+		},
+		{
 			title: "Transmission Seeding Torrents", unit: units.Short,
 			expression: node("host_observability_transmission_torrent_activity_count", `direction="seeding"`),
 			legend:     "{{activity}}",
