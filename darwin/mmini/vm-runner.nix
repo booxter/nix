@@ -25,7 +25,7 @@ let
       # Virtualization.framework needs an unlocked login keychain without a GUI.
       # https://tart.run/faq/#headless-machines
       /usr/bin/security unlock-keychain -p "$password" "$keychain"
-      /usr/bin/security login-keychain -s "$keychain"
+      /usr/bin/security default-keychain -s "$keychain"
       /usr/bin/security set-keychain-settings "$keychain"
     '';
   };
