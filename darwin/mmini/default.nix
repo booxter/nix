@@ -8,6 +8,8 @@ let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
 {
+  imports = [ ./vm-runner.nix ];
+
   system.stateVersion = 5;
 
   host.attic.publishCaches.beast = [
