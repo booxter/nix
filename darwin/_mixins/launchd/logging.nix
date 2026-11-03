@@ -8,8 +8,9 @@
 let
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
-  userLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin";
-  privateUserLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin-private";
+  userLogRoot = "/Users/${config.host.username}/Library/Logs";
+  userLogDirectory = "${userLogRoot}/nix-darwin";
+  privateUserLogDirectory = "${userLogRoot}/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
   rotationJobName = "launchd-logrotate";
   enabledSystemJobsByDomain = lib.mapAttrs (
@@ -191,6 +192,12 @@ in
         mode = "0700";
         user = "root";
         group = "wheel";
+      };
+      # install -d only applies ownership to the final directory, not its parents.
+      ${userLogRoot}.d = {
+        mode = "0700";
+        user = config.host.username;
+        group = "staff";
       };
       ${userLogDirectory}.d = {
         mode = "0755";
