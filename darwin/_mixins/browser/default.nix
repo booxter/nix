@@ -17,20 +17,41 @@ in
 
     home-manager.users.${username} =
       { config, lib, ... }:
-      lib.mkIf config.host.hm.firefox.enable {
-        home.activation.defaultFirefox = lib.hm.dag.entryAfter [ "copyApps" ] ''
-          firefox_app=${lib.escapeShellArg "${config.home.homeDirectory}/${config.targets.darwin.copyApps.directory}/Firefox.app"}
-          default_browser=${lib.getExe defaultbrowser}
+      let
+        logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/default-firefox.log";
+        setDefaultFirefox = pkgs.writeShellApplication {
+          name = "set-default-firefox";
+          text = ''
+            firefox_app=${lib.escapeShellArg "${config.home.homeDirectory}/${config.targets.darwin.copyApps.directory}/Firefox.app"}
+            default_browser=${lib.getExe defaultbrowser}
 
-          # Browser copies share a bundle ID; select the managed app by path.
-          if ! run "$default_browser" --app "$firefox_app"; then
-            # The setter can leave another copy selected despite reporting success.
-            # An explicit launch refreshes that choice; verify it again afterward.
-            echo "Refreshing Firefox URL handling with an explicit background launch..."
-            run /usr/bin/open -g -a "$firefox_app"
-            run "$default_browser" --app "$firefox_app"
-          fi
-        '';
+            # Browser copies share a bundle ID; select the managed app by path.
+            if ! "$default_browser" --app "$firefox_app"; then
+              # An explicit launch refreshes LaunchServices when another copy is selected.
+              echo "Refreshing Firefox URL handling with an explicit background launch..."
+              /usr/bin/open -g -a "$firefox_app"
+              "$default_browser" --app "$firefox_app"
+            fi
+          '';
+        };
+      in
+      lib.mkIf config.host.hm.firefox.enable {
+        # Add ordering without replacing Home Manager's launch-agent activation code.
+        home.activation.setupLaunchAgents = lib.hm.dag.entryAfter [ "copyApps" ] (lib.mkDefault "");
+
+        # LaunchServices needs a graphical session, which fresh headless guests lack.
+        launchd.agents.default-firefox = {
+          enable = true;
+          config = {
+            Label = "org.nixos.default-firefox";
+            ProgramArguments = [ (lib.getExe setDefaultFirefox) ];
+            RunAtLoad = true;
+            LimitLoadToSessionType = "Aqua";
+            ProcessType = "Background";
+            StandardOutPath = logPath;
+            StandardErrorPath = logPath;
+          };
+        };
       };
   };
 }
