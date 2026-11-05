@@ -27,8 +27,25 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
-        opencode
         ;
+
+      # TODO: Remove once nixpkgs-unstable includes the platform-specific hashes.
+      # https://github.com/NixOS/nixpkgs/pull/582675
+      opencode = pkgsNixpkgsUnstable.opencode.overrideAttrs (
+        old:
+        assert lib.asserts.assertMsg (
+          old.version == "2.2.5"
+        ) "OpenCode version changed; remove the temporary node_modules hash override";
+        {
+          node_modules = old.node_modules.overrideAttrs {
+            outputHash =
+              if prev.stdenv.hostPlatform.isLinux then
+                "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA="
+              else
+                "sha256-dIveiaiPFGSItwLyeMuPDxTE9gpvvnlTCB/+nG24qCc=";
+          };
+        }
+      );
 
       attic-client = prev.attic-client.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -38,6 +55,15 @@
       });
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
+
+      # Temporarily allow this EOL release until consumers move to Electron 43.
+      electron_42-bin = prev.electron_42-bin.overrideAttrs (old: {
+        meta =
+          old.meta
+          // lib.optionalAttrs (old.version == "42.11.18") {
+            knownVulnerabilities = [ ];
+          };
+      });
 
       claude-code = pkgsNixpkgsUnstable.claude-code.overrideAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
