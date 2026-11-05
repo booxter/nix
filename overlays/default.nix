@@ -39,6 +39,15 @@
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
 
+      # Temporarily allow this EOL release until consumers move to Electron 43.
+      electron_42-bin = prev.electron_42-bin.overrideAttrs (old: {
+        meta =
+          old.meta
+          // lib.optionalAttrs (old.version == "42.11.18") {
+            knownVulnerabilities = [ ];
+          };
+      });
+
       claude-code = pkgsNixpkgsUnstable.claude-code.overrideAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
         postFixup = (old.postFixup or "") + ''
