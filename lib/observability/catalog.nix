@@ -155,14 +155,34 @@ let
       pveTarget = contribution.value.internal.serverName;
     };
   proxmoxExporters = lib.mapAttrsToList proxmoxExporterFor proxmoxNodes;
-  blackboxSources = lib.mapAttrsToList (name: source: {
-    host = name;
-    exporter = "${name}:9115";
-    scheme = "https";
-    source = name;
-    networkScope = source.networkScope or "lan";
-    dnsResolver = source.dnsResolver or null;
-  }) observability.blackboxSources;
+  blackboxSources = lib.concatLists (
+    lib.mapAttrsToList (
+      name: source:
+      let
+        primary = {
+          host = name;
+          exporter = "${name}:9115";
+          scheme = "https";
+          path = "/probe";
+          source = name;
+          networkScope = source.networkScope or "lan";
+          dnsResolver = source.dnsResolver or null;
+          httpOnly = false;
+        };
+      in
+      [ primary ]
+      ++ lib.optional (source.directHttpComparison or false) (
+        primary
+        // {
+          source = "${name}-direct";
+          path = "/probe-direct";
+          networkScope = "lan";
+          dnsResolver = null;
+          httpOnly = true;
+        }
+      )
+    ) observability.blackboxSources
+  );
 in
 {
   inherit

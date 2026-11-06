@@ -136,9 +136,11 @@ let
     {
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
       scheme = "http";
+      path = "/probe";
       source = config.services.avahi.hostName;
       networkScope = "lan";
       dnsResolver = null;
+      httpOnly = false;
     }
   ]
   ++ remoteBlackboxProbeSourceConfigs;
@@ -147,7 +149,9 @@ let
     let
       isVpnSource = source.networkScope == "vpn";
     in
-    if probes == "icmp" then
+    if source.httpOnly && probes != "http" then
+      [ ]
+    else if probes == "icmp" then
       if isVpnSource then
         builtins.filter (probe: probe.probe != "gateway") wanIcmpProbeTargets
       else
@@ -182,6 +186,7 @@ let
           scrape_profile = "probe";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
+          prober_path = source.path;
           inherit (source) source;
           inherit (probe) probe probe_protocol probe_title;
         };
@@ -287,8 +292,12 @@ let
       target_label = "__scheme__";
     }
     {
+      source_labels = [ "prober_path" ];
+      target_label = "__metrics_path__";
+    }
+    {
       action = "labeldrop";
-      regex = "prober_address|prober_scheme";
+      regex = "prober_address|prober_scheme|prober_path";
     }
   ];
 in
