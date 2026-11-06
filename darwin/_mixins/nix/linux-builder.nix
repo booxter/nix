@@ -42,7 +42,7 @@ in
       ];
       config.virtualisation.cores = 8;
       config.virtualisation.diskSize = lib.mkForce (40 * 1024);
-      config.virtualisation.memorySize = lib.mkForce 8192;
+      config.virtualisation.memorySize = lib.mkForce (16 * 1024);
       config.virtualisation.vz.nestedVirtualization = true;
     };
 
