@@ -103,7 +103,15 @@
         };
       mkNixos =
         hostName: hostModule:
-        inputs.nixpkgs.lib.nixosSystem {
+        let
+          # Keep node modules and base packages on Proxmox's tested nixpkgs pin.
+          nixpkgsInput =
+            if builtins.hasAttr hostName fleetInventory.proxmox.nodes then
+              inputs.proxmox-nixos.inputs.nixpkgs-stable
+            else
+              inputs.nixpkgs;
+        in
+        nixpkgsInput.lib.nixosSystem {
           specialArgs = specialArgsForHost {
             inherit hostName;
             system = "x86_64-linux";
