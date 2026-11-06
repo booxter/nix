@@ -119,6 +119,7 @@ def cleanup_reasons(
     complete: bool,
     completion_age_days: float | None,
     added_age_days: float | None,
+    low_upload: bool = False,
 ) -> tuple[str, ...]:
     if (
         policy is None
@@ -133,4 +134,6 @@ def cleanup_reasons(
         reasons.append("maximum-age")
     if ratio is not None and ratio >= policy.completed.minimum_ratio:
         reasons.append("high-ratio")
+    if low_upload:
+        reasons.append("low-upload")
     return tuple(reasons)

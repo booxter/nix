@@ -42,7 +42,7 @@ let
       minimumUploadKiBPerSecond = lib.mkOption {
         type = lib.types.ints.positive;
         default = 10;
-        description = "Average upload rate that protects a special tracker torrent from cleanup.";
+        description = "Average upload threshold for low-upload cleanup; special trackers also protect torrents at or above it.";
       };
     };
   };

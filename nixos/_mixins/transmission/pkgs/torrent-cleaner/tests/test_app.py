@@ -85,7 +85,7 @@ def candidates(torrents: list[app.Torrent], rates: dict[str, float] | None = Non
     ],
 )
 def test_generic_cleanup_never_bypasses_completion_protection(overrides: dict[str, object]) -> None:
-    assert candidates([torrent(**overrides)]) == []
+    assert candidates([torrent(**overrides)], {"public": 0.0}) == []
 
 
 @pytest.mark.parametrize(
@@ -102,7 +102,24 @@ def test_generic_ratio_and_maximum_age_rules(
     item = torrent(
         added_date=int(NOW) - added_days * DAY, done_date=int(NOW) - 30 * DAY, upload_ratio=ratio
     )
-    assert candidates([item]) == expected
+    assert candidates([item], {"public": 10240.0}) == expected
+
+
+@pytest.mark.parametrize(
+    ("rate", "expected"),
+    [(None, []), (10240.0, []), (10239.0, ["public"]), (0.0, ["public"])],
+)
+def test_generic_low_upload_is_independent_of_ratio_seed_time_and_floor(
+    rate: float | None, expected: list[str]
+) -> None:
+    item = torrent(
+        added_date=int(NOW) - 40 * DAY,
+        done_date=int(NOW) - 30 * DAY,
+        upload_ratio=0.0,
+        seconds_seeding=None,
+    )
+    rates = {} if rate is None else {"public": rate}
+    assert candidates([item], rates) == expected
 
 
 def test_oldest_low_upload_special_torrents_removed_down_to_floor() -> None:
@@ -248,6 +265,15 @@ def test_cleanup_applies_special_floor_with_mature_history(tmp_path: Path) -> No
     client = FakeClient(items)
     assert app.run_cleanup(settings(tmp_path), client, FrozenClock(), mature_history(items)) == 0
     assert client.removed == ["oldest"]
+
+
+@pytest.mark.parametrize("has_history", [False, True])
+def test_generic_low_upload_requires_full_history(tmp_path: Path, has_history: bool) -> None:
+    items = [torrent(added_date=int(NOW) - 90 * DAY, upload_ratio=0.0)]
+    store = mature_history(items) if has_history else MemoryHistory()
+    client = FakeClient(items)
+    assert app.run_cleanup(settings(tmp_path), client, FrozenClock(), store) == 0
+    assert client.removed == (["public"] if has_history else [])
 
 
 def test_cleanup_rechecks_recent_downloads_before_deletion(tmp_path: Path) -> None:

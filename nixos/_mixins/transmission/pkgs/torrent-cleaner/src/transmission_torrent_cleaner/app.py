@@ -193,6 +193,7 @@ def cleanup_candidate(
             complete=True,
             completion_age_days=completion_age_days,
             added_age_days=added_age_days,
+            low_upload=rate is not None and rate < policy.activity.minimum_upload_bytes_per_second,
         )
     if not reasons:
         return None
