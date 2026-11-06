@@ -18,9 +18,11 @@ let
       "--rpc-url"
       model.rpcUrl
       "--trackers-file"
-      config.sops.secrets.transmissionTrackerHosts.path
+      config.sops.templates."transmission-tracker-aliases.json".path
       "--policy-file"
       transmissionPolicyFile
+      "--history-file"
+      "/var/lib/transmission-torrent-cleaner/uploads.json"
       "--request-timeout-seconds"
       (toString policy.requestTimeoutSeconds)
     ]
@@ -30,7 +32,7 @@ in
 {
   config = lib.mkIf (cfg != null && cfg.torrentPolicy != null) {
     systemd.services.transmission-torrent-cleaner = {
-      description = "Cleanup for old public Transmission torrents";
+      description = "Cleanup for old Transmission torrents with tracker retention floors";
       after = [
         "network-online.target"
         "nginx.service"
@@ -48,11 +50,14 @@ in
         ExecStart = command;
         User = model.user;
         Group = model.group;
+        StateDirectory = "transmission-torrent-cleaner";
+        StateDirectoryMode = "0700";
+        UMask = "0077";
       };
     };
 
     systemd.timers.transmission-torrent-cleaner = {
-      description = "Periodic cleanup scan for old public Transmission torrents";
+      description = "Periodic Transmission retention policy scan";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = policy.cleanupSchedule;

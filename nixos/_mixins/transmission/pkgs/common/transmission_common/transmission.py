@@ -1,8 +1,10 @@
+import ipaddress
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import cast
 
@@ -105,38 +107,58 @@ def normalize_tracker_host(raw_value: str) -> str:
     if not value:
         return ""
 
+    try:
+        return str(ipaddress.ip_address(value))
+    except ValueError:
+        pass
+
     if "://" in value:
         parsed = urllib.parse.urlparse(value)
-        return (parsed.hostname or "").lower()
+        return normalize_tracker_host(parsed.hostname or "")
 
     if value.startswith("[") and "]" in value:
-        return value[1 : value.index("]")].lower()
+        return normalize_tracker_host(value[1 : value.index("]")])
 
     value = value.rsplit("@", 1)[-1]
     value = value.split("/", 1)[0]
     value = value.split(":", 1)[0]
-    return value.lower()
+    return value.lower().rstrip(".")
 
 
-def read_tracker_hosts(
-    trackers_file: Path,
-    *,
-    on_empty_entry: Callable[[int], None] | None = None,
-) -> set[str]:
-    lines = trackers_file.read_text().splitlines()
-    hosts: set[str] = set()
+def read_tracker_aliases(trackers_file: Path) -> dict[str, str]:
+    def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("invalid tracker aliases")
+            result[key] = value
+        return result
 
-    for line_number, raw_line in enumerate(lines, start=1):
-        line = raw_line.split("#", 1)[0].strip()
-        if not line:
-            continue
-        host = normalize_tracker_host(line)
-        if host:
-            hosts.add(host)
-        elif on_empty_entry is not None:
-            on_empty_entry(line_number)
-
-    return hosts
+    try:
+        data = json.loads(trackers_file.read_text(), object_pairs_hook=unique_object)
+        if not isinstance(data, dict):
+            raise ValueError
+        aliases: dict[str, str] = {}
+        for alias, raw_host in data.items():
+            if not isinstance(alias, str) or not alias.strip() or not isinstance(raw_host, str):
+                raise ValueError
+            host = raw_host.strip().lower()
+            try:
+                host = str(ipaddress.ip_address(host))
+            except ValueError:
+                labels = host.rstrip(".").split(".")
+                if len(host) > 253 or any(
+                    not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label)
+                    for label in labels
+                ):
+                    raise ValueError from None
+                host = host.rstrip(".")
+            if not host or host in aliases.values():
+                raise ValueError
+            aliases[alias] = host
+        return aliases
+    except (ValueError, UnicodeError):
+        raise ValueError("invalid tracker aliases") from None
 
 
 def trackers_match_hosts(trackers: Sequence[Tracker], tracker_hosts: set[str]) -> bool:
@@ -149,3 +171,7 @@ def trackers_match_hosts(trackers: Sequence[Tracker], tracker_hosts: set[str]) -
                 return True
 
     return False
+
+
+def matching_tracker_aliases(trackers: Sequence[Tracker], aliases: Mapping[str, str]) -> set[str]:
+    return {alias for alias, host in aliases.items() if trackers_match_hosts(trackers, {host})}

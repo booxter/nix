@@ -35,7 +35,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "transmission_torrent_cleaner" ];
 
   meta = {
-    description = "Cleanup utility for old high-ratio or over-age non-priority Transmission torrents";
+    description = "Transmission cleanup with tracker retention floors and upload history";
     license = lib.licenses.mit;
     mainProgram = "transmission-torrent-cleaner";
     platforms = lib.platforms.linux;

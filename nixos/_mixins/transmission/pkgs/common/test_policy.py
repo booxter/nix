@@ -65,7 +65,19 @@ class PolicyTests(unittest.TestCase):
                 completion_age_days=None,
                 added_age_days=365.0,
             ),
+            (),
+        )
+        self.assertEqual(
+            cleanup_reasons(
+                policy, ratio=0, complete=True, completion_age_days=30, added_age_days=365
+            ),
             ("maximum-age",),
+        )
+        self.assertEqual(
+            cleanup_reasons(
+                policy, ratio=0, complete=True, completion_age_days=None, added_age_days=365
+            ),
+            (),
         )
         self.assertEqual(
             cleanup_reasons(

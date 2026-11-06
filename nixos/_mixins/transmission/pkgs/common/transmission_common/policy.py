@@ -57,9 +57,22 @@ class TorrentClassPolicy(ConfigModel):
         return self
 
 
+class RetentionPolicy(ConfigModel):
+    minimum_retained: int = Field(ge=0)
+    minimum_seed_days: float = Field(ge=0)
+    minimum_age_days: float = Field(default=30, ge=30)
+
+
+class ActivityPolicy(ConfigModel):
+    window_days: float = Field(gt=0)
+    minimum_upload_bytes_per_second: float = Field(gt=0)
+
+
 class TorrentPolicy(ConfigModel):
     preferred: TorrentClassPolicy
     non_preferred: TorrentClassPolicy
+    trackers: dict[str, RetentionPolicy]
+    activity: ActivityPolicy
 
     def class_policy(self, *, preferred: bool) -> TorrentClassPolicy:
         return self.preferred if preferred else self.non_preferred
@@ -72,6 +85,11 @@ def load_policy(path: Path) -> TorrentPolicy:
         raise PolicyConfigError(f"failed to read torrent policy {path}: {exc}") from exc
     except ValidationError as exc:
         raise PolicyConfigError(f"invalid torrent policy {path}: {exc}") from exc
+
+
+def validate_tracker_aliases(policy: TorrentPolicy, aliases: dict[str, str]) -> None:
+    if policy.trackers.keys() != aliases.keys():
+        raise PolicyConfigError("tracker aliases do not match torrent policy")
 
 
 def desired_priority(policy: RatioPriorityPolicy, ratio: int | float | None) -> Priority:
@@ -101,19 +119,21 @@ def cleanup_reasons(
     complete: bool,
     completion_age_days: float | None,
     added_age_days: float | None,
+    low_upload: bool = False,
 ) -> tuple[str, ...]:
-    if policy is None:
+    if (
+        policy is None
+        or not complete
+        or completion_age_days is None
+        or completion_age_days < policy.completed.minimum_age_days
+    ):
         return ()
 
     reasons: list[str] = []
     if added_age_days is not None and added_age_days >= policy.maximum_age_days:
         reasons.append("maximum-age")
-    if (
-        complete
-        and completion_age_days is not None
-        and completion_age_days >= policy.completed.minimum_age_days
-        and ratio is not None
-        and ratio >= policy.completed.minimum_ratio
-    ):
+    if ratio is not None and ratio >= policy.completed.minimum_ratio:
         reasons.append("high-ratio")
+    if low_upload:
+        reasons.append("low-upload")
     return tuple(reasons)

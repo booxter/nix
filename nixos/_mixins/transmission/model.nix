@@ -49,10 +49,10 @@ let
       };
       cleanup = {
         completed = {
-          minimumRatio = targetRatio;
+          minimumRatio = 2.0;
           minimumAgeDays = 30;
         };
-        maximumAgeDays = 365;
+        maximumAgeDays = 180;
       };
     };
     reconcileIntervalSeconds = 30;
@@ -83,6 +83,15 @@ in
   rpcUrl = "http://127.0.0.1:${toString rpcPort}/transmission/rpc";
   stateDir = if cfg == null then null else "${cfg.stateDir}/.config/transmission-daemon";
   torrentPolicyDocument = {
+    trackers = builtins.mapAttrs (_: policy: {
+      minimum_retained = policy.minimumRetained;
+      minimum_seed_days = policy.minimumSeedDays;
+      minimum_age_days = policy.minimumAgeDays;
+    }) cfg.torrentPolicy.trackers;
+    activity = {
+      window_days = cfg.torrentPolicy.activityWindowDays;
+      minimum_upload_bytes_per_second = cfg.torrentPolicy.minimumUploadKiBPerSecond * 1024;
+    };
     preferred = renderClassPolicy torrentPolicy.preferred;
     non_preferred = renderClassPolicy torrentPolicy.nonPreferred;
   };

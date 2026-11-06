@@ -5,10 +5,12 @@ import pytest
 from prometheus_client import generate_latest
 from prometheus_client.parser import text_string_to_metric_families
 from transmission_common.policy import (
+    ActivityPolicy,
     CleanupPolicy,
     CompletedCleanupPolicy,
     Priority,
     RatioPriorityPolicy,
+    RetentionPolicy,
     StopPolicy,
     TorrentClassPolicy,
     TorrentPolicy,
@@ -80,6 +82,8 @@ def ratio_policy(after: Priority) -> RatioPriorityPolicy:
 
 def policy() -> TorrentPolicy:
     return TorrentPolicy(
+        trackers={"preferred": RetentionPolicy(minimum_retained=1, minimum_seed_days=0)},
+        activity=ActivityPolicy(window_days=7, minimum_upload_bytes_per_second=1),
         preferred=TorrentClassPolicy(
             priority=ratio_policy(Priority.NORMAL),
             stop=None,
@@ -101,8 +105,19 @@ def policy() -> TorrentPolicy:
 
 def tracker_file(tmp_path: Path) -> Path:
     path = tmp_path / "trackers.txt"
-    path.write_text("preferred.example\n", encoding="utf-8")
+    path.write_text('{"preferred": "preferred.example"}', encoding="utf-8")
     return path
+
+
+def test_mismatched_tracker_aliases_skip_collection(tmp_path: Path) -> None:
+    path = tracker_file(tmp_path)
+    path.write_text('{"other": "secret.example"}')
+    client = FakeClient([torrent()])
+
+    _, state = core.collect_iteration_state(client, path, None, policy())
+
+    assert state is None
+    assert client.events == []
 
 
 def policy_file(tmp_path: Path) -> Path:
