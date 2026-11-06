@@ -33,7 +33,7 @@ from media_repair_planner.ollama_model import (
     OllamaDecisionModel,
     OllamaSettings,
 )
-from media_repair_planner.planning import DecisionModelError
+from media_repair_planner.planning import DecisionModelError, DecisionModelUnavailable
 from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.structured_model import StructuredDecisionModel
 from media_repair_planner.structured_planning import StructuredDecisionGenerator
@@ -150,7 +150,7 @@ async def test_decision_model_wraps_runnable_failure() -> None:
     chat = ScriptedResponseModel(RuntimeError("transport failed"))
 
     with pytest.raises(
-        DecisionModelError,
+        DecisionModelUnavailable,
         match=r"Ollama request.*RuntimeError: transport failed",
     ):
         await decide(OllamaDecisionModel(chat, test_settings()), repair_case())

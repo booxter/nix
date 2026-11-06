@@ -10,12 +10,13 @@ from .contracts import (
     encode_decision,
 )
 from .ollama_model import OllamaConfigurationError, OllamaDecisionModel, OllamaSettings
-from .planning import DecisionModelError, Planner, PlanningOutcome
+from .planning import DecisionModelError, DecisionModelUnavailable, Planner, PlanningOutcome
 from .structured_model import StructuredDecisionModel
 
 __all__ = [
     "ContractError",
     "DecisionModelError",
+    "DecisionModelUnavailable",
     "OllamaConfigurationError",
     "OllamaDecisionModel",
     "OllamaSettings",

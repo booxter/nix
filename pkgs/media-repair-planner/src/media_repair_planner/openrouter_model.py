@@ -15,7 +15,7 @@ from .openai_structured_output import (
     decision_envelope_model,
     unwrap_openai_decision,
 )
-from .planning_core import DecisionModelError
+from .planning_core import DecisionModelError, DecisionModelUnavailable
 from .structured_decision import diagnostic, structured_prompt
 from .structured_model import StructuredModelResponse
 from .tracing import MetadataValue, ModelTrace, TraceSink
@@ -251,7 +251,7 @@ class OpenRouterDecisionModel:
         except Exception as error:
             detail = diagnostic(error)
             self._trace(case_id, None, "request failed: " + detail)
-            raise DecisionModelError("OpenRouter request failed: " + detail) from error
+            raise DecisionModelUnavailable("OpenRouter request failed: " + detail) from error
         if response.content is None:
             detail = (
                 "OpenRouter refused to return a decision"

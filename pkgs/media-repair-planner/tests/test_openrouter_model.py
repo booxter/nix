@@ -28,7 +28,7 @@ from media_repair_planner.openrouter_model import (
     OpenRouterResponse,
     OpenRouterSettings,
 )
-from media_repair_planner.planning import DecisionModelError
+from media_repair_planner.planning import DecisionModelError, DecisionModelUnavailable
 from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.structured_model import StructuredDecisionModel
 from media_repair_planner.structured_planning import StructuredDecisionGenerator
@@ -142,7 +142,7 @@ async def test_decision_model_wraps_transport_failure() -> None:
     )
 
     with pytest.raises(
-        DecisionModelError,
+        DecisionModelUnavailable,
         match=r"OpenRouter request failed: RuntimeError: transport failed",
     ):
         await decide(model, repair_case())

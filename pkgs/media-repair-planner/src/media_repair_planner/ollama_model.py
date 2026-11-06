@@ -11,7 +11,7 @@ from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel
 
 from .decision_validation_core import DecisionViolation
-from .planning_core import DecisionModelError
+from .planning_core import DecisionModelError, DecisionModelUnavailable
 from .structured_decision import diagnostic, structured_prompt
 from .structured_model import StructuredModelResponse
 from .tracing import MetadataValue, ModelTrace, TraceSink
@@ -233,7 +233,7 @@ class OllamaDecisionModel:
         except Exception as error:
             detail = diagnostic(error)
             self._trace(case_id, None, "request failed: " + detail)
-            raise DecisionModelError(
+            raise DecisionModelUnavailable(
                 "Ollama request or structured decoding failed: " + detail
             ) from error
         if not isinstance(result, ChatResponse):
