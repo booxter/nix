@@ -14,12 +14,13 @@ from transmission_common.policy import (
     desired_priority,
     load_policy,
     should_stop,
+    validate_tracker_aliases,
 )
 from transmission_common.transmission import (
     Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
-    read_tracker_hosts,
+    read_tracker_aliases,
     trackers_match_hosts,
 )
 
@@ -178,18 +179,15 @@ class IterationState:
     stop_hashes: list[str]
 
 
-def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
+def load_tracker_hosts(trackers_file: Path, policy: TorrentPolicy) -> set[str] | None:
     if not trackers_file.exists():
         return None
     try:
-        return read_tracker_hosts(
-            trackers_file,
-            on_empty_entry=lambda line_number: LOG.warning(
-                "ignoring empty tracker host entry on line %s", line_number
-            ),
-        )
-    except OSError as exc:
-        LOG.warning("unable to read tracker host file %s: %s", trackers_file, exc)
+        aliases = read_tracker_aliases(trackers_file)
+        validate_tracker_aliases(policy, aliases)
+        return set(aliases.values())
+    except (OSError, ValueError):
+        LOG.warning("unable to load tracker aliases from %s", trackers_file)
         return None
 
 
@@ -224,12 +222,12 @@ def collect_iteration_state(
     last_tracker_status: str | None,
     policy: TorrentPolicy,
 ) -> tuple[str | None, IterationState | None]:
-    tracker_hosts = load_tracker_hosts(trackers_file)
+    tracker_hosts = load_tracker_hosts(trackers_file, policy)
     if tracker_hosts is None:
         status = f"missing:{trackers_file}"
         if status != last_tracker_status:
             LOG.warning(
-                "tracker host file %s does not exist yet; skipping until it is created",
+                "tracker aliases from %s are unavailable; skipping processing",
                 trackers_file,
             )
         return status, None

@@ -10,8 +10,9 @@ from transmission_common.transmission import (
     Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
+    matching_tracker_aliases,
     normalize_tracker_host,
-    read_tracker_hosts,
+    read_tracker_aliases,
     trackers_match_hosts,
 )
 
@@ -136,31 +137,32 @@ class TrackerHostTests(unittest.TestCase):
         )
         self.assertEqual(normalize_tracker_host("[2001:db8::1]:443"), "2001:db8::1")
 
-    def test_read_tracker_hosts_strips_comments_and_reports_empty_entries(self) -> None:
-        empty_lines: list[int] = []
+    def test_read_tracker_aliases_normalizes_hosts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            trackers_file = Path(tmp_dir) / "trackers.txt"
-            trackers_file.write_text(
-                (
-                    "https://Tracker.EXAMPLE:443/announce\n"
-                    "user:pass@tracker2.example:6969/path # comment\n"
-                    "http:///missing-host\n"
-                    "[2001:db8::1]:443\n"
-                ),
-                encoding="utf-8",
-            )
+            trackers_file = Path(tmp_dir) / "trackers.json"
+            trackers_file.write_text('{"one": "Tracker.EXAMPLE", "two": "second.example"}')
+            aliases = read_tracker_aliases(trackers_file)
 
-            hosts = read_tracker_hosts(trackers_file, on_empty_entry=empty_lines.append)
-
+        self.assertEqual(aliases, {"one": "tracker.example", "two": "second.example"})
         self.assertEqual(
-            hosts,
-            {
-                "tracker.example",
-                "tracker2.example",
-                "2001:db8::1",
-            },
+            matching_tracker_aliases([Tracker(host="TRACKER.example")], aliases), {"one"}
         )
-        self.assertEqual(empty_lines, [3])
+
+    def test_read_tracker_aliases_rejects_invalid_data_without_exposing_hosts(self) -> None:
+        for content in (
+            "[]",
+            '{"": "secret.example"}',
+            '{"a": ""}',
+            '{"a": "secret.example", "b": "SECRET.example"}',
+            '{"a": "secret.example", "a": "other.example"}',
+            '{"a": 1}',
+        ):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp_dir:
+                path = Path(tmp_dir) / "trackers.json"
+                path.write_text(content)
+                with self.assertRaises(ValueError) as error:
+                    read_tracker_aliases(path)
+                self.assertNotIn("secret.example", str(error.exception))
 
     def test_trackers_match_hosts_from_host_or_announce(self) -> None:
         tracker_hosts = {"preferred.example", "announce.example"}

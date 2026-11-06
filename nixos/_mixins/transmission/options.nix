@@ -9,7 +9,43 @@ let
       description = "Netscape cookie jar used to authenticate dynamic IP updates.";
     };
   };
-  capabilityType = lib.types.submodule { };
+  trackerRetentionType = lib.types.submodule {
+    options = {
+      minimumRetained = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 100;
+        description = "Minimum completed torrents to retain for this tracker alias.";
+      };
+      minimumSeedDays = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 3;
+        description = "Minimum actual seeding days before cleanup.";
+      };
+      minimumAgeDays = lib.mkOption {
+        type = lib.types.addCheck lib.types.ints.unsigned (days: days >= 30);
+        default = 30;
+        description = "Minimum days since completion before cleanup.";
+      };
+    };
+  };
+  torrentPolicyType = lib.types.submodule {
+    options = {
+      trackers = lib.mkOption {
+        type = lib.types.attrsOf trackerRetentionType;
+        default = { };
+        description = "Special tracker policies keyed by aliases from the encrypted hostname mapping.";
+      };
+      activityWindowDays = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 14;
+      };
+      minimumUploadKiBPerSecond = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 10;
+        description = "Average upload rate that protects a special tracker torrent from cleanup.";
+      };
+    };
+  };
   uploadLimitType = lib.types.submodule {
     options.initialKBytesPerSecond = lib.mkOption {
       type = lib.types.ints.positive;
@@ -44,7 +80,7 @@ in
             peerPort = lib.mkOption { type = lib.types.port; };
           };
           torrentPolicy = lib.mkOption {
-            type = lib.types.nullOr capabilityType;
+            type = lib.types.nullOr torrentPolicyType;
             default = null;
           };
           uploadLimit = lib.mkOption {

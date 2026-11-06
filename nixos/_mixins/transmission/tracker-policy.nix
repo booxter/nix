@@ -19,11 +19,12 @@ let
     "transmission.service"
   ];
   policy = model.torrentPolicy;
+  trackerSecretName = alias: "transmission/tracker_aliases/${alias}";
   commonArgs = [
     "--rpc-url"
     model.rpcUrl
     "--trackers-file"
-    config.sops.secrets.transmissionTrackerHosts.path
+    config.sops.templates."transmission-tracker-aliases.json".path
     "--policy-file"
     transmissionPolicyFile
     "--interval-seconds"
@@ -56,11 +57,19 @@ in
     host.observability.nodeExporter.textfile.directories.transmission-collector =
       nodeExporterTextfileDir;
 
-    sops.secrets.transmissionTrackerHosts = {
-      key = "transmission/private_tracker_hosts";
+    sops.secrets = lib.genAttrs (map trackerSecretName (
+      builtins.attrNames cfg.torrentPolicy.trackers
+    )) (_: { });
+
+    sops.templates."transmission-tracker-aliases.json" = {
       owner = model.user;
       group = model.group;
       mode = "0400";
+      content = builtins.toJSON (
+        lib.mapAttrs (
+          alias: _: config.sops.placeholder.${trackerSecretName alias}
+        ) cfg.torrentPolicy.trackers
+      );
     };
 
     systemd.tmpfiles.rules = [
