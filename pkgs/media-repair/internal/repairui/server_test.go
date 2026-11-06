@@ -141,7 +141,7 @@ func TestRemovalRejectsCrossSiteAndMissingToken(t *testing.T) {
 
 func TestTitlesAreEscaped(t *testing.T) {
 	fixture := newFixture(t)
-	for _, path := range []string{"/lidarr", fmt.Sprintf("/jobs/%d", fixture.job.ID)} {
+	for _, path := range []string{"/activity", fmt.Sprintf("/jobs/%d", fixture.job.ID)} {
 		response := fixture.get(path)
 		if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "<script>") ||
 			!strings.Contains(response.Body.String(), "&lt;script&gt;") {
@@ -150,7 +150,7 @@ func TestTitlesAreEscaped(t *testing.T) {
 	}
 }
 
-func TestBlockedListExplainsGroupsAndSearchesMediaIdentity(t *testing.T) {
+func TestBlockedActivityExplainsReasonsAndSearchesMediaIdentity(t *testing.T) {
 	fixture := newFixture(t)
 	ctx := context.Background()
 	for index, sample := range []struct {
@@ -177,8 +177,8 @@ func TestBlockedListExplainsGroupsAndSearchesMediaIdentity(t *testing.T) {
 	body := response.Body.String()
 	for _, want := range []string{
 		"3 items", "Moby — All Visible Objects", "These remixes do not match",
-		"Planner could not decide", "No automatic repair chosen", "Waiting on the download or queue",
-		"Radarr still reports the download as incomplete.", "Next step:",
+		"Planner failed", "No automatic repair chosen", "Waiting for download",
+		"Radarr still reports the download as incomplete.",
 	} {
 		if response.Code != http.StatusOK || !strings.Contains(body, want) {
 			t.Fatalf("blocked page missing %q: %d %s", want, response.Code, body)

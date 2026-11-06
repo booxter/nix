@@ -11,13 +11,14 @@
   <header>
     <a class="brand" href="/">Repairr</a>
     <nav aria-label="Primary">
-      <a href="/lidarr"{{if eq .Service "lidarr"}} aria-current="page"{{end}}>Lidarr</a>
-      <a href="/radarr"{{if eq .Service "radarr"}} aria-current="page"{{end}}>Radarr</a>
+      <a href="/"{{if .Inbox}} aria-current="page"{{end}}>Needs you</a>
+      <a href="/activity"{{if .Activity}} aria-current="page"{{end}}>Queue activity</a>
       <a href="/history"{{if .History}} aria-current="page"{{end}}>History</a>
     </nav>
   </header>
   <main>
     <h1>{{.Title}}</h1>
+    {{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
     {{if .Selected}}
     {{$entry := .Selected}}
     <article class="case">
@@ -29,7 +30,8 @@
         </div>
       </div>
       <p class="case-explanation">{{$entry.Explanation}}</p>
-      {{if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}
+      {{if and $entry.Attention (not .ConfirmRemoval)}}{{template "response-form" $entry}}{{else}}
+      {{if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}{{end}}
       <details class="technical-details">
         <summary>Release and technical details</summary>
         <dl>
@@ -56,9 +58,9 @@
       </section>
       {{end}}
 
-      {{if and $entry.CanAct (not .ConfirmRemoval) (ne $entry.Job.State "imported")}}
-      <section class="nudge">
-        <h3>Ask the planner to reconsider</h3>
+      {{if and $entry.CanAct (not $entry.Attention) (not .ConfirmRemoval) (ne $entry.Job.State "imported")}}
+      <details class="nudge">
+        <summary>Advanced: request a new review</summary>
         <form method="post" action="/jobs/{{$entry.Job.ID}}/reconsider">
           <input type="hidden" name="csrf_token" value="{{.CSRF}}">
           <label for="guidance">Guidance</label>
@@ -73,7 +75,7 @@
           {{end}}
           <button type="submit">Reconsider</button>
         </form>
-      </section>
+      </details>
       {{end}}
 
       {{range .Attempts}}
@@ -88,6 +90,14 @@
       <p><a class="button" href="{{.QueueURL}}">Open {{$entry.Job.Service}} queue</a></p>
     </article>
     {{else}}
+    {{if .Inbox}}
+    <p class="view-description">These downloads are still in the queue and need your answer or a retry. Answer here to send them back for processing.</p>
+    <div class="filters" aria-label="Media filters">
+      <a href="/"{{if eq .Service ""}} aria-current="page"{{end}}>All</a>
+      <a href="/lidarr"{{if eq .Service "lidarr"}} aria-current="page"{{end}}>Music</a>
+      <a href="/radarr"{{if eq .Service "radarr"}} aria-current="page"{{end}}>Movies</a>
+    </div>
+    {{else}}
     <div class="filters" aria-label="State filters">
       <a href="?"{{if eq .State ""}} aria-current="page"{{end}}>All</a>
       <a href="?state=observed"{{if eq .State "observed"}} aria-current="page"{{end}}>Not processed</a>
@@ -97,32 +107,28 @@
       <a href="?state=importing"{{if eq .State "importing"}} aria-current="page"{{end}}>Importing</a>
       <a href="?state=failed"{{if eq .State "failed"}} aria-current="page"{{end}}>Failed</a>
     </div>
-    {{if eq .State "blocked"}}<p class="view-description">Blocked does not always mean reviewed. Some downloads are not ready, some could not be inspected, and others need a decision from you. Choose a group to see why each item stopped.</p>{{end}}
+    {{if .Activity}}<p class="view-description">All current queue entries, including waiting downloads, work in progress, technical problems and declined repairs. <a href="/">{{.InboxCount}} need your input or a retry →</a></p>{{end}}
+    {{end}}
     <form class="search" method="get">
       {{if .State}}<input type="hidden" name="state" value="{{.State}}">{{end}}
+      {{if .Service}}<input type="hidden" name="service" value="{{.Service}}">{{end}}
       <label for="search">Find an item</label>
       <input id="search" name="q" type="search" value="{{.Query}}" placeholder="Album, artist, movie, release or reason">
       <button type="submit">Search</button>
     </form>
     <p class="result-count">{{len .Items}} {{if eq (len .Items) 1}}item{{else}}items{{end}}{{if .Query}} matching “{{.Query}}”{{end}}</p>
     {{if .Items}}
-    {{if .Groups}}
-    <div class="blocked-groups">
-      {{range .Groups}}
-      <details class="blocked-group">
-        <summary><span>{{.Title}}</span><span class="badge">{{len .Items}}</span></summary>
-        <p class="group-description">{{.Description}}</p>
-        {{range .Items}}
-        <article class="blocked-item">
-          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Status}}</span></div>
+    {{if .Inbox}}
+    <div class="action-inbox">
+      {{range .Items}}
+        <article class="action-item">
+          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Attention.Title}}</span></div>
           <h3><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></h3>
           <p class="case-explanation">{{.Explanation}}</p>
-          {{if .NextStep}}<p class="next-step"><strong>Next step:</strong> {{.NextStep}}</p>{{end}}
-          <a class="details-link" href="/jobs/{{.Job.ID}}">Review item →</a>
+          {{template "response-form" .}}
+          <div class="item-links"><a href="/jobs/{{.Job.ID}}">Details</a><a href="/jobs/{{.Job.ID}}/remove">Remove from queue…</a></div>
           {{if ne .Subject .Job.Title}}<details class="release-name"><summary>Download name</summary><p>{{.Job.Title}}</p></details>{{end}}
         </article>
-        {{end}}
-      </details>
       {{end}}
     </div>
     {{else}}
@@ -143,8 +149,43 @@
       </table>
     </div>
     {{end}}
+    {{else}}
+    {{if and .Inbox (not .Query)}}<div class="empty"><h2>Nothing needs your input right now.</h2><p>Other downloads may still be waiting, processing or blocked by technical problems. <a href="/activity">See queue activity ({{.ActivityCount}})</a>.</p></div>
     {{else}}<p class="empty">No entries match this view.</p>{{end}}
+    {{end}}
     {{end}}
   </main>
 </body>
 </html>
+
+{{define "response-form"}}
+<form class="response-form" method="post" action="/jobs/{{.Job.ID}}/respond">
+  <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+  <input type="hidden" name="revision" value="{{.Job.Revision}}">
+  <input type="hidden" name="fingerprint" value="{{.Job.SourceFingerprint}}">
+  <h4>{{.Attention.Question}}</h4>
+  {{if .Attention.Context}}<details class="evidence-context"><summary>Files and media information</summary><ul>{{range .Attention.Context}}<li>{{.}}</li>{{end}}</ul></details>{{end}}
+  {{if .Attention.Choices}}
+  <label for="selection-{{.Job.ID}}">Your choice</label>
+  <select id="selection-{{.Job.ID}}" name="selection" required>
+    <option value="" selected disabled>Choose…</option>
+    {{range .Attention.Choices}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
+  </select>
+  {{end}}
+  {{if .Attention.Hint}}<p class="input-hint">{{.Attention.Hint}}</p>{{end}}
+  {{if ne .Attention.Kind "retry"}}
+  <label for="answer-{{.Job.ID}}">{{if .Attention.RequireGuidance}}Your instructions{{else}}Additional instructions (optional){{end}}</label>
+  <textarea id="answer-{{.Job.ID}}" name="guidance" maxlength="1700"{{if .Attention.RequireGuidance}} required{{end}}>{{.Job.Guidance}}</textarea>
+  {{end}}
+  {{if .Attention.AllowRuntime}}
+  <fieldset>
+    <legend>Runtime difference you accept</legend>
+    {{if eq .Attention.Kind "runtime"}}<input type="hidden" name="override_runtime_difference" value="on">
+    {{else}}<label class="check"><input type="checkbox" name="override_runtime_difference"> Accept a larger difference</label>{{end}}
+    <label for="runtime-{{.Job.ID}}">Maximum difference in minutes</label>
+    <input id="runtime-{{.Job.ID}}" name="runtime_minutes" type="number" min="1" max="60"{{if eq .Attention.Kind "runtime"}} required{{end}}>
+  </fieldset>
+  {{end}}
+  <button type="submit">{{.Attention.Button}}</button>
+</form>
+{{end}}

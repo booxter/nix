@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -19,6 +20,7 @@ type PlanningResult struct {
 	Attempts    int
 	RetryAt     time.Time
 	Reason      string
+	Plan        json.RawMessage `gorm:"serializer:json"`
 }
 
 func rememberPlanning(tx *gorm.DB, job Job) error {
@@ -28,7 +30,7 @@ func rememberPlanning(tx *gorm.DB, job Job) error {
 	result := PlanningResult{
 		JobID: job.ID, Fingerprint: job.PlanningFingerprint, Revision: job.Revision,
 		Complete: job.State != Observed, Attempts: job.PlanningAttempts,
-		RetryAt: job.RetryAt, Reason: job.Reason,
+		RetryAt: job.RetryAt, Reason: job.Reason, Plan: job.Plan,
 	}
 	return tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&result).Error
 }
@@ -48,6 +50,13 @@ func observePlanning(tx *gorm.DB, job *Job, observed Job) (bool, error) {
 			if err := rememberPlanning(tx, *job); err != nil {
 				return false, err
 			}
+		}
+	}
+	// Keep the last decision as review context, including for databases that
+	// recorded planning history before decision metadata was retained.
+	if job.State != Observed && len(job.Plan) != 0 {
+		if err := rememberPlanning(tx, *job); err != nil {
+			return false, err
 		}
 	}
 	changed := job.PlanningFingerprint != observed.PlanningFingerprint
@@ -75,6 +84,8 @@ func restorePlanning(tx *gorm.DB, job *Job) error {
 	if result.Complete {
 		job.State = Blocked
 		job.Reason = "these inputs were already planned; request reconsideration to try again"
+		// This is context for an operator answer, never an executable ready plan.
+		job.Plan = result.Plan
 	}
 	return nil
 }

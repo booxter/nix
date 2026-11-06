@@ -47,12 +47,15 @@ type item struct {
 	Explanation string
 	NextStep    string
 	Group       string
+	Attention   *attention
+	CSRF        string
 }
 
 type decision struct {
-	Action      string `json:"action"`
-	Reason      string `json:"reason"`
-	Explanation string `json:"explanation"`
+	Action          string   `json:"action"`
+	Reason          string   `json:"reason"`
+	Explanation     string   `json:"explanation"`
+	MissingEvidence []string `json:"missing_evidence"`
 }
 
 type page struct {
@@ -67,14 +70,11 @@ type page struct {
 	QueueURL       string
 	State          string
 	Query          string
-	Groups         []itemGroup
-}
-
-type itemGroup struct {
-	Key         string
-	Title       string
-	Description string
-	Items       []item
+	Inbox          bool
+	Activity       bool
+	InboxCount     int
+	ActivityCount  int
+	Notice         string
 }
 
 func New(config Config) (http.Handler, error) {
@@ -106,6 +106,7 @@ func New(config Config) (http.Handler, error) {
 
 	router := http.NewServeMux()
 	router.HandleFunc("GET /{$}", app.list)
+	router.HandleFunc("GET /activity", app.list)
 	router.HandleFunc("GET /lidarr", app.list)
 	router.HandleFunc("GET /radarr", app.list)
 	router.HandleFunc("GET /history", app.list)
@@ -133,16 +134,28 @@ func New(config Config) (http.Handler, error) {
 }
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
-	view := page{Title: "Repairr", CSRF: app.csrf, History: r.URL.Path == "/history"}
+	view := page{Title: "Needs you", CSRF: app.csrf, History: r.URL.Path == "/history"}
 	view.State = r.URL.Query().Get("state")
 	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
-	if view.State == string(jobs.Blocked) {
-		view.Title = "Blocked items"
+	view.Activity = r.URL.Path == "/activity" || view.State != ""
+	view.Inbox = !view.Activity && !view.History
+	if view.Activity {
+		view.Title = "Queue activity"
+	} else if view.History {
+		view.Title = "History"
 	}
+	view.Service = jobs.Service(r.URL.Query().Get("service"))
 	if r.URL.Path == "/radarr" {
 		view.Service = jobs.Radarr
 	} else if r.URL.Path == "/lidarr" {
 		view.Service = jobs.Lidarr
+	}
+	if view.Service != "" && view.Service != jobs.Radarr && view.Service != jobs.Lidarr {
+		http.Error(w, "unknown service", http.StatusBadRequest)
+		return
+	}
+	if r.URL.Query().Get("submitted") != "" {
+		view.Notice = "Your request was saved. Repairr will review it; follow its progress in Queue activity."
 	}
 
 	for _, service := range []jobs.Service{jobs.Lidarr, jobs.Radarr} {
@@ -157,10 +170,20 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 
 		for _, job := range listed {
 			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
+			entry := present(job)
+			entry.CSRF = app.csrf
+			if !historical {
+				view.ActivityCount++
+				if entry.Attention != nil {
+					view.InboxCount++
+				}
+			}
 			if historical != view.History || view.State != "" && string(job.State) != view.State {
 				continue
 			}
-			entry := present(job)
+			if view.Inbox && entry.Attention == nil {
+				continue
+			}
 			searchable := strings.Join([]string{
 				entry.Subject, job.Title, entry.Status, entry.Explanation, job.Reason, job.CollectionError,
 			}, " ")
@@ -170,10 +193,6 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 			view.Items = append(view.Items, entry)
 		}
 	}
-	if view.State == string(jobs.Blocked) {
-		view.Groups = blockedGroups(view.Items)
-	}
-
 	app.render(w, view)
 }
 
@@ -189,6 +208,7 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	selected := present(job)
+	selected.CSRF = app.csrf
 	app.render(w, page{
 		Title:          "Item details",
 		Service:        job.Service,
@@ -229,28 +249,4 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 	})
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = output.WriteTo(w)
-}
-
-func blockedGroups(items []item) []itemGroup {
-	groups := []itemGroup{
-		{Key: "planner", Title: "Planner could not decide", Description: "These are failed planning attempts, not decisions that the media cannot be repaired."},
-		{Key: "changed", Title: "Import stopped by a safety check", Description: "Evidence changed after planning. Review the current files and matches before trying again."},
-		{Key: "inspection", Title: "Files could not be inspected", Description: "Repairr needs readable, supported files before it can make a plan."},
-		{Key: "review", Title: "Needs another look", Description: "These items need a review of their current queue entry or previous result."},
-		{Key: "decision", Title: "No automatic repair chosen", Description: "The planner reviewed these items. Read each decision to see why it declined and what information could help."},
-		{Key: "waiting", Title: "Waiting on the download or queue", Description: "Repairr cannot process these entries in their current queue state. Check their status in Lidarr or Radarr."},
-		{Key: "removal", Title: "Queue removal pending", Description: "Removal affects queue tracking only. The downloaded files are retained."},
-	}
-	var populated []itemGroup
-	for _, group := range groups {
-		for _, entry := range items {
-			if entry.Group == group.Key {
-				group.Items = append(group.Items, entry)
-			}
-		}
-		if len(group.Items) > 0 {
-			populated = append(populated, group)
-		}
-	}
-	return populated
 }

@@ -17,6 +17,7 @@ func present(job jobs.Job) item {
 		CanAct:  job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
 	}
 	_ = json.Unmarshal(job.Plan, &view.Decision)
+	view.Attention = attentionFor(job, view.Decision)
 
 	switch {
 	case job.State == jobs.Imported || job.State == jobs.Removed || job.State == jobs.Running || job.State == jobs.Importing:
@@ -68,6 +69,21 @@ func present(job jobs.Job) item {
 		view.Explanation = job.Reason
 	}
 
+	if view.Attention != nil {
+		view.Status = view.Attention.Title
+		switch view.Attention.Kind {
+		case "runtime":
+			view.Explanation = "The proposed import exceeds the allowed runtime difference."
+		case "retry":
+			if view.Decision.Explanation == plannerFallback {
+				view.Explanation = "The previous planning attempt ended without a usable decision."
+			} else {
+				view.Explanation = "The repair was interrupted before an import was submitted."
+			}
+		default:
+			view.Explanation = view.Decision.Explanation
+		}
+	}
 	return view
 }
 
