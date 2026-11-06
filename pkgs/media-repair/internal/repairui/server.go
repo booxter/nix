@@ -5,12 +5,12 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 )
@@ -36,9 +36,14 @@ type Handler struct {
 }
 
 type item struct {
-	Job      jobs.Job
-	Decision decision
-	CanAct   bool
+	Job         jobs.Job
+	Decision    decision
+	CanAct      bool
+	Subject     string
+	Status      string
+	Explanation string
+	NextStep    string
+	Group       string
 }
 
 type decision struct {
@@ -57,6 +62,16 @@ type page struct {
 	CSRF           string
 	ConfirmRemoval bool
 	QueueURL       string
+	State          string
+	Query          string
+	Groups         []itemGroup
+}
+
+type itemGroup struct {
+	Key         string
+	Title       string
+	Description string
+	Items       []item
 }
 
 func New(config Config) (http.Handler, error) {
@@ -112,6 +127,11 @@ func New(config Config) (http.Handler, error) {
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 	view := page{Title: "Repairr", CSRF: app.csrf, History: r.URL.Path == "/history"}
+	view.State = r.URL.Query().Get("state")
+	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
+	if view.State == string(jobs.Blocked) {
+		view.Title = "Blocked items"
+	}
 	if r.URL.Path == "/radarr" {
 		view.Service = jobs.Radarr
 	} else if r.URL.Path == "/lidarr" {
@@ -130,12 +150,21 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 
 		for _, job := range listed {
 			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
-			filter := r.URL.Query().Get("state")
-			if historical != view.History || filter != "" && string(job.State) != filter {
+			if historical != view.History || view.State != "" && string(job.State) != view.State {
 				continue
 			}
-			view.Items = append(view.Items, present(job))
+			entry := present(job)
+			searchable := strings.Join([]string{
+				entry.Subject, job.Title, entry.Status, entry.Explanation, job.Reason, job.CollectionError,
+			}, " ")
+			if view.Query != "" && !strings.Contains(strings.ToLower(searchable), strings.ToLower(view.Query)) {
+				continue
+			}
+			view.Items = append(view.Items, entry)
 		}
+	}
+	if view.State == string(jobs.Blocked) {
+		view.Groups = blockedGroups(view.Items)
 	}
 
 	app.render(w, view)
@@ -154,7 +183,7 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 
 	selected := present(job)
 	app.render(w, page{
-		Title:          job.Title,
+		Title:          "Item details",
 		Service:        job.Service,
 		Selected:       &selected,
 		Attempts:       attempts,
@@ -195,14 +224,26 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 	_, _ = output.WriteTo(w)
 }
 
-func present(job jobs.Job) item {
-	view := item{
-		Job:    job,
-		CanAct: job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
+func blockedGroups(items []item) []itemGroup {
+	groups := []itemGroup{
+		{Key: "planner", Title: "Planner could not decide", Description: "These are failed planning attempts, not decisions that the media cannot be repaired."},
+		{Key: "changed", Title: "Import stopped by a safety check", Description: "Evidence changed after planning. Review the current files and matches before trying again."},
+		{Key: "inspection", Title: "Files could not be inspected", Description: "Repairr needs readable, supported files before it can make a plan."},
+		{Key: "review", Title: "Needs another look", Description: "These items need a review of their current queue entry or previous result."},
+		{Key: "decision", Title: "No automatic repair chosen", Description: "The planner reviewed these items. Read each decision to see why it declined and what information could help."},
+		{Key: "waiting", Title: "Waiting on the download or queue", Description: "Repairr cannot process these entries in their current queue state. Check their status in Lidarr or Radarr."},
+		{Key: "removal", Title: "Queue removal pending", Description: "Removal affects queue tracking only. The downloaded files are retained."},
 	}
-	if len(job.Plan) != 0 {
-		_ = json.Unmarshal(job.Plan, &view.Decision)
+	var populated []itemGroup
+	for _, group := range groups {
+		for _, entry := range items {
+			if entry.Group == group.Key {
+				group.Items = append(group.Items, entry)
+			}
+		}
+		if len(group.Items) > 0 {
+			populated = append(populated, group)
+		}
 	}
-
-	return view
+	return populated
 }

@@ -21,20 +21,27 @@
     {{$entry := .Selected}}
     <article class="case">
       <div class="case-heading">
-        <div><span class="service">{{$entry.Job.Service}}</span><h2>{{$entry.Job.Title}}</h2></div>
+        <div><span class="service">{{$entry.Job.Service}}</span><h2>{{$entry.Subject}}</h2></div>
         <div class="case-actions">
-          <span class="badge">{{$entry.Job.State}}</span>
+          <span class="badge">{{$entry.Status}}</span>
           {{if $entry.CanAct}}<a class="remove-link" href="/jobs/{{$entry.Job.ID}}/remove" title="Remove from queue">×</a>{{end}}
         </div>
       </div>
-      <dl>
-        <dt>Job</dt><dd>#{{$entry.Job.ID}}</dd>
-        <dt>Queue</dt><dd>#{{$entry.Job.QueueID}}</dd>
-        <dt>Updated</dt><dd>{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</dd>
-      </dl>
-      {{if $entry.Job.CollectionError}}<p class="notice danger-notice">{{$entry.Job.CollectionError}}</p>{{end}}
-      {{if $entry.Job.Reason}}<p class="notice">{{$entry.Job.Reason}}</p>{{end}}
-      {{if $entry.Job.PendingAction}}<p class="notice">Requested: {{$entry.Job.PendingAction}}</p>{{end}}
+      <p class="case-explanation">{{$entry.Explanation}}</p>
+      {{if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}
+      <details class="technical-details">
+        <summary>Release and technical details</summary>
+        <dl>
+          <dt>Release</dt><dd>{{$entry.Job.Title}}</dd>
+          <dt>Job / queue</dt><dd>#{{$entry.Job.ID}} / #{{$entry.Job.QueueID}}</dd>
+          <dt>Last checked</dt><dd>{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</dd>
+          <dt>Internal state</dt><dd>{{$entry.Job.State}}</dd>
+          {{if $entry.Job.CollectionError}}<dt>Inspection error</dt><dd>{{$entry.Job.CollectionError}}</dd>{{end}}
+          {{if $entry.Job.Reason}}<dt>Recorded reason</dt><dd>{{$entry.Job.Reason}}</dd>{{end}}
+          {{if $entry.Decision.Action}}<dt>Last planner action</dt><dd>{{$entry.Decision.Action}} · {{$entry.Decision.Reason}}</dd>
+          <dt>Last explanation</dt><dd>{{$entry.Decision.Explanation}}</dd>{{end}}
+        </dl>
+      </details>
 
       {{if .ConfirmRemoval}}
       <section class="remove-confirmation">
@@ -45,14 +52,6 @@
           <button class="danger-button" type="submit">Remove from queue</button>
           <a class="button secondary-button" href="/jobs/{{$entry.Job.ID}}">Cancel</a>
         </form>
-      </section>
-      {{end}}
-
-      {{if $entry.Decision.Action}}
-      <section class="decision">
-        <h3>Planner decision</h3>
-        <p><strong>{{$entry.Decision.Action}}</strong> · {{$entry.Decision.Reason}}</p>
-        <p>{{$entry.Decision.Explanation}}</p>
       </section>
       {{end}}
 
@@ -89,31 +88,60 @@
     </article>
     {{else}}
     <div class="filters" aria-label="State filters">
-      <a href="?">All</a>
-      <a href="?state=observed">Not processed</a>
-      <a href="?state=blocked">Reviewed / blocked</a>
-      <a href="?state=ready">Repair planned</a>
-      <a href="?state=running">Repairing</a>
-      <a href="?state=importing">Importing</a>
-      <a href="?state=failed">Failed</a>
+      <a href="?"{{if eq .State ""}} aria-current="page"{{end}}>All</a>
+      <a href="?state=observed"{{if eq .State "observed"}} aria-current="page"{{end}}>Not processed</a>
+      <a href="?state=blocked"{{if eq .State "blocked"}} aria-current="page"{{end}}>Blocked</a>
+      <a href="?state=ready"{{if eq .State "ready"}} aria-current="page"{{end}}>Repair planned</a>
+      <a href="?state=running"{{if eq .State "running"}} aria-current="page"{{end}}>Repairing</a>
+      <a href="?state=importing"{{if eq .State "importing"}} aria-current="page"{{end}}>Importing</a>
+      <a href="?state=failed"{{if eq .State "failed"}} aria-current="page"{{end}}>Failed</a>
     </div>
+    {{if eq .State "blocked"}}<p class="view-description">Blocked does not always mean reviewed. Some downloads are not ready, some could not be inspected, and others need a decision from you. Choose a group to see why each item stopped.</p>{{end}}
+    <form class="search" method="get">
+      {{if .State}}<input type="hidden" name="state" value="{{.State}}">{{end}}
+      <label for="search">Find an item</label>
+      <input id="search" name="q" type="search" value="{{.Query}}" placeholder="Album, artist, movie, release or reason">
+      <button type="submit">Search</button>
+    </form>
+    <p class="result-count">{{len .Items}} {{if eq (len .Items) 1}}item{{else}}items{{end}}{{if .Query}} matching “{{.Query}}”{{end}}</p>
     {{if .Items}}
+    {{if .Groups}}
+    <div class="blocked-groups">
+      {{range .Groups}}
+      <details class="blocked-group">
+        <summary><span>{{.Title}}</span><span class="badge">{{len .Items}}</span></summary>
+        <p class="group-description">{{.Description}}</p>
+        {{range .Items}}
+        <article class="blocked-item">
+          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Status}}</span></div>
+          <h3><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></h3>
+          <p class="case-explanation">{{.Explanation}}</p>
+          {{if .NextStep}}<p class="next-step"><strong>Next step:</strong> {{.NextStep}}</p>{{end}}
+          <a class="details-link" href="/jobs/{{.Job.ID}}">Review item →</a>
+          {{if ne .Subject .Job.Title}}<details class="release-name"><summary>Download name</summary><p>{{.Job.Title}}</p></details>{{end}}
+        </article>
+        {{end}}
+      </details>
+      {{end}}
+    </div>
+    {{else}}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Service</th><th>Release</th><th>State</th><th>Decision</th><th>Updated</th></tr></thead>
+        <thead><tr><th>Service</th><th>Item</th><th>Status</th><th>Why / next step</th><th>Last checked</th></tr></thead>
         <tbody>
           {{range .Items}}
           <tr>
             <td><span class="service">{{.Job.Service}}</span></td>
-            <td><a href="/jobs/{{.Job.ID}}">{{.Job.Title}}</a></td>
-            <td><span class="badge">{{.Job.State}}</span>{{if .Job.PendingAction}}<small>Requested: {{.Job.PendingAction}}</small>{{end}}<small>{{.Job.Reason}}</small><small>{{.Job.CollectionError}}</small></td>
-            <td><strong>{{.Decision.Action}}</strong><small>{{.Decision.Reason}}</small></td>
+            <td><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></td>
+            <td><span class="badge">{{.Status}}</span></td>
+            <td>{{.Explanation}}{{if .NextStep}}<small>{{.NextStep}}</small>{{end}}</td>
             <td>{{.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</td>
           </tr>
           {{end}}
         </tbody>
       </table>
     </div>
+    {{end}}
     {{else}}<p class="empty">No entries match this view.</p>{{end}}
     {{end}}
   </main>

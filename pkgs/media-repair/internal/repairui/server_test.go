@@ -2,7 +2,9 @@ package repairui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -106,10 +108,10 @@ func TestRemovalWakesSchedulerAndLeavesCurrentListAfterCompletion(t *testing.T) 
 
 	current := fixture.get("/lidarr")
 	history := fixture.get("/history")
-	if current.Code != http.StatusOK || strings.Contains(current.Body.String(), "Album") {
+	if current.Code != http.StatusOK || strings.Contains(current.Body.String(), html.EscapeString(fixture.job.Title)) {
 		t.Fatalf("removed item remains current: %s", current.Body.String())
 	}
-	if history.Code != http.StatusOK || !strings.Contains(history.Body.String(), "Album") {
+	if history.Code != http.StatusOK || !strings.Contains(history.Body.String(), html.EscapeString(fixture.job.Title)) {
 		t.Fatalf("removed item missing from history: %s", history.Body.String())
 	}
 }
@@ -145,5 +147,61 @@ func TestTitlesAreEscaped(t *testing.T) {
 			!strings.Contains(response.Body.String(), "&lt;script&gt;") {
 			t.Fatalf("unsafe title at %s: %s", path, response.Body.String())
 		}
+	}
+}
+
+func TestBlockedListExplainsGroupsAndSearchesMediaIdentity(t *testing.T) {
+	fixture := newFixture(t)
+	ctx := context.Background()
+	for index, sample := range []struct {
+		title, error, evidence, plan string
+	}{
+		{"release.flac", "", `{"case":{"album":{"artist":"Moby","title":"All Visible Objects"}}}`, `{"action":"no_repair","reason":"unsafe_to_repair","explanation":"These remixes do not match the original album tracks."}`},
+		{"unfinished movie", "Radarr queue record 123 is ineligible: [incomplete_download unsupported_queue_state]", `{}`, `{}`},
+		{"old provider failure", "", `{}`, `{"action":"no_repair","explanation":"The planner could not produce a valid decision within its attempt limit."}`},
+	} {
+		job, err := fixture.store.Observe(ctx, jobs.Job{
+			Service: jobs.Radarr, QueueID: int64(index + 100), Title: sample.title,
+			CollectionError: sample.error, Evidence: json.RawMessage(sample.evidence),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		job.State, job.Plan = jobs.Blocked, json.RawMessage(sample.plan)
+		if err := fixture.store.FinishPlanning(ctx, job); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	response := fixture.get("/?state=blocked")
+	body := response.Body.String()
+	for _, want := range []string{
+		"3 items", "Moby — All Visible Objects", "These remixes do not match",
+		"Planner could not decide", "No automatic repair chosen", "Waiting on the download or queue",
+		"Radarr still reports the download as incomplete.", "Next step:",
+	} {
+		if response.Code != http.StatusOK || !strings.Contains(body, want) {
+			t.Fatalf("blocked page missing %q: %d %s", want, response.Code, body)
+		}
+	}
+	for _, internal := range []string{"unsafe_to_repair", "unsupported_queue_state", "no_repair"} {
+		if strings.Contains(body, internal) {
+			t.Errorf("list exposes internal code %q", internal)
+		}
+	}
+
+	response = fixture.get("/?state=blocked&q=mObY")
+	body = response.Body.String()
+	if response.Code != http.StatusOK || !strings.Contains(body, "1 item") ||
+		!strings.Contains(body, "Moby — All Visible Objects") || strings.Contains(body, "unfinished movie") {
+		t.Fatalf("search did not filter by canonical media identity: %d %s", response.Code, body)
+	}
+	response = fixture.get("/?state=blocked&q=missing-title")
+	if !strings.Contains(response.Body.String(), "No entries match this view.") {
+		t.Fatalf("search without matches: %s", response.Body.String())
+	}
+	response = fixture.get("/?state=blocked&q=incomplete_download")
+	if !strings.Contains(response.Body.String(), "unfinished movie") {
+		t.Fatalf("recorded inspection error is not searchable: %s", response.Body.String())
 	}
 }
