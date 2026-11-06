@@ -35,26 +35,29 @@ const (
 )
 
 type Job struct {
-	ID                 int64   `gorm:"primaryKey"`
-	Service            Service `gorm:"uniqueIndex:queue_identity"`
-	QueueID            int64   `gorm:"uniqueIndex:queue_identity"`
-	DownloadID         string  `gorm:"uniqueIndex:queue_identity"`
-	Title              string
-	SourceFingerprint  string
-	StableSince        time.Time
-	Evidence           json.RawMessage `gorm:"serializer:json"`
-	CollectionError    string
-	Plan               json.RawMessage `gorm:"serializer:json"`
-	Guidance           string
-	RuntimeToleranceMS int64
-	RetryAt            time.Time
-	PlanningAttempts   int
-	PendingAction      string
-	Revision           int64
-	InQueue            bool
-	State              State
-	Reason             string
-	UpdatedAt          time.Time `gorm:"autoUpdateTime:false"`
+	ID                          int64   `gorm:"primaryKey"`
+	Service                     Service `gorm:"uniqueIndex:queue_identity"`
+	QueueID                     int64   `gorm:"uniqueIndex:queue_identity"`
+	DownloadID                  string  `gorm:"uniqueIndex:queue_identity"`
+	Title                       string
+	SourceFingerprint           string
+	PlanningFingerprint         string
+	PreviousPlanningFingerprint string `gorm:"-"`
+	PlanningChange              string `gorm:"-"`
+	StableSince                 time.Time
+	Evidence                    json.RawMessage `gorm:"serializer:json"`
+	CollectionError             string
+	Plan                        json.RawMessage `gorm:"serializer:json"`
+	Guidance                    string
+	RuntimeToleranceMS          int64
+	RetryAt                     time.Time
+	PlanningAttempts            int
+	PendingAction               string
+	Revision                    int64
+	InQueue                     bool
+	State                       State
+	Reason                      string
+	UpdatedAt                   time.Time `gorm:"autoUpdateTime:false"`
 }
 
 type Attempt struct {
@@ -97,7 +100,7 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 	connection.SetMaxOpenConns(1)
-	if err := db.AutoMigrate(&Job{}, &Attempt{}); err != nil {
+	if err := db.AutoMigrate(&Job{}, &Attempt{}, &PlanningResult{}); err != nil {
 		connection.Close()
 		return nil, err
 	}
@@ -135,16 +138,27 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		job.InQueue = true
 		job.CollectionError = observed.CollectionError
 		if !active(job.State) && observed.Evidence != nil {
-			if job.SourceFingerprint != observed.SourceFingerprint && job.State != Imported && job.State != Removed {
+			changed, err := observePlanning(tx, &job, observed)
+			if err != nil {
+				return err
+			}
+			if changed && job.State != Imported && job.State != Removed {
 				job.Plan = nil
 				job.State = Observed
-				job.Reason = ""
+				job.Reason = observed.PlanningChange
 				job.StableSince = observed.UpdatedAt
 				job.RetryAt = time.Time{}
 				job.PlanningAttempts = 0
+				if err := restorePlanning(tx, &job); err != nil {
+					return err
+				}
 			}
-			job.SourceFingerprint = observed.SourceFingerprint
-			job.Evidence = observed.Evidence
+			// A ready plan belongs to its original full evidence. Import execution
+			// revalidates it; assessment noise must not silently replace that case.
+			if job.State != Ready || changed || observed.PlanningFingerprint == "" {
+				job.SourceFingerprint = observed.SourceFingerprint
+				job.Evidence = observed.Evidence
+			}
 		}
 
 		return tx.Save(&job).Error
@@ -180,6 +194,9 @@ func (store *Store) SetPlan(ctx context.Context, id int64, fingerprint string, p
 		job.UpdatedAt = at
 		job.State = Ready
 		job.Reason = ""
+		if err := rememberPlanning(tx, job); err != nil {
+			return err
+		}
 		return tx.Save(&job).Error
 	})
 }

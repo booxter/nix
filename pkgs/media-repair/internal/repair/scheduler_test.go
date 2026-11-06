@@ -112,3 +112,68 @@ func (service *waitingService) Remove(_ context.Context, job jobs.Job) error {
 	service.removed <- job.ID
 	return nil
 }
+
+func TestRepeatedInputsDoNotBuyAnotherPlan(t *testing.T) {
+	ctx := context.Background()
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	service := &countingPlanner{}
+	service.observed = Observation{
+		Jobs:  []jobs.Job{{QueueID: 1, SourceFingerprint: "case-a", PlanningFingerprint: "files-a", Evidence: json.RawMessage(`{}`)}},
+		Queue: []jobs.QueueKey{{QueueID: 1}},
+	}
+	scheduler := Scheduler{
+		Store: store, Service: service, Name: jobs.Lidarr, Now: time.Now,
+		Disabled: func() (bool, error) { return true, nil },
+		Log:      slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	for _, step := range []struct {
+		name, caseID, inputs string
+		calls                int
+	}{
+		{"first observation", "case-a", "files-a", 1},
+		{"assessment changed", "case-a-new-score", "files-a", 1},
+		{"files changed", "case-b", "files-b", 2},
+		{"old inputs returned", "case-a-again", "files-a", 2},
+	} {
+		t.Run(step.name, func(t *testing.T) {
+			service.observed.Jobs[0].SourceFingerprint = step.caseID
+			service.observed.Jobs[0].PlanningFingerprint = step.inputs
+			if err := scheduler.observe(ctx); err != nil {
+				t.Fatal(err)
+			}
+			if err := scheduler.advance(ctx); err != nil {
+				t.Fatal(err)
+			}
+			if service.calls != step.calls {
+				t.Fatalf("paid requests = %d, want %d", service.calls, step.calls)
+			}
+		})
+	}
+	listed, err := store.List(ctx, jobs.Lidarr)
+	if err != nil || len(listed) != 1 {
+		t.Fatalf("jobs: %+v, %v", listed, err)
+	}
+	if err := store.RequestAction(ctx, listed[0].ID, jobs.Reconsider, "try again", 0, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if err := scheduler.advance(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if service.calls != 3 {
+		t.Fatalf("operator request did not cause one new plan: %d", service.calls)
+	}
+}
+
+type countingPlanner struct {
+	waitingService
+	calls int
+}
+
+func (service *countingPlanner) Plan(context.Context, jobs.Job) (Decision, error) {
+	service.calls++
+	return Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair"}, nil
+}

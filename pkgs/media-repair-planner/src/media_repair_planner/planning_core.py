@@ -25,6 +25,10 @@ class DecisionModelError(Exception):
         self.violations = violations
 
 
+class DecisionModelUnavailable(DecisionModelError):
+    """The model provider could not serve a planning request."""
+
+
 class DecisionGenerator[CaseT, DecisionT](Protocol):
     async def generate(
         self,
@@ -75,7 +79,15 @@ class ContractPlanner[CaseT, DecisionT]:
         repair_case: CaseT,
         context: PlanningContext | None = None,
     ) -> DecisionT:
-        outcome = await self.plan_with_outcome(repair_case, context)
+        try:
+            outcome = await self.plan_with_outcome(repair_case, context)
+        except DecisionModelUnavailable as error:
+            LOGGER.warning(
+                "planner unavailable case_id=%s error=%s",
+                self._case_id(repair_case),
+                error,
+            )
+            raise
         if outcome.used_fallback:
             LOGGER.warning(
                 "planner used fallback case_id=%s attempts=%d errors=%s",
@@ -124,6 +136,10 @@ class ContractPlanner[CaseT, DecisionT]:
             decision = self._roundtrip_decision(proposed)
         except ContractError as error:
             return None, (), f"decision contract failed: {error}"
+        except DecisionModelUnavailable:
+            # The controller owns retry backoff. A provider outage is not a
+            # decision about whether the media can be repaired safely.
+            raise
         except DecisionModelError as error:
             return None, error.violations, str(error)
         violations = self._validate_decision(repair_case, decision)

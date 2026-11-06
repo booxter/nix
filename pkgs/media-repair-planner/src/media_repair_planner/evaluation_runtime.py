@@ -5,21 +5,18 @@ import asyncio
 import sys
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from .model_runtime import (
-    BackendSettings,
     ModelArguments,
     ModelFactory,
-    RuntimeDecisionModel,
     add_model_arguments,
     close_model,
     settings_from_arguments,
 )
-from .ollama_model import OllamaSettings
-from .openrouter_model import ReasoningEffort
+from .openrouter_model import OpenRouterSettings, ReasoningEffort
+from .structured_model import StructuredDecisionModel
 from .tracing import JsonlTraceWriter
 
 
@@ -27,30 +24,14 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class CommonEvaluationSettings(StrictModel):
+class EvaluationSettings(StrictModel):
     model: str
     output_tokens: int
     timeout_seconds: float
     runs: int
     case: str | None = None
-
-
-class OllamaEvaluationSettings(CommonEvaluationSettings):
-    backend: Literal["ollama"] = "ollama"
-    context_tokens: int
-    reasoning: bool
-
-
-class OpenRouterEvaluationSettings(CommonEvaluationSettings):
-    backend: Literal["openrouter"] = "openrouter"
     provider: str
     reasoning_effort: ReasoningEffort
-
-
-EvaluationSettings = Annotated[
-    OllamaEvaluationSettings | OpenRouterEvaluationSettings,
-    Field(discriminator="backend"),
-]
 
 
 class EvaluationArguments(ModelArguments):
@@ -78,20 +59,10 @@ def evaluation_parser(program: str) -> argparse.ArgumentParser:
 
 
 def evaluation_settings(
-    settings: BackendSettings,
+    settings: OpenRouterSettings,
     arguments: EvaluationArguments,
 ) -> EvaluationSettings:
-    if isinstance(settings, OllamaSettings):
-        return OllamaEvaluationSettings(
-            model=settings.model,
-            context_tokens=settings.context_tokens,
-            output_tokens=settings.output_tokens,
-            reasoning=settings.reasoning,
-            timeout_seconds=settings.timeout_seconds,
-            runs=arguments.runs,
-            case=arguments.case_name,
-        )
-    return OpenRouterEvaluationSettings(
+    return EvaluationSettings(
         model=settings.model,
         provider=settings.provider,
         output_tokens=settings.output_tokens,
@@ -106,16 +77,16 @@ async def _evaluate_with_model[ReportT: BaseModel](
     arguments: EvaluationArguments,
     model_factory: ModelFactory,
     case_names: dict[str, str],
-    evaluate: Callable[[RuntimeDecisionModel, EvaluationSettings], Awaitable[ReportT]],
+    evaluate: Callable[[StructuredDecisionModel, EvaluationSettings], Awaitable[ReportT]],
 ) -> ReportT:
-    backend_settings = settings_from_arguments(arguments)
-    settings = evaluation_settings(backend_settings, arguments)
+    model_settings = settings_from_arguments(arguments)
+    settings = evaluation_settings(model_settings, arguments)
     trace_writer: JsonlTraceWriter | None = None
-    model: RuntimeDecisionModel | None = None
+    model: StructuredDecisionModel | None = None
     try:
         if arguments.trace_output is not None:
             trace_writer = JsonlTraceWriter(arguments.trace_output, case_names)
-        model = model_factory(backend_settings, trace_writer)
+        model = model_factory(model_settings, trace_writer)
         return await evaluate(model, settings)
     finally:
         try:
@@ -129,7 +100,7 @@ def run_model_evaluation[ReportT: BaseModel](
     arguments: EvaluationArguments,
     model_factory: ModelFactory,
     case_names: dict[str, str],
-    evaluate: Callable[[RuntimeDecisionModel, EvaluationSettings], Awaitable[ReportT]],
+    evaluate: Callable[[StructuredDecisionModel, EvaluationSettings], Awaitable[ReportT]],
 ) -> ReportT:
     return asyncio.run(_evaluate_with_model(arguments, model_factory, case_names, evaluate))
 

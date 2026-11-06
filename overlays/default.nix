@@ -78,6 +78,14 @@
         '';
       });
 
+      cuetools = prev.cuetools.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Prevent malformed timestamps from overflowing the output buffer.
+          # https://github.com/svend/cuetools/pull/44
+          ./cuetools-time-frame-buffer-overflow.patch
+        ];
+      });
+
       gpauth = prev.gpauth.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
       });

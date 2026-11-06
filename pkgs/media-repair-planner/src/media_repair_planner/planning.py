@@ -13,6 +13,7 @@ from .decision_models import (
 from .decision_validation import validate_decision_for_case, validate_decision_object
 from .planning_core import ContractPlanner
 from .planning_core import DecisionModelError as DecisionModelError
+from .planning_core import DecisionModelUnavailable as DecisionModelUnavailable
 from .planning_core import PlanningOutcome as PlanningOutcome
 from .prompt import SYSTEM_INSTRUCTION
 from .radarr_projection import project_case

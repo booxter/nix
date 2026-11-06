@@ -17,7 +17,7 @@ from media_repair_planner.contracts import (
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.operator_guidance import PlanningRequest
-from media_repair_planner.planning import DecisionModelError, Planner
+from media_repair_planner.planning import DecisionModelError, DecisionModelUnavailable, Planner
 from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
 
@@ -104,6 +104,13 @@ async def test_planner_retries_one_expected_failure() -> None:
     assert outcome.attempt_errors == ("attempt 1: unavailable",)
     assert len(model.calls) == 2
     assert model.calls[1][4] == ()
+
+
+async def test_planner_does_not_turn_model_unavailability_into_a_decision() -> None:
+    model = ScriptedDecisionModel([DecisionModelUnavailable("provider has no credit")])
+
+    with pytest.raises(DecisionModelUnavailable, match="provider has no credit"):
+        await Planner(model).plan(repair_case())
 
 
 async def test_planner_falls_back_after_attempt_limit() -> None:

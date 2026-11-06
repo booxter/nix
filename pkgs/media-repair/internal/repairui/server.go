@@ -5,12 +5,12 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 )
@@ -20,6 +20,9 @@ var templates embed.FS
 
 //go:embed style.css
 var Style string
+
+//go:embed local-time.js
+var localTimeScript string
 
 type Config struct {
 	Store     *jobs.Store
@@ -36,15 +39,23 @@ type Handler struct {
 }
 
 type item struct {
-	Job      jobs.Job
-	Decision decision
-	CanAct   bool
+	Job         jobs.Job
+	Decision    decision
+	CanAct      bool
+	Subject     string
+	Status      string
+	Explanation string
+	NextStep    string
+	Group       string
+	Attention   *attention
+	CSRF        string
 }
 
 type decision struct {
-	Action      string `json:"action"`
-	Reason      string `json:"reason"`
-	Explanation string `json:"explanation"`
+	Action          string   `json:"action"`
+	Reason          string   `json:"reason"`
+	Explanation     string   `json:"explanation"`
+	MissingEvidence []string `json:"missing_evidence"`
 }
 
 type page struct {
@@ -57,6 +68,13 @@ type page struct {
 	CSRF           string
 	ConfirmRemoval bool
 	QueueURL       string
+	State          string
+	Query          string
+	Inbox          bool
+	Activity       bool
+	InboxCount     int
+	ActivityCount  int
+	Notice         string
 }
 
 func New(config Config) (http.Handler, error) {
@@ -88,6 +106,7 @@ func New(config Config) (http.Handler, error) {
 
 	router := http.NewServeMux()
 	router.HandleFunc("GET /{$}", app.list)
+	router.HandleFunc("GET /activity", app.list)
 	router.HandleFunc("GET /lidarr", app.list)
 	router.HandleFunc("GET /radarr", app.list)
 	router.HandleFunc("GET /history", app.list)
@@ -97,6 +116,10 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /assets/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = w.Write([]byte(Style))
+	})
+	router.HandleFunc("GET /assets/local-time.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		_, _ = w.Write([]byte(localTimeScript))
 	})
 	router.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -111,11 +134,28 @@ func New(config Config) (http.Handler, error) {
 }
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
-	view := page{Title: "Repairr", CSRF: app.csrf, History: r.URL.Path == "/history"}
+	view := page{Title: "Needs you", CSRF: app.csrf, History: r.URL.Path == "/history"}
+	view.State = r.URL.Query().Get("state")
+	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
+	view.Activity = r.URL.Path == "/activity" || view.State != ""
+	view.Inbox = !view.Activity && !view.History
+	if view.Activity {
+		view.Title = "Queue activity"
+	} else if view.History {
+		view.Title = "History"
+	}
+	view.Service = jobs.Service(r.URL.Query().Get("service"))
 	if r.URL.Path == "/radarr" {
 		view.Service = jobs.Radarr
 	} else if r.URL.Path == "/lidarr" {
 		view.Service = jobs.Lidarr
+	}
+	if view.Service != "" && view.Service != jobs.Radarr && view.Service != jobs.Lidarr {
+		http.Error(w, "unknown service", http.StatusBadRequest)
+		return
+	}
+	if r.URL.Query().Get("submitted") != "" {
+		view.Notice = "Your request was saved. Repairr will review it; follow its progress in Queue activity."
 	}
 
 	for _, service := range []jobs.Service{jobs.Lidarr, jobs.Radarr} {
@@ -130,14 +170,29 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 
 		for _, job := range listed {
 			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
-			filter := r.URL.Query().Get("state")
-			if historical != view.History || filter != "" && string(job.State) != filter {
+			entry := present(job)
+			entry.CSRF = app.csrf
+			if !historical {
+				view.ActivityCount++
+				if entry.Attention != nil {
+					view.InboxCount++
+				}
+			}
+			if historical != view.History || view.State != "" && string(job.State) != view.State {
 				continue
 			}
-			view.Items = append(view.Items, present(job))
+			if view.Inbox && entry.Attention == nil {
+				continue
+			}
+			searchable := strings.Join([]string{
+				entry.Subject, job.Title, entry.Status, entry.Explanation, job.Reason, job.CollectionError,
+			}, " ")
+			if view.Query != "" && !strings.Contains(strings.ToLower(searchable), strings.ToLower(view.Query)) {
+				continue
+			}
+			view.Items = append(view.Items, entry)
 		}
 	}
-
 	app.render(w, view)
 }
 
@@ -153,8 +208,9 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	selected := present(job)
+	selected.CSRF = app.csrf
 	app.render(w, page{
-		Title:          job.Title,
+		Title:          "Item details",
 		Service:        job.Service,
 		Selected:       &selected,
 		Attempts:       attempts,
@@ -193,16 +249,4 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 	})
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = output.WriteTo(w)
-}
-
-func present(job jobs.Job) item {
-	view := item{
-		Job:    job,
-		CanAct: job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
-	}
-	if len(job.Plan) != 0 {
-		_ = json.Unmarshal(job.Plan, &view.Decision)
-	}
-
-	return view
 }

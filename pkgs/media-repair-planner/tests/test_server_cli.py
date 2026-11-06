@@ -9,7 +9,6 @@ import pytest
 import uvicorn
 from fastapi import FastAPI
 from media_repair_planner.decision_validation_core import DecisionViolation
-from media_repair_planner.model_runtime import BackendSettings
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket
 from media_repair_planner.structured_model import StructuredModelResponse
@@ -63,8 +62,6 @@ class FinishedUvicornServer:
 
 def server_arguments(api_key_file: Path) -> list[str]:
     return [
-        "--backend",
-        "openrouter",
         "--model",
         "openai/gpt-5.6-sol",
         "--openrouter-provider",
@@ -87,11 +84,11 @@ def server_arguments(api_key_file: Path) -> list[str]:
 def test_server_builds_app_from_typed_settings_and_closes_model(tmp_path: Path) -> None:
     api_key_file = tmp_path / "openrouter-api-key"
     model = CloseableModel()
-    settings_seen: list[BackendSettings] = []
+    settings_seen: list[OpenRouterSettings] = []
     runner = RecordingServer()
 
     def model_factory(
-        settings: BackendSettings,
+        settings: OpenRouterSettings,
         trace_sink: TraceSink | None,
     ) -> CloseableModel:
         assert trace_sink is None
@@ -127,7 +124,7 @@ def test_server_closes_model_after_runner_failure(
     model = CloseableModel()
 
     def model_factory(
-        settings: BackendSettings,
+        settings: OpenRouterSettings,
         trace_sink: TraceSink | None,
     ) -> CloseableModel:
         del settings, trace_sink

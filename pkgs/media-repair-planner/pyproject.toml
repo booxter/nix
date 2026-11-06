@@ -7,7 +7,7 @@ name = "media-repair-planner"
 version = "0.1.0"
 description = "Agentic planner for media import repair"
 requires-python = ">=3.13"
-dependencies = ["fastapi", "jsonschema", "ollama", "openai", "pydantic", "uvicorn"]
+dependencies = ["fastapi", "jsonschema", "openai", "pydantic", "uvicorn"]
 
 [project.scripts]
 media-repair-planner = "media_repair_planner.cli:entrypoint"

@@ -18,10 +18,10 @@ from .evaluation_runtime import (
 )
 from .model_runtime import (
     ModelFactory,
-    RuntimeDecisionModel,
     create_model,
 )
 from .planning import Planner
+from .structured_model import StructuredDecisionModel
 
 
 class Arguments(EvaluationArguments):
@@ -29,7 +29,7 @@ class Arguments(EvaluationArguments):
 
 
 async def _evaluate(
-    model: RuntimeDecisionModel,
+    model: StructuredDecisionModel,
     settings: EvaluationSettings,
 ) -> EvaluationReport:
     return await run_evaluation(Planner(model), settings)

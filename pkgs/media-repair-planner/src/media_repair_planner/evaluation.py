@@ -16,12 +16,6 @@ from .decision_validation_core import describe_violation
 from .evaluation_runtime import (
     EvaluationSettings as EvaluationSettings,
 )
-from .evaluation_runtime import (
-    OllamaEvaluationSettings as OllamaEvaluationSettings,
-)
-from .evaluation_runtime import (
-    OpenRouterEvaluationSettings as OpenRouterEvaluationSettings,
-)
 from .planning import Planner, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
