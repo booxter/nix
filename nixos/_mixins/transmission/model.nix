@@ -49,10 +49,10 @@ let
       };
       cleanup = {
         completed = {
-          minimumRatio = targetRatio;
+          minimumRatio = 2.0;
           minimumAgeDays = 30;
         };
-        maximumAgeDays = 365;
+        maximumAgeDays = 180;
       };
     };
     reconcileIntervalSeconds = 30;

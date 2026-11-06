@@ -55,8 +55,8 @@ def policy(floor: int = 1) -> TorrentPolicy:
             priority=priority(Priority.LOW),
             stop=StopPolicy(minimum_ratio=6.0, require_complete=True),
             cleanup=CleanupPolicy(
-                completed=CompletedCleanupPolicy(minimum_ratio=3.0, minimum_age_days=30.0),
-                maximum_age_days=365.0,
+                completed=CompletedCleanupPolicy(minimum_ratio=2.0, minimum_age_days=30.0),
+                maximum_age_days=180.0,
             ),
         ),
         trackers={
@@ -91,9 +91,9 @@ def test_generic_cleanup_never_bypasses_completion_protection(overrides: dict[st
 @pytest.mark.parametrize(
     ("added_days", "ratio", "expected"),
     [
-        (364, 2.9, []),
-        (365, 0.1, ["public"]),
-        (40, 3.0, ["public"]),
+        (179, 1.9, []),
+        (180, 0.1, ["public"]),
+        (40, 2.0, ["public"]),
     ],
 )
 def test_generic_ratio_and_maximum_age_rules(
