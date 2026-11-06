@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Title}}</title>
   <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/local-time.js" defer></script>
 </head>
 <body>
   <header>
@@ -34,7 +35,7 @@
         <dl>
           <dt>Release</dt><dd>{{$entry.Job.Title}}</dd>
           <dt>Job / queue</dt><dd>#{{$entry.Job.ID}} / #{{$entry.Job.QueueID}}</dd>
-          <dt>Last checked</dt><dd>{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</dd>
+          <dt>Last checked</dt><dd><time datetime="{{$entry.Job.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</time></dd>
           <dt>Internal state</dt><dd>{{$entry.Job.State}}</dd>
           {{if $entry.Job.CollectionError}}<dt>Inspection error</dt><dd>{{$entry.Job.CollectionError}}</dd>{{end}}
           {{if $entry.Job.Reason}}<dt>Recorded reason</dt><dd>{{$entry.Job.Reason}}</dd>{{end}}
@@ -135,7 +136,7 @@
             <td><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></td>
             <td><span class="badge">{{.Status}}</span></td>
             <td>{{.Explanation}}{{if .NextStep}}<small>{{.NextStep}}</small>{{end}}</td>
-            <td>{{.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</td>
+            <td><time datetime="{{.Job.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</time></td>
           </tr>
           {{end}}
         </tbody>

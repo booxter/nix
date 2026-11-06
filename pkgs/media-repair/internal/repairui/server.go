@@ -21,6 +21,9 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
+//go:embed local-time.js
+var localTimeScript string
+
 type Config struct {
 	Store     *jobs.Store
 	Origins   []string
@@ -112,6 +115,10 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /assets/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = w.Write([]byte(Style))
+	})
+	router.HandleFunc("GET /assets/local-time.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		_, _ = w.Write([]byte(localTimeScript))
 	})
 	router.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
