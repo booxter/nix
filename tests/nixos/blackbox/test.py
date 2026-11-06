@@ -19,7 +19,7 @@ def metric_value(metrics, name):
     return float(matches[0].split()[1])
 
 
-def probe(module, target, *, remote=False, authenticated=True):
+def probe(module, target, *, remote=False, authenticated=True, path="/probe"):
     exporter = REMOTE_EXPORTER if remote else LOCAL_EXPORTER
     arguments = [
         "curl",
@@ -27,7 +27,7 @@ def probe(module, target, *, remote=False, authenticated=True):
         "--silent",
         "--show-error",
         "--get",
-        f"{exporter}/probe",
+        f"{exporter}{path}",
         "--data-urlencode",
         f"module={module}",
         "--data-urlencode",
@@ -92,6 +92,7 @@ def wait_for_prometheus_value(query, expected):
 
 start_all()
 machine.wait_for_unit("prometheus-blackbox-exporter.service")
+machine.wait_for_unit("prometheus-blackbox-direct.service")
 machine.wait_for_unit("nginx.service")
 machine.wait_for_unit("dnsmasq.service")
 machine.wait_for_unit("prometheus.service")
@@ -123,7 +124,6 @@ with subtest("remote endpoint requires a trusted client certificate"):
         "--silent",
         "--show-error",
         "--get",
-        f"{REMOTE_EXPORTER}/probe",
         "--data-urlencode",
         "module=http_service",
         "--data-urlencode",
@@ -133,7 +133,13 @@ with subtest("remote endpoint requires a trusted client certificate"):
         "--resolve",
         "blackbox:9115:127.0.0.1",
     ]
-    machine.fail(command(unauthenticated))
+    for path in ("/probe", "/probe-direct"):
+        machine.fail(command([*unauthenticated, f"{REMOTE_EXPORTER}{path}"]))
 
 with subtest("Prometheus consumes blackbox probe metrics"):
     wait_for_prometheus_value('probe_success{job="blackbox-test"}', 1)
+
+with subtest("direct HTTP comparison remains available without the primary exporter"):
+    machine.succeed("systemctl stop prometheus-blackbox-exporter.service")
+    assert_probe("http_service", f"{TARGET_HTTP}/ok", 1, remote=True, path="/probe-direct")
+    assert_probe("http_service", f"{TARGET_HTTP}/conflict", 0, remote=True, path="/probe-direct")

@@ -7,6 +7,7 @@
     srvarr = {
       networkScope = "vpn";
       dnsResolver = "10.128.0.1";
+      directHttpComparison = true;
     };
   };
 

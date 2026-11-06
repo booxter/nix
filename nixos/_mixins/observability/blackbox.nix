@@ -10,6 +10,8 @@ let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
   remoteEnabled = builtins.hasAttr config.networking.hostName fleetInventory.observability.blackboxSources;
+  source = fleetInventory.observability.blackboxSources.${config.networking.hostName} or { };
+  directHttpComparison = source.directHttpComparison or false;
   vpnOptionsAvailable = options.host ? vpn;
   networkNamespace =
     if cfg.networkNamespace == null || !vpnOptionsAvailable then
@@ -142,6 +144,27 @@ in
           upstream = "http://${exporterUpstreamAddress}:${toString cfg.port}/probe";
         };
       };
+    })
+    (lib.mkIf (observabilityCfg.enable && directHttpComparison) {
+      # Keep the comparison exporter in the host namespace, including its DNS.
+      # Reuse the authenticated scrape endpoint and the same HTTP probe module.
+      systemd.services.prometheus-blackbox-direct = {
+        description = "Blackbox HTTP probes outside the VPN";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        serviceConfig = {
+          ExecStart = "${lib.getExe' pkgs.prometheus-blackbox-exporter "blackbox_exporter"} --web.listen-address=127.0.0.1:19116 --config.file=${config.services.prometheus.exporters.blackbox.configFile}";
+          DynamicUser = true;
+          NoNewPrivileges = true;
+          PrivateTmp = true;
+          ProtectHome = true;
+          ProtectSystem = "strict";
+          Restart = "on-failure";
+        };
+      };
+
+      services.nginx.virtualHosts.prometheus-mtls-blackbox.locations."/probe-direct".proxyPass =
+        "http://127.0.0.1:19116/probe";
     })
   ];
 }
