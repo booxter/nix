@@ -2,7 +2,13 @@ package repairlidarr
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"slices"
+	"sort"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -60,6 +66,23 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 			job.CollectionError = err.Error()
 		} else {
 			job.SourceFingerprint = evidence.Case.CaseID
+			job.PlanningFingerprint, err = planningFingerprint(evidence.Case)
+			if err != nil {
+				return repair.Observation{}, err
+			}
+			if record != nil {
+				priorCase, decodeErr := lidarrcontracts.DecodeCase(record.Case)
+				if decodeErr != nil {
+					return repair.Observation{}, decodeErr
+				}
+				if prior.PlanningFingerprint == "" {
+					job.PreviousPlanningFingerprint, err = planningFingerprint(priorCase)
+					if err != nil {
+						return repair.Observation{}, err
+					}
+				}
+				job.PlanningChange = planningChange(priorCase, evidence.Case)
+			}
 			job.Evidence, err = encodeEvidence(evidence)
 			if err != nil {
 				return repair.Observation{}, err
@@ -70,6 +93,52 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 	}
 
 	return observed, nil
+}
+
+type planningInputs struct {
+	Album     lidarrcontracts.Album      `json:"album"`
+	Releases  []lidarrcontracts.Release  `json:"releases"`
+	Tracks    []lidarrcontracts.Track    `json:"tracks"`
+	Artifacts []lidarrcontracts.Artifact `json:"artifacts"`
+}
+
+func planningCaseInputs(repairCase lidarrcontracts.Case) planningInputs {
+	inputs := planningInputs{
+		Album: repairCase.Album, Releases: slices.Clone(repairCase.Releases),
+		Tracks: slices.Clone(repairCase.Tracks), Artifacts: slices.Clone(repairCase.Artifacts),
+	}
+	sort.Slice(inputs.Releases, func(i, j int) bool { return inputs.Releases[i].ReleaseID < inputs.Releases[j].ReleaseID })
+	sort.Slice(inputs.Tracks, func(i, j int) bool { return inputs.Tracks[i].TrackID < inputs.Tracks[j].TrackID })
+	sort.Slice(inputs.Artifacts, func(i, j int) bool { return inputs.Artifacts[i].ArtifactID < inputs.Artifacts[j].ArtifactID })
+	return inputs
+}
+
+func planningFingerprint(repairCase lidarrcontracts.Case) (string, error) {
+	inputs := planningCaseInputs(repairCase)
+	data, err := json.Marshal(inputs)
+	if err != nil {
+		return "", fmt.Errorf("encode Lidarr planning inputs: %w", err)
+	}
+	digest := sha256.Sum256(data)
+	return fmt.Sprintf("sha256:%x", digest), nil
+}
+
+func planningChange(previous, current lidarrcontracts.Case) string {
+	before, after := planningCaseInputs(previous), planningCaseInputs(current)
+	var changes []string
+	if !reflect.DeepEqual(before.Artifacts, after.Artifacts) {
+		changes = append(changes, "audio files")
+	}
+	if before.Album != after.Album {
+		changes = append(changes, "target album")
+	}
+	if !reflect.DeepEqual(before.Releases, after.Releases) {
+		changes = append(changes, "release catalog")
+	}
+	if !reflect.DeepEqual(before.Tracks, after.Tracks) {
+		changes = append(changes, "track catalog/status")
+	}
+	return strings.Join(changes, ", ")
 }
 
 func encodeEvidence(evidence lidarrrepair.Evidence) (json.RawMessage, error) {

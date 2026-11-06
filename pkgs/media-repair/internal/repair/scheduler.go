@@ -100,8 +100,13 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 	for _, job := range observed.Jobs {
 		job.Service = scheduler.Name
 		job.UpdatedAt = scheduler.Now().UTC()
-		if _, err := scheduler.Store.Observe(ctx, job); err != nil {
+		current, err := scheduler.Store.Observe(ctx, job)
+		if err != nil {
 			return err
+		}
+		if current.State == jobs.Observed && job.PlanningChange != "" {
+			scheduler.Log.Info("planning inputs changed", "service", scheduler.Name,
+				"job", current.ID, "changes", job.PlanningChange)
 		}
 	}
 	if err := scheduler.requestCompletedRemovals(ctx, observed.Complete); err != nil {

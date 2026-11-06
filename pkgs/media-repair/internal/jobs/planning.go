@@ -63,6 +63,9 @@ func (store *Store) FinishPlanning(ctx context.Context, planned Job) error {
 		if planned.State == Ready || planned.State == Blocked {
 			job.PendingAction = ""
 		}
+		if err := rememberPlanning(tx, job); err != nil {
+			return err
+		}
 
 		return tx.Save(&job).Error
 	})
