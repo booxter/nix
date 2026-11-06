@@ -3,7 +3,7 @@ use std::env;
 use std::fs::{self, TryLockError};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 
 use crate::file_lock::FileLock;
 
@@ -16,7 +16,38 @@ pub(super) fn directory() -> Result<PathBuf> {
 }
 
 pub(super) struct DeploymentLock {
-    _locks: Vec<FileLock>,
+    _hosts: Vec<HostLock>,
+}
+
+struct HostLock {
+    directory: PathBuf,
+    _lock: FileLock,
+}
+
+impl Drop for HostLock {
+    fn drop(&mut self) {
+        // Release roots before unlocking, including on ordinary error returns.
+        if let Err(error) = clear_roots(&self.directory) {
+            eprintln!("failed to release deployment roots: {error:#}");
+        }
+    }
+}
+
+fn clear_roots(directory: &Path) -> Result<()> {
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if (name == "source" || name.starts_with("helper-")) && entry.file_type()?.is_symlink() {
+            fs::remove_file(entry.path()).with_context(|| {
+                format!(
+                    "failed to remove deployment root {}",
+                    entry.path().display()
+                )
+            })?;
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn lock(directory: &Path, hosts: &[String]) -> Result<DeploymentLock> {
@@ -28,10 +59,21 @@ pub(super) fn lock(directory: &Path, hosts: &[String]) -> Result<DeploymentLock>
         .into_iter()
         .map(|host| lock_host(directory, host))
         .collect::<Result<Vec<_>>>()?;
-    Ok(DeploymentLock { _locks: locks })
+    let held = DeploymentLock { _hosts: locks };
+    clear_abandoned_roots(directory, hosts)?;
+    Ok(held)
 }
 
-fn lock_host(directory: &Path, host: &str) -> Result<FileLock> {
+fn lock_host(directory: &Path, host: &str) -> Result<HostLock> {
+    try_lock_host(directory, host)?.with_context(|| {
+        format!(
+            "another deployment is running for {host} (lock: {})",
+            directory.join(host).join("lock").display()
+        )
+    })
+}
+
+fn try_lock_host(directory: &Path, host: &str) -> Result<Option<HostLock>> {
     let host_directory = directory.join(host);
     fs::create_dir_all(&host_directory).with_context(|| {
         format!(
@@ -43,17 +85,36 @@ fn lock_host(directory: &Path, host: &str) -> Result<FileLock> {
     let file = FileLock::open(&path)?;
 
     match file.try_lock() {
-        Ok(()) => Ok(file),
-        Err(TryLockError::WouldBlock) => {
-            bail!(
-                "another deployment is running for {host} (lock: {})",
-                path.display()
-            )
+        Ok(()) => {
+            let held = HostLock {
+                directory: host_directory,
+                _lock: file,
+            };
+            clear_roots(&held.directory)?;
+            Ok(Some(held))
         }
+        Err(TryLockError::WouldBlock) => Ok(None),
         Err(TryLockError::Error(error)) => {
             Err(error).with_context(|| format!("failed to lock {}", path.display()))
         }
     }
+}
+
+fn clear_abandoned_roots(directory: &Path, selected: &[String]) -> Result<()> {
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        if !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let host = entry.file_name();
+        let host = host.to_str().context("deployment host is not UTF-8")?;
+        if !selected.iter().any(|selected| selected == host) {
+            // Busy hosts retain their roots. Never unlink lock files: doing so
+            // would allow concurrent owners to lock different inodes.
+            drop(try_lock_host(directory, host)?);
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn lock_gc(directory: &Path) -> Result<FileLock> {
@@ -66,11 +127,54 @@ pub(super) fn lock_gc(directory: &Path) -> Result<FileLock> {
 #[cfg(test)]
 mod tests {
     use std::io::{self, BufRead, Write};
+    use std::os::unix::fs::symlink;
     use std::process::{Command, Stdio};
     use std::sync::mpsc;
     use std::time::Duration;
 
     use super::*;
+
+    #[test]
+    fn roots_are_released_on_success_and_failure() {
+        let directory = tempfile::tempdir().unwrap();
+        let root = directory.path().join("alpha/source");
+        for fail in [false, true] {
+            let deploy = || -> Result<()> {
+                let _held = lock(directory.path(), &["alpha".to_owned()])?;
+                symlink("/nix/store/source", &root)?;
+                assert!(root.is_symlink());
+                if fail {
+                    anyhow::bail!("activation failed");
+                }
+                Ok(())
+            };
+            assert_eq!(deploy().is_err(), fail);
+            assert!(!root.is_symlink());
+            assert!(directory.path().join("alpha/lock").is_file());
+        }
+    }
+
+    #[test]
+    fn cleanup_preserves_active_hosts_and_unrelated_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let _active = lock(directory.path(), &["active".to_owned()]).unwrap();
+        let active_root = directory.path().join("active/source");
+        symlink("/nix/store/source", &active_root).unwrap();
+        let idle = directory.path().join("idle");
+        fs::create_dir(&idle).unwrap();
+        for name in ["source", "helper-x86_64-linux"] {
+            symlink("/nix/store/old", idle.join(name)).unwrap();
+        }
+        fs::write(idle.join("notes"), "keep").unwrap();
+
+        let _next = lock(directory.path(), &["next".to_owned()]).unwrap();
+
+        assert!(active_root.is_symlink());
+        for name in ["source", "helper-x86_64-linux"] {
+            assert!(!idle.join(name).is_symlink());
+        }
+        assert_eq!(fs::read_to_string(idle.join("notes")).unwrap(), "keep");
+    }
 
     #[test]
     fn lock_is_exclusive_and_released_when_dropped() {
@@ -115,7 +219,10 @@ mod tests {
         child.wait().unwrap();
 
         assert!(competing.is_err());
+        let root = directory.path().join("beta/source");
+        assert!(root.is_symlink());
         assert!(lock(directory.path(), &hosts).is_ok());
+        assert!(!root.is_symlink());
     }
 
     #[test]
@@ -126,6 +233,11 @@ mod tests {
         let _held = lock(
             Path::new(&directory),
             &["alpha".to_owned(), "beta".to_owned()],
+        )
+        .unwrap();
+        symlink(
+            "/nix/store/source",
+            Path::new(&directory).join("beta/source"),
         )
         .unwrap();
         println!("lock acquired");
