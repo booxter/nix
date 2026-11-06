@@ -18,13 +18,13 @@ from .lidarr_planning import LidarrPlanner
 from .model_runtime import (
     ModelArguments,
     ModelFactory,
-    RuntimeDecisionModel,
     add_model_arguments,
     close_model,
     create_model,
     settings_from_arguments,
 )
 from .planning import Planner
+from .structured_model import StructuredDecisionModel
 
 
 class Arguments(ModelArguments):
@@ -102,7 +102,7 @@ async def _serve(
 ) -> None:
     settings = settings_from_arguments(arguments)
     limits = ApiLimits(planning_timeout_seconds=arguments.planning_timeout_seconds)
-    model: RuntimeDecisionModel | None = None
+    model: StructuredDecisionModel | None = None
     try:
         model = model_factory(settings, None)
         radarr_planner = Planner(model)

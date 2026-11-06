@@ -13,7 +13,7 @@ from media_repair_planner.api import (
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
-from media_repair_planner.evaluation_runtime import OpenRouterEvaluationSettings
+from media_repair_planner.evaluation_runtime import EvaluationSettings
 from media_repair_planner.lidarr_case_models import LidarrRepairCaseV3
 from media_repair_planner.lidarr_contracts import (
     ContractError,
@@ -438,8 +438,8 @@ def write_lidarr_case(directory: Path, value: dict[str, object] | None = None) -
     return path
 
 
-def lidarr_evaluation_settings(case: str | None = None) -> OpenRouterEvaluationSettings:
-    return OpenRouterEvaluationSettings(
+def lidarr_evaluation_settings(case: str | None = None) -> EvaluationSettings:
+    return EvaluationSettings(
         model="openai/gpt-5.6-sol",
         provider="OpenAI",
         output_tokens=4096,
@@ -535,8 +535,6 @@ def test_lidarr_review_cli_writes_openrouter_report(tmp_path: Path) -> None:
 
     result = evaluation_main(
         [
-            "--backend",
-            "openrouter",
             "--model",
             "openai/gpt-5.6-sol",
             "--openrouter-provider",
@@ -562,6 +560,5 @@ def test_lidarr_review_cli_writes_openrouter_report(tmp_path: Path) -> None:
     report = json.loads(output.read_bytes())
     assert result == 0
     assert report["schema_version"] == "lidarr-repair-review-report/v1"
-    assert report["settings"]["backend"] == "openrouter"
     assert report["results"][0]["decision"]["action"] == "import_missing_tracks_v1"
     assert trace.stat().st_mode & 0o777 == 0o600

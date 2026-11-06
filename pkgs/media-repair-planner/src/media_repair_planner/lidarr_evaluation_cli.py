@@ -22,9 +22,9 @@ from .lidarr_evaluation import (
 from .lidarr_planning import LidarrPlanner
 from .model_runtime import (
     ModelFactory,
-    RuntimeDecisionModel,
     create_model,
 )
+from .structured_model import StructuredDecisionModel
 
 
 class Arguments(EvaluationArguments):
@@ -38,7 +38,7 @@ def parser() -> argparse.ArgumentParser:
 
 
 async def _evaluate(
-    model: RuntimeDecisionModel,
+    model: StructuredDecisionModel,
     settings: EvaluationSettings,
     corpus: list[CorpusCase],
 ) -> EvaluationReport:

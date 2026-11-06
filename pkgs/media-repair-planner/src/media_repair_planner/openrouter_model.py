@@ -227,7 +227,6 @@ class OpenRouterDecisionModel:
         self,
         system_instruction: str,
         case_content: str,
-        schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
@@ -276,10 +275,10 @@ class OpenRouterDecisionModel:
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
+        del decision_schema
         decision_output, response = await self._generate(
             system_instruction,
             case_content,
-            decision_schema,
             decision_model,
             case_id,
             correction,

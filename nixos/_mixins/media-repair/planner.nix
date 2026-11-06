@@ -52,8 +52,6 @@ in
         # %d expands to this service's private credentials directory.
         ExecStart = lib.escapeShellArgs [
           (lib.getExe' planner.package "media-repair-planner-serve")
-          "--backend"
-          "openrouter"
           "--model"
           planner.model
           "--openrouter-provider"
