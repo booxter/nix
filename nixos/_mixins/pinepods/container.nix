@@ -88,6 +88,11 @@ in
             PUID = toString storageIdentities.users.${user}.uid;
             PGID = toString config.users.groups.${storageGroup}.gid;
 
+            # TODO: Remove this local yt-dlp mount and directory once the image
+            # includes https://github.com/madeofpendletonwool/PinePods/pull/1080.
+            # Version 0.9.2 initializes yt-dlp as root, which cannot write to NFS.
+            YTDLP_PATH = "/opt/pinepods/yt-dlp/yt-dlp";
+
             # Native and gPodder-compatible clients authenticate with a
             # username and password even though browsers normally use SSO.
             OIDC_DISABLE_STANDARD_LOGIN = "false";
@@ -110,7 +115,10 @@ in
           environmentFiles = [ config.sops.templates."pinepods.env".path ];
           ports = [ "127.0.0.1:${toString port}:8040" ];
           networks = [ "slirp4netns:allow_host_loopback=true" ];
-          volumes = [ "${downloadsDir}:/opt/pinepods/downloads:rw" ];
+          volumes = [
+            "${downloadsDir}:/opt/pinepods/downloads:rw"
+            "/var/lib/pinepods/yt-dlp:/opt/pinepods/yt-dlp:rw"
+          ];
           extraOptions = [
             "--cap-drop=all"
             # Readiness is handled synchronously by systemd; Podman's automatic
@@ -127,6 +135,10 @@ in
         };
       };
     };
+
+    systemd.tmpfiles.rules = [
+      "d /var/lib/pinepods/yt-dlp 0750 ${user} ${storageGroup} - -"
+    ];
 
     systemd.services.podman-pinepods = {
       requires = [
