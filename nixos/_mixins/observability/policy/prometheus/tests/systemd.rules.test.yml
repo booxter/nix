@@ -93,3 +93,34 @@ tests:
             exp_annotations:
               summary: "Systemd unit failed: wireguard-wg0.service on gw"
               description: "The systemd unit wireguard-wg0.service on gw has remained failed for 5 minutes."
+
+  - interval: 1m
+    input_series:
+      - series: 'node_systemd_unit_state{instance="srvarr",name="update-dynamic-ip.service",scrape_profile="node",state="failed"}'
+        values: "1x59 0 1x1379 0x60 1x1440"
+      - series: 'node_systemd_unit_state{instance="srvarr",name="update-dynamic-ip.service",scrape_profile="node",state="activating"}'
+        values: "0x59 1 0x2881"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: SystemdUnitFailed
+      - eval_time: 5m
+        alertname: DynamicIpUpdateFailed
+      - eval_time: 23h59m
+        alertname: DynamicIpUpdateFailed
+      - eval_time: 24h
+        alertname: DynamicIpUpdateFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: DynamicIpUpdateFailed
+              category: systemd
+              instance: srvarr
+              name: update-dynamic-ip.service
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Systemd unit failed: update-dynamic-ip.service on srvarr"
+              description: "The systemd unit update-dynamic-ip.service on srvarr has failed or been retrying for 24 hours."
+      - eval_time: 24h1m
+        alertname: DynamicIpUpdateFailed
+      - eval_time: 48h
+        alertname: DynamicIpUpdateFailed

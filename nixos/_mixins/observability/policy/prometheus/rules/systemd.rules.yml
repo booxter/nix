@@ -19,7 +19,7 @@ groups:
           summary: "Systemd unit inactive: {{ $labels.name }} on {{ $labels.instance }}"
           description: "NixOS expects {{ $labels.name }} to remain active on {{ $labels.instance }}, but systemd has not reported it active for 5 minutes."
       - alert: SystemdUnitFailed
-        expr: node_systemd_unit_state{scrape_profile="node",state="failed"} == 1
+        expr: node_systemd_unit_state{scrape_profile="node",name!="update-dynamic-ip.service",state="failed"} == 1
         for: 5m
         labels:
           severity: warning
@@ -27,3 +27,14 @@ groups:
         annotations:
           summary: "Systemd unit failed: {{ $labels.name }} on {{ $labels.instance }}"
           description: "The systemd unit {{ $labels.name }} on {{ $labels.instance }} has remained failed for 5 minutes."
+      - alert: DynamicIpUpdateFailed
+        # Preserve the pending alert through retries; a successful oneshot run
+        # enters inactive and clears it.
+        expr: sum without(state) (node_systemd_unit_state{scrape_profile="node",name="update-dynamic-ip.service",state=~"failed|activating"}) == 1
+        for: 24h
+        labels:
+          severity: warning
+          category: systemd
+        annotations:
+          summary: "Systemd unit failed: {{ $labels.name }} on {{ $labels.instance }}"
+          description: "The systemd unit {{ $labels.name }} on {{ $labels.instance }} has failed or been retrying for 24 hours."
