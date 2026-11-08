@@ -18,6 +18,9 @@ python313Packages.buildPythonPackage rec {
 
   pythonImportsCheck = [ "aiosqlitepool" ];
 
+  # Use the repository updater's flake-aware fallback instead of the inherited script.
+  passthru.updateScript = null;
+
   meta = {
     description = "Asyncio connection pool for aiosqlite";
     homepage = "https://github.com/slaily/aiosqlitepool";
