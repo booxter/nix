@@ -143,6 +143,19 @@
         ];
       });
 
+      # Drop once nixpkgs includes the XML output fixes.
+      # https://github.com/NixOS/nixpkgs/pull/584774
+      lsdvd = prev.lsdvd.overrideAttrs (old: rec {
+        version = "0.21";
+        src = prev.fetchgit {
+          url = "https://git.code.sf.net/p/lsdvd/git";
+          rev = "refs/tags/${version}";
+          hash = "sha256-NCMd0gj8jF0xpixMz3Vp77O+vG/Qso98HxFwoB+b3Zc=";
+        };
+        buildInputs = (old.buildInputs or [ ]) ++ [ prev.libxml2 ];
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.autoreconfHook ];
+      });
+
       houndarr = prev.houndarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Upstream's test hard-codes a 2026-10-27 release date that is no

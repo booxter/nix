@@ -16,7 +16,9 @@ from .model_projection import (
     transform,
 )
 
-OMITTED_FIELDS = frozenset({"download_ref", "fingerprint", "queue_id"})
+# Timestamp units are normalized by the join worker. Keep them in the canonical
+# evidence for technical checks, but do not present them as a model constraint.
+OMITTED_FIELDS = frozenset({"download_ref", "fingerprint", "queue_id", "time_base"})
 
 
 def _collect_evidence_ids(value: object, identifiers: list[str]) -> None:

@@ -49,13 +49,6 @@ func present(job jobs.Job) item {
 		view.Group, view.Status = "planner", "Planner failed"
 		view.Explanation = "The previous planning attempt ended without a usable decision."
 		view.NextStep = "Request reconsideration to try again."
-	case job.Reason == "queue entry is present again":
-		view.Group, view.Status = "review", "Tracking resumed"
-		view.Explanation = "The queue entry was seen again after it was removed or disappeared."
-		if view.Decision.Explanation != "" && view.Decision.Explanation != plannerFallback {
-			view.Explanation += " Previous decision: " + view.Decision.Explanation
-		}
-		view.NextStep = "Review the previous result and current queue entry before reconsidering."
 	case strings.Contains(job.Reason, "these inputs were already planned"):
 		view.Group, view.Status = "review", "Already reviewed"
 		view.Explanation = job.Reason

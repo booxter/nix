@@ -174,8 +174,12 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 			job.InQueue = false
 			job.UpdatedAt = at
 			if !active(job.State) && job.State != Imported {
-				job.State = Removed
-				job.Reason = "no longer in the queue"
+				// Queue presence is independent of a completed repair outcome.
+				// Keep failures actionable if the same download returns later.
+				if job.State != Blocked && job.State != Failed {
+					job.State = Removed
+					job.Reason = "no longer in the queue"
+				}
 				job.PendingAction = ""
 			}
 			if err := tx.Save(&job).Error; err != nil {

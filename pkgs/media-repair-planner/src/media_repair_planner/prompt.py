@@ -18,9 +18,14 @@ invent an operation, identifier, path, command, or missing fact. Prefer
 no_repair whenever the evidence does not establish a safe choice.
 
 Choose join_parts_v1 only when the selected files are parts of exactly one
-movie and joining them is appropriate. Normally, their complete order must be
-supported by the evidence. An order need not be authored when the evidence
-explicitly identifies an anthology, vignettes, or split scenes and the files
+movie and joining them is appropriate. The join operation remuxes each part to
+normalize timestamp units before joining, without re-encoding. Raw timestamp
+units are omitted from this view; differences in them do not prevent a join.
+Codec, resolution, frame rate, and track compatibility still matter.
+
+Normally, their complete order must be supported by the evidence. An order
+need not be authored when the evidence explicitly identifies an anthology,
+vignettes, or split scenes and the files
 are independently named, self-contained scenes rather than sequential movie
 segments. In that case, require the selected scenes to account for the complete
 movie runtime, exclude every clearly identified extra, and order the selected

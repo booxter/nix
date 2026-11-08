@@ -12,4 +12,7 @@ in
   torrentCleaner = pkgs.callPackage ./torrent-cleaner {
     transmissionCommon = common;
   };
+  torrentRepair = pkgs.callPackage ./torrent-repair {
+    transmissionCommon = common;
+  };
 }

@@ -2,10 +2,67 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
 )
+
+func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
+	for _, state := range []State{Blocked, Failed} {
+		t.Run(string(state), func(t *testing.T) {
+			ctx := context.Background()
+			store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
+			observation := Job{
+				Service: Radarr, QueueID: 10, DownloadID: "download",
+				SourceFingerprint: "source", Evidence: json.RawMessage(`{"files":[]}`),
+			}
+			job, err := store.Observe(ctx, observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			plan := json.RawMessage(`{"action":"join_parts_v1"}`)
+			if err := store.SetPlan(ctx, job.ID, "source", plan, "", time.Now()); err != nil {
+				t.Fatal(err)
+			}
+			attempt, err := store.Start(ctx, job.ID, time.Now())
+			if err != nil {
+				t.Fatal(err)
+			}
+			attempt.State = state
+			attempt.Reason = "decision rejected: technical_checks_rejected"
+			if err := store.UpdateAttempt(ctx, attempt); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := store.ReconcileQueue(ctx, Radarr, nil, time.Now()); err != nil {
+				t.Fatal(err)
+			}
+			missing, err := store.Get(ctx, job.ID)
+			if err != nil || missing.InQueue || missing.State != state || missing.Reason != attempt.Reason {
+				t.Fatalf("disappearance lost failure: %+v, %v", missing, err)
+			}
+
+			present := []QueueKey{{QueueID: 20, DownloadID: "download"}}
+			if err := store.ReconcileQueue(ctx, Radarr, present, time.Now()); err != nil {
+				t.Fatal(err)
+			}
+			observation.QueueID = 20
+			returned, err := store.Observe(ctx, observation)
+			if err != nil || returned.ID != job.ID || !returned.InQueue ||
+				returned.State != state || returned.Reason != attempt.Reason || string(returned.Plan) != string(plan) {
+				t.Fatalf("return lost failure: %+v, %v", returned, err)
+			}
+			if _, err := store.Start(ctx, job.ID, time.Now()); !errors.Is(err, ErrConflict) {
+				t.Fatalf("returned failure allowed an automatic retry: %v", err)
+			}
+			if err := store.RequestAction(ctx, job.ID, Reconsider, "try again", 0, time.Now()); err != nil {
+				t.Fatalf("returned failure cannot be reconsidered: %v", err)
+			}
+		})
+	}
+}
 
 func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	ctx := context.Background()

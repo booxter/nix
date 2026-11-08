@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-const muxedAverageRateRelativeTolerance = 0.001
+const averageRateRelativeTolerance = 0.001
 
 type StreamCompatibility string
 
@@ -141,7 +141,7 @@ func AssessStreamCompatibility(probes []ProbeEvidence) StreamCompatibilityAssess
 			)
 		}
 		for streamPosition := range reference {
-			comparison := compareStreams(reference[streamPosition], streams[partPosition][streamPosition])
+			comparison := comparePartStreams(reference[streamPosition], streams[partPosition][streamPosition])
 			if comparison.mismatch != "" {
 				return streamAssessment(
 					StreamsIncompatible,
@@ -199,7 +199,7 @@ func (layout StreamLayout) MatchesMuxedOutput(streams []ProbeStream) bool {
 		if !valid {
 			return false
 		}
-		comparison := compareMuxedStream(reference, ordered[position])
+		comparison := compareStreamsWithRateTolerance(reference, ordered[position])
 		if comparison.missing != "" || comparison.mismatch != "" {
 			return false
 		}
@@ -347,14 +347,24 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 	return comparison
 }
 
-func compareMuxedStream(reference ProbeStream, candidate ProbeStream) streamComparison {
-	// avg_frame_rate is derived from the complete muxed stream and can differ
-	// slightly from the rate reported for each input part.
+func comparePartStreams(reference ProbeStream, candidate ProbeStream) streamComparison {
+	// Small differences in measured averages are acceptable when the nominal
+	// rates agree. Without that evidence, retain the exact average-rate check.
+	if reference.FrameRate != nil && candidate.FrameRate != nil &&
+		*reference.FrameRate == *candidate.FrameRate {
+		return compareStreamsWithRateTolerance(reference, candidate)
+	}
+	return compareStreams(reference, candidate)
+}
+
+func compareStreamsWithRateTolerance(reference ProbeStream, candidate ProbeStream) streamComparison {
+	// Average frame rates are derived from packet counts and duration, so small
+	// differences can occur between parts and after muxing.
 	if reference.AverageRate != nil && candidate.AverageRate != nil &&
 		rationalWithinRelativeTolerance(
 			*reference.AverageRate,
 			*candidate.AverageRate,
-			muxedAverageRateRelativeTolerance,
+			averageRateRelativeTolerance,
 		) {
 		reference.AverageRate = candidate.AverageRate
 	}

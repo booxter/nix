@@ -9,6 +9,7 @@ in
     ./downloads.nix
     ./dynamic-ip-updater.nix
     ./options.nix
+    ./repair.nix
     ./service.nix
     ./storage.nix
     ./torrent-cleaner.nix
