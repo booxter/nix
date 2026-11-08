@@ -1,0 +1,31 @@
+Materialize each local flake snapshot, including after version and hash edits.
+With lazy fetching, flake metadata can return a store path that does not exist.
+
+https://github.com/Mic92/nix-update/issues/687
+
+diff --git a/nix_update/options.py b/nix_update/options.py
+--- a/nix_update/options.py
++++ b/nix_update/options.py
+@@ -91,19 +91,19 @@
+ def get_flake_store_path(import_path: str) -> str | None:
+     """Copy a local flake into the Nix store and return its store path.
+ 
+-    Uses ``nix flake metadata`` so that git-ignored files are excluded and
++    Uses ``nix flake prefetch`` so that git-ignored files are excluded and
+     only tracked content is copied.  Returns *None* when the command fails
+     (e.g. the directory is not a flake).
+     """
+     try:
+         result = subprocess.run(
+-            ["nix", "flake", "metadata", "--json"],
++            ["nix", "flake", "prefetch", "--json", "."],
+             cwd=import_path,
+             capture_output=True,
+             text=True,
+             check=True,
+         )
+         metadata = json.loads(result.stdout)
+-        return metadata.get("path")
++        return metadata.get("storePath")
+     except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+         return None

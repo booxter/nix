@@ -161,6 +161,14 @@ class CommandPackageBackend:
         return True
 
     def update(self, target: PackageTarget) -> None:
+        # Lazy flake evaluation can name checkout scripts that are not in the store yet.
+        checked(
+            self.runner.run(
+                [self.tools.nix, "flake", "prefetch", "."],
+                cwd=self.repo_root,
+            ),
+            "prefetching the checkout",
+        )
         if self._run_update_script(target):
             return
         checked(
