@@ -348,21 +348,19 @@
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "telegym": "telegym"
+        ]
       },
       "locked": {
         "lastModified": 1794144177,
-        "narHash": "sha256-OAE9vLRmL9TZPeiICeMeAH0nQW/q3sAtVS4eVTIYad0=",
+        "narHash": "sha256-M/ALnkE9EOLC7hSB2tGVxtvMFAAZ/OlALYWMm7xcTTI=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "84fce4d6ae0763a0fee76e52daf847bb5eb5928a",
+        "rev": "0340cc457ab7ebcb46bd6a08e4d9a2bb4f7ee62c",
         "type": "github"
       },
       "original": {
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "84fce4d6ae0763a0fee76e52daf847bb5eb5928a",
         "type": "github"
       }
     },
@@ -371,10 +369,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "telegym": [
-          "lolek",
-          "telegym"
-        ]
+        "telegym": "telegym"
       },
       "locked": {
         "lastModified": 1787876576,
@@ -803,7 +798,6 @@
     "telegym": {
       "inputs": {
         "nixpkgs": [
-          "lolek",
           "nixpkgs"
         ]
       },
