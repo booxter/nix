@@ -11,8 +11,6 @@ let
 in
 lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
   ismc = plainPkgs.callPackage ../darwin/_mixins/thermal-accounting/pkgs/ismc { };
-  jiratui = pkgs.jiratui;
-  vzvm = pkgs.vzvm;
 }
 // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
   inherit (sharedPackages) aiosqlitepool firefox-devtools-mcp;

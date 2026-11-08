@@ -27,25 +27,10 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
+        claude-code
+        mcp-nixos
+        opencode
         ;
-
-      # TODO: Remove once nixpkgs-unstable includes the platform-specific hashes.
-      # https://github.com/NixOS/nixpkgs/pull/582675
-      opencode = pkgsNixpkgsUnstable.opencode.overrideAttrs (
-        old:
-        assert lib.asserts.assertMsg (
-          old.version == "2.2.5"
-        ) "OpenCode version changed; remove the temporary node_modules hash override";
-        {
-          node_modules = old.node_modules.overrideAttrs {
-            outputHash =
-              if prev.stdenv.hostPlatform.isLinux then
-                "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA="
-              else
-                "sha256-dIveiaiPFGSItwLyeMuPDxTE9gpvvnlTCB/+nG24qCc=";
-          };
-        }
-      );
 
       attic-client = prev.attic-client.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -55,28 +40,6 @@
       });
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
-
-      # Temporarily allow this EOL release until consumers move to Electron 43.
-      electron_42-bin = prev.electron_42-bin.overrideAttrs (old: {
-        meta =
-          old.meta
-          // lib.optionalAttrs (old.version == "42.11.18") {
-            knownVulnerabilities = [ ];
-          };
-      });
-
-      claude-code = pkgsNixpkgsUnstable.claude-code.overrideAttrs (old: {
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
-        postFixup = (old.postFixup or "") + ''
-          # Use the Nix CA bundle without replacing an explicit Node CA setting.
-          # https://github.com/NixOS/nixpkgs/issues/579204
-          wrapProgramShell "$out/bin/claude" --run ${lib.escapeShellArg ''
-            if [ -z "''${NODE_EXTRA_CA_CERTS:-}" ] && [ -n "''${NIX_SSL_CERT_FILE:-}" ]; then
-              export NODE_EXTRA_CA_CERTS="$NIX_SSL_CERT_FILE"
-            fi
-          ''}
-        '';
-      });
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -106,37 +69,16 @@
         ];
       });
 
-      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
-        version = "1.16.0";
-        src = pkgsNixpkgsUnstable.fetchFromGitHub {
-          owner = "whyisdifficult";
-          repo = "jiratui";
-          tag = "v${version}";
-          hash = "sha256-iICSNOfvQDh91rXOjl+9BpW4lIyVNuOxIic2rOuZijY=";
-        };
-        postPatch = ''
-          substituteInPlace pyproject.toml \
-            --replace-fail "uv_build>=0.12.5,<0.13.0" "uv_build>=0.9.2"
-        '';
-        propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
-          pkgsNixpkgsUnstable.python3Packages.questionary
-        ];
+      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
         nativeInstallCheckInputs = (old.nativeInstallCheckInputs or [ ]) ++ [
           pkgsNixpkgsUnstable.writableTmpDirAsHomeHook
         ];
         versionCheckKeepEnvironment = "HOME";
-        passthru = (old.passthru or { }) // {
-          updateScript = null;
-        };
         patches = (old.patches or [ ]) ++ [
           ../patches/jiratui-fetch-all-projects.patch
           ../patches/jiratui-normalize-jql-expression-ids.patch
         ];
       });
-
-      # The repair planner's Qwen model requires Ollama features newer than
-      # the release branch. Keep the base and ROCm variants on one revision.
-      inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
 
       # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
       inherit (pkgsNixpkgsUnstable) paperless-ngx;
@@ -169,17 +111,6 @@
           # Upstream's test hard-codes a 2026-10-27 release date that is no
           # longer in the future, so the movie stops being "not yet released".
           ../patches/houndarr-relative-release-date-test.patch
-        ];
-      });
-
-      mcp-nixos = prev.mcp-nixos.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # File contents may contain "Error" without the read failing.
-          # Drop once the packaged release includes upstream #154.
-          (prev.fetchpatch {
-            url = "https://github.com/utensils/mcp-nixos/commit/d7ebc7bfae70eaf20d54e87cf42764a1d57c35ef.patch";
-            hash = "sha256-55rQhE9CfTW1KQzUNM86U4S4Efu4yCN+1tZvdOz12oc=";
-          })
         ];
       });
 
@@ -394,19 +325,9 @@
       # https://github.com/oven-sh/bun/pull/39837
       inherit (pkgsNixpkgsUnstable) bun;
 
-      vzvm = pkgsNixpkgsUnstable.callPackage ./vzvm.nix { };
-
       darwin = prev.darwin.overrideScope (
         _: _: {
-          linux-builder-vz = pkgsNixpkgsUnstable.darwin.linux-builder-vz.override (old: {
-            modules = old.modules ++ [
-              {
-                virtualisation.vz.package = final.vzvm;
-                # Use the 1.1.0 setting until nixpkgs exposes the idleTimeout option.
-                virtualisation.vz.extraConfig.idleTimeoutSeconds = 10 * 60;
-              }
-            ];
-          });
+          inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
         }
       );
     };
