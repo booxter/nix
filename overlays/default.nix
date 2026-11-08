@@ -107,12 +107,12 @@
       });
 
       jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
-        version = "1.16.0";
+        version = "1.19.0";
         src = pkgsNixpkgsUnstable.fetchFromGitHub {
           owner = "whyisdifficult";
           repo = "jiratui";
           tag = "v${version}";
-          hash = "sha256-iICSNOfvQDh91rXOjl+9BpW4lIyVNuOxIic2rOuZijY=";
+          hash = "sha256-NVgvCgcEfxS1kQug2dTvkpOdZFxITBKnE9v6Ga6q3s0=";
         };
         postPatch = ''
           substituteInPlace pyproject.toml \
