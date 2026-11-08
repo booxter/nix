@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import io
 import json
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
-from package_updates.common import CommandResult, Runner, ToolPaths, UpdateError
+from package_updates.common import UpdateError
 from package_updates.models import PackageTarget, PackageTargets
 from package_updates.packages import (
-    CommandPackageBackend,
     PackageMetadata,
     load_targets,
     main,
@@ -32,55 +30,6 @@ class FakePackageBackend:
 
     def update(self, target: PackageTarget) -> None:
         self.updated.append(target)
-
-
-class PackageRunner(Runner):
-    def __init__(self, update_script: object = None) -> None:
-        self.update_script = update_script
-        self.calls: list[tuple[tuple[str, ...], Mapping[str, str] | None, bool]] = []
-        self.realized: set[str] = set()
-
-    def run(
-        self,
-        arguments: Sequence[str],
-        *,
-        cwd: Path,
-        environment: Mapping[str, str] | None = None,
-        capture: bool = True,
-    ) -> CommandResult:
-        del cwd
-        command = tuple(arguments)
-        self.calls.append((command, environment, capture))
-        if command[0] == "nix-store":
-            self.realized.add(command[-1])
-            return CommandResult(0)
-        if len(command) > 1 and command[1] == "build":
-            return CommandResult(1)
-        if len(command) > 1 and command[1] == "eval":
-            expression = command[-1]
-            if expression.endswith(".passthru.updateScript"):
-                return CommandResult(0, json.dumps(self.update_script))
-            values = {
-                ".version": "1.0.0",
-                ".meta.changelog": "https://github.com/example/demo/releases/tag/v1.0.0",
-                ".meta.homepage": "https://github.com/example/demo",
-                ".src.rev": "refs/tags/v1.0.0",
-            }
-            for suffix, value in values.items():
-                if expression.endswith(suffix):
-                    return CommandResult(0, value)
-            return CommandResult(1)
-        return CommandResult(0)
-
-
-TOOLS = ToolPaths(
-    nix="nix",
-    nix_store="nix-store",
-    nix_update="nix-update",
-    nix_prefetch_docker="prefetch",
-    skopeo="skopeo",
-    select_nodejs="/package/bin/select-nodejs",
-)
 
 
 def test_loads_and_selects_typed_targets(tmp_path: Path) -> None:
@@ -160,38 +109,6 @@ def test_update_script_payloads_are_validated() -> None:
         parse_update_script(["update", 1], "demo")
     with pytest.raises(UpdateError, match="unsupported"):
         parse_update_script({"command": "update"}, "demo")
-
-
-def test_command_backend_realizes_and_runs_json_update_script(tmp_path: Path) -> None:
-    update_executable = "/nix/store/update-package/bin/update"
-    runner = PackageRunner([update_executable, "--flag"])
-    backend = CommandPackageBackend(tmp_path, TOOLS, runner)
-    target = PackageTarget(attr="demo", system="aarch64-darwin")
-    backend.update(target)
-    command, environment, capture = runner.calls[-1]
-    assert update_executable in runner.realized
-    assert command == (update_executable, "--flag")
-    assert environment is not None
-    assert environment["UPDATE_NIX_ATTR_PATH"] == "updatePackages.aarch64-darwin.demo"
-    assert environment["UPDATE_NIX_SYSTEM"] == "aarch64-darwin"
-    assert environment["PACKAGE_UPDATES_SELECT_NODEJS"] == "/package/bin/select-nodejs"
-    assert capture is False
-
-
-def test_command_backend_falls_back_to_nix_update_and_reads_metadata(tmp_path: Path) -> None:
-    runner = PackageRunner()
-    backend = CommandPackageBackend(tmp_path, TOOLS, runner)
-    target = PackageTarget(attr="demo", nixUpdateArgs=["--src-only"])
-    backend.update(target)
-    assert runner.calls[-1][0] == (
-        "nix-update",
-        "--flake",
-        "--system",
-        "x86_64-linux",
-        "--src-only",
-        "updatePackages.x86_64-linux.demo",
-    )
-    assert backend.metadata(target).version == "1.0.0"
 
 
 def test_package_target_file_rejects_unknown_fields() -> None:

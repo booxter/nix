@@ -98,6 +98,14 @@
         nix = pkgsNixpkgsUnstable.nixVersions.latest;
       };
 
+      nix-update = prev.nix-update.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Remove when upstream materializes local flake sources before evaluation.
+          # https://github.com/Mic92/nix-update/issues/687
+          ./nix-update-prefetch-flake.patch
+        ];
+      });
+
       jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
         version = "1.16.0";
         src = pkgsNixpkgsUnstable.fetchFromGitHub {

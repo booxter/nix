@@ -28,6 +28,9 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with pythonPackages; [
+    pkgs.git
+    pkgs.nix
+    pkgs.nix-update
     pkgs.pythonRuffCheckHook
     mypy
     pytestCheckHook
