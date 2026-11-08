@@ -106,28 +106,11 @@
         ];
       });
 
-      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: rec {
-        version = "1.16.0";
-        src = pkgsNixpkgsUnstable.fetchFromGitHub {
-          owner = "whyisdifficult";
-          repo = "jiratui";
-          tag = "v${version}";
-          hash = "sha256-iICSNOfvQDh91rXOjl+9BpW4lIyVNuOxIic2rOuZijY=";
-        };
-        postPatch = ''
-          substituteInPlace pyproject.toml \
-            --replace-fail "uv_build>=0.12.5,<0.13.0" "uv_build>=0.9.2"
-        '';
-        propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
-          pkgsNixpkgsUnstable.python3Packages.questionary
-        ];
+      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
         nativeInstallCheckInputs = (old.nativeInstallCheckInputs or [ ]) ++ [
           pkgsNixpkgsUnstable.writableTmpDirAsHomeHook
         ];
         versionCheckKeepEnvironment = "HOME";
-        passthru = (old.passthru or { }) // {
-          updateScript = null;
-        };
         patches = (old.patches or [ ]) ++ [
           ../patches/jiratui-fetch-all-projects.patch
           ../patches/jiratui-normalize-jql-expression-ids.patch
