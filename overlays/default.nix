@@ -79,10 +79,6 @@
         ];
       });
 
-      # The repair planner's Qwen model requires Ollama features newer than
-      # the release branch. Keep the base and ROCm variants on one revision.
-      inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
-
       # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
       inherit (pkgsNixpkgsUnstable) paperless-ngx;
 
