@@ -1,17 +1,16 @@
 diff --git a/plugins/romm/index.js b/plugins/romm/index.js
-index bf67355d..5a3d7887 100644
 --- a/plugins/romm/index.js
 +++ b/plugins/romm/index.js
-@@ -4,8 +4,6 @@ const thumb = createThumbCache();
- 
+@@ -5,8 +5,6 @@ const thumb = createThumbCache();
  let rommUrl = "";
+ let _signProxyUrl = null;
  let apiToken = "";
 -let username = "";
 -let password = "";
  let template = "";
  let resultItemTpl = "";
  
-@@ -38,19 +36,9 @@ function searchVariants(term) {
+@@ -39,19 +37,9 @@ function searchVariants(term) {
    return [...new Set(variants)];
  }
  
@@ -33,18 +32,18 @@ index bf67355d..5a3d7887 100644
  }
  
  function _normalizeApiToken(token) {
-@@ -165,29 +153,12 @@ export default {
+@@ -166,31 +154,12 @@ export default {
      },
      {
        key: "apiToken",
--      label: "API Token",
+-      label: "API token",
 +      label: "Client API Token",
        type: "password",
        secret: true,
 -      required: false,
 +      required: true,
        placeholder: "rmm_...",
--      description: "RomM client API token. Preferred over username/password.",
+-      description: "A RomM client API token. Use it instead of a username and password when you can.",
 -    },
 -    {
 -      key: "username",
@@ -52,7 +51,8 @@ index bf67355d..5a3d7887 100644
 -      type: "text",
 -      required: false,
 -      placeholder: "RomM login username",
--      description: "Legacy fallback if no API token is configured.",
+-      description: "Older login, only used when no API token is set.",
+-      visibleWhen: { key: "apiToken", equals: "" },
 -    },
 -    {
 -      key: "password",
@@ -61,12 +61,13 @@ index bf67355d..5a3d7887 100644
 -      secret: true,
 -      required: false,
 -      placeholder: "RomM login password",
--      description: "Legacy fallback if no API token is configured.",
+-      description: "Older login, only used when no API token is set.",
+-      visibleWhen: { key: "apiToken", equals: "" },
 +      description: "Client API token with roms.read and me.read scopes",
      },
    ],
  
-@@ -202,20 +173,18 @@ export default {
+@@ -206,20 +175,18 @@ export default {
    configure(settings) {
      rommUrl = (settings.url || "").replace(/\/+$/, "");
      apiToken = _normalizeApiToken(settings.apiToken);
@@ -85,7 +86,7 @@ index bf67355d..5a3d7887 100644
 +    if (!rommUrl || !apiToken) {
        return {
          title: "RomM Search",
--        html: `<div class="command-result"><p>RomM is not configured. Go to <a href="/settings">Settings → Plugins</a> and set your RomM URL plus an API token, or username and password for legacy login.</p></div>`,
+-        html: `<div class="command-result"><p>RomM isn't set up yet. Go to <a href="/settings">Settings -> Plugins</a> and add your RomM URL with an API token, or a username and password for the older login.</p></div>`,
 +        html: `<div class="command-result"><p>RomM is not configured. Go to <a href="/settings">Settings → Plugins</a> and set your RomM URL and client API token.</p></div>`,
        };
      }
