@@ -352,16 +352,17 @@
         "telegym": "telegym"
       },
       "locked": {
-        "lastModified": 1792140768,
-        "narHash": "sha256-dkacCEpQ2QU0Sl5ApNJgmPsoiRrF8wp//q15SqZ8lhA=",
+        "lastModified": 1794144177,
+        "narHash": "sha256-OAE9vLRmL9TZPeiICeMeAH0nQW/q3sAtVS4eVTIYad0=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "6a16f8f6e36572a22bf762fd80b301fc0a74b94d",
+        "rev": "84fce4d6ae0763a0fee76e52daf847bb5eb5928a",
         "type": "github"
       },
       "original": {
         "owner": "dziaineka",
         "repo": "lolek",
+        "rev": "84fce4d6ae0763a0fee76e52daf847bb5eb5928a",
         "type": "github"
       }
     },

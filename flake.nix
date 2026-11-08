@@ -63,7 +63,8 @@
     vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
 
     lolek = {
-      url = "github:dziaineka/lolek";
+      # TODO: adopt rich media support from 837714544e3b and remove this pin.
+      url = "github:dziaineka/lolek/84fce4d6ae0763a0fee76e52daf847bb5eb5928a";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
