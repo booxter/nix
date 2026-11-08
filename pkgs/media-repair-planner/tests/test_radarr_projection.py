@@ -4,7 +4,12 @@ import json
 import os
 from pathlib import Path
 
-from media_repair_planner.contracts import decode_case, decode_decision, encode_decision
+from media_repair_planner.contracts import (
+    decode_case,
+    decode_decision,
+    encode_case,
+    encode_decision,
+)
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.model_projection import MODEL_CASE_ID
 from media_repair_planner.radarr_projection import project_case
@@ -41,6 +46,27 @@ def test_restores_canonical_identifiers_in_model_decision() -> None:
     restored_value = json.loads(encode_decision(restored))
 
     assert restored_value == json.loads((FIXTURES / "repair-decision-join.json").read_bytes())
+
+
+def test_timestamp_units_do_not_change_model_evidence() -> None:
+    value = json.loads((FIXTURES / "repair-case-joinable.json").read_bytes())
+    original = decode_case(json.dumps(value).encode())
+    value["files"][1]["probe"]["streams"][0]["time_base"] = {
+        "numerator": 1,
+        "denominator": 12800,
+    }
+    mixed_units = decode_case(json.dumps(value).encode())
+    canonical_before = encode_case(mixed_units)
+
+    projection = project_case(mixed_units)
+
+    assert projection.case_content == project_case(original).case_content
+    assert encode_case(mixed_units) == canonical_before
+    projected_stream = json.loads(projection.case_content)["files"][1]["probe"]["streams"][0]
+    assert projected_stream["frame_rate"] == value["files"][1]["probe"]["streams"][0]["frame_rate"]
+    assert (
+        projected_stream["duration_ms"] == value["files"][1]["probe"]["streams"][0]["duration_ms"]
+    )
 
 
 def test_projects_identifiers_in_retry_correction() -> None:

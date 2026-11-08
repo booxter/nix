@@ -13,6 +13,22 @@
       "name": "clear_ordered_join"
     },
     {
+      "base_case": "repair-case-joinable.json",
+      "expected": {
+        "action": "join_parts_v1",
+        "capability_id": "capability_join_01",
+        "ordered_file_ids": [
+          "file_01",
+          "file_02"
+        ]
+      },
+      "name": "ordered_join_with_mixed_timestamp_units",
+      "replacements": {
+        "/case_id": "sha256:1414141414141414141414141414141414141414141414141414141414141414",
+        "/files/1/probe/streams/0/time_base/denominator": 12800
+      }
+    },
+    {
       "base_case": "repair-case-manual-importable.json",
       "expected": {
         "action": "manual_import_file_v1",
