@@ -44,6 +44,7 @@ in
       config.virtualisation.diskSize = lib.mkForce (40 * 1024);
       config.virtualisation.memorySize = lib.mkForce (16 * 1024);
       config.virtualisation.vz.nestedVirtualization = true;
+      config.virtualisation.vz.idleTimeout = 10 * 60;
     };
 
     launchd.daemons.linux-builder.serviceConfig = {
