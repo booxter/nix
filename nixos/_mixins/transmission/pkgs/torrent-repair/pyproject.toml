@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transmission-torrent-repair"
+version = "0.1.0"
+description = "Verify Transmission torrents reporting corrupt local data"
+requires-python = ">=3.13"
+dependencies = ["pydantic", "transmission-common"]
+
+[project.scripts]
+transmission-torrent-repair = "transmission_torrent_repair.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=transmission_torrent_repair --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["transmission_common.*"]
+ignore_missing_imports = true
