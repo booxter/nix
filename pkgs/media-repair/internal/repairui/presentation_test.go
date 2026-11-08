@@ -2,7 +2,6 @@ package repairui
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -38,7 +37,7 @@ func TestPresentationPrioritizesCurrentState(t *testing.T) {
 	}
 }
 
-func TestPresentationIdentityAndResumedTracking(t *testing.T) {
+func TestPresentationIdentity(t *testing.T) {
 	tests := []struct {
 		evidence string
 		want     string
@@ -54,12 +53,19 @@ func TestPresentationIdentityAndResumedTracking(t *testing.T) {
 			t.Errorf("evidence %s: got subject %q, want %q", tt.evidence, got.Subject, tt.want)
 		}
 	}
+}
 
-	got := present(jobs.Job{
-		State: jobs.Blocked, Reason: "queue entry is present again",
-		Plan: json.RawMessage(`{"action":"no_repair","explanation":"Previous review"}`),
-	})
-	if got.Status != "Tracking resumed" || !strings.Contains(got.Explanation, "Previous review") {
-		t.Fatalf("resumed tracking lost context: %+v", got)
+func TestPresentationKeepsRepairFailureVisible(t *testing.T) {
+	for _, state := range []jobs.State{jobs.Blocked, jobs.Failed} {
+		t.Run(string(state), func(t *testing.T) {
+			job := jobs.Job{
+				State: state, InQueue: true, Reason: "decision rejected: technical_checks_rejected",
+				Plan: json.RawMessage(`{"action":"join_parts_v1","explanation":"Join both parts"}`),
+			}
+			view := present(job)
+			if view.Explanation != job.Reason || !view.CanAct {
+				t.Fatalf("failure lost its explanation or actions: %+v", view)
+			}
+		})
 	}
 }
