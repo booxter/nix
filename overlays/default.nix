@@ -27,6 +27,7 @@
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
+        claude-code
         opencode
         ;
 
@@ -38,19 +39,6 @@
       });
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
-
-      claude-code = pkgsNixpkgsUnstable.claude-code.overrideAttrs (old: {
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
-        postFixup = (old.postFixup or "") + ''
-          # Use the Nix CA bundle without replacing an explicit Node CA setting.
-          # https://github.com/NixOS/nixpkgs/issues/579204
-          wrapProgramShell "$out/bin/claude" --run ${lib.escapeShellArg ''
-            if [ -z "''${NODE_EXTRA_CA_CERTS:-}" ] && [ -n "''${NIX_SSL_CERT_FILE:-}" ]; then
-              export NODE_EXTRA_CA_CERTS="$NIX_SSL_CERT_FILE"
-            fi
-          ''}
-        '';
-      });
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
