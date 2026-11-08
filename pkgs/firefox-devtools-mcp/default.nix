@@ -10,17 +10,17 @@
 
 buildNpmPackage rec {
   pname = "firefox-devtools-mcp";
-  version = "0.10.4";
+  version = "0.10.7";
 
   src = fetchFromGitHub {
     owner = "mozilla";
     repo = "firefox-devtools-mcp";
     tag = "v${version}";
-    hash = "sha256-Ch9dk7E3Nn1lt8dgrEo43P36oB73KfRwyHlZgDOyA8s=";
+    hash = "sha256-B/BL2ou9l5wgAzvc0PiuMphYp/mRmw3c4bRsynugAKs=";
   };
 
   nodejs = nodejs_24;
-  npmDepsHash = "sha256-+pJwxFmgnFWUCvt5wWWFXvyO5oUiTamgaEkQdk0lZoo=";
+  npmDepsHash = "sha256-tSufdG4ov8GCrB7bZmLpw78fJlc5qo7EKy4FikVy938=";
 
   nativeBuildInputs = [
     makeWrapper
