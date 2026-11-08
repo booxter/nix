@@ -8,11 +8,11 @@
   stdenvNoCC,
 }:
 let
-  rev = "115e36e3d7b7330bacdd4f5aeb55d86a87d4c928";
+  rev = "4c9bdaffd331b904eef742768f81ce84b419fbeb";
   upstreamSrc = fetchgit {
     url = "https://github.com/degoog-org/official-extensions.git";
     inherit rev;
-    hash = "sha256-F+MlfTx13rMjIztdUpV6jT2Hl4NsYUQLC3e0hX2Eko0=";
+    hash = "sha256-IbGtSRnCw6cUrGYoek42mKKsda9LoTd+WBWGTJGOGnE=";
   };
   src = applyPatches {
     name = "degoog-official-extensions-source";
@@ -66,7 +66,7 @@ stdenvNoCC.mkDerivation {
   pname = "degoog-official-extensions";
   # Upstream has no releases, so track its main branch as a pinned snapshot.
   # update-official-extensions.sh advances the revision through package-update CI.
-  version = "0-unstable-2026-10-08";
+  version = "0-unstable-2026-10-29";
 
   inherit src;
 
