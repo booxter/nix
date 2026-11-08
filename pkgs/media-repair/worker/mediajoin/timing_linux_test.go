@@ -7,15 +7,75 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/joinverification"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
+
+func TestSmallAverageRateDifferencePreservesPacketTiming(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	directory := t.TempDir()
+	var parts []*os.File
+	var probes []controller.ProbeEvidence
+	var timelines []ffprobe.Timeline
+	prober, err := ffprobe.NewRunner(toolPath(t, "ffprobe"), time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index := range 2 {
+		path := filepath.Join(directory, strconv.Itoa(index)+".mp4")
+		// One part has a one-frame gap halfway through. Both retain a nominal
+		// 30 fps rate, while their measured average rates differ by about 0.06%.
+		filter := "setpts='PTS+" + strconv.Itoa(index) + "*gte(N,900)/(30*TB)'"
+		command := exec.Command(toolPath(t, "ffmpeg"),
+			"-v", "error", "-f", "lavfi", "-i", "testsrc2=s=32x32:r=30:d=60",
+			"-vf", filter, "-fps_mode", "passthrough", "-c:v", "libx264",
+			"-video_track_timescale", "90000", path,
+		)
+		if output, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("create average-rate fixture: %v: %s", err, output)
+		}
+		file := openTestFile(t, path, os.O_RDONLY)
+		parts = append(parts, file)
+		probe, err := prober.ProbeFile(ctx, file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		probes = append(probes, probe)
+		timeline, err := prober.Timeline(ctx, file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		timelines = append(timelines, timeline)
+	}
+	if reflect.DeepEqual(probes[0].Streams[0].AverageRate, probes[1].Streams[0].AverageRate) {
+		t.Fatal("fixture did not produce different average frame rates")
+	}
+	if assessment := controller.AssessStreamCompatibility(probes); assessment.Compatibility != controller.StreamsCompatible {
+		t.Fatalf("average-rate fixture rejected: %+v", assessment)
+	}
+
+	output := openTestFile(t, filepath.Join(directory, "joined.mp4"), os.O_CREATE|os.O_EXCL|os.O_RDWR)
+	if _, err := testRunner(t, time.Minute).Join(ctx, parts, output, workercontracts.OutputContainerMP4); err != nil {
+		t.Fatal(err)
+	}
+	joined, err := prober.Timeline(ctx, output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := joinverification.ValidateTimeline(timelines, joined); err != nil {
+		t.Fatalf("joined scenes lost packet timing: %v", err)
+	}
+}
 
 func TestMixedTimeBasesPreserveEveryScene(t *testing.T) {
 	ctx := context.Background()

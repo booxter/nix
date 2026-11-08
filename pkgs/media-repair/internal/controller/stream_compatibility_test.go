@@ -127,6 +127,64 @@ func TestAssessStreamCompatibilityAllowsTimeBaseNormalization(t *testing.T) {
 	}
 }
 
+func TestAssessStreamCompatibilityAllowsSmallAverageRateDifferences(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		nominal    *Rational
+		average    *Rational
+		compatible bool
+	}{
+		{
+			name:       "Buttercup rates",
+			nominal:    &Rational{Numerator: 30, Denominator: 1},
+			average:    &Rational{Numerator: 74_123, Denominator: 2_476},
+			compatible: true,
+		},
+		{
+			name:    "different nominal rate",
+			nominal: &Rational{Numerator: 25, Denominator: 1},
+			average: &Rational{Numerator: 74_123, Denominator: 2_476},
+		},
+		{
+			name:    "missing nominal rate",
+			average: &Rational{Numerator: 74_123, Denominator: 2_476},
+		},
+		{
+			name:    "average difference exceeds tolerance",
+			nominal: &Rational{Numerator: 30, Denominator: 1},
+			average: &Rational{Numerator: 30, Denominator: 1},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			first := videoStream(0)
+			first.FrameRate = &Rational{Numerator: 30, Denominator: 1}
+			first.AverageRate = &Rational{Numerator: 25_009, Denominator: 836}
+			second := videoStream(0)
+			second.FrameRate = test.nominal
+			second.AverageRate = test.average
+
+			// Either part may be first in the authored scene order.
+			for _, pair := range [][]ProbeStream{{first, second}, {second, first}} {
+				got := AssessStreamCompatibility([]ProbeEvidence{
+					{Streams: pair[:1]}, {Streams: pair[1:]},
+				})
+				if test.compatible {
+					if got.Compatibility != StreamsCompatible || got.Layout == nil {
+						t.Fatalf("compatible average rates rejected: %+v", got)
+					}
+				} else {
+					assertStreamIssue(t, got, StreamsIncompatible, StreamReasonLayoutMismatch, StreamFieldAverageFrameRate)
+				}
+			}
+		})
+	}
+}
+
 func TestAssessStreamCompatibilityRejectsAudioDifferences(t *testing.T) {
 	t.Parallel()
 
