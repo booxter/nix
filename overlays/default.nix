@@ -28,6 +28,7 @@
         aerospace
         chatgpt
         claude-code
+        mcp-nixos
         opencode
         ;
 
@@ -110,17 +111,6 @@
           # Upstream's test hard-codes a 2026-10-27 release date that is no
           # longer in the future, so the movie stops being "not yet released".
           ../patches/houndarr-relative-release-date-test.patch
-        ];
-      });
-
-      mcp-nixos = prev.mcp-nixos.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # File contents may contain "Error" without the read failing.
-          # Drop once the packaged release includes upstream #154.
-          (prev.fetchpatch {
-            url = "https://github.com/utensils/mcp-nixos/commit/d7ebc7bfae70eaf20d54e87cf42764a1d57c35ef.patch";
-            hash = "sha256-55rQhE9CfTW1KQzUNM86U4S4Efu4yCN+1tZvdOz12oc=";
-          })
         ];
       });
 
