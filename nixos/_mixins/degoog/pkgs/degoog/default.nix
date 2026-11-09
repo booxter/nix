@@ -13,13 +13,13 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "degoog";
-  version = "0.23.0";
+  version = "1.1.1";
 
   src = fetchFromGitHub {
     owner = "degoog-org";
     repo = "degoog";
     tag = finalAttrs.version;
-    hash = "sha256-+ReSP9pMgt92E9Li9G36eQYoLuwd94ZZ9c4j/3eb068=";
+    hash = "sha256-CaT3UWZ29/Fmzu9tSPay6JhcCIfW0qW2hwUZJFx5wiU=";
   };
 
   patches = [
