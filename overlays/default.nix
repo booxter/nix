@@ -30,6 +30,7 @@
         claude-code
         mcp-nixos
         opencode
+        zoom-us
         ;
 
       attic-client = prev.attic-client.overrideAttrs (old: {
