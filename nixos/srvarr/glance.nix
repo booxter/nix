@@ -18,8 +18,6 @@ let
   ];
 in
 {
-  host.glance.search.provider = "degoog";
-
   host.glance.instances = {
     internal = {
       port = internalPort;

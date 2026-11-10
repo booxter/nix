@@ -10,7 +10,6 @@ let
   dashboardCatalog = import ./catalog.nix {
     inherit fleetInventory lib;
   };
-  searchEndpoint = config.host.site.search.availableProviders.${cfg.search.provider}.endpoint;
   resolved = lib.mapAttrs (
     name: instance:
     let
@@ -18,7 +17,7 @@ let
     in
     instance
     // {
-      inherit name searchEndpoint;
+      inherit name;
       sections = map (
         section:
         section
@@ -62,7 +61,7 @@ let
               {
                 type = "search";
                 autofocus = true;
-                search-engine = "${instance.searchEndpoint.baseUrl}${instance.searchEndpoint.searchPath}?${instance.searchEndpoint.queryParameter}={QUERY}";
+                search-engine = "https://www.google.com/search?q={QUERY}";
               }
             ]
             ++ map monitorFor instance.sections;

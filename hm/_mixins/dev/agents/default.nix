@@ -4,7 +4,6 @@
     ./mcp-options.nix
     ./claude
     ./codex
-    ./opencode
   ];
 
   options.host.hm.dev = {
@@ -22,7 +21,5 @@
         description = "Codex account type used for usage accounting.";
       };
     };
-
-    opencode.enable = lib.mkEnableOption "OpenCode coding agent";
   };
 }

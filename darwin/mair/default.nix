@@ -12,10 +12,6 @@ in
 {
   system.stateVersion = 6;
 
-  imports = [
-    ./opencode.nix
-  ];
-
   home-manager.users.${username}.host.hm = {
     dev.agents.mcp.stdioServers.firefox-devtools = {
       instructions = ''

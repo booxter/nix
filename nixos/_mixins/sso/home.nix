@@ -23,12 +23,6 @@ lib.mkIf (config.host.realm == "home") {
         };
         bootstrapOwner = "ihar";
       };
-      degoog = {
-        roles = {
-          admin = "infra-admins";
-          user = "degoog-users";
-        };
-      };
       paperless = {
         roles = {
           admin = "paperless-admins";
@@ -73,7 +67,6 @@ lib.mkIf (config.host.realm == "home") {
       "paperless-admins"
       "paperless-users"
       "vikunja-users"
-      "degoog-users"
       "romm-admins"
       "romm-editors"
       "romm-viewers"
@@ -93,7 +86,6 @@ lib.mkIf (config.host.realm == "home") {
           "paperless-admins"
           "paperless-users"
           "vikunja-users"
-          "degoog-users"
           "romm-admins"
           "media-admins"
           "media-users"
@@ -104,7 +96,6 @@ lib.mkIf (config.host.realm == "home") {
         groups = [
           "paperless-users"
           "vikunja-users"
-          "degoog-users"
           "media-admins"
           "media-users"
           "romm-viewers"
@@ -114,7 +105,6 @@ lib.mkIf (config.host.realm == "home") {
       eugene = {
         mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
         groups = [
-          "degoog-users"
           "media-users"
           "vikunja-users"
           "romm-viewers"

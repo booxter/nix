@@ -9,8 +9,6 @@ let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.firefox;
   publicDomain = osConfig.host.network.publicDomain;
-  searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};
-  searchEndpoint = searchProvider.endpoint;
   firefoxDohExcludedDomains = [ publicDomain ];
 in
 {
@@ -18,11 +16,6 @@ in
 
   options.host.hm.firefox = {
     enable = lib.mkEnableOption "managed Firefox browser";
-
-    search.provider = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      description = "Site search provider selected for Firefox.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -37,26 +30,11 @@ in
       );
       profiles.default = {
         search = {
-          default = cfg.search.provider;
-          privateDefault = cfg.search.provider;
+          default = "google";
+          privateDefault = "google";
           force = true;
           engines = {
-            ${cfg.search.provider} = {
-              name = searchProvider.title;
-              urls = [
-                {
-                  template = "${searchEndpoint.baseUrl}${searchEndpoint.searchPath}";
-                  params = [
-                    {
-                      name = searchEndpoint.queryParameter;
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-              searchForm = searchEndpoint.baseUrl;
-              definedAliases = searchProvider.aliases;
-            };
+            google = { };
             ddg = { };
           };
         };

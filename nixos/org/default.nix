@@ -21,45 +21,6 @@ in
     storageName = "orgvm";
   };
 
-  host.degoog = {
-    enable = true;
-    engines = [
-      "brave"
-      "brave-images"
-      "brave-news"
-      "duckduckgo"
-      "duckduckgo-images"
-      "duckduckgo-news"
-      "google"
-      "hacker-news"
-      "internet-archive"
-      "openstreetmap"
-      "reddit"
-      "stackexchange"
-      "wikipedia"
-    ];
-    features = [
-      "brave-autocomplete"
-      "definitions"
-      "duckduckgo-bangs"
-      "github-results"
-      "highlight-terms"
-      "local-history"
-      "math"
-      "openstreetmap-results"
-      "reddit-results"
-      "stocks"
-      "time"
-      "tmdb-results"
-      "weather"
-    ];
-    theme = "gruvbox";
-    integrations = {
-      jellyfin = "beast";
-      romm = "srvarr";
-    };
-  };
-
   host.paperless = {
     storageProvider = "beast";
     gpt = {

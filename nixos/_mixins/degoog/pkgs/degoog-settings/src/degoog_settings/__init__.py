@@ -1,1 +1,0 @@
-"""Managed Degoog settings merge."""
