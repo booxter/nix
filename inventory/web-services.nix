@@ -142,20 +142,6 @@
     };
   };
   org = {
-    goo = {
-      declaration = {
-        displayName = "Degoog";
-        public.hostName = "goo.ihar.dev";
-        health = {
-          frontend.path = "/oauth2/sign_in";
-          backend.path = "/readyz";
-        };
-        dashboard = {
-          icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
-          section = "user";
-        };
-      };
-    };
     paperless = {
       declaration = {
         public = {

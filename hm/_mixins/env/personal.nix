@@ -27,10 +27,7 @@
   workstation = {
     host.hm = {
       numberedWorkspaces = if pkgs.stdenv.hostPlatform.isDarwin then 4 else 6;
-      firefox = {
-        enable = true;
-        search.provider = "degoog";
-      };
+      firefox.enable = true;
       gmailctl.enable = true;
       hyprland.enable = pkgs.stdenv.hostPlatform.isLinux;
       kitty.enable = true;

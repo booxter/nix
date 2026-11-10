@@ -22,7 +22,6 @@ in
   inherit hosts;
   observability = import ./observability.nix;
   proxmox = import ./proxmox.nix;
-  sites = import ./sites.nix;
   ups = import ./ups.nix;
   inherit webIngress;
   inherit webServices;

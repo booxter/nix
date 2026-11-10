@@ -36,10 +36,5 @@ in
       default = { };
       description = "Glance dashboard instances named by catalog exposure scope.";
     };
-
-    search.provider = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      description = "Site search provider used by Glance dashboards.";
-    };
   };
 }
