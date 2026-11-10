@@ -18,6 +18,10 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    fast-nix-gc.url = "github:Mic92/fast-nix-gc/b4471ec56911541f72f7a7b9b8fee7f42183f21b";
+    fast-nix-gc.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    fast-nix-gc.inputs.nix-darwin.follows = "nix-darwin";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     # Remove when nix-homebrew pins a release supporting `zap :not_required`.
     nix-homebrew.inputs.brew-src.url = "github:Homebrew/brew/7.0.11";

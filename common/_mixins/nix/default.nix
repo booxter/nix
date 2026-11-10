@@ -15,11 +15,9 @@ in
     ./netrc.nix
   ];
 
+  services.fast-nix-gc.deleteOlderThan = "1d";
+
   nix = {
-    gc = {
-      automatic = true;
-      options = "--delete-older-than 1d";
-    };
     distributedBuilds = hasBuildMachines;
     nrBuildUsers = 4;
     optimise.automatic = true;
