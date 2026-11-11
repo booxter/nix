@@ -2,6 +2,11 @@
 let
   fixtures = ./pinepods;
   inherit (pkgs) lib;
+  testPki = import ./lib/tls-pki.nix {
+    inherit pkgs;
+    serverName = "ollama";
+    clientName = "pinepods.podcast-node";
+  };
 in
 pkgs.testers.runNixOSTest {
   name = "pinepods";
@@ -14,12 +19,30 @@ pkgs.testers.runNixOSTest {
     ];
 
     _module.args.storageConfigurations = { };
+    _module.args.outputs.nixosConfigurations.ollama.config.host = {
+      realm = "test";
+      ollama.models."test-model" = { };
+      web.services.ollama.internal.serverName = "ollama";
+    };
+
+    virtualisation = {
+      memorySize = 4096;
+      # Podman unpacks both images into the VM's writable root filesystem.
+      diskSize = 8192;
+    };
 
     networking.hostName = "podcast-node";
 
     host = {
       realm = "test";
-      pinepods = { };
+      pinepods = {
+        ollamaHost = "ollama";
+        adDetectionModel = "test-model";
+      };
+      pki.authority = {
+        hostName = "ollama";
+        rootCaCertificate = "${testPki}/ca.crt";
+      };
       network.publicDomain = "example.invalid";
       site.timeZone = "Etc/UTC";
       storage = {
@@ -80,11 +103,35 @@ pkgs.testers.runNixOSTest {
       "directory/users/owner/mail" = "owner@example.invalid";
       "pinepods/oidc/client_secret" = "oidc-secret";
     };
+    testSupport.sops.sources = {
+      internal-pki-client-pinepods-ollama-crt = "${testPki}/client.crt";
+      internal-pki-client-pinepods-ollama-key = "${testPki}/client.key";
+    };
 
     # The VM provides the storage claim as an already-mounted test fixture.
     systemd.tmpfiles.rules = [
       "d /srv/podcasts/podcasts/pinepods 0750 pinepods media - -"
     ];
+  };
+
+  # A real mTLS endpoint supplies model discovery without downloading an LLM.
+  nodes.ollama = {
+    networking.firewall.allowedTCPPorts = [ 443 ];
+    services.nginx = {
+      enable = true;
+      virtualHosts.ollama = {
+        forceSSL = true;
+        sslCertificate = "${testPki}/server.crt";
+        sslCertificateKey = "${testPki}/server.key";
+        extraConfig = ''
+          ssl_client_certificate ${testPki}/ca.crt;
+          ssl_verify_client on;
+        '';
+        locations."/api/tags".return = "200 '${
+          builtins.toJSON { models = [ { name = "test-model"; } ]; }
+        }'";
+      };
+    };
   };
 
   testScript = ''

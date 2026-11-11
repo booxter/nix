@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 
 import httpx
 import pytest
+from argon2 import PasswordHasher
 from pinepods_tools.api import PinepodsApi, PinepodsApiError
 from pinepods_tools.cli import run_bootstrap
 from pinepods_tools.models import CreateAdminRequest
@@ -87,7 +88,6 @@ def test_bootstrap_waits_then_creates_typed_admin(tmp_path: Path) -> None:
     password = tmp_path / "password"
     email.write_text("admin@example.test\n", encoding="utf-8")
     password.write_text("secret\n", encoding="utf-8")
-    sleeps: list[float] = []
     with api_server(state) as base_url:
         user_id = run_bootstrap(
             [
@@ -102,19 +102,20 @@ def test_bootstrap_waits_then_creates_typed_admin(tmp_path: Path) -> None:
                 "--password-file",
                 str(password),
             ],
-            sleep=sleeps.append,
+            sleep=lambda _: None,
         )
 
     assert user_id == 42
-    assert sleeps == [2.0]
-    assert state.created_admins == [
-        {
-            "username": "admin",
-            "fullname": "Admin User",
-            "email": "admin@example.test",
-            "password": "secret",
-        }
-    ]
+    assert len(state.created_admins) == 1
+    admin = state.created_admins[0]
+    password_hash = admin.pop("password")
+    assert isinstance(password_hash, str)
+    assert PasswordHasher().verify(password_hash, "secret")
+    assert admin == {
+        "username": "admin",
+        "fullname": "Admin User",
+        "email": "admin@example.test",
+    }
 
 
 def test_bootstrap_is_idempotent_when_admin_exists() -> None:

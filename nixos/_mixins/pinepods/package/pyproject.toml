@@ -7,7 +7,7 @@ name = "pinepods-tools"
 version = "0.1.0"
 description = "Bootstrap a PinePods service"
 requires-python = ">=3.13"
-dependencies = ["httpx", "pydantic"]
+dependencies = ["argon2-cffi", "httpx", "pydantic"]
 
 [project.scripts]
 pinepods-bootstrap-admin = "pinepods_tools.cli:bootstrap_main"

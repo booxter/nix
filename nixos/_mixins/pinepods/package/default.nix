@@ -15,6 +15,7 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
   dependencies = with pythonPackages; [
+    argon2-cffi
     httpx
     pydantic
   ];

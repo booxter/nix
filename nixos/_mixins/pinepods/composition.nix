@@ -1,6 +1,7 @@
 {
   imports = [
     ../../../common/_mixins/hardware
+    ../../../common/_mixins/internal-pki
     ../../../common/_mixins/host/options.nix
     ../../../common/_mixins/network
     ../../../common/_mixins/site/options.nix
