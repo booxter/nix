@@ -249,9 +249,9 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
-        values: "9x60 15x2"
+        values: "9895604649984x60 16492674416640x2"
       - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
-        values: "100x62"
+        values: "109951162777600x62"
     alert_rule_test:
       - eval_time: 29m30s
         alertname: BeastVolume2UsageHigh
@@ -269,15 +269,16 @@ tests:
             exp_annotations:
               summary: "Beast volume2 usage high"
               description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+              filesystem_usage: "91.0% used, 9TiB available of 100TiB"
       - eval_time: 30m30s
         alertname: BeastVolume2UsageHigh
 
   - interval: 30s
     input_series:
       - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
-        values: "4x30 15x2"
+        values: "4398046511104x30 16492674416640x2"
       - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
-        values: "100x32"
+        values: "109951162777600x32"
     alert_rule_test:
       - eval_time: 14m30s
         alertname: BeastVolume2UsageCritical
@@ -295,6 +296,7 @@ tests:
             exp_annotations:
               summary: "Beast volume2 usage critically high"
               description: "The /volume2 filesystem on beast has been above 95% used for 15 minutes."
+              filesystem_usage: "96.0% used, 4TiB available of 100TiB"
 
   - interval: 30s
     input_series:
