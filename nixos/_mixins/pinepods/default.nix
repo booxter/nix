@@ -17,6 +17,7 @@
     ./container.nix
     ./database.nix
     ./storage.nix
+    ./subscriptions.nix
     ./web.nix
   ];
 

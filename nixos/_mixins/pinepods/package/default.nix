@@ -34,7 +34,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "pinepods_tools" ];
 
   meta = {
-    description = "Bootstrap a PinePods service";
+    description = "Bootstrap PinePods and manage subscription settings";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
