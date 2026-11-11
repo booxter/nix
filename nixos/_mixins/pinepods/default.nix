@@ -1,12 +1,15 @@
 {
   config,
   lib,
+  outputs,
   pkgs,
   storageModel,
   ...
 }:
 {
   imports = [
+    ./ai.nix
+    ./ai-settings.nix
     ./assertions.nix
     ./auth.nix
     ./bootstrap.nix
@@ -18,12 +21,30 @@
   ];
 
   options.host.pinepods = lib.mkOption {
-    type = lib.types.nullOr (lib.types.submodule { });
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options = {
+          ollamaHost = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            description = "Host serving the ad-detection model through Ollama.";
+          };
+          adDetectionModel = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            description = "Ollama model used to identify advertisements.";
+          };
+        };
+      }
+    );
     default = null;
     description = "PinePods podcast server configuration.";
   };
 
   config._module.args.pinepodsModel = import ./model.nix {
-    inherit config pkgs storageModel;
+    inherit
+      config
+      outputs
+      pkgs
+      storageModel
+      ;
   };
 }

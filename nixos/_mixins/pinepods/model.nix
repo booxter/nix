@@ -1,10 +1,13 @@
 {
   config,
+  outputs,
   pkgs,
   storageModel,
 }:
 let
   cfg = config.host.pinepods;
+  aiProvider =
+    if cfg == null then null else outputs.nixosConfigurations.${cfg.ollamaHost}.config or null;
   claim = storageModel.localClaims.media or null;
   ssoApplication = config.host.sso.applications.pinepods or null;
   bootstrapOwnerName = if ssoApplication == null then null else ssoApplication.bootstrapOwner;
@@ -17,6 +20,7 @@ let
 in
 {
   inherit
+    aiProvider
     bootstrapOwner
     bootstrapOwnerName
     cfg
@@ -28,6 +32,8 @@ in
   databaseName = "pinepods";
   port = 8040;
   cachePort = 6382;
+  aiPort = 8100;
+  ollamaTunnelPort = 11436;
   downloadsDir = if claim == null then null else "${claim.mountPoint}/podcasts/pinepods";
   storageGroup =
     if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then

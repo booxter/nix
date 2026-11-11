@@ -1,6 +1,9 @@
 { ... }:
 {
-  host.pinepods = { };
+  host.pinepods = {
+    ollamaHost = "frame";
+    adDetectionModel = "gemma3:27b";
+  };
 
   # TODO: Migrate this existing cluster to PostgreSQL's NixOS-managed default
   # under /var/lib/postgresql, then remove this override and both tmpfiles
