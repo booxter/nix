@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import httpx
+from argon2 import PasswordHasher
 
 from .models import (
     CreateAdminRequest,
@@ -42,7 +43,9 @@ class PinepodsApi:
             raise PinepodsApiError("PinePods returned invalid self-service status") from error
 
     def create_admin(self, request: CreateAdminRequest) -> CreateAdminResponse:
-        response = self._response("POST", "/api/data/create_first", json=request.model_dump())
+        # Unlike login, the first-admin endpoint expects a client-generated hash.
+        payload = request.model_copy(update={"password": PasswordHasher().hash(request.password)})
+        response = self._response("POST", "/api/data/create_first", json=payload.model_dump())
         try:
             return CreateAdminResponse.model_validate(response.json())
         except ValueError as error:
