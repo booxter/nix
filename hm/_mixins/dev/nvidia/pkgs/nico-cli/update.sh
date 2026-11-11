@@ -20,4 +20,28 @@ if [[ -z "$version" ]]; then
   exit 1
 fi
 
+current_rev="$(nix eval --raw ".#${attr}.src.rev")"
+next_rev="v${version}"
+
+if [[ "$current_rev" == "$next_rev" ]]; then
+  exit 0
+fi
+
+checkout="$(mktemp -d)"
+trap 'rm -rf "$checkout"' EXIT
+
+git init --bare --quiet "$checkout"
+git -C "$checkout" fetch --quiet --depth=1 --filter=blob:none "$repo_url" \
+  "refs/tags/${current_rev}:refs/tags/${current_rev}" \
+  "refs/tags/${next_rev}:refs/tags/${next_rev}"
+
+# Compare subtree contents across releases, including any previously skipped tags.
+current_tree="$(git -C "$checkout" rev-parse "${current_rev}:rest-api/cli")"
+next_tree="$(git -C "$checkout" rev-parse "${next_rev}:rest-api/cli")"
+
+if [[ "$current_tree" == "$next_tree" ]]; then
+  echo "Skipping $next_rev: rest-api/cli is unchanged since $current_rev"
+  exit 0
+fi
+
 nix-update --flake --system "$system" --version "$version" "$attr"
