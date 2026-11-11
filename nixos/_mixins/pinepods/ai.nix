@@ -59,7 +59,7 @@ in
         key = client.materializations.default.keyPath;
         checkHost = serverName;
         sni = serverName;
-        CAFile = toString config.host.pki.authority.rootCaCertificate;
+        CAFile = "${config.host.pki.authority.rootCaCertificate}";
         verifyChain = true;
         OCSPaia = false;
       };
