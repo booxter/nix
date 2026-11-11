@@ -23,7 +23,7 @@ python313Packages.buildPythonApplication (finalAttrs: {
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname src version;
     fetcherVersion = 4;
-    hash = "sha256-wmPv68dWN3iM4b9wbeNrRXJX4PJOBjiuM2MreZfmFTM=";
+    hash = "sha256-V/X8tWToeqLiPHOSBzGuEFCDPdTNxrNiA2Y+xDs0tYU=";
   };
 
   nativeBuildInputs = [
