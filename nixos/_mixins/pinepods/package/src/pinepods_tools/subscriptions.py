@@ -96,13 +96,18 @@ class HttpSubscriptionApi:
             if not status.auto_download:
                 self.request("POST", "enable_auto_download", json={**ids, "auto_download": True})
 
-            for setting in ("auto_transcribe", "auto_ad_detect", "ad_skip_auto_activate"):
+            # Detection prepares candidates; only the user's review authorizes skipping.
+            for setting, enabled in (
+                ("ad_skip_auto_activate", False),
+                ("auto_transcribe", True),
+                ("auto_ad_detect", True),
+            ):
                 endpoint = f"get_{setting}"
                 status_enabled = self.parse(
                     Enabled, self.request("GET", endpoint, params=ids), endpoint
                 )
-                if not status_enabled.enabled:
-                    self.request("POST", f"adjust_{setting}", json={**ids, "enabled": True})
+                if status_enabled.enabled != enabled:
+                    self.request("POST", f"adjust_{setting}", json={**ids, "enabled": enabled})
         except PinepodsApiError as error:
             raise PinepodsApiError(f"Podcast {podcast_id}: {error}") from error
 

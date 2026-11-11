@@ -16,7 +16,7 @@ in
     };
 
     # The API key scopes this policy to its owner's subscriptions. Each run
-    # also restores these settings if they were disabled through the UI.
+    # restores automatic processing and requires manual approval before ad skips.
     systemd.services.pinepods-subscriptions = {
       description = "Enable PinePods downloads and AI for every subscription";
       requires = [ "podman-pinepods.service" ];

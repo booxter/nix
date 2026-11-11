@@ -56,7 +56,11 @@ def check_subscription(podcast_id: int) -> None:
     query = f"user_id={user_id}&podcast_id={podcast_id}"
     for setting in ("auto_transcribe", "auto_ad_detect", "ad_skip_auto_activate"):
         result = json.loads(machine.succeed(f"{api} '{base}/get_{setting}?{query}'"))
-        assert result["enabled"], (podcast_id, setting, result)
+        assert result["enabled"] == (setting != "ad_skip_auto_activate"), (
+            podcast_id,
+            setting,
+            result,
+        )
 
     payload = json.dumps({"user_id": user_id, "podcast_id": podcast_id})
     result = json.loads(
@@ -71,16 +75,16 @@ def check_subscription(podcast_id: int) -> None:
 machine.succeed("systemctl start pinepods-subscriptions.service")
 check_subscription(101)
 
-# A later run picks up newly added subscriptions and repairs manual opt-outs.
+# A later run picks up new subscriptions and restores the approval requirement.
 machine.succeed(
     "sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d pinepods -c "
     + shlex.quote(
         'INSERT INTO "Podcasts" (podcastid, podcastname, feedurl, userid, adskipautoactivate) '
-        "SELECT 103, 'Later subscription', 'https://example.invalid/later.xml', userid, false "
+        "SELECT 103, 'Later subscription', 'https://example.invalid/later.xml', userid, true "
         "FROM \"Users\" WHERE username = 'owner';"
     )
 )
-payload = json.dumps({"user_id": user_id, "podcast_id": 101, "enabled": False})
+payload = json.dumps({"user_id": user_id, "podcast_id": 101, "enabled": True})
 machine.succeed(
     f"{api} -H 'Content-Type: application/json' -d {shlex.quote(payload)}"
     f" {base}/adjust_ad_skip_auto_activate"

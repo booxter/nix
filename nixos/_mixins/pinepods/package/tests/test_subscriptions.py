@@ -89,24 +89,34 @@ def server(state: State) -> Iterator[str]:
 
 
 def settings() -> dict[str, bool]:
-    return dict.fromkeys(
-        ("auto_download", "auto_transcribe", "auto_ad_detect", "ad_skip_auto_activate"), False
-    )
+    return {
+        "auto_download": False,
+        "auto_transcribe": False,
+        "auto_ad_detect": False,
+        "ad_skip_auto_activate": True,
+    }
 
 
 def test_enforces_new_subscriptions_and_is_idempotent() -> None:
     state = State(podcasts={10: settings()})
+    expected = {
+        "auto_download": True,
+        "auto_transcribe": True,
+        "auto_ad_detect": True,
+        "ad_skip_auto_activate": False,
+    }
     with server(state) as url, httpx.Client(base_url=url, trust_env=False) as client:
         api = HttpSubscriptionApi(client, "secret")
         assert enforce(api) == 1
-        assert all(state.podcasts[10].values())
+        assert state.podcasts[10] == expected
         assert len(state.writes) == 4
         assert enforce(api) == 1
         assert len(state.writes) == 4
         state.podcasts[11] = settings()
-        state.podcasts[10]["ad_skip_auto_activate"] = False
+        state.podcasts[10]["ad_skip_auto_activate"] = True
         assert enforce(api) == 2
-        assert all(state.podcasts[11].values())
+        assert state.podcasts[10] == expected
+        assert state.podcasts[11] == expected
         assert len(state.writes) == 9
 
 
