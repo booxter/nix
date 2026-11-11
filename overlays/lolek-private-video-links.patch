@@ -1,0 +1,675 @@
+From 0bf80101dc6333b648790e97e5c530092edb2248 Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Mon, 9 Nov 2026 18:43:07 -0500
+Subject: [PATCH] add private video links to group posts
+
+---
+ README.md                         |   7 +
+ lib/lolek.ex                      |   8 +
+ lib/lolek/ex_gram_telegram.ex     |  10 ++
+ lib/lolek/handler.ex              |  93 +++++++++---
+ lib/lolek/private_video.ex        | 104 +++++++++++++
+ lib/lolek/telegram.ex             |  16 ++
+ test/lolek/private_video_test.exs | 245 ++++++++++++++++++++++++++++++
+ test/lolek/send_file_test.exs     |  16 ++
+ 8 files changed, 477 insertions(+), 22 deletions(-)
+ create mode 100644 lib/lolek/private_video.ex
+ create mode 100644 test/lolek/private_video_test.exs
+
+diff --git a/README.md b/README.md
+index 2a087fc..1f46665 100644
+--- a/README.md
++++ b/README.md
+@@ -10,6 +10,13 @@ Supported sites: X/Twitter, Bluesky, Threads, Instagram, TikTok, Facebook, Coub,
+ 2. Lolek downloads the media with gallery-dl or yt-dlp, and converts it with ffmpeg to a format that Telegram accepts.
+ 3. Lolek sends one rich message (`sendRichMessage`) with up to 50 media files, and caches the Telegram file_ids for the next requests.
+ 
++Group posts with videos have a **Get video privately** button. Open it and press
++**Start** if Telegram prompts you; Lolek sends the post's videos as separate,
++captionless messages in your private chat, ready to forward. The group keeps the
++rich post. Videos are reused from Telegram without another download or upload.
++Anyone with the link can request the videos. Links survive bot restarts but expire
++when their records are evicted from the download cache.
++
+ ## Run
+ 
+ ```bash
+diff --git a/lib/lolek.ex b/lib/lolek.ex
+index 0c17afd..15e06af 100644
+--- a/lib/lolek.ex
++++ b/lib/lolek.ex
+@@ -94,6 +94,14 @@ defmodule Lolek do
+       {:ok, {%ExGram.Model.Message{} = message, used_opts}} ->
+         entries = extract_file_entries(items, message, post, used_opts)
+         refresh_after_send(chat_id, message, post, items, entries, used_opts, context)
++
++        Lolek.PrivateVideo.attach(
++          chat_id,
++          message.message_id,
++          entries,
++          Keyword.get(context, :private_video_bot_username)
++        )
++
+         {:ok, entries}
+ 
+       {:ok, {other, _used_opts}} ->
+diff --git a/lib/lolek/ex_gram_telegram.ex b/lib/lolek/ex_gram_telegram.ex
+index 5becbdc..f5796a7 100644
+--- a/lib/lolek/ex_gram_telegram.ex
++++ b/lib/lolek/ex_gram_telegram.ex
+@@ -5,6 +5,16 @@ defmodule Lolek.ExGramTelegram do
+ 
+   @behaviour Lolek.Telegram
+ 
++  @impl true
++  def send_video(chat_id, file_id, options) do
++    ExGram.send_video(chat_id, file_id, options)
++  end
++
++  @impl true
++  def edit_message_reply_markup(chat_id, message_id, options) do
++    ExGram.edit_message_reply_markup(options ++ [chat_id: chat_id, message_id: message_id])
++  end
++
+   @impl true
+   def send_rich_message(chat_id, rich_message, options) do
+     ExGram.send_rich_message(chat_id, rich_message, options)
+diff --git a/lib/lolek/handler.ex b/lib/lolek/handler.ex
+index 1e29ab9..5dc7768 100644
+--- a/lib/lolek/handler.ex
++++ b/lib/lolek/handler.ex
+@@ -26,6 +26,17 @@ defmodule Lolek.Handler do
+   # {:update, update} → This tuple will match as a default handle
+ 
+   @impl true
++  def handle(
++        {:command, :start,
++         %ExGram.Model.Message{chat: %{type: "private", id: chat_id}, text: "video_" <> token} =
++           message},
++        context
++      ) do
++    with_fresh_message(message, fn ->
++      deliver_private_video(chat_id, String.trim(token), context)
++    end)
++  end
++
+   def handle({:command, :start, %ExGram.Model.Message{} = message}, context) do
+     with_fresh_message(message, fn ->
+       answer(context, "Hi! Send me an url and I will try to show media from it.")
+@@ -41,12 +52,15 @@ defmodule Lolek.Handler do
+             from: from
+           } = message
+         },
+-        _context
++        context
+       ) do
+     with_fresh_message(message, fn ->
+       result =
+         with_processing_deadline(message, fn ->
+-          handle_text_message(text, chat_id, from, topic_message_thread_id(message))
++          handle_text_message(text, chat_id, from,
++            message_thread_id: topic_message_thread_id(message),
++            private_video_bot_username: private_video_bot_username(message, context)
++          )
+         end)
+ 
+       maybe_react_to_failure(message, result)
+@@ -57,6 +71,30 @@ defmodule Lolek.Handler do
+     :ok
+   end
+ 
++  @spec deliver_private_video(integer(), String.t(), ExGram.Cnt.t()) :: :ok | ExGram.Cnt.t()
++  defp deliver_private_video(chat_id, token, context) do
++    if Lolek.ChatRateLimiter.admit?(chat_id) do
++      private_video_result(Lolek.PrivateVideo.deliver(chat_id, token), context)
++    else
++      answer(context, "Too many requests. Please try again in a minute.")
++    end
++  end
++
++  @spec private_video_result(:ok | {:error, term()}, ExGram.Cnt.t()) :: :ok | ExGram.Cnt.t()
++  defp private_video_result(:ok, _context), do: :ok
++
++  defp private_video_result({:error, :expired_link}, context) do
++    answer(
++      context,
++      "This video link has expired. Request the post in the group again for a new link."
++    )
++  end
++
++  defp private_video_result({:error, reason}, context) do
++    Logger.warning("Could not send private video: #{inspect(reason)}")
++    answer(context, "I couldn't send the video. Please try the link again.")
++  end
++
+   @doc false
+   @spec topic_message_thread_id(ExGram.Model.Message.t()) :: integer() | nil
+   def topic_message_thread_id(%ExGram.Model.Message{
+@@ -68,12 +106,22 @@ defmodule Lolek.Handler do
+ 
+   def topic_message_thread_id(%ExGram.Model.Message{}), do: nil
+ 
+-  @spec handle_text_message(String.t(), integer(), ExGram.Model.User.t() | nil, integer() | nil) ::
++  @spec private_video_bot_username(ExGram.Model.Message.t(), ExGram.Cnt.t()) :: String.t() | nil
++  defp private_video_bot_username(
++         %{chat: %{type: type}},
++         %{bot_info: %ExGram.Model.User{username: username}}
++       )
++       when type in ["group", "supergroup"],
++       do: username
++
++  defp private_video_bot_username(_message, _context), do: nil
++
++  @spec handle_text_message(String.t(), integer(), ExGram.Model.User.t() | nil, keyword()) ::
+           :ok | {:failure, term()}
+-  defp handle_text_message(text, chat_id, from, message_thread_id) do
++  defp handle_text_message(text, chat_id, from, send_context) do
+     case Lolek.Url.extract_url(text) do
+       {:ok, url} ->
+-        case process_admitted_url(chat_id, url, from, message_thread_id) do
++        case process_admitted_url(chat_id, url, from, send_context) do
+           {:ok, _file_state} ->
+             Lolek.Metrics.record_message_result(:ok)
+             :ok
+@@ -120,13 +168,13 @@ defmodule Lolek.Handler do
+           integer(),
+           String.t(),
+           ExGram.Model.User.t() | nil,
+-          integer() | nil
++          keyword()
+         ) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp process_admitted_url(chat_id, url, from, message_thread_id) do
++  defp process_admitted_url(chat_id, url, from, send_context) do
+     if Lolek.ChatRateLimiter.admit?(chat_id) do
+       Lolek.UrlProcessing.process(url, fn ->
+-        process_url_with_limit(chat_id, url, from, message_thread_id)
++        process_url_with_limit(chat_id, url, from, send_context)
+       end)
+     else
+       {:error, :chat_rate_limited}
+@@ -137,12 +185,12 @@ defmodule Lolek.Handler do
+           integer(),
+           String.t(),
+           ExGram.Model.User.t() | nil,
+-          integer() | nil
++          keyword()
+         ) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp process_url_with_limit(chat_id, url, from, message_thread_id) do
++  defp process_url_with_limit(chat_id, url, from, send_context) do
+     Lolek.ProcessingLimiter.with_limit(chat_id, fn ->
+-      process_url(chat_id, url, Lolek.Requester.display_name(from), message_thread_id)
++      process_url(chat_id, url, Lolek.Requester.display_name(from), send_context)
+     end)
+   end
+ 
+@@ -201,14 +249,14 @@ defmodule Lolek.Handler do
+     max(deadline - System.system_time(:millisecond), 0)
+   end
+ 
+-  @spec process_url(integer(), String.t(), String.t(), integer() | nil) ::
++  @spec process_url(integer(), String.t(), String.t(), keyword()) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp process_url(chat_id, url, requester_name, message_thread_id) do
++  defp process_url(chat_id, url, requester_name, send_context) do
+     log_url = Lolek.Url.normalize_for_log(url)
+     started_at = System.monotonic_time()
+ 
+     timed_step("total", log_url, fn ->
+-      do_process_url(chat_id, url, log_url, requester_name, message_thread_id, started_at)
++      do_process_url(chat_id, url, log_url, requester_name, send_context, started_at)
+     end)
+   end
+ 
+@@ -217,19 +265,20 @@ defmodule Lolek.Handler do
+           String.t(),
+           String.t(),
+           String.t(),
+-          integer() | nil,
++          keyword(),
+           integer()
+         ) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp do_process_url(chat_id, url, log_url, requester_name, message_thread_id, started_at) do
++  defp do_process_url(chat_id, url, log_url, requester_name, send_context, started_at) do
+     with {:ok, folder_path} <- Lolek.File.get_folder_path(url),
+          post <- source_post(url, folder_path, log_url),
+-         send_context = [
+-           requester_name: requester_name,
+-           message_thread_id: message_thread_id,
+-           started_at: started_at,
+-           post: post
+-         ],
++         send_context =
++           send_context ++
++             [
++               requester_name: requester_name,
++               started_at: started_at,
++               post: post
++             ],
+          {:ok, file_state} <-
+            timed_step("cache lookup", log_url, fn -> Lolek.File.get_file_state(folder_path) end),
+          {:ok, file_state} <-
+diff --git a/lib/lolek/private_video.ex b/lib/lolek/private_video.ex
+new file mode 100644
+index 0000000..8a69248
+--- /dev/null
++++ b/lib/lolek/private_video.ex
+@@ -0,0 +1,104 @@
++defmodule Lolek.PrivateVideo do
++  @moduledoc """
++  Links group posts to captionless copies of their videos in the bot's private chat.
++  Link records live in the download cache and survive restarts until cache eviction.
++  """
++
++  require Logger
++
++  @doc "Adds a private-chat link when the post has videos and a bot username is provided."
++  @spec attach(integer(), integer(), [Lolek.File.sent_media_entry()], String.t() | nil) :: :ok
++  def attach(chat_id, message_id, entries, username) when is_binary(username) do
++    video_ids =
++      for {ext, id} <- entries, Lolek.GalleryDownloader.video_file?("x#{ext}") do
++        id
++      end
++
++    case video_ids do
++      [] ->
++        :ok
++
++      ids ->
++        attach_link(chat_id, message_id, ids, username)
++    end
++  end
++
++  def attach(_chat_id, _message_id, _entries, _username), do: :ok
++
++  @doc "Sends the linked videos as ordinary messages without captions."
++  @spec deliver(integer(), String.t()) :: :ok | {:error, term()}
++  def deliver(chat_id, token) do
++    with {:ok, ids} <- read_link(token) do
++      deliver_videos(chat_id, ids)
++    end
++  end
++
++  @spec deliver_videos(integer(), [String.t()]) :: :ok | {:error, term()}
++  defp deliver_videos(_chat_id, []), do: :ok
++
++  defp deliver_videos(chat_id, [id | rest]) do
++    with {:ok, _message} <- Lolek.Telegram.send_video(chat_id, id, []) do
++      deliver_videos(chat_id, rest)
++    end
++  end
++
++  @spec attach_link(integer(), integer(), [String.t()], String.t()) :: :ok
++  defp attach_link(chat_id, message_id, ids, username) do
++    with {:ok, token} <- store_link(ids),
++         button = %ExGram.Model.InlineKeyboardButton{
++           text: if(length(ids) == 1, do: "Get video privately", else: "Get videos privately"),
++           url: "https://t.me/#{username}?start=video_#{token}"
++         },
++         markup = %ExGram.Model.InlineKeyboardMarkup{inline_keyboard: [[button]]},
++         {:ok, _message} <-
++           Lolek.Telegram.edit_message_reply_markup(chat_id, message_id, reply_markup: markup) do
++      :ok
++    else
++      {:error, reason} ->
++        log_link_failure(reason)
++    end
++  rescue
++    error ->
++      log_link_failure(error)
++  end
++
++  @spec store_link([String.t()]) :: {:ok, String.t()} | {:error, term()}
++  defp store_link(ids) do
++    # File IDs exceed Telegram's 64-character start parameter limit. A random
++    # lookup token also keeps unrelated cached videos from being enumerable.
++    token = :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
++    path = link_path(token)
++
++    with :ok <- File.mkdir_p(Path.dirname(path)),
++         :ok <- File.write(path, Jason.encode!(ids), [:exclusive]) do
++      {:ok, token}
++    end
++  end
++
++  @spec read_link(String.t()) :: {:ok, [String.t()]} | {:error, :expired_link}
++  defp read_link(token) do
++    with true <- Regex.match?(~r/\A[A-Za-z0-9_-]{22}\z/, token),
++         {:ok, json} <- File.read(link_path(token)),
++         {:ok, [_ | _] = ids} <- Jason.decode(json),
++         true <- Enum.all?(ids, &(is_binary(&1) and &1 != "")) do
++      {:ok, ids}
++    else
++      _ ->
++        {:error, :expired_link}
++    end
++  end
++
++  @spec link_path(String.t()) :: String.t()
++  defp link_path(token) do
++    Path.join([
++      Application.fetch_env!(:lolek, :download_path),
++      "private-video-#{token}",
++      "videos.json"
++    ])
++  end
++
++  @spec log_link_failure(term()) :: :ok
++  defp log_link_failure(reason) do
++    Logger.warning("Could not attach private video link: #{inspect(reason)}")
++  end
++end
+diff --git a/lib/lolek/telegram.ex b/lib/lolek/telegram.ex
+index 5d56c3f..27ac1c1 100644
+--- a/lib/lolek/telegram.ex
++++ b/lib/lolek/telegram.ex
+@@ -9,6 +9,22 @@ defmodule Lolek.Telegram do
+               {:ok, term()} | {:error, term()}
+   @callback set_message_reaction(integer(), integer(), keyword()) ::
+               {:ok, term()} | {:error, term()}
++  @callback edit_message_reply_markup(integer(), integer(), keyword()) ::
++              {:ok, term()} | {:error, term()}
++  @callback send_video(integer(), String.t(), keyword()) :: {:ok, term()} | {:error, term()}
++
++  @doc "Sends a video using its Telegram file ID."
++  @spec send_video(integer(), String.t(), keyword()) :: {:ok, term()} | {:error, term()}
++  def send_video(chat_id, file_id, options) do
++    client().send_video(chat_id, file_id, options)
++  end
++
++  @doc "Updates the buttons on a previously sent message."
++  @spec edit_message_reply_markup(integer(), integer(), keyword()) ::
++          {:ok, term()} | {:error, term()}
++  def edit_message_reply_markup(chat_id, message_id, options) do
++    client().edit_message_reply_markup(chat_id, message_id, options)
++  end
+ 
+   @doc "Sends a rich message to the given chat."
+   @spec send_rich_message(integer(), ExGram.Model.InputRichMessage.t(), keyword()) ::
+diff --git a/test/lolek/private_video_test.exs b/test/lolek/private_video_test.exs
+new file mode 100644
+index 0000000..dcc6b87
+--- /dev/null
++++ b/test/lolek/private_video_test.exs
+@@ -0,0 +1,245 @@
++defmodule Lolek.PrivateVideoTest do
++  use ExUnit.Case
++
++  defmodule TelegramClient do
++    @moduledoc false
++
++    def send_rich_message(chat_id, rich_message, options) do
++      record({:rich_post, chat_id, rich_message, options})
++      {:ok, Application.fetch_env!(:lolek, :private_video_test_response)}
++    end
++
++    def edit_message_text(chat_id, message_id, options) do
++      record({:edit_post, chat_id, message_id, options})
++      {:ok, Application.fetch_env!(:lolek, :private_video_test_response)}
++    end
++
++    def edit_message_reply_markup(chat_id, message_id, options) do
++      record({:buttons, chat_id, message_id, options[:reply_markup]})
++      Application.get_env(:lolek, :private_video_test_result, {:ok, true})
++    end
++
++    def send_video(chat_id, file_id, options) do
++      record({:video, chat_id, file_id, options})
++      Application.get_env(:lolek, :private_video_test_result, {:ok, true})
++    end
++
++    defp record(call), do: send(Application.fetch_env!(:lolek, :private_video_test_parent), call)
++  end
++
++  setup %{tmp_dir: dir} do
++    settings = [
++      telegram_client: TelegramClient,
++      private_video_test_parent: self(),
++      private_video_test_result: {:ok, true},
++      private_video_test_response: response([video("cached-video")]),
++      download_path: dir,
++      post_source_caption: false,
++      post_requester_caption: true,
++      max_message_delay_seconds: 300
++    ]
++
++    saved = Map.new(settings, fn {key, _} -> {key, Application.fetch_env(:lolek, key)} end)
++    Enum.each(settings, fn {key, value} -> Application.put_env(:lolek, key, value) end)
++
++    on_exit(fn ->
++      Enum.each(saved, fn
++        {key, {:ok, value}} -> Application.put_env(:lolek, key, value)
++        {key, :error} -> Application.delete_env(:lolek, key)
++      end)
++    end)
++
++    start_supervised!({Registry, keys: :unique, name: Lolek.UrlProcessingRegistry})
++    start_supervised!({Lolek.ChatRateLimiter, limit: 3})
++    start_supervised!(Lolek.ProcessingLimiter)
++    :ok
++  end
++
++  @moduletag :tmp_dir
++
++  for type <- ["group", "supergroup"] do
++    test "opens a #{type} post's video privately without another upload", %{tmp_dir: dir} do
++      url = cache_post(dir)
++      message = message(-100, unquote(type), url)
++      message = %{message | is_topic_message: true, message_thread_id: 10}
++
++      assert :ok = Lolek.Handler.handle({:text, url, message}, context())
++      assert_receive {:rich_post, -100, _, options}
++      assert options[:message_thread_id] == 10
++      assert_receive {:edit_post, -100, 77, _}
++      token = button_token("Get video privately")
++
++      assert :ok = start_link(123, "private", token)
++      assert_receive {:video, 123, "cached-video", []}
++      refute_receive {:rich_post, 123, _, _}
++
++      # Another group member can use the same link; it is not tied to the requester.
++      assert :ok = start_link(456, "private", token)
++      assert_receive {:video, 456, "cached-video", []}
++    end
++  end
++
++  for type <- ["private", "channel"] do
++    test "does not add a private-video button in a #{type}", %{tmp_dir: dir} do
++      url = cache_post(dir)
++      message = message(123, unquote(type), url)
++
++      assert :ok = Lolek.Handler.handle({:text, url, message}, context())
++      assert_receive {:rich_post, 123, _, _}
++      refute_receive {:buttons, _, _, _}
++    end
++  end
++
++  test "returns only the videos from a mixed post, in order" do
++    photo = %ExGram.Model.RichBlockPhoto{
++      type: "photo",
++      photo: [%ExGram.Model.PhotoSize{file_id: "photo"}]
++    }
++
++    collage = %ExGram.Model.RichBlockCollage{
++      type: "collage",
++      blocks: [video("first"), photo, video("second")]
++    }
++
++    Application.put_env(:lolek, :private_video_test_response, response([collage]))
++    entries = [{"first", ".mp4"}, {"photo", ".jpg"}, {"second", ".mp4"}]
++
++    assert {:ok, _} =
++             Lolek.send_file(-100, {:ready_media, entries},
++               private_video_bot_username: "lolek_bot"
++             )
++
++    token = button_token("Get videos privately")
++    assert :ok = start_link(123, "private", token)
++    assert_receive {:video, 123, "first", []}
++    assert_receive {:video, 123, "second", []}
++    refute_receive {:video, _, "photo", _}
++  end
++
++  test "omits the button when there are no videos" do
++    assert :ok = Lolek.PrivateVideo.attach(-100, 77, [{".jpg", "photo"}], "lolek_bot")
++    refute_receive {:buttons, _, _, _}
++  end
++
++  test "links a newly uploaded video using the ID returned by Telegram", %{tmp_dir: dir} do
++    {:ok, _apps} = Application.ensure_all_started(:erlexec)
++    path = Path.join(dir, "video.mp4")
++    File.write!(path, "video")
++
++    assert {:ok, {:sent_media, _, [{".mp4", "cached-video"}]}} =
++             Lolek.send_file(-100, {:prepared_media, dir, [path]},
++               private_video_bot_username: "lolek_bot"
++             )
++
++    token = button_token("Get video privately")
++    assert :ok = start_link(123, "private", token)
++    assert_receive {:video, 123, "cached-video", []}
++  end
++
++  test "keeps the group post successful when the button cannot be attached" do
++    Application.put_env(:lolek, :private_video_test_result, {:error, :unavailable})
++
++    assert {:ok, _} =
++             Lolek.send_file(-100, {:ready_media, [{"cached-video", ".mp4"}]},
++               private_video_bot_username: "lolek_bot"
++             )
++
++    assert_receive {:rich_post, -100, _, _}
++  end
++
++  test "explains links removed by cache cleanup" do
++    token = create_link()
++
++    assert :ok =
++             Lolek.FileCleaner.cleanup_downloads_directory(
++               Application.fetch_env!(:lolek, :download_path),
++               0
++             )
++
++    result = start_link(123, "private", token)
++    assert answer_text(result) =~ "expired"
++    refute_receive {:video, _, _, _}
++  end
++
++  test "rejects malformed tokens and does not redeem links in groups" do
++    for token <- ["../outside", "", String.duplicate("a", 65)] do
++      assert answer_text(start_link(123, "private", token)) =~ "expired"
++    end
++
++    token = create_link()
++    assert %ExGram.Cnt{} = start_link(-100, "supergroup", token)
++    refute_receive {:video, _, _, _}
++  end
++
++  test "reports send failures and rate limits private requests" do
++    token = create_link()
++    Application.put_env(:lolek, :private_video_test_result, {:error, :unavailable})
++    assert answer_text(start_link(123, "private", token)) =~ "couldn't send"
++
++    assert Lolek.ChatRateLimiter.admit?(123)
++    assert Lolek.ChatRateLimiter.admit?(123)
++    assert answer_text(start_link(123, "private", token)) =~ "Too many requests"
++  end
++
++  defp cache_post(dir) do
++    url = "https://coub.com/view/private-video-test"
++    folder = Path.join(dir, Lolek.Url.to_folder_name(url))
++    File.mkdir_p!(folder)
++
++    File.write!(
++      Path.join(folder, "post.json"),
++      Jason.encode!(Lolek.Post.to_map(Lolek.Post.empty(url)))
++    )
++
++    assert :ok =
++             Lolek.File.move_to_ready_to_telegram(
++               {:sent_media, folder, [{".mp4", "cached-video"}]}
++             )
++
++    url
++  end
++
++  defp create_link do
++    :ok = Lolek.PrivateVideo.attach(-100, 77, [{".mp4", "cached-video"}], "lolek_bot")
++    button_token("Get video privately")
++  end
++
++  defp button_token(label) do
++    assert_receive {:buttons, -100, 77, %{inline_keyboard: [[button]]}}
++    assert button.text == label
++    assert %URI{host: "t.me", path: "/lolek_bot", query: query} = URI.parse(button.url)
++    assert %{"start" => "video_" <> token = payload} = URI.decode_query(query)
++    assert byte_size(payload) <= 64
++    token
++  end
++
++  defp start_link(chat_id, type, token) do
++    # ExGram strips the command name and passes its argument in message.text.
++    message = message(chat_id, type, "video_#{token}")
++    Lolek.Handler.handle({:command, :start, message}, context())
++  end
++
++  defp answer_text(%ExGram.Cnt{answers: [{:response, %{text: text}}]}), do: text
++
++  defp context do
++    %ExGram.Cnt{bot_info: %ExGram.Model.User{username: "lolek_bot"}}
++  end
++
++  defp message(chat_id, type, text) do
++    %ExGram.Model.Message{
++      message_id: 1,
++      date: System.system_time(:second),
++      chat: %ExGram.Model.Chat{id: chat_id, type: type},
++      from: %ExGram.Model.User{id: 123, first_name: "Alice"},
++      text: text
++    }
++  end
++
++  defp response(blocks) do
++    %ExGram.Model.Message{message_id: 77, rich_message: %ExGram.Model.RichMessage{blocks: blocks}}
++  end
++
++  defp video(id) do
++    %ExGram.Model.RichBlockVideo{type: "video", video: %ExGram.Model.Video{file_id: id}}
++  end
++end
+diff --git a/test/lolek/send_file_test.exs b/test/lolek/send_file_test.exs
+index 592da2a..e11cf0d 100644
+--- a/test/lolek/send_file_test.exs
++++ b/test/lolek/send_file_test.exs
+@@ -8,6 +8,14 @@ defmodule Lolek.SendFileTest do
+ 
+     @behaviour Lolek.Telegram
+ 
++    @impl true
++    def send_video(chat_id, file_id, options),
++      do: respond({:send_video, chat_id, file_id, options})
++
++    @impl true
++    def edit_message_reply_markup(chat_id, message_id, options),
++      do: respond({:edit_message_reply_markup, chat_id, message_id, options})
++
+     @impl true
+     def send_rich_message(chat_id, rich_message, options),
+       do: respond({:send_rich_message, chat_id, rich_message, options})
+@@ -50,6 +58,14 @@ defmodule Lolek.SendFileTest do
+ 
+     @behaviour Lolek.Telegram
+ 
++    @impl true
++    def send_video(_chat_id, _file_id, _options),
++      do: raise(Application.fetch_env!(:lolek, :telegram_test_error))
++
++    @impl true
++    def edit_message_reply_markup(_chat_id, _message_id, _options),
++      do: raise(Application.fetch_env!(:lolek, :telegram_test_error))
++
+     @impl true
+     def send_rich_message(_chat_id, _rich_message, _options),
+       do: raise(Application.fetch_env!(:lolek, :telegram_test_error))
