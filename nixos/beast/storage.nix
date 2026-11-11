@@ -78,6 +78,13 @@
           model = "ST24000NM000H-3KS103";
         }
         {
+          bay = 2;
+          row = 2;
+          column = 1;
+          serial = "ZXA0HG90";
+          model = "ST24000NM000C-3WD103";
+        }
+        {
           bay = 3;
           row = 3;
           column = 1;
