@@ -179,8 +179,8 @@
         in
         (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
-            # Drop once the locked lolek includes private video links in group posts.
-            # https://github.com/booxter/lolek/commit/0bf80101dc6333b648790e97e5c530092edb2248
+            # Drop once the locked lolek includes private media links in rich posts.
+            # https://github.com/booxter/lolek/commit/732cec0a28d53ae6d03bd960e57ce6bcb634cafc
             ./lolek-private-video-links.patch
           ];
         });
