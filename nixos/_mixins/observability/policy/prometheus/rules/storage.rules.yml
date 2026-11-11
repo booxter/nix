@@ -83,6 +83,15 @@ groups:
         annotations:
           summary: "Beast volume2 usage high"
           description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+          filesystem_usage: &filesystem_usage >-
+            {{- $selector := printf "{instance=%q,job=%q,mountpoint=%q,device=%q,fstype=%q}"
+              $labels.instance $labels.job $labels.mountpoint $labels.device $labels.fstype -}}
+            {{- $available := query (print "node_filesystem_avail_bytes" $selector) -}}
+            {{- $size := query (print "node_filesystem_size_bytes" $selector) -}}
+            {{ printf "%.1f" $value }}% used
+            {{- if and $available $size -}}
+            , {{ $available | first | value | humanize1024 }}B available of {{ $size | first | value | humanize1024 }}B
+            {{- end }}
       - alert: BeastVolume2UsageCritical
         expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 95
         for: 15m
@@ -92,6 +101,7 @@ groups:
         annotations:
           summary: "Beast volume2 usage critically high"
           description: "The /volume2 filesystem on beast has been above 95% used for 15 minutes."
+          filesystem_usage: *filesystem_usage
       - alert: BeastBtrfsDeviceErrors
         expr: increase(node_btrfs_device_errors_total{instance="beast",device="md127"}[15m]) > 0
         for: 5m

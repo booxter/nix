@@ -24,7 +24,10 @@ receivers:
           <b>{{ if .CommonAnnotations.summary }}{{ .CommonAnnotations.summary }}{{ else }}{{ .CommonLabels.alertname }}{{ end }}</b>
           {{ if .CommonAnnotations.description }}
 
-          {{ .CommonAnnotations.description }}{{ end }}
+          {{ .CommonAnnotations.description }}{{ end -}}
+          {{ if and (eq (len .Alerts) 1) (eq .Status "firing") }}{{ with .CommonAnnotations.filesystem_usage }}
+
+          {{ . }}{{ end }}{{ end }}
           {{ if or .CommonLabels.instance .CommonLabels.severity .CommonLabels.category .CommonLabels.job }}
 
           <b>Details</b>
@@ -37,7 +40,7 @@ receivers:
           {{ end }}{{ end }}{{ if or (gt (len .Alerts.Firing) 1) (gt (len .Alerts.Resolved) 0) }}
 
           {{ if gt (len .Alerts.Firing) 0 }}<b>Firing</b>
-          {{ range .Alerts.Firing }}{{ if .Annotations.summary }}• {{ .Annotations.summary }}
+          {{ range .Alerts.Firing }}{{ if .Annotations.summary }}• {{ .Annotations.summary }}{{ with .Annotations.filesystem_usage }} ({{ . }}){{ end }}
           {{ else if .Labels.name }}• {{ .Labels.name }}{{ if .Labels.instance }} on {{ .Labels.instance }}{{ end }}
           {{ else if .Labels.instance }}• {{ .Labels.instance }}
           {{ else if .Labels.target }}• {{ .Labels.target }}

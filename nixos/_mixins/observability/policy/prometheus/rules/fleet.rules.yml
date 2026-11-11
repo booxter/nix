@@ -46,6 +46,15 @@ groups:
         annotations:
           summary: "Root filesystem usage high on {{ $labels.instance }}"
           description: "The root filesystem on {{ $labels.instance }} has been above 85% used for 30 minutes."
+          filesystem_usage: &filesystem_usage >-
+            {{- $selector := printf "{instance=%q,job=%q,mountpoint=%q,device=%q,fstype=%q}"
+              $labels.instance $labels.job $labels.mountpoint $labels.device $labels.fstype -}}
+            {{- $available := query (print "node_filesystem_avail_bytes" $selector) -}}
+            {{- $size := query (print "node_filesystem_size_bytes" $selector) -}}
+            {{ printf "%.1f" $value }}% used
+            {{- if and $available $size -}}
+            , {{ $available | first | value | humanize1024 }}B available of {{ $size | first | value | humanize1024 }}B
+            {{- end }}
       - alert: RootFilesystemUsageCritical
         expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""})) > 95
         for: 15m
@@ -55,6 +64,7 @@ groups:
         annotations:
           summary: "Root filesystem usage critical on {{ $labels.instance }}"
           description: "The root filesystem on {{ $labels.instance }} has been above 95% used for 15 minutes."
+          filesystem_usage: *filesystem_usage
       - alert: HostUpgradeStale
         expr: |
           ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node-local|node-mtls"}) / 86400) > 14

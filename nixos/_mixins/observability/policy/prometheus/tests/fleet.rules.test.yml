@@ -316,9 +316,9 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_filesystem_avail_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'
-        values: "14x60 20x2"
+        values: "15569256448x60 21474836480x2"
       - series: 'node_filesystem_size_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'
-        values: "100x62"
+        values: "107374182400x62"
     alert_rule_test:
       - eval_time: 29m30s
         alertname: RootFilesystemUsageHigh
@@ -336,6 +336,7 @@ tests:
             exp_annotations:
               summary: "Root filesystem usage high on builder2"
               description: "The root filesystem on builder2 has been above 85% used for 30 minutes."
+              filesystem_usage: "85.5% used, 14.5GiB available of 100GiB"
 
   - interval: 30s
     input_series:
@@ -350,9 +351,9 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_filesystem_avail_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'
-        values: "4x30 6x2"
+        values: "4294967296x30 6442450944x2"
       - series: 'node_filesystem_size_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'
-        values: "100x32"
+        values: "107374182400x32"
     alert_rule_test:
       - eval_time: 14m30s
         alertname: RootFilesystemUsageCritical
@@ -370,6 +371,7 @@ tests:
             exp_annotations:
               summary: "Root filesystem usage critical on builder2"
               description: "The root filesystem on builder2 has been above 95% used for 15 minutes."
+              filesystem_usage: "96.0% used, 4GiB available of 100GiB"
 
   - interval: 30s
     input_series:
