@@ -97,12 +97,16 @@ pkgs.testers.runNixOSTest {
     };
 
     testSupport.sops.values = {
+      "pinepods/subscriptions/api_key" = "subscription-test-key";
       "pinepods/postgresql/password" = "database-password";
       "pinepods/valkey/password" = "cache-password";
       "pinepods/bootstrap/password" = "test-password";
       "directory/users/owner/mail" = "owner@example.invalid";
       "pinepods/oidc/client_secret" = "oidc-secret";
     };
+
+    # Install the account and subscription fixtures before running the policy.
+    systemd.timers.pinepods-subscriptions.wantedBy = lib.mkForce [ ];
     testSupport.sops.sources = {
       internal-pki-client-pinepods-ollama-crt = "${testPki}/client.crt";
       internal-pki-client-pinepods-ollama-key = "${testPki}/client.key";
@@ -136,6 +140,7 @@ pkgs.testers.runNixOSTest {
 
   testScript = ''
     JQ = ${builtins.toJSON (lib.getExe pkgs.jq)}
+    SUBSCRIPTIONS_FIXTURE = ${builtins.toJSON "${fixtures}/subscriptions.sql"}
   ''
   + builtins.readFile (fixtures + "/test.py");
 }

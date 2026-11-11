@@ -5,12 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pinepods-tools"
 version = "0.1.0"
-description = "Bootstrap a PinePods service"
+description = "Bootstrap PinePods and manage subscription settings"
 requires-python = ">=3.13"
 dependencies = ["argon2-cffi", "httpx", "pydantic"]
 
 [project.scripts]
 pinepods-bootstrap-admin = "pinepods_tools.cli:bootstrap_main"
+pinepods-enforce-subscriptions = "pinepods_tools.subscriptions:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
