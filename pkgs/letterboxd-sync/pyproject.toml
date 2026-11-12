@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "letterboxd-sync"
+version = "0.1.0"
+description = "Copy Jellyfin watched movies to Letterboxd"
+requires-python = ">=3.13"
+dependencies = [
+    "atomic-file-writes",
+    "beautifulsoup4",
+    "curl-cffi",
+    "jellyfin-apiclient-python",
+    "pydantic",
+]
+
+[project.scripts]
+letterboxd-sync = "letterboxd_sync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+letterboxd_sync = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=letterboxd_sync --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/letterboxd_sync"]
+strict = true

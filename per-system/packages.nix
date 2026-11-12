@@ -9,6 +9,7 @@
 }:
 {
   codex = pkgs.codex;
+  letterboxd-sync = pkgs.letterboxd-sync;
   fleet-tools = appSet.packages.deploy;
   pki-certificates = appSet.packages.issue-internal-service-cert;
 

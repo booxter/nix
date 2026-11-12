@@ -20,6 +20,8 @@ in
       '';
       command = lib.getExe pkgs.firefox-devtools-mcp;
       args = [
+        "--firefox-path"
+        "${hmConfig.home.homeDirectory}/Applications/Home Manager Apps/Firefox.app/Contents/MacOS/firefox"
         "--profile-path"
         "${hmConfig.xdg.dataHome}/firefox-devtools-mcp"
         "--accept-insecure-certs"

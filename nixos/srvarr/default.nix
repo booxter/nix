@@ -83,6 +83,7 @@ in
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
+    ./letterboxd.nix
     ./observability.nix
     ./pinepods.nix
     ./media-repair.nix
