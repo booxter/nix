@@ -351,11 +351,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794472147,
-        "narHash": "sha256-40bkc2OECD3+BrQDcY9SxxHtgdBAA+SiB/aLx7jIM64=",
+        "lastModified": 1794510036,
+        "narHash": "sha256-b23pneiOEHMnP8pL7h29IPI58hdtw9l6z0Z6jTbYp1g=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "9507562373f0a38f90b1e721bb21bfdbc729ec9e",
+        "rev": "219c301c9a1e05b4f4dad0825ffee54c21093f21",
         "type": "github"
       },
       "original": {
