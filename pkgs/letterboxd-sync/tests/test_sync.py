@@ -28,16 +28,26 @@ def test_unmatched_movies_do_not_block_later_batches(state, dry_run, capsys):
     unmatched = {f"tt{index:03d}" for index in range(26)}
     destination = Destination(unmatched=unmatched)
 
-    with pytest.raises(SyncError, match="No Letterboxd match for 26"):
-        sync(movies, state, destination, dry_run=dry_run)
+    assert sync(movies, state, destination, dry_run=dry_run) == 29
 
-    assert "29/55 movies" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "29/55 movies" in output
+    assert "Warning: no Letterboxd match for 26 movies" in output
     assert destination.watched == (set() if dry_run else movies - unmatched)
     assert set(state.pending(movies)) == (movies if dry_run else unmatched)
 
     destination.unmatched.clear()
     assert sync(movies, state, destination, dry_run=False) == (55 if dry_run else 26)
     assert destination.watched == movies
+
+
+def test_all_unmatched_movies_are_a_successful_noop(state, capsys):
+    destination = Destination(unmatched={"tt1"})
+
+    assert sync({"tt1"}, state, destination, dry_run=False) == 0
+    assert destination.watched == set()
+    assert state.pending({"tt1"}) == ("tt1",)
+    assert "Warning: no Letterboxd match for 1 movies: tt1" in capsys.readouterr().out
 
 
 @pytest.fixture

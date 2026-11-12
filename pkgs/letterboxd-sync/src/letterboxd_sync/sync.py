@@ -1,7 +1,6 @@
 from typing import Protocol
 
 from .letterboxd import Preview
-from .models import SyncError
 from .state import State
 
 
@@ -31,8 +30,8 @@ def sync(movies: set[str], state: State, destination: Destination, *, dry_run: b
         print(f"{'Previewed' if dry_run else 'Imported'} {processed}/{len(pending)} movies")
 
     if unmatched:
-        # Finish the other batches before failing, so unresolved titles remain
-        # retryable and visible to monitoring without blocking new watched films.
-        raise SyncError(f"No Letterboxd match for {len(unmatched)} movies: {', '.join(unmatched)}")
+        # Catalog gaps are normal. Leave these IDs pending in case Letterboxd
+        # adds them later, without treating an otherwise successful run as failed.
+        print(f"Warning: no Letterboxd match for {len(unmatched)} movies: {', '.join(unmatched)}")
 
     return processed
