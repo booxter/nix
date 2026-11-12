@@ -43,8 +43,10 @@ in
       enable = true;
       package = cfg.package;
       botTokenFile = config.sops.secrets."lolek/botToken".path;
-      # The local Bot API allows larger uploads; leave room for codec conversion.
+      # Allow larger uploads while keeping the original compression budgets.
       maxFileSizeToSendToTelegram = 100000000;
+      maxVideoSizeToSendToTelegram = 40000000;
+      maxAudioSizeToSendToTelegram = 5000000;
       maxConcurrentDownloads = 4;
       maxConcurrentDownloadsPerChat = 2;
       postSourceCaption = true;

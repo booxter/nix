@@ -177,13 +177,7 @@
             ];
           });
         in
-        (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [
-            # Drop once the locked lolek includes private media links in rich posts.
-            # https://github.com/booxter/lolek/commit/732cec0a28d53ae6d03bd960e57ce6bcb634cafc
-            ./lolek-private-video-links.patch
-          ];
-        });
+        lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement
@@ -289,25 +283,6 @@
           "-l"
         ];
         patches = (old.patches or [ ]) ++ [
-          # Prerequisite history lookup added shortly after v1.4.0.
-          # https://github.com/calibrain/shelfmark/pull/1422
-          (prev.fetchpatch {
-            url = "https://github.com/calibrain/shelfmark/commit/bac0b9356640e6f649b239efa8ca18f66cdef113.patch";
-            hash = "sha256-d9xSWqCF267fy9XOcN4SRn0JE3yQCMxNwHQFw1ioy38=";
-            includes = [ "shelfmark/core/download_history_service.py" ];
-          })
-          # Reconcile downloads left active across a Shelfmark restart.
-          # https://github.com/calibrain/shelfmark/pull/1409
-          (prev.fetchpatch {
-            url = "https://github.com/calibrain/shelfmark/commit/8392b43dd3c066835134c6c8e6f1415496691431.patch";
-            hash = "sha256-Cj7/v9Rt/J6NpV376DfeTnzF6ZaxLlKrA8vnTFLqicc=";
-          })
-          # Preserve retry behavior while reconciling request-linked downloads.
-          # https://github.com/calibrain/shelfmark/pull/1423
-          (prev.fetchpatch {
-            url = "https://github.com/calibrain/shelfmark/commit/119d3374e3bc123982966ff49cbcfa912f96718a.patch";
-            hash = "sha256-7eKce2Cb+lQaTdPZ9o6K8mdCbN8vCYccsPiDVUuLzGs=";
-          })
           # Persist external-client download IDs and reattach to them after
           # Shelfmark restarts, without resolving an expired indexer URL.
           ../patches/shelfmark-resume-external-downloads.patch
