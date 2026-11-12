@@ -124,3 +124,34 @@ tests:
         alertname: DynamicIpUpdateFailed
       - eval_time: 48h
         alertname: DynamicIpUpdateFailed
+
+  - interval: 1m
+    input_series:
+      - series: 'node_systemd_unit_state{instance="srvarr",name="letterboxd-sync.service",scrape_profile="node",state="failed"}'
+        values: "1x59 0 1x1379 0x60 1x1440"
+      - series: 'node_systemd_unit_state{instance="srvarr",name="letterboxd-sync.service",scrape_profile="node",state="activating"}'
+        values: "0x59 1 0x2881"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: SystemdUnitFailed
+      - eval_time: 5m
+        alertname: LetterboxdSyncFailed
+      - eval_time: 23h59m
+        alertname: LetterboxdSyncFailed
+      - eval_time: 24h
+        alertname: LetterboxdSyncFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: LetterboxdSyncFailed
+              category: systemd
+              instance: srvarr
+              name: letterboxd-sync.service
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Systemd unit failed: letterboxd-sync.service on srvarr"
+              description: "The systemd unit letterboxd-sync.service on srvarr has failed or been retrying for 24 hours."
+      - eval_time: 24h1m
+        alertname: LetterboxdSyncFailed
+      - eval_time: 48h
+        alertname: LetterboxdSyncFailed
