@@ -25,6 +25,9 @@ in
     memoryGiB = 128;
   };
 
+  # The work laptop has no hardware SSH agent configured for sudo.
+  security.sudo.wheelNeedsPassword = false;
+
   # Serve the single-use GlobalProtect browser login on the trusted work LAN.
   networking.firewall.interfaces.${config.host.network.primaryInterface}.allowedTCPPorts = [
     authenticationPort
@@ -38,10 +41,6 @@ in
     generateKey = lib.mkForce false;
     sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
   };
-
-  # Work machines do not use sops-managed login passwords; this VM does not
-  # currently configure a login password.
-  security.sudo.wheelNeedsPassword = false;
 
   boot.kernelParams = [
     "default_hugepagesz=1GB"

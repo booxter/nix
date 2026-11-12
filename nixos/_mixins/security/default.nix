@@ -11,9 +11,10 @@ let
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
 in
 {
+  imports = [ ./sudo.nix ];
+
   config = lib.mkMerge [
     {
-      security.sudo.wheelNeedsPassword = lib.mkDefault (!homeRealm);
       sops.age.generateKey = !homeRealm;
     }
     (lib.mkIf homeRealm {
