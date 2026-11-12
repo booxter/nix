@@ -195,6 +195,8 @@ def existing_ticket_valid(target: Target, paths: TicketPaths, runtime: Runtime) 
         return False
     if metadata.principal != target.principal:
         return False
+    if not metadata.allow_agent_forwarding:
+        return False
     return metadata.valid_before - runtime.clock.now() > MIN_VALID_SECONDS
 
 
@@ -250,7 +252,7 @@ def issue_ticket(
             "-n",
             target.principal,
             "-O",
-            "no-agent-forwarding",
+            "permit-agent-forwarding",
         ]
     )
     if target.allow_x11_forwarding:
@@ -278,6 +280,7 @@ def issue_ticket(
         valid_before=now + ttl,
         issued_at=now,
         ttl=ttl,
+        allow_agent_forwarding=True,
         allow_x11_forwarding=target.allow_x11_forwarding,
         certificate_file=str(paths.cert),
         identity_file=str(key_path),
@@ -425,7 +428,7 @@ def ssht_ssh_command(args: argparse.Namespace, target: Target, paths: TicketPath
         "-o",
         f"CertificateFile={paths.cert}",
         "-o",
-        "ForwardAgent=no",
+        "ForwardAgent=yes",
         "-o",
         "AddKeysToAgent=no",
         "-o",

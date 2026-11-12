@@ -18,6 +18,9 @@ let
     target: target // { principal = "${username}@${target.name}"; }
   ) osConfig.host.ssh.tickets.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
+  # A forwarded agent authenticates with the originating operator's key. Do not
+  # ask the remote workstation's hardware to issue a ticket for that session.
+  useLocalCredentials = ''!exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
   ticketHostBlock =
     target:
     let
@@ -33,10 +36,7 @@ let
         HostName = target.name;
         HostKeyAlias = target.name;
         User = username;
-        IdentitiesOnly = true;
-        IdentityFile = ticketKeyPath;
-        CertificateFile = "${ticketStateDir}/%n-cert.pub";
-        ForwardAgent = false;
+        ForwardAgent = true;
         AddKeysToAgent = "no";
         ControlMaster = "no";
         ControlPath = "none";
@@ -46,6 +46,15 @@ let
         PubkeyAuthentication = true;
       };
     };
+  ticketIdentityBlock = target: {
+    name = "ssh-ticket-identity-${target.name}";
+    value = lib.hm.dag.entryBefore [ "*" ] {
+      header = "Match originalhost ${target.name},${target.name}.local ${useLocalCredentials}";
+      IdentitiesOnly = true;
+      IdentityFile = ticketKeyPath;
+      CertificateFile = "${ticketStateDir}/%n-cert.pub";
+    };
+  };
   ticketEnsureBlock =
     target:
     let
@@ -58,13 +67,14 @@ let
     {
       name = "ssh-ticket-ensure-${target.name}";
       value = lib.hm.dag.entryBefore [ "*" ] {
-        header = "Match originalhost ${lib.concatStringsSep "," patterns} exec \"${ensureCommand}\"";
+        header = "Match originalhost ${lib.concatStringsSep "," patterns} ${useLocalCredentials} exec \"${ensureCommand}\"";
         IdentitiesOnly = true;
       };
     };
   ticketKnownHostSettings = builtins.listToAttrs (
     builtins.concatMap (target: [
       (ticketHostBlock target)
+      (ticketIdentityBlock target)
       (ticketEnsureBlock target)
     ]) ticketTargets
   );
