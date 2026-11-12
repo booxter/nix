@@ -291,11 +291,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1794393450,
-        "narHash": "sha256-S/H72hOD4+wGzIUmrCcEfbPe+BlWVcx0l0kmGnOM1ZY=",
+        "lastModified": 1794480602,
+        "narHash": "sha256-VgKZl1D7tY7IkAMmnAkxQ3SaTAFD1KtR/yp4l8Yb8Uo=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "bf74c5f4ad618aaf68af86e47fcfcdef825e824d",
+        "rev": "b47e876f36026582cc0400833e2c772e4054aeb6",
         "type": "github"
       },
       "original": {
@@ -307,11 +307,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1794392535,
-        "narHash": "sha256-rQ/tzlBlENaeI0CLmOpT8BicJFGkGgszHc/0fwaKlrQ=",
+        "lastModified": 1794479247,
+        "narHash": "sha256-SHDJszNYNtdxg5NKu1PELcd8ClSbuQZWcaHk7YpDxss=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "014c70ab07532c76e1af9e9d1ba15d4fc1c3bd19",
+        "rev": "af6548f063a71fc8be20f15bc5c6500870002f5f",
         "type": "github"
       },
       "original": {
@@ -351,11 +351,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794160544,
-        "narHash": "sha256-bVVMTC1GyZ6WgORRMYBQbfv5SwXd3SW/pFIHmadnR2Q=",
+        "lastModified": 1794472147,
+        "narHash": "sha256-40bkc2OECD3+BrQDcY9SxxHtgdBAA+SiB/aLx7jIM64=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "7af773f479789cc6dc4288fa3ccf1779adaf0a1e",
+        "rev": "9507562373f0a38f90b1e721bb21bfdbc729ec9e",
         "type": "github"
       },
       "original": {
@@ -368,15 +368,14 @@
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "telegym": "telegym"
+        ]
       },
       "locked": {
-        "lastModified": 1787876576,
-        "narHash": "sha256-FG0vYXChx6cqwPi+qKrlWYrqwrN/a/6+w9W9WByTChU=",
+        "lastModified": 1794434826,
+        "narHash": "sha256-7fWFeEuM3/G41m6QqRurYNqwxE3sIFadcJZq02fMPjk=",
         "owner": "FrostBy",
         "repo": "motion-captcha-bot",
-        "rev": "29bade826af20029f5462a861eed17a55f69ecbd",
+        "rev": "78b5d0ab14faadd42ee1fbe805eaec44a7a94cc7",
         "type": "github"
       },
       "original": {
@@ -451,11 +450,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794222723,
-        "narHash": "sha256-jehPADpSIsWnyNHw/s44OHF9l6Y75QmW74sqO9cEe0A=",
+        "lastModified": 1794425805,
+        "narHash": "sha256-4s5CRvkYX4oAJVZ+zu2bBKFH2gG2GqN6OKHEWgJr1AY=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "919c16cf46a7acf9b44b2c2444bc39aa094eaa85",
+        "rev": "b6ca87f78ec5bafc4b2aef7b29803dcf419266af",
         "type": "github"
       },
       "original": {
@@ -480,11 +479,11 @@
     },
     "nixpkgs-darwin": {
       "locked": {
-        "lastModified": 1793976852,
-        "narHash": "sha256-M+MxnhCLmLbyVq9Ool2Q2FSqrLQyxT4B6oPRl+nYwIE=",
-        "rev": "57f1c8965649ce5bcac5118a0d2e41f1fbdc56e5",
+        "lastModified": 1794217284,
+        "narHash": "sha256-gDgDxMHOYuYTP5sbSvzlFivvOZSc3gZyzJcwOdG9ZyM=",
+        "rev": "f4244ef33645badc8157562b5e80748929b396c2",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/26.05-darwin/nixpkgs-darwin-26.05pre1018012.57f1c8965649/nixexprs.tar.zst"
+        "url": "https://releases.nixos.org/nixpkgs/26.05-darwin/nixpkgs-darwin-26.05pre1018274.f4244ef33645/nixexprs.tar.zst"
       },
       "original": {
         "type": "tarball",
@@ -540,11 +539,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1793977579,
-        "narHash": "sha256-4/Yzr1fWTh/zBAR1tR84ZQ1Zhmor8AXwgD4AS7sPn60=",
-        "rev": "4fe25e12eb9f4c744966dd3de5a05246cf098601",
+        "lastModified": 1794285365,
+        "narHash": "sha256-BszPqU/Au5mm0nQIDUMnsksh6hgIp7iyaX/UBcuRa0c=",
+        "rev": "9ac0edc06bfb33e6c0000be79d98ef8d89e26503",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1109744.4fe25e12eb9f/nixexprs.tar.zst"
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1115905.9ac0edc06bfb/nixexprs.tar.zst"
       },
       "original": {
         "type": "tarball",
@@ -582,11 +581,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794394674,
-        "narHash": "sha256-8Q6c2LqcopEz5+508qD/OWjewnGo/KklZB2givXNNMw=",
+        "lastModified": 1794480144,
+        "narHash": "sha256-/4fKGHZ9O7AD/bGiK5JctuG29asdLkB6P+7DG03wics=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "289bc5c8f21d4f399069c37c8ef7bc36233f0afe",
+        "rev": "2873e9e2f09efd4f2f8802bf8db1db8c45974cad",
         "type": "github"
       },
       "original": {
@@ -792,27 +791,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "telegym": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1787265683,
-        "narHash": "sha256-KpRAq5nOFM59nCNyGJZIadCUUBQeS8d9oMNLuw6qvEw=",
-        "owner": "booxter",
-        "repo": "telegym",
-        "rev": "25d3da8e9271e95006e6cf682921dd4945d27d23",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "lolek-missing-features",
-        "repo": "telegym",
         "type": "github"
       }
     },
