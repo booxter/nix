@@ -69,6 +69,10 @@ in
       bridges = [ bridgeName ];
     };
 
+    # Match upstream Proxmox: let stopall enforce guest shutdown timeouts.
+    # Remove once the pinned input includes https://github.com/SaumonNet/proxmox-nixos/pull/274.
+    systemd.services.pve-guests.serviceConfig.TimeoutSec = "infinity";
+
     # Some packages useful when debugging Proxmox VE.
     environment.systemPackages = with pkgs; [ bridge-utils ];
 
