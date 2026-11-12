@@ -3,7 +3,8 @@
   lib,
 }:
 let
-  hosts = import ./hosts.nix { inherit fleetHosts lib; };
+  ssh = import ./ssh { inherit lib; };
+  hosts = import ./hosts.nix { inherit fleetHosts lib ssh; };
   webIngress = import ./web-ingress.nix;
   webServices = import ./web-services-model.nix {
     entriesByOwner = import ./web-services.nix;
@@ -20,6 +21,7 @@ in
   builders = import ./builders.nix { inherit lib; };
   dashboard = import ./dashboard.nix;
   inherit hosts;
+  inherit ssh;
   observability = import ./observability.nix;
   proxmox = import ./proxmox.nix;
   ups = import ./ups.nix;

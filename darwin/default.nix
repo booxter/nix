@@ -2,6 +2,7 @@
   config,
   fleetInventory,
   inputs,
+  sshKeys,
   lib,
   pkgs,
   ...
@@ -47,7 +48,7 @@ in
   ];
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs sshKeys; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

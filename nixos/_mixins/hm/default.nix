@@ -2,6 +2,7 @@
   config,
   fleetInventory,
   inputs,
+  sshKeys,
   lib,
   ...
 }:
@@ -13,7 +14,7 @@ in
   imports = [ inputs.home-manager.nixosModules.home-manager ];
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs sshKeys; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

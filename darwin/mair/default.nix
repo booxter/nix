@@ -2,12 +2,12 @@
   config,
   lib,
   pkgs,
+  sshKeys,
   ...
 }:
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
-  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
 {
   system.stateVersion = 6;
@@ -52,14 +52,11 @@ in
     ssh = {
       credentials = {
         backend = "secretive";
-        secretive.publicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHMpzrKs1o9ek9+rZw3O8y7tzedq+iMObfvGA1xVS9uKX1cdSp7rnWyq83Y2hsfPI+J2quB42JFVUzCxn4NVfvM= ihar.hrachyshka@gmail.com";
+        secretive.publicKey = sshKeys.keys.mairSecretive;
       };
-      operator.authorizedKeys = [
-        (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
-        (readPublicKey ../../common/_mixins/ssh/public-keys/mair-secretive.pub)
-      ];
+      operator.authorizedKeys = sshKeys.operators.mair;
       tickets.issuer = {
-        publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/fleet-user-ca.pub;
+        publicKey = sshKeys.ticketIssuers.mair;
         keyName = "fleet-user-ca.pub";
         useAgent = true;
       };

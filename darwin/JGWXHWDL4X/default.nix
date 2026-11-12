@@ -1,11 +1,11 @@
 {
   config,
   lib,
+  sshKeys,
   ...
 }:
 let
   username = config.host.username;
-  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   maasServer = name: {
     instructions = ''
       Only use the NVInfo MaaS MCP when the user explicitly requests NVIDIA
@@ -49,10 +49,7 @@ in
     group = "staff";
     mode = "0400";
   };
-  host.ssh.operator.authorizedKeys = [
-    (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x.pub)
-    (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x-nix-builder.pub)
-  ];
+  host.ssh.operator.authorizedKeys = sshKeys.operators.JGWXHWDL4X;
   home-manager.users.${username}.host.hm = {
     dev.agents.mcp.httpServers = {
       maas_artifactory = maasServer "maas_artifactory";

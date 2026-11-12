@@ -85,6 +85,7 @@
         fleetHosts = hosts;
         inherit lib;
       };
+      sshKeys = fleetInventory.ssh;
       specialArgsForHost =
         {
           hostName,
@@ -96,6 +97,7 @@
           inherit
             hostName
             fleetInventory
+            sshKeys
             inputs
             outputs
             system
