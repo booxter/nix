@@ -39,6 +39,8 @@ in
 
   houndarr = pkgs.callPackage ./houndarr { };
 
+  letterboxd-sync = pkgs.callPackage ./letterboxd-sync { inherit atomicFileWrites; };
+
   media-repair-contracts = mediaRepairContracts;
 
   media-repair-go-models = mediaRepairGoModels;
