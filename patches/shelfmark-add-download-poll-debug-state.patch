@@ -2,8 +2,14 @@ diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/cli
 index 0d26c1d..173b00d 100644
 --- a/shelfmark/download/clients/base_handler.py
 +++ b/shelfmark/download/clients/base_handler.py
-@@ -22,6 +22,12 @@ from shelfmark.download.clients import (
+@@ -26,18 +26,24 @@ from shelfmark.download.clients import (
      list_configured_clients,
+ )
+ from shelfmark.download.clients.settings import (
+     STALL_TIMEOUT_DEFAULT_MINUTES,
+     STALL_TIMEOUT_MAX_MINUTES,
+     STALL_TIMEOUT_MIN_MINUTES,
+     STALL_TIMEOUT_SETTING,
  )
  from shelfmark.download.fs import run_blocking_io
 +from shelfmark.download.poll_debug import (
@@ -13,9 +19,15 @@ index 0d26c1d..173b00d 100644
 +    record_poll_start,
 +)
  from shelfmark.download.permissions_debug import log_path_permission_context
- from shelfmark.release_sources import DownloadHandler
+ from shelfmark.release_sources import DownloadHandler, HandoffResult
  
-@@ -755,7 +761,19 @@ class ExternalClientHandler(DownloadHandler, ABC):
+ if TYPE_CHECKING:
+     from collections.abc import Callable, Sequence
+     from threading import Event
+ 
+     from shelfmark.core.models import DownloadTask
+ 
+@@ -755,8 +761,20 @@ class ExternalClientHandler(DownloadHandler, ABC):
              result: str | None = None
              logger.debug("Starting poll for %s (content_type=%s)", download_id, task.content_type)
              while not cancel_flag.is_set():
@@ -34,9 +46,10 @@ index 0d26c1d..173b00d 100644
 +                record_poll_result(task.task_id, status)
 +
                  progress_callback(status.progress)
+                 task.client_queued = status.state == DownloadState.QUEUED
  
                  # Check for completion
-@@ -881,6 +898,8 @@ class ExternalClientHandler(DownloadHandler, ABC):
+@@ -881,12 +898,14 @@ class ExternalClientHandler(DownloadHandler, ABC):
              status_callback("error", str(e))
              self._safe_remove_download(client, download_id, protocol, "polling exception")
              return None
@@ -45,6 +58,10 @@ index 0d26c1d..173b00d 100644
  
          # Clean up on success
          if result:
+             self._on_download_complete(task)
+             self._cleanup_refs[task.task_id] = (client, download_id, protocol, added_by_shelfmark)
+ 
+         return result
  
      def _handle_completed_file(
 diff --git a/shelfmark/download/poll_debug.py b/shelfmark/download/poll_debug.py
