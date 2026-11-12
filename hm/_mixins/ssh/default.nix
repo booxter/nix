@@ -62,7 +62,7 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      package = pkgs.openssh;
+      package = lib.mkDefault pkgs.openssh;
       settings = preBootSettings;
 
       includes = [

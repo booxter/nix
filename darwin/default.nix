@@ -48,7 +48,7 @@ in
   ];
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs sshKeys; };
+    extraSpecialArgs = { inherit inputs sshKeys fleetInventory; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

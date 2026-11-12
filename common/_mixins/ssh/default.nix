@@ -9,4 +9,7 @@
   ];
 
   services.openssh.enable = true;
+  services.openssh.extraConfig = ''
+    AcceptEnv SOPS_KEYSERVICE SOPS_ENABLE_LOCAL_KEYSERVICE
+  '';
 }

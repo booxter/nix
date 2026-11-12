@@ -14,7 +14,7 @@ in
   imports = [ inputs.home-manager.nixosModules.home-manager ];
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs sshKeys; };
+    extraSpecialArgs = { inherit inputs sshKeys fleetInventory; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

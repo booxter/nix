@@ -81,6 +81,15 @@ def test_missing_realm_identity_is_rejected(tmp_path: Path) -> None:
         runtime(tmp_path).resolve_realm("work")
 
 
+def test_forwarded_key_service_does_not_require_a_local_realm_identity(tmp_path: Path) -> None:
+    environment = runtime(tmp_path, extra={"SOPS_KEYSERVICE": "unix:///forwarded/sops.sock"})
+    realm = environment.resolve_realm("work")
+    assert realm.identity_file is None
+    assert (
+        environment.command_environment(realm)["SOPS_KEYSERVICE"] == "unix:///forwarded/sops.sock"
+    )
+
+
 def test_host_must_belong_to_bootstrap_realm(tmp_path: Path) -> None:
     inventory = tmp_path / "realms.json"
     inventory.write_text(json.dumps({"newhost": "home"}))

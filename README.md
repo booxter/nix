@@ -70,40 +70,8 @@ checks remain enabled when copying the content-addressed source.
 
 ## Secrets
 
-Secrets for non-work machines are managed via sops-nix, with one encrypted YAML
-per host under `secrets/`.
-Use these commands:
-
-```sh
-# Bootstrap a host secret
-nix run .#sops-bootstrap -- beast
-nix run .#sops-bootstrap -- beast --user root
-
-# Current host (detected from hostname)
-nix run .#sops-cat
-nix run .#sops-edit
-nix run .#sops-update
-
-# Explicit host
-nix run .#sops-cat -- mair
-nix run .#sops-edit -- mair
-nix run .#sops-update -- mair
-printf %s "$attic_token" | nix run .#sops-set -- --realm home --all attic/token
-nix run .#sops-unset -- --realm home --all obsolete/token
-nix run .#sops-pass -- beast root
-nix run .#sops-pass -- --gen gw root
-nix run .#sops-pass -- --gen gw both
-nix run .#sops-pass -- beast ihrachyshka
-
-# Copy one section between host secrets
-nix run .#sops-copy -- mair prx1-lab attic
-```
-
-Run `sops-update` when a host secret should receive missing template keys.
-`sops-edit` only opens the selected secret for editing.
-`sops-set --all` and `sops-unset --all` update every host secret in the selected
-realm and report completed and remaining hosts if an operation fails partway
-through.
+See [SOPS tools](apps/sops/README.md) for secret management commands and
+Touch ID/YubiKey authentication over SSH.
 
 ## Tests
 
