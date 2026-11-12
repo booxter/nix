@@ -177,13 +177,7 @@
             ];
           });
         in
-        (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [
-            # Drop once the locked lolek includes private media links in rich posts.
-            # https://github.com/booxter/lolek/commit/732cec0a28d53ae6d03bd960e57ce6bcb634cafc
-            ./lolek-private-video-links.patch
-          ];
-        });
+        lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement

@@ -64,7 +64,7 @@
 
     lolek = {
       url = "github:dziaineka/lolek";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     motion-captcha-bot = {
