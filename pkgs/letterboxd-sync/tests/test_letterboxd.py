@@ -57,6 +57,39 @@ def test_wrong_account_is_rejected_before_upload():
     assert responses.upload is None
 
 
+def test_unmatched_row_does_not_shift_the_next_movies_identity():
+    responses = Responses()
+    responses.pages["/import/csv/"] = responses.pages["/import/csv/"].replace(
+        '<li class="import-film"',
+        '<li class="import-film" data-json=\'{"imdbId": "tt22184976"}\'></li>'
+        '<li class="import-film"',
+    )
+    match_url = "/import/watchlist/match-import-film/"
+    responses.pages[match_url] = (FIXTURES / "no-match.html").read_text() + responses.pages[
+        match_url
+    ]
+    client = Letterboxd(responses, "example")
+
+    preview = client.preview(("tt22184976", "tt0133093"))
+    client.confirm(preview)
+
+    assert preview.imdb_ids == ("tt0133093",)
+    assert responses.confirmation["importProductionId"] == ["2a1m"]
+
+
+def test_all_unmatched_rows_produce_an_empty_preview():
+    responses = Responses()
+    responses.pages["/import/watchlist/match-import-film/"] = (
+        FIXTURES / "no-match.html"
+    ).read_text()
+
+    preview = Letterboxd(responses, "example").preview(("tt0133093",))
+
+    assert preview.imdb_ids == ()
+    assert preview.production_ids == ()
+    assert responses.confirmation is None
+
+
 @pytest.mark.parametrize(
     "path,old,new",
     [

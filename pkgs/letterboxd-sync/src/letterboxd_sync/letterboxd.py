@@ -45,8 +45,7 @@ class Letterboxd:
 
         csrf = self._open_importer()
         csrf = self._upload_csv(imdb_ids, csrf)
-        production_ids = self._match_movies(imdb_ids, csrf)
-        return Preview(imdb_ids, csrf, production_ids)
+        return self._match_movies(imdb_ids, csrf)
 
     def _open_importer(self) -> str:
         # Cookies may have been exported from a different account. Check identity
@@ -90,7 +89,7 @@ class Letterboxd:
             raise SyncError("Letterboxd did not preserve the requested IMDb IDs")
         return csrf
 
-    def _match_movies(self, imdb_ids: tuple[str, ...], csrf: str) -> tuple[str, ...]:
+    def _match_movies(self, imdb_ids: tuple[str, ...], csrf: str) -> Preview:
         # Use only our watched-only fields, even if the upload parser adds defaults later.
         # "diary" is the website's importer type even when no diary dates are supplied.
         payload = {
@@ -105,23 +104,36 @@ class Letterboxd:
             ),
             "html.parser",
         )
+        matches = matched.select(".matched-item")
+        if len(matches) != len(imdb_ids):
+            raise SyncError("Letterboxd returned an incomplete matching response")
+
+        accepted_ids = []
         production_ids = []
-        # Confirmation uses Letterboxd IDs rather than IMDb IDs. Require a complete,
-        # unambiguous batch so the checkpoint cannot silently include skipped films.
-        for match in matched.select(".matched-item"):
-            if match.select_one(".icon-matched") is None:
-                raise SyncError(
-                    "Letterboxd could not match a movie; nothing in this batch was imported"
-                )
-            if attribute(match.select_one('[name="shouldImportProduction"]'), "value") != "true":
-                raise SyncError("Letterboxd rejected a matched movie")
+        # The response preserves input order. Keep each accepted IMDb ID paired
+        # with its Letterboxd ID so skipped films never enter the checkpoint.
+        for imdb_id, match in zip(imdb_ids, matches, strict=True):
+            eligible = attribute(match.select_one('[name="shouldImportProduction"]'), "value")
             production_id = attribute(match.select_one('[name="importProductionId"]'), "value")
+
+            # "No match found" still includes an icon-matched placeholder. The
+            # empty ID and false import flag identify an unresolved film instead.
+            if eligible == "false" and production_id == "":
+                continue
+
+            if match.select_one(".icon-matched") is None:
+                raise SyncError("Letterboxd returned unexpected matching markup")
+            if eligible != "true":
+                raise SyncError("Letterboxd rejected a matched movie")
             if not re.fullmatch(r"[A-Za-z0-9]+", production_id):
                 raise SyncError("Letterboxd returned an invalid production ID")
+
+            accepted_ids.append(imdb_id)
             production_ids.append(production_id)
-        if len(production_ids) != len(imdb_ids) or len(set(production_ids)) != len(imdb_ids):
-            raise SyncError("Letterboxd returned incomplete or duplicate matches")
-        return tuple(production_ids)
+
+        if len(set(production_ids)) != len(production_ids):
+            raise SyncError("Letterboxd returned duplicate matches")
+        return Preview(tuple(accepted_ids), csrf, tuple(production_ids))
 
     def confirm(self, preview: Preview) -> None:
         fields = [("__csrf", preview.csrf), ("shouldMarkAsWatched", "true")]

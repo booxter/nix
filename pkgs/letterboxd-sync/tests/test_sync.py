@@ -6,17 +6,38 @@ from letterboxd_sync.sync import sync
 
 
 class Destination:
-    def __init__(self, fail_after=None):
+    def __init__(self, fail_after=None, unmatched=()):
         self.watched = set()
         self.fail_after = fail_after
+        self.unmatched = set(unmatched)
 
     def preview(self, imdb_ids):
-        return Preview(imdb_ids, "test-token", imdb_ids)
+        accepted = tuple(imdb_id for imdb_id in imdb_ids if imdb_id not in self.unmatched)
+        return Preview(accepted, "test-token", accepted)
 
     def confirm(self, preview):
+        assert preview.imdb_ids
         if self.fail_after is not None and len(self.watched) >= self.fail_after:
             raise SyncError("Import failed")
         self.watched.update(preview.imdb_ids)
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_unmatched_movies_do_not_block_later_batches(state, dry_run, capsys):
+    movies = {f"tt{index:03d}" for index in range(55)}
+    unmatched = {f"tt{index:03d}" for index in range(26)}
+    destination = Destination(unmatched=unmatched)
+
+    with pytest.raises(SyncError, match="No Letterboxd match for 26"):
+        sync(movies, state, destination, dry_run=dry_run)
+
+    assert "29/55 movies" in capsys.readouterr().out
+    assert destination.watched == (set() if dry_run else movies - unmatched)
+    assert set(state.pending(movies)) == (movies if dry_run else unmatched)
+
+    destination.unmatched.clear()
+    assert sync(movies, state, destination, dry_run=False) == (55 if dry_run else 26)
+    assert destination.watched == movies
 
 
 @pytest.fixture
