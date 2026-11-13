@@ -10,7 +10,7 @@ in
 {
   environment.etc."sudo/authorized_keys/${username}".text = lib.concatMapStrings (
     key: "${key}\n"
-  ) sshKeys.sudo;
+  ) sshKeys.sudo.${config.host.realm};
 
   security.sudo.extraConfig = ''
     Defaults:${username} timestamp_type=global, timestamp_timeout=15

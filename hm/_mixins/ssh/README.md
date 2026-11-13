@@ -1,13 +1,52 @@
 # Operator SSH credentials
 
-Home operators sign Git commits and tags with the hardware identities in
+Operators sign Git commits and tags with the hardware identities in
 `sshKeys.hardware`. Git selects an approved public key from the current SSH
 agent; other agent keys cannot become a signing fallback.
 
 On a local YubiKey session, the selector first loads the configured hardware
-handle into the local agent. Inside SSH, it only uses the forwarded agent, so
+handles into the local agent. Inside SSH, it only uses the forwarded agent, so
 approval happens on the originating machine. Without an approved agent key,
 signing fails instead of using a software key or the destination's hardware.
+
+File and YubiKey credentials use Home Manager's nixpkgs OpenSSH agent, with
+graphical authentication prompts on macOS. Secretive credentials use Secretive's
+own agent. New local shells select the configured socket; SSH sessions preserve
+a forwarded agent. YubiKey clients also use the prompt helper for direct signing
+and automatically add handles to the agent on first use after a restart. To use
+agent-backed sudo before making an SSH connection, load a handle with `ssh-add`.
+After activation, open a fresh shell; existing shells retain their old agent
+socket and prompt settings.
+
+On Linux and macOS, the OpenSSH agent restarts its touch notification after PIN
+entry and dismisses it when signing finishes. Linux graphical sessions show this
+as a Zenity dialog, independently of any status-bar integration.
+
+The work realm authorizes both `work.main` and `work.laptop` YubiKeys. Their
+serial numbers are recorded in [the YubiKey inventory](../../../inventory/yubikeys.nix),
+and their public keys are in [the SSH inventory](../../../inventory/ssh/default.nix).
+The work laptop offers `~/.ssh/id_ed25519_sk_work_main` first, followed by
+`~/.ssh/id_ed25519_sk_work_laptop`. Other YubiKey clients default to
+`~/.ssh/id_ed25519_sk_rk`; configure `host.ssh.credentials.yubikey.identityFiles`
+to use different handle filenames.
+
+macOS PIN and touch dialogs label known SSH fingerprints with the YubiKey's
+realm, name, and serial from the inventory. Set `sshPublicKey` on an inventory
+entry to associate its public key with that label. The original prompt and
+fingerprint remain visible; unknown keys keep their original prompts.
+
+When SketchyBar is enabled, known SSH key prompts also show a highlighted
+`🔑 main` or `🔑 laptop` item using the short inventory name. Each prompt owns
+its item, which is removed when the prompt finishes or OpenSSH dismisses it.
+This indicates an active PIN or touch prompt, not the hardware LED state. The
+indicator can briefly disappear as the touch and PIN prompts replace each other.
+
+For each hardware signing check, identify the intended key by name and serial
+before starting. With multiple tokens connected, a `verify-required` SSH key
+normally needs three short touches: select the token, enter its FIDO2 PIN in
+the dialog, select the same token again, then authorize signing. With only the
+intended token connected, expect one signing touch after the PIN. Touch only
+when the token flashes; the SSH PIN is separate from the PIV PIN used for SOPS.
 
 Frame's pre-boot SSH unlock accepts the mair Secretive key and the shared
 YubiKey identity used from mmini. SSH authentication starts the restricted disk

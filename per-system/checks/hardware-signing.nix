@@ -9,7 +9,10 @@ let
   '';
   selectKey = pkgs.callPackage ../../hm/_mixins/ssh/pkgs/git-hardware-signing-key.nix {
     approvedKeysFile = "${fixtures}/approved";
-    localIdentityFile = "local-key";
+    localIdentityFiles = [
+      "unapproved-key"
+      "local-key"
+    ];
   };
 in
 pkgs.runCommand "hardware-signing"
@@ -41,7 +44,7 @@ pkgs.runCommand "hardware-signing"
     printf 'operator@example.test %s\n' "$(cat ${fixtures}/local.pub)" > allowed-signers
     printf 'operator@example.test %s\n' "$(cat ${fixtures}/forwarded.pub)" >> allowed-signers
 
-    # Local sessions can load the configured hardware handle into their agent.
+    # Local signing selects an approved identity among the configured handles.
     unset SSH_CONNECTION
     git commit --allow-empty -m local
     git verify-commit HEAD

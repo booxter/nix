@@ -1,0 +1,28 @@
+diff --git a/ssh-agent.c b/ssh-agent.c
+--- a/ssh-agent.c
++++ b/ssh-agent.c
+@@ -935,15 +935,17 @@ process_sign_request2(SocketEntry *e)
+ 			/* error already logged */
+ 			goto send;
+ 		}
+-		if (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD) {
+-			notifier = notify_start(0,
+-			    "Confirm user presence for key %s %s%s%s",
+-			    sshkey_type(id->key), fp,
+-			    sig_dest == NULL ? "" : "\n",
+-			    sig_dest == NULL ? "" : sig_dest);
+-		}
+ 	}
+  retry_pin:
++	/* The PIN prompt closes the notifier; restart it for the retry. */
++	if (sshkey_is_sk(id->key) &&
++	    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
++		notifier = notify_start(0,
++		    "Confirm user presence for key %s %s%s%s",
++		    sshkey_type(id->key), fp,
++		    sig_dest == NULL ? "" : "\n",
++		    sig_dest == NULL ? "" : sig_dest);
++	}
+ 	if ((r = sshkey_sign(id->key, &signature, &slen,
+ 	    sshbuf_ptr(data), sshbuf_len(data), agent_decode_alg(key, flags),
+ 	    id->sk_provider, pin, compat)) != 0) {

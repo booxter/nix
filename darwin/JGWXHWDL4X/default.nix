@@ -1,6 +1,8 @@
 {
   config,
+  fleetInventory,
   lib,
+  pkgs,
   sshKeys,
   ...
 }:
@@ -34,14 +36,23 @@ in
   host.realm = "work";
 
   host.hardware.isLaptop = true;
+  host.network.homeCacheDns.enable = true;
   host.network.interfaces = {
     en0.kind = "wireless";
     en7 = { };
   };
   host.nix.builderClient = { };
   host.security.secrets.operator.ageIdentity = {
-    backend = "secure-enclave";
-    path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
+    backend = "yubikey";
+    # These are public device handles; the private keys remain on the YubiKeys.
+    path = toString (
+      pkgs.writeText "work-yubikey-identities" (
+        lib.concatMapStrings builtins.readFile [
+          fleetInventory.yubikeys.work.main.ageIdentity
+          fleetInventory.yubikeys.work.laptop.ageIdentity
+        ]
+      )
+    );
   };
   sops.secrets.jiratuiGitRepositories = {
     key = "jiratui/gitRepositories";
@@ -49,7 +60,16 @@ in
     group = "staff";
     mode = "0400";
   };
-  host.ssh.operator.authorizedKeys = sshKeys.operators.JGWXHWDL4X;
+  host.ssh = {
+    credentials = {
+      backend = "yubikey";
+      yubikey.identityFiles = [
+        "id_ed25519_sk_work_main"
+        "id_ed25519_sk_work_laptop"
+      ];
+    };
+    operator.authorizedKeys = sshKeys.operators.JGWXHWDL4X;
+  };
   home-manager.users.${username}.host.hm = {
     dev.agents.mcp.httpServers = {
       maas_artifactory = maasServer "maas_artifactory";

@@ -1,6 +1,7 @@
 { lib }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+  yubikeys = import ../yubikeys.nix;
   keys = lib.mapAttrs (_: readPublicKey) {
     frameBuilder = ./public-keys/frame-builder.pub;
     mairBuilder = ./public-keys/mair-builder.pub;
@@ -9,16 +10,26 @@ let
     workLaptop = ./public-keys/jgwxhwdl4x.pub;
     workBuilder = ./public-keys/jgwxhwdl4x-nix-builder.pub;
     yubikey = ./public-keys/yubikey.pub;
+    workYubikeyMain = yubikeys.work.main.sshPublicKey;
+    workYubikeyLaptop = yubikeys.work.laptop.sshPublicKey;
     fleetUserCa = ./public-keys/fleet-user-ca.pub;
     ciBuilder = ./public-keys/nix-ci-builder.pub;
   };
-  hardware = [
-    keys.mairSecretive
-    keys.yubikey
-  ];
+  # Sudo accepts only hardware identities belonging to the destination's realm.
+  sudo = {
+    home = [
+      keys.mairSecretive
+      keys.yubikey
+    ];
+    work = [
+      keys.workYubikeyMain
+      keys.workYubikeyLaptop
+    ];
+  };
 in
 {
-  inherit keys hardware;
+  inherit keys sudo;
+  hardware = lib.concatLists (builtins.attrValues sudo);
 
   builders = {
     frame = keys.frameBuilder;
@@ -31,6 +42,8 @@ in
     JGWXHWDL4X = [
       keys.workLaptop
       keys.workBuilder
+      keys.workYubikeyMain
+      keys.workYubikeyLaptop
     ];
     frame = [ keys.yubikey ];
     mair = [ keys.mairSecretive ];
@@ -41,8 +54,4 @@ in
     mair = keys.fleetUserCa;
     mmini = keys.yubikey;
   };
-
-  # Sudo accepts the operator's hardware identities, not software fallback
-  # keys or the fleet CA. These identities apply across the operator's realms.
-  sudo = hardware;
 }

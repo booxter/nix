@@ -4,7 +4,7 @@
   openssh,
   gawk,
   approvedKeysFile,
-  localIdentityFile ? null,
+  localIdentityFiles ? [ ],
 }:
 writeShellApplication {
   name = "git-hardware-signing-key";
@@ -13,10 +13,10 @@ writeShellApplication {
     gawk
   ];
   text =
-    lib.optionalString (localIdentityFile != null) ''
+    lib.optionalString (localIdentityFiles != [ ]) ''
       # A remote session must use its forwarded agent, never the destination's key.
       if [[ -z "''${SSH_CONNECTION:-}" ]]; then
-        ssh-add -q ${lib.escapeShellArg localIdentityFile}
+        ssh-add -q ${lib.escapeShellArgs localIdentityFiles}
       fi
     ''
     + ''

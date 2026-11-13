@@ -30,6 +30,12 @@ in
       description = "Backend providing the operator's SSH authentication and signing identity.";
     };
 
+    credentials.yubikey.identityFiles = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ "id_ed25519_sk_rk" ];
+      description = "YubiKey SSH identity filenames under the operator's ~/.ssh, in preference order.";
+    };
+
     authorizedKeys = lib.mkOption {
       type = with lib.types; listOf nonEmptyStr;
       default = realmAuthorizedKeys;

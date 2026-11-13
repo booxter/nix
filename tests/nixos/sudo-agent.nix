@@ -23,10 +23,15 @@ pkgs.testers.runNixOSTest {
         type = lib.types.str;
         default = "operator";
       };
+      options.host.realm = lib.mkOption {
+        type = lib.types.str;
+        default = "home";
+      };
       config = {
-        _module.args.sshKeys.sudo = [
-          (lib.removeSuffix "\n" (builtins.readFile "${keys}/approved.pub"))
-        ];
+        _module.args.sshKeys.sudo = {
+          home = [ (lib.removeSuffix "\n" (builtins.readFile "${keys}/approved.pub")) ];
+          work = [ (lib.removeSuffix "\n" (builtins.readFile "${keys}/unapproved.pub")) ];
+        };
         users.users.operator = {
           isNormalUser = true;
           extraGroups = [ "wheel" ];
@@ -66,7 +71,7 @@ pkgs.testers.runNixOSTest {
     with subtest("SSH login alone does not authorize sudo"):
         client.fail(agent + ssh + " -a operator@server '" + sudo + "'")
 
-    with subtest("a key authorized for SSH but not sudo is rejected"):
+    with subtest("another realm's sudo key is rejected even when authorized for SSH"):
         client.succeed(agent + "ssh-add -D")
         client.succeed(agent + "ssh-add /root/.ssh/unapproved")
         client.fail(agent + ssh + " -A operator@server '" + sudo + "'")

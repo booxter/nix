@@ -2,6 +2,14 @@ import AppKit
 import AskpassCore
 
 final class AppKitPrompter: Prompting {
+  func notify(prompt: String) {
+    let alert = makeAlert(prompt: prompt)
+    alert.messageText = "Touch your security key"
+    alert.addButton(withTitle: "Dismiss")
+    // The agent terminates this helper when the hardware operation finishes.
+    _ = alert.runModal()
+  }
+
   func confirm(prompt: String) -> Bool {
     let alert = makeAlert(prompt: prompt)
     alert.addButton(withTitle: "Yes")
