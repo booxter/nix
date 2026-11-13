@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, Write};
+use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
 use rustix::termios::{self, LocalModes, OptionalActions, Termios};
@@ -40,7 +41,9 @@ struct SystemPrompter {
 impl Prompting for SystemPrompter {
     fn await_user_presence(&mut self, prompt: &str) -> io::Result<bool> {
         if self.graphical {
-            return Ok(Command::new(ZENITY)
+            // OpenSSH terminates this PID when the touch completes. Replace
+            // the helper so that termination also closes the notification.
+            return Err(Command::new(ZENITY)
                 .args([
                     "--info",
                     "--title",
@@ -52,9 +55,9 @@ impl Prompting for SystemPrompter {
                     "--text",
                     prompt,
                 ])
+                .stdout(Stdio::null())
                 .stderr(Stdio::null())
-                .status()?
-                .success());
+                .exec());
         }
 
         let mut tty = open_tty()?;

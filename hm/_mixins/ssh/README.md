@@ -16,6 +16,10 @@ a forwarded agent. After activation, open a fresh shell and pass the configured
 key or handle paths to `ssh-add` before forwarding the OpenSSH agent for sudo.
 Existing shells retain their old agent socket until restarted.
 
+On Linux and macOS, the OpenSSH agent restarts its touch notification after PIN
+entry and dismisses it when signing finishes. Linux graphical sessions show this
+as a Zenity dialog, independently of any status-bar integration.
+
 The work realm authorizes both `work.main` and `work.laptop` YubiKeys. Their
 serial numbers are recorded in [the YubiKey inventory](../../../inventory/yubikeys.nix),
 and their public keys are in [the SSH inventory](../../../inventory/ssh/default.nix).
@@ -32,10 +36,8 @@ fingerprint remain visible; unknown keys keep their original prompts.
 When SketchyBar is enabled, known SSH key prompts also show a highlighted
 `🔑 main` or `🔑 laptop` item using the short inventory name. Each prompt owns
 its item, which is removed when the prompt finishes or OpenSSH dismisses it.
-This indicates an active PIN or touch prompt, not the hardware LED state;
-the macOS agent restarts the touch notification after PIN entry and keeps it
-visible until the signing attempt finishes. The indicator can briefly disappear
-as the touch and PIN prompts replace each other.
+This indicates an active PIN or touch prompt, not the hardware LED state. The
+indicator can briefly disappear as the touch and PIN prompts replace each other.
 
 For each hardware signing check, identify the intended key by name and serial
 before starting. With multiple tokens connected, a `verify-required` SSH key
