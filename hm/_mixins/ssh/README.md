@@ -9,11 +9,12 @@ handles into the local agent. Inside SSH, it only uses the forwarded agent, so
 approval happens on the originating machine. Without an approved agent key,
 signing fails instead of using a software key or the destination's hardware.
 
-macOS YubiKey clients run Home Manager's Nix OpenSSH agent with graphical PIN
-prompts. New local shells select its socket; SSH sessions preserve a forwarded
-agent. After activation, open a fresh shell and pass the configured handle paths
-to `ssh-add` before forwarding the agent for sudo. Existing shells retain their
-old agent socket until restarted.
+File and YubiKey credentials use Home Manager's nixpkgs OpenSSH agent, with
+graphical authentication prompts on macOS. Secretive credentials use Secretive's
+own agent. New local shells select the configured socket; SSH sessions preserve
+a forwarded agent. After activation, open a fresh shell and pass the configured
+key or handle paths to `ssh-add` before forwarding the OpenSSH agent for sudo.
+Existing shells retain their old agent socket until restarted.
 
 The work realm authorizes both `work.main` and `work.laptop` YubiKeys. Their
 serial numbers are recorded in [the YubiKey inventory](../../../inventory/yubikeys.nix),

@@ -9,7 +9,7 @@
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
   enabled = config.host.hm.env.roles.developer;
-  useDarwinAgent = isDarwin && osConfig.host.ssh.credentials.backend == "yubikey";
+  useOpenSshAgent = osConfig.host.ssh.credentials.backend != "secretive";
   agentLogPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/ssh-agent.log";
   namedYubikeys = lib.concatMapAttrs (
     realm: keys:
@@ -57,7 +57,7 @@ in
       SSH_ASKPASS_REQUIRE = "prefer";
     };
 
-    services.ssh-agent.enable = isLinux || useDarwinAgent;
+    services.ssh-agent.enable = useOpenSshAgent;
     systemd.user.services.ssh-agent.Service = lib.mkIf isLinux {
       Environment = [
         "SSH_ASKPASS=${lib.getExe sshAskpass}"
@@ -68,7 +68,7 @@ in
       SuccessExitStatus = 2;
     };
 
-    launchd.agents.ssh-agent.config = lib.mkIf useDarwinAgent {
+    launchd.agents.ssh-agent.config = lib.mkIf (isDarwin && useOpenSshAgent) {
       EnvironmentVariables = {
         SSH_ASKPASS = lib.getExe sshAskpass;
         SSH_ASKPASS_REQUIRE = "force";
