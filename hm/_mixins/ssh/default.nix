@@ -8,6 +8,8 @@
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
   enabled = config.host.hm.env.roles.developer;
+  useDarwinAgent = isDarwin && osConfig.host.ssh.credentials.backend == "yubikey";
+  agentLogPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/ssh-agent.log";
   sshAskpass =
     if isDarwin then
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
@@ -47,7 +49,7 @@ in
       SSH_ASKPASS_REQUIRE = "prefer";
     };
 
-    services.ssh-agent.enable = isLinux;
+    services.ssh-agent.enable = isLinux || useDarwinAgent;
     systemd.user.services.ssh-agent.Service = lib.mkIf isLinux {
       Environment = [
         "SSH_ASKPASS=${lib.getExe sshAskpass}"
@@ -56,6 +58,17 @@ in
       # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
       # as a clean stop so short-lived user sessions do not look like failures.
       SuccessExitStatus = 2;
+    };
+
+    launchd.agents.ssh-agent.config = lib.mkIf useDarwinAgent {
+      EnvironmentVariables = {
+        SSH_ASKPASS = lib.getExe sshAskpass;
+        SSH_ASKPASS_REQUIRE = "force";
+      };
+      ProcessType = lib.mkForce "Interactive";
+      LimitLoadToSessionType = "Aqua";
+      StandardOutPath = agentLogPath;
+      StandardErrorPath = agentLogPath;
     };
 
     programs.ssh = {
