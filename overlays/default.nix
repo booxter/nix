@@ -180,7 +180,13 @@
         lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Stable's 1.16 lacks keyboard wakeup and VNC updates for unchanged frames.
-      inherit (pkgsNixpkgsUnstable) reframe;
+      reframe = pkgsNixpkgsUnstable.reframe.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Drop once upstream retries connector discovery after waking displays.
+          # https://github.com/AlynxZhou/reframe/issues/42
+          ../patches/reframe-wait-for-connector.patch
+        ];
+      });
 
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
