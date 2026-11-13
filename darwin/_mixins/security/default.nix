@@ -7,6 +7,8 @@ let
   homeRealm = config.host.realm == "home";
 in
 {
+  imports = [ ./sudo.nix ];
+
   config = {
     security.pam.services.sudo_local.touchIdAuth = lib.mkDefault config.host.hardware.hasTouchId;
     security.pam.services.sudo_local.reattach = lib.mkDefault config.host.hardware.hasTouchId;

@@ -299,6 +299,9 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      # Stable still excludes Darwin; upstream support landed in nixpkgs#557620.
+      inherit (pkgsNixpkgsUnstable) pam_rssh;
+
       darwin = prev.darwin.overrideScope (
         _: _: {
           inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;

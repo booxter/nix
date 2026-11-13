@@ -50,6 +50,7 @@ let
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       launchd-certificates = import ./launchd-certificates { inherit inputs lib pkgs; };
+      sudo-agent = import ./sudo-agent { inherit pkgs; };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       repairr-package = pkgs.repairr;
