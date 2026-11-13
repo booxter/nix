@@ -1,6 +1,7 @@
 public let defaultPrompt = "OpenSSH authentication"
 
 public protocol Prompting {
+  func notify(prompt: String)
   func confirm(prompt: String) -> Bool
   func readSecret(prompt: String) -> String?
 }
@@ -27,6 +28,12 @@ public struct Askpass {
     environment: [String: String]
   ) -> AskpassResult {
     let prompt = arguments.first.flatMap { $0.isEmpty ? nil : $0 } ?? defaultPrompt
+
+    // OpenSSH uses "none" for touch notifications and ignores their output.
+    if environment["SSH_ASKPASS_PROMPT"] == "none" {
+      prompter.notify(prompt: prompt)
+      return AskpassResult(standardOutput: "", status: 0)
+    }
 
     if environment["SSH_ASKPASS_PROMPT"] == "confirm" {
       guard prompter.confirm(prompt: prompt) else {

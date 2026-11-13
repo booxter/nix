@@ -15,8 +15,13 @@ private enum CheckFailure: Error, CustomStringConvertible {
 private final class RecordingPrompter: Prompting {
   var confirmation = false
   var secret: String?
+  var notifications: [String] = []
   var confirmationPrompts: [String] = []
   var secretPrompts: [String] = []
+
+  func notify(prompt: String) {
+    notifications.append(prompt)
+  }
 
   func confirm(prompt: String) -> Bool {
     confirmationPrompts.append(prompt)
@@ -40,6 +45,24 @@ private func expectEqual<T: Equatable>(
 }
 
 do {
+  let notification = RecordingPrompter()
+  let notificationResult = Askpass(prompter: notification).run(
+    arguments: ["Confirm user presence for key ED25519-SK"],
+    environment: ["SSH_ASKPASS_PROMPT": "none"]
+  )
+  try expectEqual(
+    notificationResult,
+    AskpassResult(standardOutput: "", status: 0),
+    "notification has no response"
+  )
+  try expectEqual(
+    notification.notifications,
+    ["Confirm user presence for key ED25519-SK"],
+    "touch notification"
+  )
+  try expectEqual(notification.secretPrompts, [], "notification must not request a PIN")
+  try expectEqual(notification.confirmationPrompts, [], "notification needs no approval")
+
   let password = RecordingPrompter()
   password.secret = "correct horse battery staple"
   let passwordResult = Askpass(prompter: password).run(
