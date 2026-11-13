@@ -15,7 +15,10 @@ pkgs.testers.runNixOSTest {
       environment.systemPackages = [ pkgs.openssh ];
     };
     server = {
-      imports = [ ../../nixos/_mixins/security/sudo.nix ];
+      imports = [
+        ../../common/_mixins/security/sudo.nix
+        ../../nixos/_mixins/security/sudo.nix
+      ];
       options.host.username = lib.mkOption {
         type = lib.types.str;
         default = "operator";
@@ -54,6 +57,11 @@ pkgs.testers.runNixOSTest {
     with subtest("a forwarded authorized agent authenticates sudo"):
         client.succeed(agent + "ssh-add /root/.ssh/approved")
         assert client.succeed(agent + ssh + " -A operator@server '" + sudo + "'").strip() == "0"
+
+    with subtest("approval is shared across SSH sessions until revoked"):
+        assert client.succeed(agent + ssh + " -A operator@server 'sudo -K; sudo -n id -u'").strip() == "0"
+        assert client.succeed(agent + ssh + " -a operator@server 'sudo -n id -u'").strip() == "0"
+        client.fail(agent + ssh + " -a operator@server 'sudo -K; sudo -n id -u'")
 
     with subtest("SSH login alone does not authorize sudo"):
         client.fail(agent + ssh + " -a operator@server '" + sudo + "'")
