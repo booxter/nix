@@ -41,7 +41,7 @@ in
   config = lib.mkIf enabled (
     lib.mkMerge [
       {
-        programs.ssh.settings."*".AddKeysToAgent = if useSecretive || useYubikey then "no" else "yes";
+        programs.ssh.settings."*".AddKeysToAgent = if useSecretive then "no" else "yes";
       }
       (lib.mkIf (useSecretive || useYubikey) {
         programs.git.settings.gpg.ssh.defaultKeyCommand = lib.getExe signingKey;

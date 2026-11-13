@@ -12,9 +12,11 @@ signing fails instead of using a software key or the destination's hardware.
 File and YubiKey credentials use Home Manager's nixpkgs OpenSSH agent, with
 graphical authentication prompts on macOS. Secretive credentials use Secretive's
 own agent. New local shells select the configured socket; SSH sessions preserve
-a forwarded agent. After activation, open a fresh shell and pass the configured
-key or handle paths to `ssh-add` before forwarding the OpenSSH agent for sudo.
-Existing shells retain their old agent socket until restarted.
+a forwarded agent. YubiKey clients also use the prompt helper for direct signing
+and automatically add handles to the agent on first use after a restart. To use
+agent-backed sudo before making an SSH connection, load a handle with `ssh-add`.
+After activation, open a fresh shell; existing shells retain their old agent
+socket and prompt settings.
 
 On Linux and macOS, the OpenSSH agent restarts its touch notification after PIN
 entry and dismisses it when signing finishes. Linux graphical sessions show this

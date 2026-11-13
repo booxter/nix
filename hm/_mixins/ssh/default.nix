@@ -64,7 +64,10 @@ in
   config = lib.mkIf enabled {
     home.sessionVariables = {
       SSH_ASKPASS = lib.getExe sshAskpass;
-      SSH_ASKPASS_REQUIRE = "prefer";
+      # Direct signing must also show touch prompts when the agent starts empty.
+      # macOS has no DISPLAY, so "prefer" cannot launch the native helper there.
+      SSH_ASKPASS_REQUIRE =
+        if osConfig.host.ssh.credentials.backend == "yubikey" then "force" else "prefer";
     };
 
     services.ssh-agent.enable = useOpenSshAgent;
