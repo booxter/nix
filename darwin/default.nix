@@ -72,6 +72,15 @@ in
     shell = pkgs.zsh;
   };
 
+  # nix-darwin only updates shells for knownUsers, which must not include the
+  # primary admin account. Apple zsh can miss Nix terminfo during SSH startup.
+  # TODO: upstream an option to manage an existing primary user's shell alone.
+  system.activationScripts.users.text = lib.mkAfter ''
+    echo >&2 "setting login shell for ${username}..."
+    /usr/bin/dscl . -read ${lib.escapeShellArg "/Users/${username}"} UniqueID >/dev/null
+    /usr/bin/dscl . -create ${lib.escapeShellArg "/Users/${username}"} UserShell /run/current-system/sw${pkgs.zsh.shellPath}
+  '';
+
   system.defaults.smb = lib.optionalAttrs config.host.management.manageNetworkIdentity {
     NetBIOSName = hostname;
     ServerDescription = hostname;
