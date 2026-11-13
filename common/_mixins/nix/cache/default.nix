@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   ...
 }:
@@ -30,6 +31,9 @@ let
   cacheLib = import ./lib.nix { inherit lib; };
   proxmoxCache = import ./proxmox.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
+  builderParticipant =
+    config.host.realm == "home"
+    && (config.host.nix.builder != null || config.host.nix.builderClient != null);
 in
 {
   options.host.nix.caches = lib.mkOption {
@@ -51,7 +55,10 @@ in
     nix.settings = {
       substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);
       trusted-public-keys = lib.mkForce (
-        lib.unique (builtins.concatMap (cache: cache.trustedPublicKeys) caches)
+        lib.unique (
+          builtins.concatMap (cache: cache.trustedPublicKeys) caches
+          ++ lib.optionals builderParticipant (builtins.attrValues fleetInventory.builderSigningKeys)
+        )
       );
     };
   };

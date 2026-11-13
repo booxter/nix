@@ -56,9 +56,5 @@ in
 
   sops.secrets = {
     "github/actions_runner/token" = { };
-    "nix/builder_private_key" = {
-      mode = "0400";
-      owner = "root";
-    };
   };
 }

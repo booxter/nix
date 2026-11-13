@@ -165,8 +165,10 @@ in
     ./community
     ./build.nix
     ./ci.nix
+    ./credentials.nix
     ./nixpkgs.nix
     ./ssh.nix
+    ./server.nix
   ];
 
   options.host.nix = {
