@@ -65,6 +65,17 @@ groups:
           summary: "Root filesystem usage critical on {{ $labels.instance }}"
           description: "The root filesystem on {{ $labels.instance }} has been above 95% used for 15 minutes."
           filesystem_usage: *filesystem_usage
+      - alert: HostRebootRequired
+        expr: |
+          (time() - node_nixos_reboot_required_since_time_seconds{job=~"node-local|node-mtls"}) >= 7 * 86400
+            and
+          (node_nixos_reboot_required_since_time_seconds{job=~"node-local|node-mtls"} > 0)
+        labels:
+          severity: warning
+          category: maintenance
+        annotations:
+          summary: "NixOS reboot overdue on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has needed a reboot to activate its desired kernel, initrd, or modules for at least 7 days."
       - alert: HostUpgradeStale
         expr: |
           ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node-local|node-mtls"}) / 86400) > 14

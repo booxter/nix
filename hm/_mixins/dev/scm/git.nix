@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -29,7 +30,9 @@ lib.mkIf config.host.hm.env.roles.developer {
       user = {
         inherit email;
         name = fullName;
-        signingKey = lib.mkDefault sshSigningKeyPath;
+        signingKey = lib.mkIf (osConfig.host.ssh.credentials.backend == "files") (
+          lib.mkDefault sshSigningKeyPath
+        );
       };
 
       gpg.format = "ssh";

@@ -18,7 +18,6 @@ in
     network.macAddress = "bc:24:11:7f:01:17";
     nix.builderClient = {
       buildUse = "ci";
-      sshIdentityFile = config.sops.secrets."nix/builder_private_key".path;
     };
     proxmox.guest = {
       cores = 12;
@@ -56,9 +55,5 @@ in
 
   sops.secrets = {
     "github/actions_runner/token" = { };
-    "nix/builder_private_key" = {
-      mode = "0400";
-      owner = "root";
-    };
   };
 }

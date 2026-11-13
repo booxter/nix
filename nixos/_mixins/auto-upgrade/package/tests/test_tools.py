@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 from auto_upgrade_tools.cli import guard, run
-from auto_upgrade_tools.metrics import write_hold_metrics, write_success_metric
+from auto_upgrade_tools.metrics import write_hold_metrics, write_reboot_metric, write_success_metric
 from auto_upgrade_tools.model import UpgradeConfig
 from auto_upgrade_tools.reboot import REBOOT_MESSAGE, reboot_required, schedule_reboot_if_needed
 from prometheus_client.parser import text_string_to_metric_families
@@ -110,6 +110,64 @@ def test_reboot_decision_compares_all_profile_links(tmp_path: Path) -> None:
     (current / "kernel").unlink()
     (current / "kernel").symlink_to("/nix/store/kernel-two")
     assert reboot_required(booted, current)
+
+
+@pytest.mark.parametrize("changed_link", ["kernel", "initrd", "kernel-modules"])
+def test_pending_reboot_age_survives_upgrades_and_clears_when_matching(
+    tmp_path: Path, changed_link: str
+) -> None:
+    booted = tmp_path / "booted"
+    current = tmp_path / "current"
+    booted.mkdir()
+    current.mkdir()
+    for name in ("initrd", "kernel", "kernel-modules"):
+        (booted / name).symlink_to(f"/nix/store/{name}-one")
+        (current / name).symlink_to(f"/nix/store/{name}-one")
+
+    output = tmp_path / "reboot.prom"
+    state = tmp_path / "pending-since"
+    metric = "node_nixos_reboot_required_since_time_seconds"
+    write_reboot_metric(output, state, 100, booted, current)
+    assert metric_values(output)[metric] == 0
+
+    for version, now in (("two", 200), ("three", 300)):
+        (current / changed_link).unlink()
+        (current / changed_link).symlink_to(f"/nix/store/{changed_link}-{version}")
+        write_reboot_metric(output, state, now, booted, current)
+        assert metric_values(output)[metric] == 200
+
+    (booted / changed_link).unlink()
+    (booted / changed_link).symlink_to((current / changed_link).readlink())
+    assert (
+        run(
+            [
+                "write-reboot-metric",
+                "--output",
+                str(output),
+                "--state",
+                str(state),
+                "--booted-system",
+                str(booted),
+                "--current-system",
+                str(current),
+            ]
+        )
+        == 0
+    )
+    assert metric_values(output)[metric] == 0
+
+    (current / changed_link).unlink()
+    (current / changed_link).symlink_to(f"/nix/store/{changed_link}-four")
+    write_reboot_metric(output, state, 400, booted, current)
+    assert metric_values(output)[metric] == 400
+
+
+def test_missing_profiles_do_not_clear_pending_reboot(tmp_path: Path) -> None:
+    state = tmp_path / "pending-since"
+    state.write_text("200", encoding="utf-8")
+    with pytest.raises(FileNotFoundError):
+        write_reboot_metric(tmp_path / "reboot.prom", state, 300, tmp_path, tmp_path)
+    assert state.read_text(encoding="utf-8") == "200"
 
 
 def test_config_loads_generated_json(tmp_path: Path) -> None:

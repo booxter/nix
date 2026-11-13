@@ -19,8 +19,8 @@
         kernelModules = [ "r8169" ];
         hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
         authorizedKeys = [
-          sshKeys.keys.mair
-          sshKeys.keys.mmini
+          sshKeys.keys.mairSecretive
+          sshKeys.keys.yubikey
         ];
       };
     };
