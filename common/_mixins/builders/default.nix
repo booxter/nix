@@ -137,15 +137,17 @@ let
 
       sshIdentityFile = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = "${config.users.users.${config.host.username}.home}/.ssh/${
-          if config.host.realm == "home" then "id_ed25519" else "jgwxhwdl4x-nix-builder"
-        }";
+        default =
+          if config.host.realm == "home" then
+            config.sops.secrets."nix/builder_private_key".path
+          else
+            "${config.users.users.${config.host.username}.home}/.ssh/jgwxhwdl4x-nix-builder";
         description = "SSH identity file used by the Nix daemon to authenticate to builders.";
       };
 
       sshUser = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = config.host.username;
+        default = if config.host.realm == "home" then "nix-ssh" else config.host.username;
         description = "SSH user used by the Nix daemon to authenticate to builders.";
       };
     };
@@ -164,7 +166,6 @@ in
     ./assertions.nix
     ./community
     ./build.nix
-    ./ci.nix
     ./credentials.nix
     ./nixpkgs.nix
     ./ssh.nix

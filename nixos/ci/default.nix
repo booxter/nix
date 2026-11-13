@@ -18,7 +18,6 @@ in
     network.macAddress = "bc:24:11:7f:01:17";
     nix.builderClient = {
       buildUse = "ci";
-      sshIdentityFile = config.sops.secrets."nix/builder_private_key".path;
     };
     proxmox.guest = {
       cores = 12;

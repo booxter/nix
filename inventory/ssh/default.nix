@@ -2,12 +2,9 @@
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   keys = lib.mapAttrs (_: readPublicKey) {
-    frame = ./public-keys/frame.pub;
     frameBuilder = ./public-keys/frame-builder.pub;
-    mair = ./public-keys/mair.pub;
     mairBuilder = ./public-keys/mair-builder.pub;
     mairSecretive = ./public-keys/mair-secretive.pub;
-    mmini = ./public-keys/mmini.pub;
     mminiBuilder = ./public-keys/mmini-builder.pub;
     workLaptop = ./public-keys/jgwxhwdl4x.pub;
     workBuilder = ./public-keys/jgwxhwdl4x-nix-builder.pub;
@@ -35,18 +32,9 @@ in
       keys.workLaptop
       keys.workBuilder
     ];
-    frame = [
-      keys.frame
-      keys.yubikey
-    ];
-    mair = [
-      keys.mair
-      keys.mairSecretive
-    ];
-    mmini = [
-      keys.mmini
-      keys.yubikey
-    ];
+    frame = [ keys.yubikey ];
+    mair = [ keys.mairSecretive ];
+    mmini = [ keys.yubikey ];
   };
   ticketIssuers = {
     frame = keys.yubikey;

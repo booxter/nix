@@ -13,6 +13,8 @@ Frame's pre-boot SSH unlock accepts the mair Secretive key and the shared
 YubiKey identity used from mmini. SSH authentication starts the restricted disk
 unlock command; the disk passphrase is still required.
 
-The software `id_ed25519` identities still serve unattended home builds. Their
-builder and operator authorization must be separated before those files can be
-retired. Community builders use the separate `nix-community-builders` key.
+Home builds use separate root-only software keys and an untrusted `nix-ssh`
+account. The old operator `id_ed25519` public keys no longer authorize home
+logins. See [builder access](../../../common/_mixins/builders/README.md) for the
+staged rollout and store-signing policy before retiring their local files.
+Community builders use the separate `nix-community-builders` key.
