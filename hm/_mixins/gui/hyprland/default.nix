@@ -199,6 +199,9 @@ in
         # Let a replacement lockscreen recover a locked session after failure.
         misc.allow_session_lock_restore = true;
 
+        # Wake even if hypridle restarted while DPMS was off and lost its idle state.
+        misc.key_press_enables_dpms = true;
+
         general = {
           gaps_in = 5;
           gaps_out = 2;
