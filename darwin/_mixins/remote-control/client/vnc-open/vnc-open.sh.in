@@ -1,10 +1,11 @@
 usage() {
   cat <<'EOF'
-Usage: vnc-open [--@usageDisplays@] [HOST]
+Usage: vnc-open [--unlock] [--@usageDisplays@] [HOST]
 
 Open macOS Screen Sharing for a host with a VNC server enabled.
 If HOST is omitted, select one interactively.
 Display selection applies only to tunneled multi-display hosts.
+--unlock unlocks an existing Hyprlock session on a tunneled NixOS host via SSH.
 
 Hosts: @usageHosts@
 EOF
@@ -12,12 +13,16 @@ EOF
 
 target=""
 requested_display=""
+unlock=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help)
       usage
       exit 0
+      ;;
+    --unlock)
+      unlock=true
       ;;
 @displayOptionCases@
     -*)
@@ -75,6 +80,15 @@ ssh \
   -o ExitOnForwardFailure=yes \
   -L "127.0.0.1:$local_port:127.0.0.1:$remote_port" \
   "$target"
+
+if [[ "$unlock" == true ]]; then
+  # SIGUSR1 requests a normal Hyprlock unlock; it does not kill the session.
+  ssh -S "$control_socket" "$target" '
+    if systemctl --user is-active --quiet hyprlock.service; then
+      systemctl --user kill --kill-whom=main --signal=SIGUSR1 hyprlock.service
+    fi
+  '
+fi
 
 # A dedicated Screen Sharing process lets `open` wait for this session;
 # the EXIT trap then closes the SSH control master and its forwarding.
