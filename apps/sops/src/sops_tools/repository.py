@@ -56,7 +56,11 @@ class RuntimeEnvironment:
             raise ToolError(f"Invalid realm: {name}")
 
         identity: Path | None = None
-        if name != "home" and not self.values.get("SOPS_AGE_KEY_FILE"):
+        if (
+            name != "home"
+            and not self.values.get("SOPS_AGE_KEY_FILE")
+            and not self.values.get("SOPS_KEYSERVICE")
+        ):
             identity = self.realm_identity_file(name)
             if require_identity and not identity.is_file():
                 raise ToolError(f"Age identity for realm '{name}' not found: {identity}")

@@ -23,6 +23,7 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with pythonPackages; [
+    openssh
     pythonRuffCheckHook
     mypy
     pytestCheckHook

@@ -13,6 +13,8 @@ let
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
 in
 {
+  imports = [ ./sudo.nix ];
+
   options.host.security = {
     secrets = {
       operator = {

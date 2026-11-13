@@ -88,16 +88,15 @@ in
       settings =
         let
           hyprctl = "${pkgs.hyprland}/bin/hyprctl";
-          hyprlock = "${pkgs.hyprlock}/bin/hyprlock";
           loginctl = "${pkgs.systemd}/bin/loginctl";
-          pidof = "${pkgs.procps}/bin/pidof";
+          systemctl = "${pkgs.systemd}/bin/systemctl";
         in
         {
           general = {
             after_sleep_cmd = "${hyprctl} dispatch dpms on";
             before_sleep_cmd = "${loginctl} lock-session";
             ignore_dbus_inhibit = false;
-            lock_cmd = "${pidof} hyprlock || ${hyprlock}";
+            lock_cmd = "${systemctl} --user start hyprlock.service";
           };
 
           listener = [
@@ -112,6 +111,26 @@ in
             }
           ];
         };
+    };
+
+    # The lockscreen must survive hypridle restarts and Home Manager updates.
+    # Start it only on lock requests; repeated starts leave an active lock alone.
+    # TODO: Report upstream to Home Manager: restarting hypridle during activation
+    # kills a directly launched hyprlock in its cgroup, leaving the session locked.
+    systemd.user.services.hyprlock = {
+      Unit = {
+        Description = "Hyprland lockscreen";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+        ConditionEnvironment = "WAYLAND_DISPLAY";
+        X-SwitchMethod = "keep-old";
+      };
+      Service = {
+        Type = "exec";
+        ExecStart = "${config.programs.hyprlock.package}/bin/hyprlock";
+        Restart = "on-failure";
+        RestartSec = 1;
+      };
     };
 
     programs.hyprlock = {
@@ -177,6 +196,12 @@ in
       xwayland.enable = true;
       systemd.enable = true;
       settings = {
+        # Let a replacement lockscreen recover a locked session after failure.
+        misc.allow_session_lock_restore = true;
+
+        # Wake even if hypridle restarted while DPMS was off and lost its idle state.
+        misc.key_press_enables_dpms = true;
+
         general = {
           gaps_in = 5;
           gaps_out = 2;

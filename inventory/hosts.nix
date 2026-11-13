@@ -1,6 +1,7 @@
 {
   fleetHosts,
   lib,
+  ssh,
 }:
 let
   readPublicKey = import ../common/_lib/read-public-key.nix { inherit lib; };
@@ -9,32 +10,9 @@ let
     "nv"
     "nvws"
   ];
-  operatorKeyFiles = {
-    JGWXHWDL4X = [
-      ../common/_mixins/ssh/public-keys/jgwxhwdl4x.pub
-      ../common/_mixins/ssh/public-keys/jgwxhwdl4x-nix-builder.pub
-    ];
-    frame = [
-      ../common/_mixins/ssh/public-keys/frame.pub
-      ../common/_mixins/ssh/public-keys/yubikey.pub
-    ];
-    mair = [
-      ../common/_mixins/ssh/public-keys/mair.pub
-      ../common/_mixins/ssh/public-keys/mair-secretive.pub
-    ];
-    mmini = [
-      ../common/_mixins/ssh/public-keys/mmini.pub
-      ../common/_mixins/ssh/public-keys/yubikey.pub
-    ];
-  };
   prometheusEndpointInventory.beast.jellyfin = {
     port = 9594;
     path = "/metrics";
-  };
-  ticketIssuerKeyFiles = {
-    frame = ../common/_mixins/ssh/public-keys/yubikey.pub;
-    mair = ../common/_mixins/ssh/public-keys/fleet-user-ca.pub;
-    mmini = ../common/_mixins/ssh/public-keys/yubikey.pub;
   };
   defaultTicketPolicy = {
     allowX11Forwarding = false;
@@ -93,13 +71,9 @@ let
     remoteControl.vnc = vncInventory.${name} or null;
     ssh = {
       knownHostNames = knownHostNamesFor platform name;
-      operatorAuthorizedKeys = map readPublicKey (operatorKeyFiles.${name} or [ ]);
+      operatorAuthorizedKeys = ssh.operators.${name} or [ ];
       publicHostKey = readPublicKey (path + "/ssh_host_ed25519_key.pub");
-      ticketIssuerPublicKey =
-        if builtins.hasAttr name ticketIssuerKeyFiles then
-          readPublicKey ticketIssuerKeyFiles.${name}
-        else
-          null;
+      ticketIssuerPublicKey = ssh.ticketIssuers.${name} or null;
       ticketPolicy = defaultTicketPolicy // (ticketPolicyOverrides.${name} or { });
     };
   };

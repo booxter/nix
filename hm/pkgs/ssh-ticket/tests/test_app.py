@@ -163,7 +163,8 @@ def test_resolve_target_reports_targets_for_unknown_name():
         ssh_ticket.resolve_target([target()], "missing")
 
 
-def test_existing_ticket_valid_uses_metadata(tmp_path):
+@pytest.mark.parametrize("allow_agent_forwarding", [False, True])
+def test_existing_ticket_valid_requires_agent_forwarding(tmp_path, allow_agent_forwarding):
     ticket_target = target()
     paths = ssh_ticket.target_paths(ticket_target.name, tmp_path)
     paths.cert.write_text("not a real cert\n", encoding="utf-8")
@@ -173,11 +174,14 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
             target=ticket_target.name,
             principal=ticket_target.principal,
             valid_before=1_710_003_600,
+            allow_agent_forwarding=allow_agent_forwarding,
         ),
     )
     assert paths.metadata.stat().st_mode & 0o777 == 0o600
     assert not list(tmp_path.glob(".srvarr.json.*"))
-    assert ssh_ticket.existing_ticket_valid(ticket_target, paths, runtime())
+    assert (
+        ssh_ticket.existing_ticket_valid(ticket_target, paths, runtime()) == allow_agent_forwarding
+    )
 
 
 def test_ticket_status_distinguishes_missing_expired_and_valid(tmp_path):
@@ -304,18 +308,20 @@ class CoordinatedSigningCommands:
         raise AssertionError(f"unexpected exec: {arguments!r}")
 
 
-def issue_ticket_command(tmp_path, *, allow_x11_forwarding=False):
+@pytest.mark.parametrize("allow_x11_forwarding", [False, True])
+def test_issued_certificate_permits_agent_and_selected_x11_forwarding(
+    tmp_path, allow_x11_forwarding
+):
     key_path = tmp_path / "id_ed25519"
-    key_path.write_text("private\n", encoding="utf-8")
-    public_key = tmp_path / "id_ed25519.pub"
-    public_key.write_text("ssh-ed25519 AAAATEST ssht ticket key\n", encoding="utf-8")
-    commands = RecordingCommands()
+    ca_key = tmp_path / "ca"
+    commands = SystemCommands()
+    commands.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(ca_key)])
 
-    ssh_ticket.issue_ticket(
+    paths = ssh_ticket.issue_ticket(
         types.SimpleNamespace(
             ttl=None,
             ca_agent=False,
-            ca_key=str(tmp_path / "ca"),
+            ca_key=str(ca_key),
         ),
         target(
             "frame",
@@ -328,23 +334,10 @@ def issue_ticket_command(tmp_path, *, allow_x11_forwarding=False):
         runtime(commands),
     )
 
-    assert len(commands.calls) == 1
-    return commands.calls[0]
-
-
-def test_issue_ticket_disables_x11_forwarding_by_default(tmp_path):
-    cmd = issue_ticket_command(tmp_path)
-
-    assert "no-agent-forwarding" in cmd
-    assert "no-x11-forwarding" in cmd
-
-
-def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path):
-    cmd = issue_ticket_command(tmp_path, allow_x11_forwarding=True)
-
-    assert "no-agent-forwarding" in cmd
-    assert "permit-X11-forwarding" in cmd
-    assert "no-x11-forwarding" not in cmd
+    certificate = commands.run(["ssh-keygen", "-L", "-f", str(paths.cert)])
+    assert "permit-agent-forwarding" in certificate
+    assert ("permit-X11-forwarding" in certificate) == allow_x11_forwarding
+    assert ssh_ticket.existing_ticket_valid(target("frame"), paths, runtime())
 
 
 def test_write_ticket_alias_copies_cert_material(tmp_path):
@@ -441,7 +434,7 @@ def test_parser_has_ensure_command():
     assert args.target == "org"
 
 
-def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
+def test_ssht_forwards_agent_without_adding_ticket_key(tmp_path):
     cmd = ssh_ticket.ssht_ssh_command(
         types.SimpleNamespace(key=str(tmp_path / "id_ed25519"), ssh_args=["--", "true"]),
         target(),
@@ -452,5 +445,6 @@ def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
         ),
     )
 
-    assert "AddKeysToAgent=no" in cmd
-    assert cmd[-2:] == ["srvarr", "true"]
+    configuration = SystemCommands().run([cmd[0], "-G", "-F", "none", *cmd[1:]])
+    assert "forwardagent yes\n" in configuration
+    assert "addkeystoagent false\n" in configuration

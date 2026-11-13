@@ -179,15 +179,12 @@
         in
         lolekPackage.override { yt-dlp = lolekYtDlp; };
 
-      # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
-      # the same uinput device as both absolute and relative breaks movement
-      # under some compositors. Drop once a release contains this commit.
-      reframe = prev.reframe.overrideAttrs (old: {
+      # Stable's 1.16 lacks keyboard wakeup and VNC updates for unchanged frames.
+      reframe = pkgsNixpkgsUnstable.reframe.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/AlynxZhou/reframe/commit/c028f5f840638ba6eb1703393ee81315474264d1.patch";
-            hash = "sha256-ETB/kbPFoRER/w49oVHrjY1AhBvlNWTrXlXvWBY/yvw=";
-          })
+          # Drop once upstream retries connector discovery after waking displays.
+          # https://github.com/AlynxZhou/reframe/issues/42
+          ../patches/reframe-wait-for-connector.patch
         ];
       });
 
@@ -302,6 +299,9 @@
       });
     }
     // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      # Stable still excludes Darwin; upstream support landed in nixpkgs#557620.
+      inherit (pkgsNixpkgsUnstable) pam_rssh;
+
       darwin = prev.darwin.overrideScope (
         _: _: {
           inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;

@@ -24,7 +24,10 @@ let
       IdentityFile ${remoteFallbackIdentityFile}
       IdentitiesOnly yes
 
-    Match exec "test -n \"$SSH_CONNECTION\""
+    Match exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""
+      IdentitiesOnly no
+
+    Match exec "test -n \"$SSH_CONNECTION\" && ! test -S \"$SSH_AUTH_SOCK\""
       IdentityFile ${remoteFallbackIdentityFile}
       IdentitiesOnly yes
       IdentityAgent none

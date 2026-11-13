@@ -103,7 +103,7 @@ let
       port=${toString port}
       password=${config.sops.placeholder.reframeVncPassword}
       # libvncserver is compatible with macOS's native Screen Sharing client.
-      type=libvncserver
+      backend=libvncserver
 
       [libvncserver]
 

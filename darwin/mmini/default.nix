@@ -2,11 +2,9 @@
   config,
   lib,
   pkgs,
+  sshKeys,
   ...
 }:
-let
-  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
-in
 {
   imports = [ ./vm-runner.nix ];
 
@@ -31,12 +29,9 @@ in
 
   host.ssh = {
     credentials.backend = "yubikey";
-    operator.authorizedKeys = [
-      (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
-      (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
-    ];
+    operator.authorizedKeys = sshKeys.operators.mmini;
     tickets.issuer = {
-      publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+      publicKey = sshKeys.ticketIssuers.mmini;
       keyName = "id_ed25519_sk_rk";
       useAgent = false;
     };

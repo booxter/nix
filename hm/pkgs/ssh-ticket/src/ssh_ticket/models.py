@@ -44,6 +44,7 @@ class TicketMetadata(BaseModel):
     valid_before: int = Field(default=0, alias="validBefore")
     issued_at: int = Field(default=0, alias="issuedAt")
     ttl: int = Field(default=0, ge=0)
+    allow_agent_forwarding: bool = Field(default=False, alias="allowAgentForwarding")
     allow_x11_forwarding: bool = Field(default=False, alias="allowX11Forwarding")
     certificate_file: str = Field(default="", alias="certificateFile")
     identity_file: str = Field(default="", alias="identityFile")

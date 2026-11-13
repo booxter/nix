@@ -50,6 +50,10 @@ let
     inherit displayOptionCases;
     directHostCases = lib.optionalString (directHosts != [ ]) ''
       ${lib.concatStringsSep "|" (map (host: lib.escapeShellArg host.name) directHosts)})
+        if [[ "$unlock" == true ]]; then
+          printf 'vnc-open: --unlock is only supported for tunneled NixOS hosts\n' >&2
+          exit 2
+        fi
         if [[ -n "$requested_display" ]]; then
           printf 'vnc-open: display selection does not apply to %s\n' "$target" >&2
           exit 2

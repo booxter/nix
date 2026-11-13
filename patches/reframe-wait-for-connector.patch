@@ -1,0 +1,41 @@
+Recheck connectors while the compositor finishes waking the displays.
+DPMS activation behind a KVM can take several seconds after KEY_WAKEUP.
+Stop retrying after ten seconds; individual DRM ioctls can still block.
+
+diff --git a/reframe-streamer/main.c b/reframe-streamer/main.c
+--- a/reframe-streamer/main.c
++++ b/reframe-streamer/main.c
+@@ -540,7 +540,7 @@ static drmModeCrtc *get_crtc(int cfd, drmModeConnector *connector)
+ 	return crtc;
+ }
+ 
+-static drmModeConnector *get_connector(int cfd, const char *connector_name)
++static drmModeConnector *get_connector_once(int cfd, const char *connector_name)
+ {
+ 	drmModeConnector *connector = NULL;
+ 	drmModeRes *res = drmModeGetResources(cfd);
+@@ -578,6 +578,24 @@ static drmModeConnector *get_connector(int cfd, const char *connector_name)
+ 	return connector;
+ }
+ 
++static drmModeConnector *get_connector(int cfd, const char *connector_name)
++{
++	const gint64 deadline = g_get_monotonic_time() + 10 * G_USEC_PER_SEC;
++	drmModeConnector *connector = get_connector_once(cfd, connector_name);
++	if (connector != NULL)
++		return connector;
++
++	// Waking displays is asynchronous; the connector may not have a CRTC yet.
++	g_message("DRM: Waiting for a usable connector after display wakeup.");
++	while (g_get_monotonic_time() < deadline) {
++		g_usleep(100 * 1000);
++		connector = get_connector_once(cfd, connector_name);
++		if (connector != NULL)
++			return connector;
++	}
++	return NULL;
++}
++
+ static drmModeConnector *
+ get_usable_card_and_connector(struct this *this, const char *connector_name)
+ {
