@@ -68,6 +68,14 @@ in
     };
 
     services.ssh-agent.enable = useOpenSshAgent;
+    services.ssh-agent.package = lib.mkIf isDarwin (
+      pkgs.openssh.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Drop when OpenSSH restores touch notifications after requesting a PIN.
+          ./patches/agent-touch-after-pin.patch
+        ];
+      })
+    );
     systemd.user.services.ssh-agent.Service = lib.mkIf isLinux {
       Environment = [
         "SSH_ASKPASS=${lib.getExe sshAskpass}"
