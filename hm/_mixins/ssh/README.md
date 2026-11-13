@@ -23,6 +23,11 @@ The work laptop offers `~/.ssh/id_ed25519_sk_work_main` first, followed by
 `~/.ssh/id_ed25519_sk_rk`; configure `host.ssh.credentials.yubikey.identityFiles`
 to use different handle filenames.
 
+macOS PIN and touch dialogs label known SSH fingerprints with the YubiKey's
+realm, name, and serial from the inventory. Set `sshPublicKey` on an inventory
+entry to associate its public key with that label. The original prompt and
+fingerprint remain visible; unknown keys keep their original prompts.
+
 For each hardware signing check, identify the intended key by name and serial
 before starting. With multiple tokens connected, a `verify-required` SSH key
 normally needs three short touches: select the token, enter its FIDO2 PIN in

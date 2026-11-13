@@ -1,6 +1,7 @@
 { lib }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+  yubikeys = import ../yubikeys.nix;
   keys = lib.mapAttrs (_: readPublicKey) {
     frameBuilder = ./public-keys/frame-builder.pub;
     mairBuilder = ./public-keys/mair-builder.pub;
@@ -9,8 +10,8 @@ let
     workLaptop = ./public-keys/jgwxhwdl4x.pub;
     workBuilder = ./public-keys/jgwxhwdl4x-nix-builder.pub;
     yubikey = ./public-keys/yubikey.pub;
-    workYubikeyMain = ./public-keys/yubikey-work-main.pub;
-    workYubikeyLaptop = ./public-keys/yubikey-work-laptop.pub;
+    workYubikeyMain = yubikeys.work.main.sshPublicKey;
+    workYubikeyLaptop = yubikeys.work.laptop.sshPublicKey;
     fleetUserCa = ./public-keys/fleet-user-ca.pub;
     ciBuilder = ./public-keys/nix-ci-builder.pub;
   };

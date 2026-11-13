@@ -18,16 +18,20 @@ public struct AskpassResult: Equatable {
 
 public struct Askpass {
   private let prompter: Prompting
+  private let aliases: KeyAliases
 
-  public init(prompter: Prompting) {
+  public init(prompter: Prompting, namedPublicKeys: [String: String] = [:]) {
     self.prompter = prompter
+    aliases = KeyAliases(publicKeys: namedPublicKeys)
   }
 
   public func run(
     arguments: [String],
     environment: [String: String]
   ) -> AskpassResult {
-    let prompt = arguments.first.flatMap { $0.isEmpty ? nil : $0 } ?? defaultPrompt
+    let prompt = aliases.decorate(
+      arguments.first.flatMap { $0.isEmpty ? nil : $0 } ?? defaultPrompt
+    )
 
     // OpenSSH uses "none" for touch notifications and ignores their output.
     if environment["SSH_ASKPASS_PROMPT"] == "none" {

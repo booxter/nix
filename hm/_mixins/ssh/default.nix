@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   osConfig,
   pkgs,
@@ -10,9 +11,16 @@ let
   enabled = config.host.hm.env.roles.developer;
   useDarwinAgent = isDarwin && osConfig.host.ssh.credentials.backend == "yubikey";
   agentLogPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/ssh-agent.log";
+  namedYubikeys = lib.concatMapAttrs (
+    realm: keys:
+    lib.mapAttrs' (name: key: {
+      name = "${realm}.${name} (serial ${key.serial})";
+      value = builtins.readFile key.sshPublicKey;
+    }) (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
+  ) fleetInventory.yubikeys;
   sshAskpass =
     if isDarwin then
-      pkgs.callPackage ./pkgs/ssh-askpass-macos { }
+      pkgs.callPackage ./pkgs/ssh-askpass-macos { namedPublicKeys = namedYubikeys; }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
   preBootEndpoints = lib.filterAttrs (
