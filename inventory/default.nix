@@ -29,4 +29,5 @@ in
   inherit webIngress;
   inherit webServices;
   wireguard = import ./wireguard.nix;
+  yubikeys = import ./yubikeys.nix;
 }
