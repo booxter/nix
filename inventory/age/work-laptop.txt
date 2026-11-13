@@ -1,0 +1,4 @@
+# Serial: 32147427, Slot: 1
+# Name: work-laptop
+# Recipient: age1yubikey1q0x7g74hgzde5lts29z4upqcnceq86lzqgwq8l7v805xfraw0uj97r809xt
+AGE-PLUGIN-YUBIKEY-1UWR75QVZE84NCMCUFWDU3

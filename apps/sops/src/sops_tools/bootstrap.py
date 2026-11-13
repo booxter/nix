@@ -23,7 +23,7 @@ class HostRecipientProvider(Protocol):
 
 
 class OperatorRecipientProvider(Protocol):
-    def recipient(self, realm: Realm) -> str: ...
+    def recipients(self, realm: Realm) -> list[str]: ...
 
 
 @dataclass(frozen=True)
@@ -62,7 +62,7 @@ class CommandOperatorRecipientProvider:
     runner: ProcessRunner
     resolver: AgeRecipientResolver
 
-    def recipient(self, realm: Realm) -> str:
+    def recipients(self, realm: Realm) -> list[str]:
         configured = self.runtime.values.get("SOPS_AGE_KEY_FILE")
         if configured:
             identity = Path(configured)
@@ -120,9 +120,7 @@ class BootstrapService:
     def bootstrap(self, host: str) -> BootstrapResult:
         self.runtime.assert_realm_host(self.repository.realm, host)
         host_recipient = self.host_recipients.recipient(host)
-        operator_recipient = self.operator.recipient(self.repository.realm)
-
-        recipients = [host_recipient, operator_recipient]
+        recipients = [host_recipient, *self.operator.recipients(self.repository.realm)]
         if self.repository.realm.name == "home":
             recipients.append(self.host_recipients.recipient("pki"))
         return self._update_host(host, recipients)

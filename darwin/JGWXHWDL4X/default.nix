@@ -1,6 +1,8 @@
 {
   config,
+  fleetInventory,
   lib,
+  pkgs,
   sshKeys,
   ...
 }:
@@ -40,8 +42,16 @@ in
   };
   host.nix.builderClient = { };
   host.security.secrets.operator.ageIdentity = {
-    backend = "secure-enclave";
-    path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
+    backend = "yubikey";
+    # These are public device handles; the private keys remain on the YubiKeys.
+    path = toString (
+      pkgs.writeText "work-yubikey-identities" (
+        lib.concatMapStrings builtins.readFile [
+          fleetInventory.yubikeys.work.main.ageIdentity
+          fleetInventory.yubikeys.work.laptop.ageIdentity
+        ]
+      )
+    );
   };
   sops.secrets.jiratuiGitRepositories = {
     key = "jiratui/gitRepositories";

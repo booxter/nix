@@ -12,7 +12,7 @@ from .process import ProcessRunner
 class AgeRecipientResolver:
     runner: ProcessRunner
 
-    def derive(self, identity_file: Path) -> str:
+    def derive(self, identity_file: Path) -> list[str]:
         if not identity_file.is_file():
             raise ToolError(f"Age identity file not found: {identity_file}")
 
@@ -35,18 +35,25 @@ class AgeRecipientResolver:
             )
         elif identity_type.startswith("AGE-PLUGIN-YUBIKEY-"):
             recipients = self._metadata_recipients(identity_file, "age1yubikey1")
-            if len(recipients) != 1:
+            identities = [
+                line.strip()
+                for line in identity_file.read_text().splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            ]
+            if not all(line.startswith("AGE-PLUGIN-YUBIKEY-") for line in identities):
+                raise ToolError(f"Mixed identity types in YubiKey identity file: {identity_file}")
+            if len(recipients) != len(identities):
                 raise ToolError(
-                    "YubiKey age identity must contain exactly one recipient "
-                    f"metadata line: {identity_file}"
+                    "YubiKey age identity file must contain one recipient "
+                    f"metadata line per identity: {identity_file}"
                 )
-            recipient = recipients[0]
+            return recipients
         else:
             raise ToolError(f"Unsupported age identity type in: {identity_file}")
 
         if not recipient:
             raise ToolError(f"Failed to derive age recipient from: {identity_file}")
-        return recipient
+        return [recipient]
 
     @staticmethod
     def _identity_type(identity_file: Path) -> str:
@@ -59,9 +66,8 @@ class AgeRecipientResolver:
     @staticmethod
     def _metadata_recipients(identity_file: Path, prefix: str) -> list[str]:
         pattern = re.compile(rf"^#[^:]*:\s*({re.escape(prefix)}[0-9a-z]+)\s*$")
-        recipients = {
+        return [
             match.group(1)
             for line in identity_file.read_text().splitlines()
             if (match := pattern.fullmatch(line))
-        }
-        return sorted(recipients)
+        ]

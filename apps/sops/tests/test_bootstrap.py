@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 import yaml
-from sops_tools.bootstrap import BootstrapService, CommandHostRecipientProvider
+from sops_tools.age import AgeRecipientResolver
+from sops_tools.bootstrap import (
+    BootstrapService,
+    CommandHostRecipientProvider,
+    CommandOperatorRecipientProvider,
+)
 from sops_tools.errors import ToolError
 from sops_tools.policy import SopsPolicy
 from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
@@ -70,6 +76,33 @@ def test_bootstrap_creates_policy_and_encrypted_template(tmp_path: Path) -> None
     ]
     secret = bootstrap.repository.secret("newhost")
     assert backend.documents[secret] == {"bootstrap": {"token": "replace"}}
+
+
+def test_bootstrap_authorizes_all_configured_yubikeys(tmp_path: Path) -> None:
+    bootstrap, _, _ = service(tmp_path)
+    identity = tmp_path / "operators.txt"
+    identity.write_text(
+        "# Recipient: age1yubikey1main\nAGE-PLUGIN-YUBIKEY-1MAIN\n"
+        "# Recipient: age1yubikey1laptop\nAGE-PLUGIN-YUBIKEY-1LAPTOP\n"
+    )
+    bootstrap.runtime = replace(
+        bootstrap.runtime,
+        values={**bootstrap.runtime.values, "SOPS_AGE_KEY_FILE": str(identity)},
+    )
+    runner = RecordingRunner()
+    bootstrap.operator = CommandOperatorRecipientProvider(
+        bootstrap.runtime, runner, AgeRecipientResolver(runner)
+    )
+
+    bootstrap.bootstrap("newhost")
+
+    policy = SopsPolicy.load(tmp_path / ".sops.yaml")
+    assert policy.recipients_for_rule("secrets/home/newhost\\.yaml$") == [
+        "age1host",
+        "age1yubikey1main",
+        "age1yubikey1laptop",
+        "age1pki",
+    ]
 
 
 def test_bootstrap_appends_hosts_and_does_not_rewrite_existing_secret(

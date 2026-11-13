@@ -179,5 +179,5 @@ class StaticHostRecipientProvider:
 class StaticOperatorRecipientProvider:
     value: str = "age1operator"
 
-    def recipient(self, realm: Realm) -> str:
-        return self.value
+    def recipients(self, realm: Realm) -> list[str]:
+        return [self.value]

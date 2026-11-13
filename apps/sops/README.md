@@ -1,6 +1,6 @@
 # SOPS tools
 
-Secrets for non-work machines are managed via sops-nix, with one encrypted YAML
+Secrets are managed via sops-nix, with one encrypted YAML
 per host under `secrets/<realm>/`. The helpers use the enclosing Git checkout,
 so its secret files must match the installed tools' realm layout.
 
@@ -36,6 +36,18 @@ Run `sops-update` when a host secret should receive missing template keys.
 `sops-set --all` and `sops-unset --all` update every host secret in the selected
 realm and report completed and remaining hosts if an operation fails partway
 through.
+
+## Work operator YubiKeys
+
+The work laptop's operator identity file combines the public handles for
+`work.main` and `work.laptop` from [inventory](../../inventory/yubikeys.nix).
+These handles identify PIV slots; private keys remain on the devices. The local
+SOPS key service uses this file, and bootstrap adds every recipient listed in it
+to the host's policy. Keep each handle's `Recipient` comment when combining files.
+
+Both keys require their PIV PIN and a touch for decryption. The PIV PIN is
+separate from the FIDO2 PIN used for SSH. Existing work secrets also retain the
+Secure Enclave recipient for recovery during enrollment.
 
 ## Hardware authentication over SSH
 

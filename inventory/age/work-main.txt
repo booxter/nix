@@ -1,0 +1,4 @@
+# Serial: 32147445, Slot: 1
+# Name: work-main
+# Recipient: age1yubikey1qt4tazyg86tmcw90fh7jeucqt5v03msynngq0y8yjacfyv8wt0tqzjs8z8z
+AGE-PLUGIN-YUBIKEY-17KR75QVZ0X7J0GGV0578T
