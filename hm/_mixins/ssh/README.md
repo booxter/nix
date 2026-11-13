@@ -29,6 +29,12 @@ realm, name, and serial from the inventory. Set `sshPublicKey` on an inventory
 entry to associate its public key with that label. The original prompt and
 fingerprint remain visible; unknown keys keep their original prompts.
 
+When SketchyBar is enabled, known SSH key prompts also show a highlighted
+`🔑 main` or `🔑 laptop` item using the short inventory name. Each prompt owns
+its item, which is removed when the prompt finishes or OpenSSH dismisses it.
+This indicates an active PIN or touch prompt, not the hardware LED state;
+touches after the PIN dialog closes are not tracked by this indicator.
+
 For each hardware signing check, identify the intended key by name and serial
 before starting. With multiple tokens connected, a `verify-required` SSH key
 normally needs three short touches: select the token, enter its FIDO2 PIN in

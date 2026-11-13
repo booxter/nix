@@ -11,16 +11,26 @@ let
   enabled = config.host.hm.env.roles.developer;
   useOpenSshAgent = osConfig.host.ssh.credentials.backend != "secretive";
   agentLogPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/ssh-agent.log";
-  namedYubikeys = lib.concatMapAttrs (
-    realm: keys:
-    lib.mapAttrs' (name: key: {
-      name = "${realm}.${name} (serial ${key.serial})";
-      value = builtins.readFile key.sshPublicKey;
-    }) (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
-  ) fleetInventory.yubikeys;
+  namedYubikeys = lib.concatLists (
+    lib.mapAttrsToList (
+      realm: keys:
+      lib.mapAttrsToList (name: key: {
+        inherit name;
+        label = "${realm}.${name} (serial ${key.serial})";
+        publicKey = builtins.readFile key.sshPublicKey;
+      }) (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
+    ) fleetInventory.yubikeys
+  );
   sshAskpass =
     if isDarwin then
-      pkgs.callPackage ./pkgs/ssh-askpass-macos { namedPublicKeys = namedYubikeys; }
+      pkgs.callPackage ./pkgs/ssh-askpass-macos {
+        namedPublicKeys = namedYubikeys;
+        indicator = lib.optionalAttrs config.host.hm.sketchybar.enable {
+          executable = lib.getExe config.programs.sketchybar.package;
+          background = "0xff${config.lib.stylix.colors.base0A}";
+          foreground = "0xff${config.lib.stylix.colors.base00}";
+        };
+      }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
   preBootEndpoints = lib.filterAttrs (
