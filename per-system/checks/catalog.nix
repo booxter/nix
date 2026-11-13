@@ -50,6 +50,7 @@ let
       nixpkgs-runners = pkgs.callPackage ../../hm/_mixins/remote-control/pkgs { };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+      home-cache-dns = pkgs.callPackage ../../darwin/_mixins/networking/pkgs/home-cache-dns { };
       launchd-certificates = import ./launchd-certificates { inherit inputs lib pkgs; };
       sudo-agent = import ./sudo-agent { inherit pkgs; };
     }
