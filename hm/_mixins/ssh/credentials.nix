@@ -3,6 +3,7 @@
   lib,
   osConfig,
   pkgs,
+  sshKeys,
   ...
 }:
 let
@@ -17,36 +18,22 @@ let
     fi
   '';
   yubikeyIdentityFile = "${config.home.homeDirectory}/.ssh/id_ed25519_sk_rk";
-  remoteFallbackIdentityFile = "${config.home.homeDirectory}/.ssh/id_ed25519";
   yubikeyIdentityConfig = ''
     Match exec "test -z \"$SSH_CONNECTION\""
       IdentityFile ${yubikeyIdentityFile}
-      IdentityFile ${remoteFallbackIdentityFile}
       IdentitiesOnly yes
 
     Match exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""
       IdentitiesOnly no
 
-    Match exec "test -n \"$SSH_CONNECTION\" && ! test -S \"$SSH_AUTH_SOCK\""
-      IdentityFile ${remoteFallbackIdentityFile}
-      IdentitiesOnly yes
-      IdentityAgent none
-
     Host *
   '';
-  gitSshSign = pkgs.writeShellScript "git-ssh-sign" ''
-    args=("$@")
-
-    if [[ -n "''${SSH_CONNECTION:-}" ]]; then
-      for ((i = 0; i < ''${#args[@]}; i++)); do
-        if [[ "''${args[i]}" == ${lib.escapeShellArg yubikeyIdentityFile} ]]; then
-          args[i]=${lib.escapeShellArg remoteFallbackIdentityFile}
-        fi
-      done
-    fi
-
-    exec ${lib.getExe' pkgs.openssh "ssh-keygen"} "''${args[@]}"
-  '';
+  signingKey = pkgs.callPackage ./pkgs/git-hardware-signing-key.nix {
+    approvedKeysFile = pkgs.writeText "hardware-signing-keys" (
+      lib.concatMapStrings (key: key + "\n") sshKeys.hardware
+    );
+    localIdentityFile = if useYubikey then yubikeyIdentityFile else null;
+  };
 in
 {
   config = lib.mkIf enabled (
@@ -54,9 +41,11 @@ in
       {
         programs.ssh.settings."*".AddKeysToAgent = if useSecretive || useYubikey then "no" else "yes";
       }
+      (lib.mkIf (useSecretive || useYubikey) {
+        programs.git.settings.gpg.ssh.defaultKeyCommand = lib.getExe signingKey;
+      })
       (lib.mkIf useSecretive {
         home.file.".ssh/secretive.pub".text = osConfig.host.ssh.credentials.secretive.publicKey + "\n";
-        programs.git.settings.user.signingKey = "${config.home.homeDirectory}/.ssh/secretive.pub";
         programs.bash = {
           profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
           initExtra = lib.mkOrder 900 secretiveAuthSockInit;
@@ -64,10 +53,6 @@ in
         programs.zsh.envExtra = lib.mkOrder 900 secretiveAuthSockInit;
       })
       (lib.mkIf useYubikey {
-        programs.git.settings = {
-          gpg.ssh.program = "${gitSshSign}";
-          user.signingKey = yubikeyIdentityFile;
-        };
         programs.ssh.extraConfig = lib.mkAfter yubikeyIdentityConfig;
       })
     ]

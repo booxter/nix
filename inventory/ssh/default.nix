@@ -12,9 +12,13 @@ let
     fleetUserCa = ./public-keys/fleet-user-ca.pub;
     ciBuilder = ./public-keys/nix-ci-builder.pub;
   };
+  hardware = [
+    keys.mairSecretive
+    keys.yubikey
+  ];
 in
 {
-  inherit keys;
+  inherit keys hardware;
 
   operators = {
     JGWXHWDL4X = [
@@ -42,8 +46,5 @@ in
 
   # Sudo accepts the operator's hardware identities, not software fallback
   # keys or the fleet CA. These identities apply across the operator's realms.
-  sudo = [
-    keys.mairSecretive
-    keys.yubikey
-  ];
+  sudo = hardware;
 }
