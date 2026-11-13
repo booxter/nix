@@ -59,6 +59,13 @@ let
     "--output"
     "${textfileDir}/nixos-upgrade.prom"
   ];
+  writeRebootMetric = toolCommand [
+    "write-reboot-metric"
+    "--output"
+    "${textfileDir}/nixos-reboot.prom"
+    "--state"
+    "/var/lib/nixos-reboot-metrics/pending-since"
+  ];
   maintenanceGuards = builtins.attrValues config.host.maintenance.guards;
 in
 {
@@ -136,6 +143,14 @@ in
       system.activationScripts.nixosUpgradeHoldMetrics.text = writeHoldMetrics;
 
       systemd.services = {
+        nixos-reboot-metrics = {
+          description = "Record how long a NixOS reboot has been pending";
+          serviceConfig = {
+            Type = "oneshot";
+            StateDirectory = "nixos-reboot-metrics";
+            ExecStart = writeRebootMetric;
+          };
+        };
         nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
         nixos-upgrade-hold-metrics = {
           description = "Write NixOS auto-upgrade hold metrics";
@@ -143,6 +158,15 @@ in
             Type = "oneshot";
             ExecStart = writeHoldMetrics;
           };
+        };
+      };
+
+      systemd.timers.nixos-reboot-metrics = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "1min";
+          OnUnitActiveSec = "5min";
+          Unit = "nixos-reboot-metrics.service";
         };
       };
 

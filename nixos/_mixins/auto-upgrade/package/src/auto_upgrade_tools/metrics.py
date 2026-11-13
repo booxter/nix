@@ -11,6 +11,36 @@ from atomic_file_writes import write_text_atomic
 from prometheus_client import CollectorRegistry, Gauge, generate_latest
 
 from .model import UpgradeConfig, UpgradeHold
+from .reboot import reboot_required
+
+
+def write_reboot_metric(
+    path: Path,
+    state: Path,
+    timestamp: int,
+    booted_system: Path,
+    current_system: Path,
+) -> None:
+    try:
+        pending_since = int(state.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        pending_since = 0
+
+    if not reboot_required(booted_system, current_system):
+        pending_since = 0
+    elif pending_since == 0:
+        pending_since = timestamp
+
+    # Further upgrades must not restart the grace period while a reboot is pending.
+    write_text_atomic(state, str(pending_since), mode=0o600)
+    registry = CollectorRegistry()
+    pending = Gauge(
+        "node_nixos_reboot_required_since_time_seconds",
+        "Unix time a required reboot was first observed, or 0 when none is required.",
+        registry=registry,
+    )
+    pending.set(pending_since)
+    write_text_atomic(path, generate_latest(registry).decode("utf-8"), mode=0o644)
 
 
 def _local_epoch(day: date, clock: datetime_time) -> int:

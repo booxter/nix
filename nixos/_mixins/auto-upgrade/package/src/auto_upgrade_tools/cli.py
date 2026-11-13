@@ -7,7 +7,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import TextIO
 
-from .metrics import hold_description, write_hold_metrics, write_success_metric
+from .metrics import hold_description, write_hold_metrics, write_reboot_metric, write_success_metric
 from .model import UpgradeConfig
 from .reboot import ShutdownCommand, schedule_reboot_if_needed
 
@@ -25,6 +25,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     success = commands.add_parser("write-success-metric", help="record a successful upgrade")
     success.add_argument("--output", required=True, type=Path)
+
+    pending = commands.add_parser("write-reboot-metric", help="record the pending reboot age")
+    pending.add_argument("--output", required=True, type=Path)
+    pending.add_argument("--state", required=True, type=Path)
+    pending.add_argument("--booted-system", type=Path, default=Path("/run/booted-system"))
+    pending.add_argument(
+        "--current-system", type=Path, default=Path("/nix/var/nix/profiles/system")
+    )
 
     reboot = commands.add_parser("reboot-if-needed", help="schedule a reboot for a changed system")
     reboot.add_argument("--shutdown-executable", required=True, type=Path)
@@ -49,6 +57,11 @@ def run(arguments: list[str], stderr: TextIO = sys.stderr) -> int:
         return 0
     if args.command == "write-success-metric":
         write_success_metric(args.output, int(time.time()))
+        return 0
+    if args.command == "write-reboot-metric":
+        write_reboot_metric(
+            args.output, args.state, int(time.time()), args.booted_system, args.current_system
+        )
         return 0
     if args.command == "reboot-if-needed":
         changed = schedule_reboot_if_needed(ShutdownCommand(args.shutdown_executable))

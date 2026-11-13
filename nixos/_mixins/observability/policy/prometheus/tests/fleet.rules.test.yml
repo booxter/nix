@@ -5,6 +5,31 @@ rule_files:
 evaluation_interval: 30s
 
 tests:
+  - interval: 1m
+    input_series:
+      - series: 'node_nixos_reboot_required_since_time_seconds{instance="frame",job="node-mtls"}'
+        values: "60+0x10081 0+0x5"
+      - series: 'node_nixos_reboot_required_since_time_seconds{instance="beast",job="node-mtls"}'
+        values: "0+0x10087"
+      - series: 'node_nixos_upgrade_hold_active{instance="frame",job="node-mtls"}'
+        values: "1+0x10087"
+    alert_rule_test:
+      - eval_time: 168h
+        alertname: HostRebootRequired
+      - eval_time: 168h1m
+        alertname: HostRebootRequired
+        exp_alerts:
+          - exp_labels:
+              instance: frame
+              job: node-mtls
+              severity: warning
+              category: maintenance
+            exp_annotations:
+              summary: "NixOS reboot overdue on frame"
+              description: "frame has needed a reboot to activate its desired kernel, initrd, or modules for at least 7 days."
+      - eval_time: 168h2m
+        alertname: HostRebootRequired
+
   - interval: 30s
     input_series:
       - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",host_builder="false",host_hypervisor="false",host_laptop="false"}'
