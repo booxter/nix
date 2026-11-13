@@ -17,10 +17,12 @@ let
       export SSH_AUTH_SOCK="${secretiveSocket}"
     fi
   '';
-  yubikeyIdentityFile = "${config.home.homeDirectory}/.ssh/id_ed25519_sk_rk";
+  yubikeyIdentityFiles = map (
+    name: "${config.home.homeDirectory}/.ssh/${name}"
+  ) osConfig.host.ssh.credentials.yubikey.identityFiles;
   yubikeyIdentityConfig = ''
     Match exec "test -z \"$SSH_CONNECTION\""
-      IdentityFile ${yubikeyIdentityFile}
+    ${lib.concatMapStrings (path: "  IdentityFile ${path}\n") yubikeyIdentityFiles}
       IdentitiesOnly yes
 
     Match exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""
@@ -32,7 +34,7 @@ let
     approvedKeysFile = pkgs.writeText "hardware-signing-keys" (
       lib.concatMapStrings (key: key + "\n") sshKeys.hardware
     );
-    localIdentityFile = if useYubikey then yubikeyIdentityFile else null;
+    localIdentityFiles = lib.optionals useYubikey yubikeyIdentityFiles;
   };
 in
 {

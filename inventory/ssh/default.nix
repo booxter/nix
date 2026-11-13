@@ -9,12 +9,16 @@ let
     workLaptop = ./public-keys/jgwxhwdl4x.pub;
     workBuilder = ./public-keys/jgwxhwdl4x-nix-builder.pub;
     yubikey = ./public-keys/yubikey.pub;
+    workYubikeyMain = ./public-keys/yubikey-work-main.pub;
+    workYubikeyLaptop = ./public-keys/yubikey-work-laptop.pub;
     fleetUserCa = ./public-keys/fleet-user-ca.pub;
     ciBuilder = ./public-keys/nix-ci-builder.pub;
   };
   hardware = [
     keys.mairSecretive
     keys.yubikey
+    keys.workYubikeyMain
+    keys.workYubikeyLaptop
   ];
 in
 {
@@ -31,6 +35,8 @@ in
     JGWXHWDL4X = [
       keys.workLaptop
       keys.workBuilder
+      keys.workYubikeyMain
+      keys.workYubikeyLaptop
     ];
     frame = [ keys.yubikey ];
     mair = [ keys.mairSecretive ];

@@ -49,7 +49,16 @@ in
     group = "staff";
     mode = "0400";
   };
-  host.ssh.operator.authorizedKeys = sshKeys.operators.JGWXHWDL4X;
+  host.ssh = {
+    credentials = {
+      backend = "yubikey";
+      yubikey.identityFiles = [
+        "id_ed25519_sk_work_main"
+        "id_ed25519_sk_work_laptop"
+      ];
+    };
+    operator.authorizedKeys = sshKeys.operators.JGWXHWDL4X;
+  };
   home-manager.users.${username}.host.hm = {
     dev.agents.mcp.httpServers = {
       maas_artifactory = maasServer "maas_artifactory";
