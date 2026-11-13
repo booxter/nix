@@ -15,15 +15,21 @@ let
     fleetUserCa = ./public-keys/fleet-user-ca.pub;
     ciBuilder = ./public-keys/nix-ci-builder.pub;
   };
-  hardware = [
-    keys.mairSecretive
-    keys.yubikey
-    keys.workYubikeyMain
-    keys.workYubikeyLaptop
-  ];
+  # Sudo accepts only hardware identities belonging to the destination's realm.
+  sudo = {
+    home = [
+      keys.mairSecretive
+      keys.yubikey
+    ];
+    work = [
+      keys.workYubikeyMain
+      keys.workYubikeyLaptop
+    ];
+  };
 in
 {
-  inherit keys hardware;
+  inherit keys sudo;
+  hardware = lib.concatLists (builtins.attrValues sudo);
 
   builders = {
     frame = keys.frameBuilder;
@@ -48,8 +54,4 @@ in
     mair = keys.fleetUserCa;
     mmini = keys.yubikey;
   };
-
-  # Sudo accepts the operator's hardware identities, not software fallback
-  # keys or the fleet CA. These identities apply across the operator's realms.
-  sudo = hardware;
 }
