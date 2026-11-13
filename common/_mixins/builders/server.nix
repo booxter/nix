@@ -19,7 +19,6 @@ in
   config = lib.mkIf enabled (
     lib.mkMerge [
       {
-        nix.settings.allowed-users = [ "nix-ssh" ];
         assertions = [
           {
             assertion = !(builtins.elem "nix-ssh" config.nix.settings.trusted-users);

@@ -20,6 +20,7 @@ let
       dependency = make "unsigned-local-input" "echo local-input > $out";
     in rec {
       simple = make "untrusted-remote-build" "echo remote-build > $out";
+      local = make "untrusted-local-build" "echo local-build > $out";
       inherit dependency;
       dependent = make "untrusted-dependent-build" "''${coreutils}/bin/cat ''${dependency} > $out";
       remoteDependent = make "untrusted-remote-dependent-build" "''${coreutils}/bin/cat ''${simple} > $out";
@@ -111,6 +112,10 @@ pkgs.testers.runNixOSTest {
             info = json.loads(client.succeed("nix store info --json --store " + shlex.quote(store)))
             assert info["trusted"] is False, info
 
+    with subtest("ordinary local users retain untrusted daemon access"):
+        info = json.loads(server.succeed("su - operator -c 'nix store info --json'"))
+        assert info["trusted"] is False, info
+
     with subtest("the key cannot run shell commands or log in as the operator"):
         client.fail(ssh + " nix-ssh@server 'touch /tmp/shell-access'")
         server.fail("test -e /tmp/shell-access")
@@ -133,6 +138,11 @@ pkgs.testers.runNixOSTest {
     for node, name in [(client, "client"), (server, "server"), (server2, "server2")]:
         node.succeed(f"install -m 600 ${keys}/{name}.secret /etc/nix/signing-key")
         node.succeed("systemctl restart nix-daemon.service")
+
+    with subtest("ordinary local users can build through the daemon"):
+        command = "nix-build ${expression} -A local --no-out-link --builders " + shlex.quote("")
+        output = server.succeed("su - operator -c " + shlex.quote(command)).strip()
+        assert server.succeed("cat " + shlex.quote(output)).strip() == "local-build"
 
     with subtest("locally built inputs are automatically signed"):
         client.succeed("nix-store --delete " + shlex.quote(dependency))
