@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .hba import HbaError, HbaExporter, SubprocessStorcliSource
+from .maintenance import guard_raid
 from .md import MdExporter
 
 
@@ -46,3 +47,17 @@ def md_main(argv: Sequence[str] | None = None) -> int:
         print(f"storage-md-metrics: {error}", file=sys.stderr)
         return 1
     return 0
+
+
+def maintenance_main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="storage-md-maintenance",
+        description="Skip unattended maintenance while an MD reshape is unfinished.",
+    )
+    parser.add_argument("--sys-block", type=Path, default=Path("/sys/block"))
+    arguments = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    try:
+        return guard_raid(arguments.sys_block, sys.stderr)
+    except (OSError, ValueError) as error:
+        print(f"storage-md-maintenance: {error}", file=sys.stderr)
+        return 1
