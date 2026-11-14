@@ -30,7 +30,7 @@ This is enforced by the wrapper when invoked, not by a background timer or the
 YubiKey itself. Direct `gpg` use bypasses it, and resetting the shared agent
 also clears other GnuPG authorization for that home. GnuPG's ordinary cache
 TTLs do not expire its YubiKey PIN cache. A reset failure stops the operation.
-Configure other hosts through `host.hm.pass.idleTimeout` when their own keys
+Configure other hosts through `host.hm.pass.idleTimeout` when their hardware keys
 are ready.
 
 GnuPG prompts use `pinentry-mac` on macOS and `pinentry-qt` on Linux desktops
@@ -47,9 +47,9 @@ scope.
 
 The password store's `.gpg-id` remains the recipient policy. It includes the
 Nano and NFC keys and retains the old software-key recipient during migration.
-Android decryption with the NFC key is verified. Frame and mmini still need
-their own hardware keys before retiring the software recipient. Public keys
-for every recipient must be available on clients that write entries.
+Android decryption with the NFC key is verified. Frame and mmini share
+`home.main`; verify access from both before retiring the software recipient.
+Public keys for every recipient must be available on clients that write entries.
 
 An isolated keyring containing only this public key and its card references
 successfully decrypted a migrated entry with a physical touch. If two GnuPG
@@ -58,6 +58,15 @@ homes compete for the card, stop their `scdaemon` processes before retrying.
 Keep the revocation certificate and a recovery method outside the password
 store. Git backs up encrypted entries, not hardware private keys. Re-encryption
 changes the current files; old Git revisions still require their old recipients.
+
+## Home main
+
+`home.main` is the YubiKey 5C Nano, serial `35640926`, shared between frame and
+mmini. Its existing SSH and age credentials are unchanged. OpenPGP signing and
+authentication use Ed25519; encryption uses cv25519. The keys were generated
+on-device without an off-card encryption-key backup and have no expiration.
+Touch is enabled for all three operations using the changeable `on` policy.
+The USB OTP application was already disabled.
 
 ## Home NFC
 

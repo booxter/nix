@@ -4,6 +4,11 @@
     serial = "35640926";
     sshPublicKey = ./ssh/public-keys/yubikey.pub;
     ageIdentity = ./age/home-main.txt;
+    openpgp = {
+      publicKey = ./openpgp/home-main.asc;
+      fingerprint = "9A69C4E63FB9053D2E404BDD589400D6A9793DDD";
+      encryptionFingerprint = "6B897B6CC45E0692192C4C386853A85DEC000BEB";
+    };
   };
 
   home.laptop = {
