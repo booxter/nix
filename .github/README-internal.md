@@ -22,8 +22,9 @@ For pull requests, CI runs:
 ## Runners
 
 The `ci` host provides six ephemeral `nix-ci` runners (`ci-1` through `ci-6`),
-and `frame` provides four (`frame-1` through `frame-4`). Runner jobs delegate
-Linux builds to the builder hosts and macOS builds to `mmini`. The `mmini-ci`
+and `frame` provides four (`frame-1` through `frame-4`). Linux builds use
+`builder1`–`builder3` and `frame`; runners on `frame` can also build locally.
+macOS builds use `mmini`. The `mmini-ci`
 service provides the `nix-ci-darwin` label for checks and update jobs that must
 execute on macOS.
 

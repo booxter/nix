@@ -5,6 +5,8 @@
   ...
 }:
 let
+  builder = config.host.nix.builder;
+  localJobs = if builder != null && builtins.elem "ci" builder.uses then builder.maxJobs else 0;
   runnerCount = config.host.ci.runners;
   runnerNames = map (index: "${config.networking.hostName}-${toString index}") (
     lib.range 1 runnerCount
@@ -31,8 +33,8 @@ in
       extraEnvironment = {
         NIX_CACHE_HOME = "/var/cache/github-runner/${name}/nix";
 
-        # Runner hosts also serve interactive users; delegate only CI builds.
-        NIX_CONFIG = "max-jobs = 0";
+        # The remote builder pool excludes this host; use its CI capacity locally.
+        NIX_CONFIG = "max-jobs = ${toString localJobs}";
       };
       serviceOverrides = {
         # Registration wipes the state and work directories, so keep Nix's
