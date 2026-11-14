@@ -11,6 +11,8 @@
 
   system.stateVersion = 5;
 
+  home-manager.users.${config.host.username}.host.hm.pass.yubikey = "main";
+
   host.attic.publishCaches.beast = [
     "default"
     "github"

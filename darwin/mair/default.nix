@@ -1,6 +1,5 @@
 {
   config,
-  fleetInventory,
   lib,
   pkgs,
   sshKeys,
@@ -9,25 +8,12 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
-  passKey = fleetInventory.yubikeys.home.laptop.openpgp;
 in
 {
   system.stateVersion = 6;
 
   home-manager.users.${username} = {
-    host.hm.pass.idleTimeout = 15 * 60;
-
-    programs = {
-      gpg.publicKeys = [
-        {
-          source = passKey.publicKey;
-          trust = "ultimate";
-        }
-      ];
-
-      # Prefer the Nano while the store retains the old recipient for Android.
-      password-store.settings.PASSWORD_STORE_GPG_OPTS = "--try-secret-key ${passKey.fingerprint}";
-    };
+    host.hm.pass.yubikey = "laptop";
 
     host.hm.dev.agents.mcp.stdioServers.firefox-devtools = {
       instructions = ''

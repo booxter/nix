@@ -4,6 +4,12 @@ Public keys live here; device serials and fingerprints are recorded in
 [the YubiKey inventory](../yubikeys.nix). Never commit PINs, private keys, or
 revocation certificates.
 
+Set `host.hm.pass.yubikey` to the device's inventory name within the host's realm:
+mair uses `laptop`; frame and mmini use `main`. This imports the realm's OpenPGP
+public certificates, prefers the selected key for decryption, and defaults to a
+15-minute idle timeout. The shared device can move between frame and mmini;
+each host uses the same on-card keys.
+
 ## Home laptop
 
 `home.laptop` is the YubiKey 5C Nano attached to `mair`, serial `38418581`.
@@ -30,8 +36,7 @@ This is enforced by the wrapper when invoked, not by a background timer or the
 YubiKey itself. Direct `gpg` use bypasses it, and resetting the shared agent
 also clears other GnuPG authorization for that home. GnuPG's ordinary cache
 TTLs do not expire its YubiKey PIN cache. A reset failure stops the operation.
-Configure other hosts through `host.hm.pass.idleTimeout` when their hardware keys
-are ready.
+Override `host.hm.pass.idleTimeout` to change this policy for a host.
 
 GnuPG prompts use `pinentry-mac` on macOS and `pinentry-qt` on Linux desktops
 (including frame's Hyprland session). Headless Linux hosts use `pinentry-tty`.

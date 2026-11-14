@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   osConfig,
   pkgs,
@@ -7,6 +8,9 @@
 }:
 let
   cfg = config.host.hm.pass;
+  realmKeys = lib.mapAttrs (_: device: device.openpgp) (
+    lib.filterAttrs (_: device: device ? openpgp) fleetInventory.yubikeys.${osConfig.host.realm}
+  );
   indicator = config.host.hm.authRequest.package;
   passPackage =
     if indicator == null then
@@ -20,20 +24,39 @@ in
 {
   options.host.hm.pass = {
     enable = lib.mkEnableOption "password-store environment";
+    yubikey = lib.mkOption {
+      type = lib.types.nullOr (lib.types.enum (builtins.attrNames realmKeys));
+      default = null;
+      description = ''
+        YubiKey inventory name within this host's realm to prefer for decryption.
+        Imports all OpenPGP public certificates from that realm for encryption.
+        Other available secret keys can still decrypt if this device is absent.
+      '';
+    };
     idleTimeout = lib.mkOption {
       type = lib.types.nullOr lib.types.ints.positive;
-      default = null;
+      default = if cfg.yubikey == null then null else 15 * 60;
       description = ''
         Seconds of inactivity before pass stops scdaemon and gpg-agent to
         require fresh authorization. Enforced on the next secret operation.
         Null disables the wrapper.
+        Defaults to 15 minutes when a YubiKey is configured, otherwise null.
       '';
     };
   };
 
   config = lib.mkIf cfg.enable {
     programs = {
-      gpg.enable = true;
+      gpg = {
+        enable = true;
+        # Writers need every recipient's public certificate, not just their own.
+        publicKeys = lib.optionals (cfg.yubikey != null) (
+          map (key: {
+            source = key.publicKey;
+            trust = "ultimate";
+          }) (builtins.attrValues realmKeys)
+        );
+      };
 
       password-store = {
         enable = true;
@@ -67,6 +90,9 @@ in
         settings = {
           # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
           PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
+        }
+        // lib.optionalAttrs (cfg.yubikey != null) {
+          PASSWORD_STORE_GPG_OPTS = "--try-secret-key ${realmKeys.${cfg.yubikey}.fingerprint}";
         };
       };
     };
