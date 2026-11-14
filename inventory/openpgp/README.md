@@ -83,3 +83,15 @@ NFC. To force that path, open **OpenKeychain → Apps → Password Store** and s
 **Allowed Keys** with only `pass - NFC 31341726` selected. This restricts the
 app's decryption permissions without deleting the old software key; its
 permission can be restored there if needed.
+
+Android needs the public certificates for every `.gpg-id` recipient to create
+or edit entries. Import `home-laptop.asc` as well as `home-nfc.asc`; the Nano's
+public certificate appears under Ihar rather than **My keys**, which is expected.
+No Nano pairing is needed for encryption. Without its certificate, OpenKeychain
+reports `Missing key for encryption: %s`. Keep the app's **Allowed Keys** limited
+to the NFC key for decryption.
+
+An Android-created test entry contained all three configured recipients and
+successfully decrypted on mair in an isolated keyring containing only the
+Nano's public certificate and card references. This verifies Android writes
+preserve access for the laptop as well as NFC decryption on the phone.
