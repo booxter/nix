@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   pkgs,
   sshKeys,
@@ -8,12 +9,25 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
+  passKey = fleetInventory.yubikeys.home.laptop.openpgp;
 in
 {
   system.stateVersion = 6;
 
-  home-manager.users.${username}.host.hm = {
-    dev.agents.mcp.stdioServers.firefox-devtools = {
+  home-manager.users.${username} = {
+    programs = {
+      gpg.publicKeys = [
+        {
+          source = passKey.publicKey;
+          trust = "ultimate";
+        }
+      ];
+
+      # Prefer the Nano while the store retains the old recipient for Android.
+      password-store.settings.PASSWORD_STORE_GPG_OPTS = "--try-secret-key ${passKey.fingerprint}";
+    };
+
+    host.hm.dev.agents.mcp.stdioServers.firefox-devtools = {
       instructions = ''
         Only use the Firefox DevTools MCP when the user explicitly requests browser
         interaction or browser-based debugging.
