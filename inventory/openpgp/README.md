@@ -45,10 +45,11 @@ including software-key fallback. SSH uses the same display helper with its key
 names. Direct GPG calls and other OpenPGP clients are outside this indicator's
 scope.
 
-The password store's `.gpg-id` remains the recipient policy. It currently
-retains the old software-key recipient for Android. Add and verify the future
-NFC key before removing that recipient. Public keys for every recipient must
-be available on clients that write entries.
+The password store's `.gpg-id` remains the recipient policy. It includes the
+Nano and NFC keys and retains the old software-key recipient during migration.
+Verify Android Password Store uses the NFC key before removing the old
+recipient. Public keys for every recipient must be available on clients that
+write entries.
 
 An isolated keyring containing only this public key and its card references
 successfully decrypted a migrated entry with a physical touch. If two GnuPG
@@ -71,4 +72,8 @@ the changeable `on` policy. A harmless message encrypted only to this key was
 successfully decrypted over USB with touch.
 
 The initial Android client versions are Password Store 1.13.5 and OpenKeychain
-6.0.4; NFC decryption verification is pending.
+6.0.4. The same harmless message was successfully decrypted over NFC in
+OpenKeychain. After importing the public key, use **Manage my keys → Use security
+token** and scan the YubiKey to associate it with the imported certificate.
+Importing the public key alone leaves decryption reporting that no known secret
+key is available.
