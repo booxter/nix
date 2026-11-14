@@ -18,7 +18,7 @@ backup. Signing and authentication use Ed25519; encryption uses cv25519.
 The keys have no expiration. Touch is enabled for all three operations using
 the changeable `on` policy, and the USB OTP application is disabled.
 
-Mair imports the public key and makes `pass` prefer it through
+Mair imports the home realm's public keys and makes `pass` prefer its Nano through
 `PASSWORD_STORE_GPG_OPTS`. This is a preference, not a requirement: other
 available secret keys can still decrypt entries if the Nano cannot.
 
@@ -41,7 +41,9 @@ Override `host.hm.pass.idleTimeout` to change this policy for a host.
 GnuPG prompts use `pinentry-mac` on macOS and `pinentry-qt` on Linux desktops
 (including frame's Hyprland session). Headless Linux hosts use `pinentry-tty`.
 These are separate from SSH's `SSH_ASKPASS` helpers. A Linux graphical prompt
-requires a running desktop session; verify it locally when provisioning frame.
+requires a running desktop session. Where Linux already runs `pcscd` for age,
+GPG uses that service through `disable-ccid`; its direct USB driver otherwise
+failed to open frame's readers without falling back to PC/SC.
 
 On macOS with SketchyBar, pass shows the shared yellow request indicator during
 each GPG decryption, including PIN and touch waits. It clears when GPG exits,
@@ -50,11 +52,13 @@ including software-key fallback. SSH uses the same display helper with its key
 names. Direct GPG calls and other OpenPGP clients are outside this indicator's
 scope.
 
-The password store's `.gpg-id` remains the recipient policy. It includes the
-Nano and NFC keys and retains the old software-key recipient during migration.
-Android decryption with the NFC key is verified. Frame and mmini share
-`home.main`; verify access from both before retiring the software recipient.
+The password store's `.gpg-id` remains the recipient policy. Its recipients are
+`home.laptop`, `home.main`, and `home.nfc`; the old software key is no longer a
+recipient for current entries. Android decryption with the NFC key is verified.
 Public keys for every recipient must be available on clients that write entries.
+After retiring the software recipient, a rewritten store entry successfully
+decrypted with the shared Nano on frame and the laptop Nano on mair. All current
+entries were checked for exactly these three hardware recipients.
 
 An isolated keyring containing only this public key and its card references
 successfully decrypted a migrated entry with a physical touch. If two GnuPG
@@ -72,6 +76,10 @@ authentication use Ed25519; encryption uses cv25519. The keys were generated
 on-device without an off-card encryption-key backup and have no expiration.
 Touch is enabled for all three operations using the changeable `on` policy.
 The USB OTP application was already disabled.
+
+Messages encrypted only to this key successfully decrypted through `pass` on
+both mmini and frame, with their native graphical PIN prompts and physical
+touch. Both the home and work YubiKeys were connected during these tests.
 
 ## Home NFC
 
@@ -99,13 +107,14 @@ app's decryption permissions without deleting the old software key; its
 permission can be restored there if needed.
 
 Android needs the public certificates for every `.gpg-id` recipient to create
-or edit entries. Import `home-laptop.asc` as well as `home-nfc.asc`; the Nano's
-public certificate appears under Ihar rather than **My keys**, which is expected.
-No Nano pairing is needed for encryption. Without its certificate, OpenKeychain
-reports `Missing key for encryption: %s`. Keep the app's **Allowed Keys** limited
-to the NFC key for decryption.
+or edit entries. Import `home-laptop.asc`, `home-main.asc`, and `home-nfc.asc`.
+The laptop and shared home public certificates appear under Ihar rather than
+**My keys**, which is expected. No Nano pairing is needed for encryption.
+Missing recipient certificates cause OpenKeychain to report
+`Missing key for encryption: %s`. Keep the app's **Allowed Keys** limited to the
+NFC key for decryption.
 
-An Android-created test entry contained all three configured recipients and
+An Android-created test entry preserved the configured recipient list and
 successfully decrypted on mair in an isolated keyring containing only the
 Nano's public certificate and card references. This verifies Android writes
 preserve access for the laptop as well as NFC decryption on the phone.
