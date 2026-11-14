@@ -37,6 +37,7 @@ let
     // {
       python-quality = pythonQualityCheck;
       agent-mcp = import ./agent-mcp.nix { inherit lib pkgs; };
+      auth-request = pkgs.auth-request;
       claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       hardware-signing = import ./hardware-signing.nix { inherit pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
@@ -45,6 +46,7 @@ let
       media-repair-contracts = pkgs.media-repair-contracts;
       letterboxd-sync = pkgs.letterboxd-sync;
       pass-idle = pkgs.pass-idle;
+      pass-indicator = import ./pass-indicator.nix { inherit pkgs; };
       proxmox-bootstrap = pkgs.proxmox-bootstrap;
       gpclient = pkgs.gpclient;
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };

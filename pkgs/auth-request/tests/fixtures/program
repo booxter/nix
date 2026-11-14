@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+import os
+import signal
+import sys
+import time
+
+if os.path.basename(sys.argv[0]) == "fd-probe":
+    os.write(int(sys.argv[1]), b"status")
+    try:
+        os.fstat(int(sys.argv[2]))
+    except OSError:
+        sys.exit(0)
+    sys.exit(1)
+
+if os.path.basename(sys.argv[0]) == "gpg":
+    if "--kill-self" in sys.argv:
+        os.kill(os.getpid(), signal.SIGKILL)
+    print(sys.stdin.read(), end="")
+    print("gpg error", file=sys.stderr)
+    sys.exit(17)
+if os.path.basename(sys.argv[0]) == "indicator":
+    sys.stdin.buffer.read()
+else:
+    with open(os.environ["BAR_LOG"], "a") as log:
+        print(" ".join(sys.argv[1:]), file=log)
+    if os.environ.get("BAR_SLOW"):
+        time.sleep(5)

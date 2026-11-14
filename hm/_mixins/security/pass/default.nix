@@ -7,6 +7,15 @@
 }:
 let
   cfg = config.host.hm.pass;
+  indicator = config.host.hm.authRequest.package;
+  passPackage =
+    if indicator == null then
+      pkgs.pass
+    else
+      pkgs.callPackage ./with-indicator.nix {
+        inherit indicator;
+        gnupg = config.programs.gpg.package;
+      };
 in
 {
   options.host.hm.pass = {
@@ -28,31 +37,33 @@ in
 
       password-store = {
         enable = true;
-        package = lib.mkIf (cfg.idleTimeout != null) (
-          pkgs.symlinkJoin {
-            name = "pass-with-idle-timeout";
-            paths = [ pkgs.pass ];
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-            postBuild = ''
-              rm "$out/bin/pass"
-              makeWrapper ${lib.getExe pkgs.pass-idle} "$out/bin/pass" \
-                --add-flags ${
-                  lib.escapeShellArg (
-                    lib.escapeShellArgs [
-                      "--pass-program"
-                      (lib.getExe pkgs.pass)
-                      "--gpgconf"
-                      "${config.programs.gpg.package}/bin/gpgconf"
-                      "--idle-seconds"
-                      (toString cfg.idleTimeout)
-                      "--"
-                    ]
-                  )
-                }
-            '';
-            meta.mainProgram = "pass";
-          }
-        );
+        package =
+          if cfg.idleTimeout == null then
+            passPackage
+          else
+            pkgs.symlinkJoin {
+              name = "pass-with-idle-timeout";
+              paths = [ passPackage ];
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              postBuild = ''
+                rm "$out/bin/pass"
+                makeWrapper ${lib.getExe pkgs.pass-idle} "$out/bin/pass" \
+                  --add-flags ${
+                    lib.escapeShellArg (
+                      lib.escapeShellArgs [
+                        "--pass-program"
+                        (lib.getExe passPackage)
+                        "--gpgconf"
+                        "${config.programs.gpg.package}/bin/gpgconf"
+                        "--idle-seconds"
+                        (toString cfg.idleTimeout)
+                        "--"
+                      ]
+                    )
+                  }
+              '';
+              meta.mainProgram = "pass";
+            };
         settings = {
           # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
           PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";

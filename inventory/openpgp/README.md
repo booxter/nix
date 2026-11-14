@@ -38,6 +38,13 @@ GnuPG prompts use `pinentry-mac` on macOS and `pinentry-qt` on Linux desktops
 These are separate from SSH's `SSH_ASKPASS` helpers. A Linux graphical prompt
 requires a running desktop session; verify it locally when provisioning frame.
 
+On macOS with SketchyBar, pass shows the shared yellow request indicator during
+each GPG decryption, including PIN and touch waits. It clears when GPG exits,
+before an editor opens. The label is `OpenPGP`; it describes the operation,
+including software-key fallback. SSH uses the same display helper with its key
+names. Direct GPG calls and other OpenPGP clients are outside this indicator's
+scope.
+
 The password store's `.gpg-id` remains the recipient policy. It currently
 retains the old software-key recipient for Android. Add and verify the future
 NFC key before removing that recipient. Public keys for every recipient must

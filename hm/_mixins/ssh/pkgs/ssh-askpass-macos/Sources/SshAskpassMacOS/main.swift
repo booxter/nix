@@ -7,10 +7,8 @@ let namedKeysJSON = environment["SSH_ASKPASS_NAMED_KEYS"] ?? "[]"
 let namedPublicKeys = try JSONDecoder().decode(
   [NamedPublicKey].self, from: Data(namedKeysJSON.utf8)
 )
-let indicator = try environment["SSH_ASKPASS_INDICATOR"].map { json in
-  SketchyBarIndicator(
-    configuration: try JSONDecoder().decode(IndicatorConfiguration.self, from: Data(json.utf8))
-  )
+let indicator = environment["SSH_ASKPASS_INDICATOR"].map { executable in
+  RequestIndicator(executable: executable)
 }
 
 let result = Askpass(
