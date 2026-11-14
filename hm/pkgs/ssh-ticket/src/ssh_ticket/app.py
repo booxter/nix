@@ -292,6 +292,14 @@ def issue_ticket(
 
 
 def ensure_ticket(args: argparse.Namespace, target: Target, runtime: Runtime) -> TicketPaths:
+    # Cached tickets still need a usable agent for remote sudo and onward SSH.
+    # Never load the destination's identities from inside an SSH session.
+    if args.agent_identity and not os.environ.get("SSH_CONNECTION"):
+        runtime.commands.run(
+            ["ssh-add", "-q", *[str(expand_path(path)) for path in args.agent_identity]],
+            capture=False,
+        )
+
     state_dir = state_dir_arg(args)
     key_path = expand_path(args.key)
     paths = target_paths(target.name, state_dir)
@@ -478,6 +486,15 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--force", action="store_true", help="ignore an existing valid ticket")
 
 
+def add_agent_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--agent-identity",
+        action="append",
+        default=[],
+        help="load a local identity into the forwarded agent (repeatable; ignored inside SSH)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ssh-ticket")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -501,6 +518,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ensure = subparsers.add_parser("ensure", help="issue or reuse a ticket without connecting")
     add_common_options(ensure)
+    add_agent_options(ensure)
     ensure.add_argument("target", help="target or alias")
     ensure.add_argument(
         "--cert-alias",
@@ -519,6 +537,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ssht = subparsers.add_parser("ssht", help="connect to a host through a short-lived ticket")
     add_common_options(ssht)
+    add_agent_options(ssht)
     ssht.add_argument("target", help="target or alias")
     ssht.add_argument(
         "ssh_args",

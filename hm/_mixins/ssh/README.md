@@ -18,6 +18,12 @@ agent-backed sudo before making an SSH connection, load a handle with `ssh-add`.
 After activation, open a fresh shell; existing shells retain their old agent
 socket and prompt settings.
 
+Before a local YubiKey client connects using a ticket, it loads its configured
+hardware handles into the agent, even when the ticket is cached. This restores
+forwarded-agent sudo and onward SSH after an agent restart. The ticket key stays
+out of the agent; each certificate remains scoped to its destination. Onward
+authentication uses the hardware key with its usual approval policy.
+
 On Linux and macOS, the OpenSSH agent restarts its touch notification after PIN
 entry and dismisses it when signing finishes. Linux graphical sessions show this
 as a Zenity dialog, independently of any status-bar integration.
