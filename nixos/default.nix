@@ -21,6 +21,7 @@
       ./_mixins/aurral
       ./_mixins/backups
       ./_mixins/bazarr
+      ./_mixins/ci.nix
       ./_mixins/desktop
       ./_mixins/downloads
       ./_mixins/disko
