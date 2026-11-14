@@ -47,9 +47,9 @@ scope.
 
 The password store's `.gpg-id` remains the recipient policy. It includes the
 Nano and NFC keys and retains the old software-key recipient during migration.
-Verify Android Password Store uses the NFC key before removing the old
-recipient. Public keys for every recipient must be available on clients that
-write entries.
+Android decryption with the NFC key is verified. Frame and mmini still need
+their own hardware keys before retiring the software recipient. Public keys
+for every recipient must be available on clients that write entries.
 
 An isolated keyring containing only this public key and its card references
 successfully decrypted a migrated entry with a physical touch. If two GnuPG
@@ -77,3 +77,9 @@ OpenKeychain. After importing the public key, use **Manage my keys → Use secur
 token** and scan the YubiKey to associate it with the imported certificate.
 Importing the public key alone leaves decryption reporting that no known secret
 key is available.
+
+Android Password Store also successfully decrypted a synced store entry over
+NFC. To force that path, open **OpenKeychain → Apps → Password Store** and save
+**Allowed Keys** with only `pass - NFC 31341726` selected. This restricts the
+app's decryption permissions without deleting the old software key; its
+permission can be restored there if needed.
