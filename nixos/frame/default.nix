@@ -1,5 +1,5 @@
 {
-  config,
+  fleetInventory,
   inputs,
   lib,
   sshKeys,
@@ -92,7 +92,7 @@
     security = {
       secrets.operator.ageIdentity = {
         backend = "yubikey";
-        path = "/home/${config.host.username}/.config/sops/age/yubi-nix.txt";
+        path = "${fleetInventory.yubikeys.home.main.ageIdentity}";
       };
     };
     ups.server = {

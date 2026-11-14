@@ -1,0 +1,4 @@
+# Serial: 35640926, Slot: 1
+# Name: nix sops age
+# Recipient: age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
+AGE-PLUGIN-YUBIKEY-1TMTP7Q5ZAEKZVSCXP4ENF
