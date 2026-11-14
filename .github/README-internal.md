@@ -1,93 +1,14 @@
-# GitHub CI Behavior
+# CI
 
-This repository uses `.github/workflows/build-targets.yml` to run CI.
+The [build workflow](workflows/build-targets.yml) checks formatting, runs tests,
+and builds the full fleet. `ci-success` is the required merge gate.
 
-## High-level flow
-
-For pull requests, CI runs:
-
-1. `format` checks formatting and evaluates the build and check inventories.
-2. `check_batch` builds non-NixOS checks once per system, while `nixos_test`
-   runs each NixOS test as a separate job with bounded parallelism.
-3. `build` runs every fleet build target in the matrix.
-4. `post-config-diffs` publishes advisory machine configuration diffs.
-5. `ci-success` serves as the required final gate.
-
-## Notes
-
-- `format` runs `nix fmt .`, which uses the flake-pinned formatter and includes
-  workflow (`actionlint`) and markdown checks.
-- Pull requests, pushes, and manual runs all use the full build matrix.
-
-## Runners
-
-The `ci` host provides six ephemeral `nix-ci` runners (`ci-1` through `ci-6`),
-and `frame` provides four (`frame-1` through `frame-4`). Linux builds use
-`builder1`–`builder3` and `frame`; runners on `frame` can also build locally.
-macOS builds use `mmini`. The `mmini-ci`
-service provides the `nix-ci-darwin` label for checks and update jobs that must
-execute on macOS.
-
-Linux runners retain their private Nix fetch and evaluation caches under
-`/var/cache/github-runner/<runner>/nix`. Registration state and workspaces are
-still cleared after each job.
-
-Linux runners use a minimal systemd `RootDirectory`. The Nix store is read-only,
-and builds go through the host daemon as an untrusted user. Explicit mounts
-provide Nix configuration, DNS, certificates, and user lookup; systemd supplies
-each runner's own workspace, state, logs, cache, and upload credential. Host
-homes and live secrets are absent. Registration also runs inside the root,
-using a systemd credential hidden from job processes. This isolation does not
-apply to the macOS runner.
-
-The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
-`nix-vm-darwin` label.
-
-Daemon build hooks publish only to their realm's internal cache, including on
-runner hosts. The build and check jobs use `ci-build` to publish their selected
-output closures to the public `github` cache. Outputs reused from the internal
-cache are published too; unrelated store paths are never collected. Build or
-upload failures fail the job. Failed builds do not publish partial results.
-
-Runners receive a separate credential with pull and push access only to `github`.
-Linux supplies it through systemd credentials; the macOS runner reads its private
-rendered config. Helper tools and advisory diff builds retain the normal internal
-publishing policy unless their outputs are also selected by a build or check job.
-The CI credential is stored as `attic/ci_token` on `ci`, `frame`, and `mmini`.
-
-## Config diffs
-
-Pull request build jobs that target a toplevel NixOS or nix-darwin machine also
-run `nix run .#diff -- --details <machine> <base-sha> <head-sha>` after the
-blocking `nix build`. Diff generation is advisory: failures are captured in the
-uploaded artifact and PR comment, but the build job result is still determined
-by the blocking build.
-
-Pull request jobs explicitly check out GitHub's generated merge ref
-(`refs/pull/<number>/merge`). The diff head is the checked-out merge commit, not
-the raw PR branch tip, so diffs reflect the revision CI built after applying the
-PR to the current base branch.
-
-Every toplevel NixOS and nix-darwin machine job generates a diff. VM, QEMU,
-ISO, and other non-toplevel targets remain build-only.
-
-The PR comment groups diff results into machines with package or generated
-config changes, machines with closure-size-only or dix path/size-only
-changes, and machines with no changes.
-Per-machine artifacts are prefixed with `package-or-config-`, `size-only-`, or
-`unchanged-`; the post job uses those prefixes when assembling the grouped
-comment.
-Before posting a new config diff comment batch, the post job marks earlier
-bot-authored config diff comments on the same pull request as outdated.
-Flake input update pull requests list every changed input in a table with its old
-and new revisions and a link to the upstream comparison. Nested inputs use their
-full lock path, while `follows` aliases are omitted.
-The generator and its tests are packaged as
-`nix run .#flake-input-update-summary`.
-For scheduled flake input update PRs, if at least one target produced a config
-diff artifact and no package-or-config entries were found, the post job
-enables GitHub auto-merge for the pull request. The PR must come from
-`ci/flake-update`, have title `flake: update inputs`, include the scheduled
-trigger marker in its body, and change only `flake.lock`. Closure-size-only,
-dix path/size-only, and unchanged diffs are considered safe for this auto-merge
-path.
+- Configuration diffs are advisory and compare the base with the merge result
+  that CI built.
+- Runner hosts also serve interactive users. Linux jobs have an isolated
+  filesystem; workspaces are disposable, but Nix caches persist between jobs.
+- Only outputs selected by CI build and check jobs go to the public Attic cache.
+  Other builds publish only internally.
+- Scheduled flake update PRs changing only `flake.lock` may auto-merge when
+  configuration diffs are available and show no package or generated config
+  changes. Size-only changes do not prevent auto-merge.
