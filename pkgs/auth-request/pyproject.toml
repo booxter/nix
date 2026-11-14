@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auth-request"
+version = "0.1.0"
+description = "Show authentication activity in SketchyBar"
+requires-python = ">=3.13"
+
+[project.scripts]
+auth-request = "auth_request.indicator:main"
+pass-gpg = "auth_request.pass_gpg:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=auth_request --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/auth_request"]
+strict = true

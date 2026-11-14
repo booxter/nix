@@ -25,11 +25,7 @@ let
     if isDarwin then
       pkgs.callPackage ./pkgs/ssh-askpass-macos {
         namedPublicKeys = namedYubikeys;
-        indicator = lib.optionalAttrs config.host.hm.sketchybar.enable {
-          executable = lib.getExe config.programs.sketchybar.package;
-          background = "0xff${config.lib.stylix.colors.base0A}";
-          foreground = "0xff${config.lib.stylix.colors.base00}";
-        };
+        indicator = config.host.hm.authRequest.package;
       }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };

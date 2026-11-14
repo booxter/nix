@@ -1,65 +1,29 @@
 # Operator SSH credentials
 
-Operators sign Git commits and tags with the hardware identities in
-`sshKeys.hardware`. Git selects an approved public key from the current SSH
-agent; other agent keys cannot become a signing fallback.
+Operators sign Git commits and tags with approved hardware identities from
+`sshKeys.hardware`. Signing fails when no approved key is available.
 
-On a local YubiKey session, the selector first loads the configured hardware
-handles into the local agent. Inside SSH, it only uses the forwarded agent, so
-approval happens on the originating machine. Without an approved agent key,
-signing fails instead of using a software key or the destination's hardware.
+Local sessions use the configured agent: nixpkgs OpenSSH for file and YubiKey
+credentials, Secretive for Secure Enclave credentials. SSH sessions preserve
+the forwarded agent, so approval happens on the originating machine.
+YubiKey handles are loaded automatically before ticket connections.
+Open a fresh shell after changing agent configuration.
 
-File and YubiKey credentials use Home Manager's nixpkgs OpenSSH agent, with
-graphical authentication prompts on macOS. Secretive credentials use Secretive's
-own agent. New local shells select the configured socket; SSH sessions preserve
-a forwarded agent. YubiKey clients also use the prompt helper for direct signing
-and automatically add handles to the agent on first use after a restart. To use
-agent-backed sudo before making an SSH connection, load a handle with `ssh-add`.
-After activation, open a fresh shell; existing shells retain their old agent
-socket and prompt settings.
+SSH tickets are scoped to their destination and stay out of the agent.
+Onward SSH and forwarded-agent sudo use the operator's hardware identity.
 
-Before a local YubiKey client connects using a ticket, it loads its configured
-hardware handles into the agent, even when the ticket is cached. This restores
-forwarded-agent sudo and onward SSH after an agent restart. The ticket key stays
-out of the agent; each certificate remains scoped to its destination. Onward
-authentication uses the hardware key with its usual approval policy.
+Device names, serials, and public keys belong in the
+[YubiKey inventory](../../../inventory/yubikeys.nix) and
+[SSH inventory](../../../inventory/ssh/default.nix).
+Configure handle paths with `host.ssh.credentials.yubikey.identityFiles`.
 
-On Linux and macOS, the OpenSSH agent restarts its touch notification after PIN
-entry and dismisses it when signing finishes. Linux graphical sessions show this
-as a Zenity dialog, independently of any status-bar integration.
+PIN and touch prompts identify known keys by inventory name. macOS uses native
+dialogs and a SketchyBar indicator; Linux graphical sessions use Zenity.
+Touch only the intended flashing token. The SSH FIDO2 PIN is separate from
+the PIV PIN used for SOPS.
 
-The work realm authorizes both `work.main` and `work.laptop` YubiKeys. Their
-serial numbers are recorded in [the YubiKey inventory](../../../inventory/yubikeys.nix),
-and their public keys are in [the SSH inventory](../../../inventory/ssh/default.nix).
-The work laptop offers `~/.ssh/id_ed25519_sk_work_main` first, followed by
-`~/.ssh/id_ed25519_sk_work_laptop`. Other YubiKey clients default to
-`~/.ssh/id_ed25519_sk_rk`; configure `host.ssh.credentials.yubikey.identityFiles`
-to use different handle filenames.
+Frame's pre-boot SSH accepts the mair Secretive key and shared home YubiKey.
+Login starts the restricted unlock command; the disk passphrase is still needed.
 
-macOS PIN and touch dialogs label known SSH fingerprints with the YubiKey's
-realm, name, and serial from the inventory. Set `sshPublicKey` on an inventory
-entry to associate its public key with that label. The original prompt and
-fingerprint remain visible; unknown keys keep their original prompts.
-
-When SketchyBar is enabled, known SSH key prompts also show a highlighted
-`🔑 main` or `🔑 laptop` item using the short inventory name. Each prompt owns
-its item, which is removed when the prompt finishes or OpenSSH dismisses it.
-This indicates an active PIN or touch prompt, not the hardware LED state. The
-indicator can briefly disappear as the touch and PIN prompts replace each other.
-
-For each hardware signing check, identify the intended key by name and serial
-before starting. With multiple tokens connected, a `verify-required` SSH key
-normally needs three short touches: select the token, enter its FIDO2 PIN in
-the dialog, select the same token again, then authorize signing. With only the
-intended token connected, expect one signing touch after the PIN. Touch only
-when the token flashes; the SSH PIN is separate from the PIV PIN used for SOPS.
-
-Frame's pre-boot SSH unlock accepts the mair Secretive key and the shared
-YubiKey identity used from mmini. SSH authentication starts the restricted disk
-unlock command; the disk passphrase is still required.
-
-Home builds use separate root-only software keys and an untrusted `nix-ssh`
-account. The old operator `id_ed25519` public keys no longer authorize home
-logins. See [builder access](../../../common/_mixins/builders/README.md) for the
-staged rollout and store-signing policy before retiring their local files.
-Community builders use the separate `nix-community-builders` key.
+Builds use separate root-only software keys and an untrusted `nix-ssh` account.
+See [builder access](../../../common/_mixins/builders/README.md).

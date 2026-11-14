@@ -1,4 +1,5 @@
 {
+  config,
   fleetInventory,
   inputs,
   lib,
@@ -7,6 +8,8 @@
 }:
 {
   system.stateVersion = "25.11";
+
+  home-manager.users.${config.host.username}.host.hm.pass.yubikey = "main";
 
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series

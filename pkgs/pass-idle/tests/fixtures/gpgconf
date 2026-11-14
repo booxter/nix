@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Stand-in for gpgconf; it never contacts a real agent."""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+if sys.argv[1:] == ["--list-dirs", "homedir"]:
+    print(os.environ["TEST_GNUPG_HOME"])
+    sys.exit(int(os.environ.get("TEST_HOME_STATUS", "0")))
+
+daemon = sys.argv[2]
+with Path(os.environ["TEST_RESET_LOG"]).open("a") as log:
+    log.write(json.dumps(daemon) + "\n")
+
+sys.exit(4 if daemon == os.environ.get("TEST_FAIL_DAEMON") else 0)

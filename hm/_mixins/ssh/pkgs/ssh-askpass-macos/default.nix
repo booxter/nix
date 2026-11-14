@@ -2,7 +2,7 @@
   lib,
   makeWrapper,
   namedPublicKeys ? [ ],
-  indicator ? { },
+  indicator ? null,
   swift,
   swiftPackages,
   swiftpm,
@@ -35,8 +35,8 @@ swiftPackages.stdenv.mkDerivation {
       "$out/bin/ssh-askpass-macos"
     wrapProgram "$out/bin/ssh-askpass-macos" \
       --set SSH_ASKPASS_NAMED_KEYS ${lib.escapeShellArg (builtins.toJSON namedPublicKeys)} \
-      ${lib.optionalString (indicator != { }) ''
-        --set SSH_ASKPASS_INDICATOR ${lib.escapeShellArg (builtins.toJSON indicator)}
+      ${lib.optionalString (indicator != null) ''
+        --set SSH_ASKPASS_INDICATOR ${lib.escapeShellArg (lib.getExe indicator)}
       ''}
     runHook postInstall
   '';

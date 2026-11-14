@@ -1,24 +1,103 @@
 {
   config,
+  fleetInventory,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
   cfg = config.host.hm.pass;
+  realmKeys = lib.mapAttrs (_: device: device.openpgp) (
+    lib.filterAttrs (_: device: device ? openpgp) fleetInventory.yubikeys.${osConfig.host.realm}
+  );
+  indicator = config.host.hm.authRequest.package;
+  passPackage =
+    if indicator == null then
+      pkgs.pass
+    else
+      pkgs.callPackage ./with-indicator.nix {
+        inherit indicator;
+        gnupg = config.programs.gpg.package;
+      };
 in
 {
-  options.host.hm.pass.enable = lib.mkEnableOption "password-store environment";
+  options.host.hm.pass = {
+    enable = lib.mkEnableOption "password-store environment";
+    yubikey = lib.mkOption {
+      type = lib.types.nullOr (lib.types.enum (builtins.attrNames realmKeys));
+      default = null;
+      description = ''
+        YubiKey inventory name within this host's realm to prefer for decryption.
+        Imports all OpenPGP public certificates from that realm for encryption.
+        Other available secret keys can still decrypt if this device is absent.
+      '';
+    };
+    idleTimeout = lib.mkOption {
+      type = lib.types.nullOr lib.types.ints.positive;
+      default = if cfg.yubikey == null then null else 15 * 60;
+      description = ''
+        Seconds of inactivity before pass stops scdaemon and gpg-agent to
+        require fresh authorization. Enforced on the next secret operation.
+        Null disables the wrapper.
+        Defaults to 15 minutes when a YubiKey is configured, otherwise null.
+      '';
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     programs = {
-      gpg.enable = true;
+      gpg = {
+        enable = true;
+        # GnuPG 2.4 does not fall back from its direct USB driver to PC/SC.
+        # Use the system reader service when it is already enabled for age.
+        scdaemonSettings = lib.optionalAttrs (pkgs.stdenv.isLinux && osConfig.services.pcscd.enable) {
+          disable-ccid = true;
+        };
+        # Writers need every recipient's public certificate, not just their own.
+        publicKeys = lib.optionals (cfg.yubikey != null) (
+          map (key: {
+            source = key.publicKey;
+            trust = "ultimate";
+          }) (builtins.attrValues realmKeys)
+        );
+      };
 
       password-store = {
         enable = true;
+        package =
+          if cfg.idleTimeout == null then
+            passPackage
+          else
+            pkgs.symlinkJoin {
+              name = "pass-with-idle-timeout";
+              paths = [ passPackage ];
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              postBuild = ''
+                rm "$out/bin/pass"
+                makeWrapper ${lib.getExe pkgs.pass-idle} "$out/bin/pass" \
+                  --add-flags ${
+                    lib.escapeShellArg (
+                      lib.escapeShellArgs [
+                        "--pass-program"
+                        (lib.getExe passPackage)
+                        "--gpgconf"
+                        "${config.programs.gpg.package}/bin/gpgconf"
+                        "--idle-seconds"
+                        (toString cfg.idleTimeout)
+                        "--"
+                      ]
+                    )
+                  }
+              '';
+              meta.mainProgram = "pass";
+            };
         settings = {
           # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
           PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
+        }
+        // lib.optionalAttrs (cfg.yubikey != null) {
+          PASSWORD_STORE_GPG_OPTS = "--try-secret-key ${realmKeys.${cfg.yubikey}.fingerprint}";
         };
       };
     };
@@ -27,7 +106,15 @@ in
       enable = true;
       enableSshSupport = false; # it's not 1:1 compatible and can mess output of `ssh-add -l`.
       enableZshIntegration = true;
-      pinentry.package = pkgs.pinentry-tty;
+      pinentry.package =
+        if pkgs.stdenv.hostPlatform.isDarwin then
+          pkgs.pinentry_mac
+        else if osConfig.host.desktop != null then
+          pkgs.pinentry-qt
+        else
+          pkgs.pinentry-tty;
+      # Ask pinentry to leave credential caching to the agent we reset on idle.
+      noAllowExternalCache = true;
     };
 
     # Refresh pinentry's store path before the old path is garbage-collected.

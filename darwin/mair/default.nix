@@ -12,8 +12,10 @@ in
 {
   system.stateVersion = 6;
 
-  home-manager.users.${username}.host.hm = {
-    dev.agents.mcp.stdioServers.firefox-devtools = {
+  home-manager.users.${username} = {
+    host.hm.pass.yubikey = "laptop";
+
+    host.hm.dev.agents.mcp.stdioServers.firefox-devtools = {
       instructions = ''
         Only use the Firefox DevTools MCP when the user explicitly requests browser
         interaction or browser-based debugging.

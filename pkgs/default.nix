@@ -25,6 +25,8 @@ in
 
   atomic-file-writes = atomicFileWrites;
 
+  auth-request = pkgs.callPackage ./auth-request { };
+
   codex-mcp-login = pkgs.callPackage ./codex-mcp-login { };
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
@@ -59,6 +61,8 @@ in
   };
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
+
+  pass-idle = pkgs.callPackage ./pass-idle { };
 
   proxmox-bootstrap = pkgs.callPackage ./proxmox-bootstrap {
     inherit atomicFileWrites;
