@@ -1,10 +1,13 @@
 import json
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from threading import Thread
 
 import pytest
+import tomli_w
 from ci_build.cli import NativeCommands, main
 
 OUTPUT = "/nix/store/" + "a" * 32 + "-result"
@@ -26,7 +29,7 @@ class FakeCommands:
             raise self.build_error
         return self.result
 
-    def run(self, arguments: Sequence[str]) -> None:
+    def run(self, arguments: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
         if self.upload_error:
             raise self.upload_error
         self.uploads.extend(
@@ -87,3 +90,49 @@ def test_native_commands_capture_output_and_report_failures() -> None:
     commands.run(["true"])
     with pytest.raises(subprocess.CalledProcessError):
         commands.run(["false"])
+
+
+def test_real_attic_uses_runner_credential(tmp_path: Path) -> None:
+    requests: list[tuple[str, str | None]] = []
+
+    class CacheServer(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            requests.append((self.path, self.headers.get("Authorization")))
+            # Stop before any store paths are uploaded; only exercise client setup.
+            self.send_error(403)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    class RealAtticCommands(FakeCommands):
+        def run(self, arguments: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
+            NativeCommands().run(arguments, env=dict(env or {}) | {"NIX_REMOTE": "dummy://"})
+
+    with HTTPServer(("127.0.0.1", 0), CacheServer) as server:
+        config = tmp_path / "runner.toml"
+        config.write_text(
+            tomli_w.dumps(
+                {
+                    "servers": {
+                        "ci": {
+                            "endpoint": f"http://127.0.0.1:{server.server_port}",
+                            "token": "test-ci-token",
+                        }
+                    }
+                }
+            )
+        )
+        thread = Thread(target=server.serve_forever)
+        thread.start()
+        try:
+            assert main([".#target"], config_file=str(config), commands=RealAtticCommands()) != 0
+            assert len(requests) == 1
+            path, authorization = requests[0]
+            assert path == "/_api/v1/cache-config/github"
+            assert authorization is not None
+            scheme, token = authorization.split()
+            assert scheme.lower() == "bearer"
+            assert token == "test-ci-token"
+        finally:
+            server.shutdown()
+            thread.join()

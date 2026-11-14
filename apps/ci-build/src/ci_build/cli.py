@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated, Protocol
 
@@ -25,15 +25,15 @@ class BuildResults(RootModel[list[BuildResult]]):
 class Commands(Protocol):
     def capture(self, arguments: Sequence[str]) -> str: ...
 
-    def run(self, arguments: Sequence[str]) -> None: ...
+    def run(self, arguments: Sequence[str], *, env: Mapping[str, str] | None = None) -> None: ...
 
 
 class NativeCommands:
     def capture(self, arguments: Sequence[str]) -> str:
         return subprocess.run(arguments, check=True, text=True, stdout=subprocess.PIPE).stdout
 
-    def run(self, arguments: Sequence[str]) -> None:
-        subprocess.run(arguments, check=True)
+    def run(self, arguments: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
+        subprocess.run(arguments, check=True, env=None if env is None else os.environ | dict(env))
 
 
 def build_and_publish(targets: Sequence[str], config: Path, commands: Commands) -> None:
@@ -62,8 +62,15 @@ def publish_outputs(result: str, config: Path, commands: Commands) -> None:
     if not paths:
         raise ValueError("Nix returned no build outputs to publish")
 
-    # Attic includes each output's closure, even when Nix reused an existing result.
-    commands.run(["attic", "--config", str(config), "push", "ci:github", *paths])
+    # Attic loads configuration through XDG; it has no config-file CLI option.
+    # Link the private credential without copying it or changing the job's environment.
+    with tempfile.TemporaryDirectory(prefix="ci-attic-") as directory:
+        config_directory = Path(directory) / "attic"
+        config_directory.mkdir()
+        (config_directory / "config.toml").symlink_to(config.resolve())
+
+        # Attic includes each output's closure, even when Nix reused an existing result.
+        commands.run(["attic", "push", "ci:github", *paths], env={"XDG_CONFIG_HOME": directory})
 
 
 def main(

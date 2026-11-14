@@ -1,6 +1,7 @@
 {
   lib,
   attic-client,
+  cacert,
   makeWrapper,
   nix,
   python3Packages,
@@ -23,12 +24,16 @@ python3Packages.buildPythonApplication {
   dependencies = [ python3Packages.pydantic ];
   nativeBuildInputs = [ makeWrapper ];
   nativeCheckInputs = with python3Packages; [
+    attic-client
     mypy
     pytestCheckHook
     pytest-cov
     pythonRuffCheckHook
+    tomli-w
   ];
+  __darwinAllowLocalNetworking = true;
   preCheck = ''
+    export NIX_SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
     mypy src/ci_build
   '';
   pythonImportsCheck = [ "ci_build" ];
