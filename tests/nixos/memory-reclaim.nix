@@ -12,7 +12,7 @@ pkgs.testers.runNixOSTest {
     host.memoryReclaim = {
       enable = true;
       package = pkgs.oomd;
-      cgroups = [ "system.slice/thp-fixture.service" ];
+      cgroups = [ "system.slice/thp-*.service" ];
       reserveMiB = 4;
       intervalSeconds = 2;
     };
@@ -31,6 +31,11 @@ pkgs.testers.runNixOSTest {
   testScript = ''
     start_all()
     machine.wait_for_unit("multi-user.target")
+    # An empty match is normal while VMs are stopped or migrating.
+    machine.succeed("systemctl start oomd-reclaim")
+    machine.sleep(3)
+    machine.succeed("systemctl is-active oomd-reclaim")
+    machine.succeed("systemctl stop oomd-reclaim")
     machine.succeed("systemctl start thp-fixture")
     machine.wait_for_file("/run/thp-ready")
     group = "/sys/fs/cgroup/system.slice/thp-fixture.service"

@@ -18,6 +18,17 @@ class Filesystem:
     def read(self, path: Path) -> str:
         return path.read_text()
 
+    def resolve_groups(self, root: Path, patterns: Sequence[str]) -> list[str]:
+        groups: set[str] = set()
+        for pattern in patterns:
+            if "*" in pattern:
+                groups.update(
+                    str(path.relative_to(root)) for path in root.glob(pattern) if path.is_dir()
+                )
+            else:
+                groups.add(pattern)
+        return sorted(groups)
+
 
 @dataclass(frozen=True)
 class Memory:
@@ -99,5 +110,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--cgroup", action="append", required=True)
     parser.add_argument("--output-file", type=Path, required=True)
     args = parser.parse_args(argv)
-    output = collect(Filesystem(), args.cgroup_root, args.cgroup)
+    source = Filesystem()
+    groups = source.resolve_groups(args.cgroup_root, args.cgroup)
+    output = collect(source, args.cgroup_root, groups)
     write_text_atomic(args.output_file, output, mode=0o644)

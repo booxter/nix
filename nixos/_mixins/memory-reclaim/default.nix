@@ -52,9 +52,9 @@ in
       description = "Meta oomd with reclaim_unmapped_anon support.";
     };
     cgroups = lib.mkOption {
-      type = lib.types.listOf (lib.types.strMatching "[a-zA-Z0-9_.@/-]+");
+      type = lib.types.listOf (lib.types.strMatching "[a-zA-Z0-9_.@/*-]+");
       default = [ ];
-      description = "Explicit cgroup paths relative to /sys/fs/cgroup; no wildcard targets.";
+      description = "Cgroup paths relative to /sys/fs/cgroup; * matches names within a directory.";
     };
     reserveMiB = lib.mkOption {
       type = lib.types.ints.positive;
@@ -84,9 +84,12 @@ in
         assertion =
           cfg.cgroups != [ ]
           && lib.all (
-            path: !(lib.hasPrefix "/" path) && !(builtins.elem ".." (lib.splitString "/" path))
+            path:
+            !(lib.hasPrefix "/" path)
+            && !(lib.hasInfix "**" path)
+            && !(builtins.elem ".." (lib.splitString "/" path))
           ) cfg.cgroups;
-        message = "memoryReclaim requires explicit relative cgroup targets without parent traversal";
+        message = "memoryReclaim requires relative cgroup targets without parent traversal or recursive globs";
       }
     ];
 

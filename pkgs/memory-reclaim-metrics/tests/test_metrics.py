@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import pytest
@@ -60,3 +61,34 @@ def test_atomic_export_replaces_stopped_vm_sample(tmp_path: Path) -> None:
     (tmp_path / "vm/memory.current").unlink()
     main(args)
     assert 'kind="unmapped_anon"' not in output.read_text()
+
+
+def test_wildcard_targets_follow_running_vms(tmp_path: Path) -> None:
+    output = tmp_path / "memory.prom"
+    args = [
+        "--cgroup-root",
+        str(tmp_path),
+        "--cgroup",
+        "qemu.slice/*.scope",
+        "--output-file",
+        str(output),
+    ]
+    main(args)
+    assert 'cgroup="' not in output.read_text()
+
+    for group in ("qemu.slice/100.scope", "qemu.slice/101.scope", "other.slice/102.scope"):
+        for name, text in files().items():
+            path = tmp_path / group / Path(name).name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
+    (tmp_path / "qemu.slice/not-a-directory.scope").touch()
+    main(args)
+    assert 'cgroup="qemu.slice/100.scope"' in output.read_text()
+    assert 'cgroup="qemu.slice/101.scope"' in output.read_text()
+    assert "other.slice" not in output.read_text()
+    assert "not-a-directory" not in output.read_text()
+
+    shutil.rmtree(tmp_path / "qemu.slice/100.scope")
+    main(args)
+    assert 'cgroup="qemu.slice/100.scope"' not in output.read_text()
+    assert 'cgroup="qemu.slice/101.scope"' in output.read_text()
