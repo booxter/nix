@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memory-reclaim-metrics"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = ["atomic-file-writes", "prometheus-client"]
+
+[project.scripts]
+memory-reclaim-metrics = "memory_reclaim_metrics:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=memory_reclaim_metrics --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]

@@ -128,12 +128,11 @@ in
             };
           }
         ) snapshots)
-        {
-          snapper-timeline = {
-            after = map (unit: "${unit}.service") snapshotUnits;
-            requires = map (unit: "${unit}.service") snapshotUnits;
-          };
-        }
+        # Both jobs need the mounted volumes and their snapshot subvolumes.
+        (lib.genAttrs [ "snapper-timeline" "snapper-cleanup" ] (_: {
+          after = map (unit: "${unit}.service") snapshotUnits;
+          requires = map (unit: "${unit}.service") snapshotUnits;
+        }))
       ];
     })
   ];

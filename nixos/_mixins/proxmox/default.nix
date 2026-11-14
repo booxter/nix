@@ -13,6 +13,7 @@ in
   imports = [
     ./api-certificate.nix
     ./guest.nix
+    ./memory-reclaim.nix
     ./node.nix
     ./oidc.nix
     ./options.nix

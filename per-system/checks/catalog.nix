@@ -38,6 +38,7 @@ let
       python-quality = pythonQualityCheck;
       agent-mcp = import ./agent-mcp.nix { inherit lib pkgs; };
       auth-request = pkgs.auth-request;
+      check-commit-message = pkgs.callPackage ../../hm/_mixins/dev/scm/pkgs/check-commit-message { };
       claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       hardware-signing = import ./hardware-signing.nix { inherit pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
@@ -58,6 +59,8 @@ let
       sudo-agent = import ./sudo-agent { inherit pkgs; };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      oomd = pkgs.oomd;
+      memory-reclaim-metrics = pkgs.memory-reclaim-metrics;
       repairr-package = pkgs.repairr;
       nv-gpconnect = pkgs.callPackage ../../nixos/nv/pkgs/gpconnect {
         interface = "lo";

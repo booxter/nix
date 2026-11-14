@@ -23,6 +23,13 @@ in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
 
+  oomd = pkgs.callPackage ./oomd { };
+
+  memory-reclaim-metrics = pkgs.callPackage ./memory-reclaim-metrics {
+    inherit atomicFileWrites;
+    inherit (pkgs) pythonRuffCheckHook;
+  };
+
   atomic-file-writes = atomicFileWrites;
 
   auth-request = pkgs.callPackage ./auth-request { };
