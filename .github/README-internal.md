@@ -21,17 +21,31 @@ For pull requests, CI runs:
 
 ## Runners
 
-The `ci` host provides six ephemeral `nix-ci` runners. It does not build
-locally; Nix delegates Linux builds to the builder hosts and macOS builds to
-`mmini`. The `mmini-ci` service provides the `nix-ci-darwin` label for checks
-and update jobs that must execute on macOS.
+The `ci` host provides six ephemeral `nix-ci` runners (`ci-1` through `ci-6`),
+and `frame` provides four (`frame-1` through `frame-4`). Linux builds use
+`builder1`–`builder3` and `frame`; runners on `frame` can also build locally.
+macOS builds use `mmini`. The `mmini-ci`
+service provides the `nix-ci-darwin` label for checks and update jobs that must
+execute on macOS.
+
+Linux runners retain their private Nix fetch and evaluation caches under
+`/var/cache/github-runner/<runner>/nix`. Registration state and workspaces are
+still cleared after each job.
 
 The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
 `nix-vm-darwin` label.
 
-Completed CI builds are published to both the private `default` Attic cache
-and the public `github` cache. Other managed hosts publish only to their
-realm's default cache.
+Daemon build hooks publish only to their realm's internal cache, including on
+runner hosts. The build and check jobs use `ci-build` to publish their selected
+output closures to the public `github` cache. Outputs reused from the internal
+cache are published too; unrelated store paths are never collected. Build or
+upload failures fail the job. Failed builds do not publish partial results.
+
+Runners receive a separate credential with pull and push access only to `github`.
+Linux supplies it through systemd credentials; the macOS runner reads its private
+rendered config. Helper tools and advisory diff builds retain the normal internal
+publishing policy unless their outputs are also selected by a build or check job.
+The CI credential is stored as `attic/ci_token` on `ci`, `frame`, and `mmini`.
 
 ## Config diffs
 

@@ -63,6 +63,7 @@ in
   frame = builder {
     hostName = "frame";
     speedFactor = 200;
+    uses = ciUses;
   };
   mmini = builder {
     hostName = "mmini";

@@ -16,6 +16,7 @@
   ];
 
   host = {
+    ci.runners = 4;
     disko = {
       layout = "luks";
       remoteUnlock = {
