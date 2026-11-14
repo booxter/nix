@@ -32,6 +32,14 @@ Linux runners retain their private Nix fetch and evaluation caches under
 `/var/cache/github-runner/<runner>/nix`. Registration state and workspaces are
 still cleared after each job.
 
+Linux runners use a minimal systemd `RootDirectory`. The Nix store is read-only,
+and builds go through the host daemon as an untrusted user. Explicit mounts
+provide Nix configuration, DNS, certificates, and user lookup; systemd supplies
+each runner's own workspace, state, logs, cache, and upload credential. Host
+homes and live secrets are absent. The privileged registration preparation
+still runs on the host before the isolated runner starts. This isolation does
+not apply to the macOS runner.
+
 The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
 `nix-vm-darwin` label.
 

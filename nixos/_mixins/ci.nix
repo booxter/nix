@@ -13,6 +13,8 @@ let
   );
 in
 {
+  imports = [ ./ci/sandbox.nix ];
+
   options.host.ci.runners = lib.mkOption {
     type = lib.types.ints.unsigned;
     default = 0;
