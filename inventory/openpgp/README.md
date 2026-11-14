@@ -66,5 +66,9 @@ and Yubico OTP is disabled over both USB and NFC.
 
 The OpenPGP keys were generated on-device without an off-card encryption-key
 backup. Signing and authentication use Ed25519; encryption uses cv25519.
-The keys have no expiration. The initial Android client versions are Password
-Store 1.13.5 and OpenKeychain 6.0.4; NFC decryption verification is pending.
+The keys have no expiration. Touch is enabled for all three operations using
+the changeable `on` policy. A harmless message encrypted only to this key was
+successfully decrypted over USB with touch.
+
+The initial Android client versions are Password Store 1.13.5 and OpenKeychain
+6.0.4; NFC decryption verification is pending.
