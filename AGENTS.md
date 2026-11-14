@@ -103,6 +103,8 @@ Scope: whole repository.
 
 ## SSH
 
+- Machines generally cannot access hosts in another realm. Do not attempt SSH
+  from home machines to work machines, or vice versa.
 - Use machine names, not IP addresses, with normal OpenSSH:
 
   ```sh
