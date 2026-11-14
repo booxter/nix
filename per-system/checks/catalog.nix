@@ -58,6 +58,7 @@ let
       sudo-agent = import ./sudo-agent { inherit pkgs; };
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      oomd = pkgs.oomd;
       repairr-package = pkgs.repairr;
       nv-gpconnect = pkgs.callPackage ../../nixos/nv/pkgs/gpconnect {
         interface = "lo";

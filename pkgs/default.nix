@@ -23,6 +23,8 @@ in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
 
+  oomd = pkgs.callPackage ./oomd { };
+
   atomic-file-writes = atomicFileWrites;
 
   auth-request = pkgs.callPackage ./auth-request { };
