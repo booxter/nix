@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ci-build"
+version = "0.1.0"
+description = "Build CI targets and publish their closures to Attic"
+requires-python = ">=3.13"
+dependencies = ["pydantic"]
+
+[project.scripts]
+ci-build = "ci_build.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=ci_build --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/ci_build"]
+strict = true
