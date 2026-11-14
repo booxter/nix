@@ -14,7 +14,7 @@ let
     .${interface.kind};
 in
 {
-  imports = [ ./home-cache-dns.nix ];
+  imports = [ ./home-split-dns.nix ];
 
   environment.etc."resolver/${config.host.network.lanDomain}".text = ''
     nameserver ${lan.gateway.address}

@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol CacheProbing: AnyObject {
+public protocol ServiceProbing: AnyObject {
   func check(completion: @escaping (Bool) -> Void)
   func cancel()
 }
@@ -10,6 +10,7 @@ public protocol ResolverWriting {
 }
 
 public struct ResolverFile: ResolverWriting {
+  // Keep ownership stable across daemon renames so upgrades can remove stale files.
   private static let marker = "# Managed by home-cache-dns.\n"
   private let url: URL
   private let contents: String
@@ -17,6 +18,29 @@ public struct ResolverFile: ResolverWriting {
   public init(url: URL, nameserver: String) {
     self.url = url
     contents = Self.marker + "nameserver \(nameserver)\n"
+  }
+
+  public static func removeOwnedFiles(in directory: URL) throws -> Bool {
+    let manager = FileManager.default
+    guard manager.fileExists(atPath: directory.path) else {
+      return false
+    }
+    let files = try manager.contentsOfDirectory(
+      at: directory, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey]
+    )
+    var changed = false
+    for file in files {
+      let properties = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+      guard properties.isRegularFile == true, properties.isSymbolicLink != true else {
+        continue
+      }
+      let contents = try String(contentsOf: file, encoding: .utf8)
+      if contents.hasPrefix(marker) {
+        try manager.removeItem(at: file)
+        changed = true
+      }
+    }
+    return changed
   }
 
   public func setEnabled(_ enabled: Bool) throws -> Bool {
@@ -57,14 +81,14 @@ enum ResolverError: Error {
 // All callbacks run on the main queue. A new path invalidates any probe still
 // completing on the previous network, including a late successful handshake.
 public final class ResolverController {
-  private let probe: CacheProbing
+  private let probe: ServiceProbing
   private let resolver: ResolverWriting
   private let reportError: (Error) -> Void
   private let reportChange: (Bool) -> Void
   private var generation = 0
 
   public init(
-    probe: CacheProbing,
+    probe: ServiceProbing,
     resolver: ResolverWriting,
     reportError: @escaping (Error) -> Void,
     reportChange: @escaping (Bool) -> Void = { _ in }

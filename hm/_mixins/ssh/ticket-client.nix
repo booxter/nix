@@ -14,6 +14,14 @@ let
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
+  agentIdentityArgs =
+    lib.concatMapStrings
+      (name: " --agent-identity ${lib.escapeShellArg "${config.home.homeDirectory}/.ssh/${name}"}")
+      (
+        lib.optionals (
+          osConfig.host.ssh.credentials.backend == "yubikey"
+        ) osConfig.host.ssh.credentials.yubikey.identityFiles
+      );
   ticketTargets = map (
     target: target // { principal = "${username}@${target.name}"; }
   ) osConfig.host.ssh.tickets.targets;
@@ -62,7 +70,7 @@ let
         target.name
         "${target.name}.local"
       ];
-      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs} --cert-alias %n ${target.name}";
+      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs}${agentIdentityArgs} --cert-alias %n ${target.name}";
     in
     {
       name = "ssh-ticket-ensure-${target.name}";

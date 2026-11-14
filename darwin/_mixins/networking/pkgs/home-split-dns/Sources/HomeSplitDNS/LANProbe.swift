@@ -2,19 +2,21 @@ import Foundation
 import Network
 import Security
 
-public final class LANProbe: CacheProbing {
+public final class LANProbe: ServiceProbing {
   public var interfaces: [NWInterface] = []
-  private let configuration: Configuration
+  private let service: Service
+  private let allowedInterfaces: [String]
   private var attempts: [TLSAttempt] = []
 
-  public init(configuration: Configuration) {
-    self.configuration = configuration
+  public init(service: Service, interfaces: [String]) {
+    self.service = service
+    self.allowedInterfaces = interfaces
   }
 
   public func check(completion: @escaping (Bool) -> Void) {
     cancel()
     let candidates = interfaces.filter {
-      configuration.interfaces.contains($0.name)
+      allowedInterfaces.contains($0.name)
         && ($0.type == .wifi || $0.type == .wiredEthernet)
     }
     guard !candidates.isEmpty else {
@@ -25,7 +27,7 @@ public final class LANProbe: CacheProbing {
     var remaining = candidates.count
     var finished = false
     attempts = candidates.map { interface in
-      TLSAttempt(configuration: configuration, interface: interface) { [weak self] reachable in
+      TLSAttempt(service: service, interface: interface) { [weak self] reachable in
         guard !finished else {
           return
         }
@@ -55,15 +57,15 @@ private final class TLSAttempt {
   private var completion: ((Bool) -> Void)?
   private var timeout: DispatchWorkItem?
 
-  init(configuration: Configuration, interface: NWInterface, completion: @escaping (Bool) -> Void) {
+  init(service: Service, interface: NWInterface, completion: @escaping (Bool) -> Void) {
     self.completion = completion
     let tls = NWProtocolTLS.Options()
     // Connect without DNS, but retain normal certificate and hostname checking.
-    sec_protocol_options_set_tls_server_name(tls.securityProtocolOptions, configuration.hostname)
+    sec_protocol_options_set_tls_server_name(tls.securityProtocolOptions, service.hostname)
     sec_protocol_options_set_peer_authentication_required(tls.securityProtocolOptions, true)
     let parameters = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
     parameters.requiredInterface = interface
-    connection = NWConnection(host: NWEndpoint.Host(configuration.address), port: 443, using: parameters)
+    connection = NWConnection(host: NWEndpoint.Host(service.address), port: 443, using: parameters)
   }
 
   func start() {

@@ -9,7 +9,7 @@ let
     mminiBuilder = ./public-keys/mmini-builder.pub;
     workLaptop = ./public-keys/jgwxhwdl4x.pub;
     workBuilder = ./public-keys/jgwxhwdl4x-nix-builder.pub;
-    yubikey = ./public-keys/yubikey.pub;
+    yubikey = yubikeys.home.main.sshPublicKey;
     workYubikeyMain = yubikeys.work.main.sshPublicKey;
     workYubikeyLaptop = yubikeys.work.laptop.sshPublicKey;
     fleetUserCa = ./public-keys/fleet-user-ca.pub;

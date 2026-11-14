@@ -5,7 +5,7 @@
   swiftpm,
 }:
 swiftPackages.stdenv.mkDerivation {
-  pname = "home-cache-dns";
+  pname = "home-split-dns";
   version = "1";
 
   src = ./.;
@@ -17,20 +17,20 @@ swiftPackages.stdenv.mkDerivation {
   doCheck = true;
   checkPhase = ''
     runHook preCheck
-    "$(swiftpmBinPath)/HomeCacheDNSChecks"
+    "$(swiftpmBinPath)/HomeSplitDNSChecks"
     runHook postCheck
   '';
 
   installPhase = ''
     runHook preInstall
-    install -D -m 0755 "$(swiftpmBinPath)/home-cache-dns" "$out/bin/home-cache-dns"
+    install -D -m 0755 "$(swiftpmBinPath)/home-split-dns" "$out/bin/home-split-dns"
     runHook postInstall
   '';
 
   meta = {
-    description = "Prefer LAN DNS for the home cache when its identity is reachable locally";
+    description = "Prefer LAN DNS for home services with locally reachable TLS identities";
     license = lib.licenses.mit;
-    mainProgram = "home-cache-dns";
+    mainProgram = "home-split-dns";
     platforms = lib.platforms.darwin;
   };
 }

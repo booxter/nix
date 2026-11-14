@@ -37,7 +37,12 @@ Run `sops-update` when a host secret should receive missing template keys.
 realm and report completed and remaining hosts if an operation fails partway
 through.
 
-## Work operator YubiKeys
+## Operator YubiKeys
+
+Frame and mmini use the `home.main` public age handle from
+[inventory](../../inventory/yubikeys.nix). Activation supplies it from the Nix
+store, so these hosts do not need a manually provisioned `yubi-nix.txt` file.
+The handle refers to the existing YubiKey identity; recipients do not change.
 
 The work laptop's operator identity file combines the public handles for
 `work.main` and `work.laptop` from [inventory](../../inventory/yubikeys.nix).

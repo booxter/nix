@@ -270,6 +270,7 @@ def test_ensure_ticket_serializes_concurrent_issuance(tmp_path):
         ttl=None,
         ca_agent=False,
         ca_key=str(tmp_path / "ca"),
+        agent_identity=[],
     )
 
     with ThreadPoolExecutor(max_workers=2) as executor:

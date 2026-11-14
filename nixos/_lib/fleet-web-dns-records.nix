@@ -1,6 +1,7 @@
 {
   addressFor,
   fleetServices,
+  lanDomain,
   ttlSeconds ? 300,
 }:
 let
@@ -19,8 +20,13 @@ let
           && builtins.match ".*[.].*" contribution.value.internal.serverName != null
         ) fleetServices.contributions
       );
-  publicRecords = map (
-    contribution: mkRecord contribution.value.public.hostName contribution.value.public.splitDnsHost
-  ) fleetServices.public;
+  # UniFi's A-only overrides expose the public CNAME through AAAA queries.
+  # A local alias keeps every query type pointed at the LAN hostname instead.
+  publicRecords = map (contribution: {
+    type = "CNAME_RECORD";
+    domain = contribution.value.public.hostName;
+    targetDomain = "${contribution.value.public.splitDnsHost}.${lanDomain}";
+    inherit ttlSeconds;
+  }) fleetServices.public;
 in
 internalRecords ++ publicRecords

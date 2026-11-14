@@ -1,5 +1,5 @@
 import Foundation
-import HomeCacheDNS
+import HomeSplitDNS
 
 struct CheckFailure: Error {
   let message: String
@@ -12,7 +12,7 @@ func expect(_ condition: @autoclosure () throws -> Bool, _ message: String) thro
 }
 
 // Keep canceled results deliverable to exercise late callbacks during roaming.
-final class FakeProbe: CacheProbing {
+final class FakeProbe: ServiceProbing {
   var replies: [(Bool) -> Void] = []
 
   func check(completion: @escaping (Bool) -> Void) {
@@ -113,6 +113,93 @@ func testForeignResolverIsPreserved(_ root: URL) throws {
   try expect(String(contentsOf: path) == contents, "operator resolver must not be deleted")
 }
 
+func testIndependentServices(_ root: URL) throws {
+  let firstPath = root.appendingPathComponent("first.example.com")
+  let secondPath = root.appendingPathComponent("second.example.com")
+  let firstProbe = FakeProbe()
+  let secondProbe = FakeProbe()
+  var errors: [Error] = []
+  let first = ResolverController(
+    probe: firstProbe,
+    resolver: ResolverFile(url: firstPath, nameserver: "192.168.0.1"),
+    reportError: { errors.append($0) }
+  )
+  let second = ResolverController(
+    probe: secondProbe,
+    resolver: ResolverFile(url: secondPath, nameserver: "192.168.0.1"),
+    reportError: { errors.append($0) }
+  )
+
+  first.refresh()
+  second.refresh()
+  firstProbe.reply(true)
+  secondProbe.reply(false)
+  try expect(FileManager.default.fileExists(atPath: firstPath.path), "reachable service must use LAN DNS")
+  try expect(!FileManager.default.fileExists(atPath: secondPath.path), "unreachable service must use default DNS")
+
+  second.refresh()
+  secondProbe.reply(true)
+  first.refresh()
+  firstProbe.reply(false)
+  try expect(!FileManager.default.fileExists(atPath: firstPath.path), "failed service must lose its override")
+  try expect(FileManager.default.fileExists(atPath: secondPath.path), "another service must remain on LAN DNS")
+  second.stop()
+  try expect(errors.isEmpty, "independent service transitions should succeed")
+}
+
+func testOwnedResolverCleanup(_ root: URL) throws {
+  let directory = root.appendingPathComponent("cleanup")
+  try expect(!ResolverFile.removeOwnedFiles(in: directory), "missing resolver directory needs no cleanup")
+  let stale = directory.appendingPathComponent("removed.example.com")
+  _ = try ResolverFile(url: stale, nameserver: "192.168.0.1").setEnabled(true)
+  let foreign = directory.appendingPathComponent("operator.example.com")
+  let foreignContents = "nameserver 10.0.0.1\n"
+  try foreignContents.write(to: foreign, atomically: true, encoding: .utf8)
+  let link = directory.appendingPathComponent("linked.example.com")
+  try FileManager.default.createSymbolicLink(at: link, withDestinationURL: foreign)
+
+  try expect(ResolverFile.removeOwnedFiles(in: directory), "restart must remove owned files absent from inventory")
+  try expect(!FileManager.default.fileExists(atPath: stale.path), "stale override must be removed")
+  try expect(String(contentsOf: foreign) == foreignContents, "operator resolver must be preserved")
+  try expect(link.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink == true, "static symlink must be preserved")
+  try expect(!ResolverFile.removeOwnedFiles(in: directory), "repeated cleanup must be a no-op")
+}
+
+func configuration(_ services: [[String: String]]) throws -> Configuration {
+  let data = try JSONSerialization.data(withJSONObject: [
+    "services": services,
+    "nameserver": "192.168.0.1",
+    "interfaces": ["en0"],
+  ])
+  return try JSONDecoder().decode(Configuration.self, from: data)
+}
+
+func testConfiguration() throws {
+  try configuration([]).validate()
+  try configuration([
+    ["hostname": "cache.example.com", "address": "192.168.16.3"],
+    ["hostname": "dash.example.com", "address": "192.168.20.2"],
+  ]).validate()
+
+  let invalidServices = [
+    [["hostname": "../cache", "address": "192.168.16.3"]],
+    [["hostname": "cache.example.com", "address": "invalid"]],
+    [
+      ["hostname": "cache.example.com", "address": "192.168.16.3"],
+      ["hostname": "CACHE.example.com", "address": "192.168.20.2"],
+    ],
+  ]
+  for services in invalidServices {
+    var rejected = false
+    do {
+      try configuration(services).validate()
+    } catch {
+      rejected = true
+    }
+    try expect(rejected, "unsafe or duplicate service configuration must be rejected")
+  }
+}
+
 func testWriteFailureIsReported(_ root: URL) throws {
   let parent = root.appendingPathComponent("not-a-directory")
   try Data().write(to: parent)
@@ -138,7 +225,10 @@ do {
   try testRestartAndConfigurationChange(root)
   try testForeignResolverIsPreserved(root)
   try testWriteFailureIsReported(root)
-  print("Home cache DNS behavior checks passed.")
+  try testIndependentServices(root)
+  try testOwnedResolverCleanup(root)
+  try testConfiguration()
+  print("Home split DNS behavior checks passed.")
 } catch {
   FileHandle.standardError.write(Data("\(error)\n".utf8))
   exit(1)

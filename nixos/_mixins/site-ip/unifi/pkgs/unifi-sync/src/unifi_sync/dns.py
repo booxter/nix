@@ -156,7 +156,12 @@ def choose_site(sites: list[dict[str, Any]], requested_site: str) -> dict[str, A
 
 
 def policy_key(record_type: str, domain: str) -> tuple[str, str]:
-    return record_type.upper(), normalize_dns_name(domain)
+    record_type = record_type.upper()
+    # A and CNAME are alternative representations of our managed host names.
+    # Share their identity so transitions update the existing policy in place.
+    if record_type in SUPPORTED_RECORD_TYPES:
+        record_type = "HOST_RECORD"
+    return record_type, normalize_dns_name(domain)
 
 
 def policies_by_key(
@@ -204,6 +209,9 @@ def update_plan(
             changes[key] = _change(None, value)
         return "create", desired_payload, changes
 
+    current_type = existing_policy.get("type")
+    if current_type != record.record_type:
+        changes["type"] = _change(current_type, record.record_type)
     current_enabled = bool(existing_policy.get("enabled"))
     if current_enabled != record.enabled:
         changes["enabled"] = _change(current_enabled, record.enabled)
