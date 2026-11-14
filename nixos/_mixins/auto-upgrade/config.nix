@@ -10,7 +10,6 @@ let
   autoUpgradeTools = pkgs.callPackage ./package {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
-  cfg = config.host.autoUpgrade;
   hostname = config.networking.hostName;
   policy = fleetInventory.autoUpgrade.policy;
   # Keep host evaluation local; fleet constraints are checked against this
@@ -31,28 +30,12 @@ let
   };
   metricsEnabled = config.host.observability.enable;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile/auto-upgrade";
-  toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
-    inherit hostname;
-    inherit (cfg) holds;
-  };
   toolCommand =
     arguments: utils.escapeSystemdExecArgs ([ (lib.getExe autoUpgradeTools) ] ++ arguments);
   rebootIfNeeded = toolCommand [
     "reboot-if-needed"
     "--shutdown-executable"
     "${config.systemd.package}/bin/shutdown"
-  ];
-  upgradeHoldGuard = toolCommand [
-    "guard"
-    "--config"
-    toolsConfig
-  ];
-  writeHoldMetrics = toolCommand [
-    "write-hold-metrics"
-    "--config"
-    toolsConfig
-    "--output"
-    "${textfileDir}/nixos-upgrade-hold.prom"
   ];
   writeSuccessMetric = toolCommand [
     "write-success-metric"
@@ -67,6 +50,7 @@ let
     "/var/lib/nixos-reboot-metrics/pending-since"
   ];
   maintenanceGuards = builtins.attrValues config.host.maintenance.guards;
+  maintenanceConditions = builtins.attrValues config.host.maintenance.holds;
 in
 {
   config = lib.mkMerge [
@@ -76,12 +60,6 @@ in
           switch.cadence = "daily";
           reboot.cadence = "daily";
         };
-        holds = [
-          {
-            startDate = "2026-06-08";
-            stopDate = "2026-06-28";
-          }
-        ];
       };
 
       system.autoUpgrade = {
@@ -127,20 +105,16 @@ in
       };
     })
 
-    (lib.mkIf (cfg.holds != [ ]) {
-      systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
+    (lib.mkIf (maintenanceConditions != [ ]) {
+      systemd.services.nixos-upgrade.serviceConfig.ExecCondition = maintenanceConditions;
     })
 
-    (lib.mkIf (cfg.holds != [ ] && schedule.reboot.mode == "scheduled") {
-      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
+    (lib.mkIf (maintenanceConditions != [ ] && schedule.reboot.mode == "scheduled") {
+      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = maintenanceConditions;
     })
 
     (lib.mkIf metricsEnabled {
       host.observability.nodeExporter.textfile.directories.auto-upgrade = textfileDir;
-
-      # Update immediately on switch so adding or removing a hold changes alert
-      # suppression without waiting for the next hourly timer tick.
-      system.activationScripts.nixosUpgradeHoldMetrics.text = writeHoldMetrics;
 
       systemd.services = {
         nixos-reboot-metrics = {
@@ -152,13 +126,6 @@ in
           };
         };
         nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
-        nixos-upgrade-hold-metrics = {
-          description = "Write NixOS auto-upgrade hold metrics";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = writeHoldMetrics;
-          };
-        };
       };
 
       systemd.timers.nixos-reboot-metrics = {
@@ -167,17 +134,6 @@ in
           OnBootSec = "1min";
           OnUnitActiveSec = "5min";
           Unit = "nixos-reboot-metrics.service";
-        };
-      };
-
-      systemd.timers.nixos-upgrade-hold-metrics = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "5min";
-          OnCalendar = "hourly";
-          Persistent = true;
-          RandomizedDelaySec = "1min";
-          Unit = "nixos-upgrade-hold-metrics.service";
         };
       };
 
