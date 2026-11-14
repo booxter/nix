@@ -16,6 +16,16 @@
     };
   };
 
+  home.nfc = {
+    model = "YubiKey 5C NFC";
+    serial = "31341726";
+    openpgp = {
+      publicKey = ./openpgp/home-nfc.asc;
+      fingerprint = "C7B35E86998DC4F54D19CBEB25CF345EE4DD440F";
+      encryptionFingerprint = "DCD8DAAF0BF657D21253D2AED6543BA0E885CCDB";
+    };
+  };
+
   work = {
     main = {
       model = "YubiKey 5C Nano";

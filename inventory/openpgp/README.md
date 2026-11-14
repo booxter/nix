@@ -57,3 +57,14 @@ homes compete for the card, stop their `scdaemon` processes before retrying.
 Keep the revocation certificate and a recovery method outside the password
 store. Git backs up encrypted entries, not hardware private keys. Re-encryption
 changes the current files; old Git revisions still require their old recipients.
+
+## Home NFC
+
+`home.nfc` is the YubiKey 5C NFC, serial `31341726`, intended for Android
+Password Store with OpenKeychain. Its applications were reset before provisioning,
+and Yubico OTP is disabled over both USB and NFC.
+
+The OpenPGP keys were generated on-device without an off-card encryption-key
+backup. Signing and authentication use Ed25519; encryption uses cv25519.
+The keys have no expiration. The initial Android client versions are Password
+Store 1.13.5 and OpenKeychain 6.0.4; NFC decryption verification is pending.
