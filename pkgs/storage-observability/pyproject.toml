@@ -12,6 +12,7 @@ dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
 [project.scripts]
 storage-storcli-metrics = "storage_observability.cli:hba_main"
 storage-md-metrics = "storage_observability.cli:md_main"
+storage-md-maintenance = "storage_observability.cli:maintenance_main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

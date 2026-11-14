@@ -23,6 +23,11 @@ in
 
     environment.systemPackages = [ pkgs.mdadm ];
 
+    # Udev's mdadm --incremental cannot activate some unfinished reshapes after
+    # reboot; they need operator-led --assemble recovery. Hold maintenance until
+    # the reshape finishes rather than automate recovery. Revisit if needed.
+    host.maintenance.holds.mdraid = lib.getExe' pkgs.storage-observability "storage-md-maintenance";
+
     # node_exporter cannot parse transient raid_disks values such as
     # "11 (10)" during reshape, so use the dedicated sysfs collector.
     services.prometheus.exporters.node.extraFlags = lib.mkIf observabilityEnabled [

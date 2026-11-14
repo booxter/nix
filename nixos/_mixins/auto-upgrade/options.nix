@@ -62,20 +62,6 @@ let
       };
     };
   };
-  holdType = lib.types.submodule {
-    options = {
-      startDate = lib.mkOption {
-        type = lib.types.str;
-        example = "2026-07-06";
-        description = "Inclusive local start date for a NixOS auto-upgrade hold window in YYYY-MM-DD format.";
-      };
-      stopDate = lib.mkOption {
-        type = lib.types.str;
-        example = "2026-07-19";
-        description = "Inclusive local stop date for a NixOS auto-upgrade hold window in YYYY-MM-DD format.";
-      };
-    };
-  };
 in
 {
   options.host.autoUpgrade = {
@@ -83,23 +69,6 @@ in
       type = lib.types.attrsOf claimType;
       default = { };
       description = "Role and relationship constraints used to plan unattended maintenance.";
-    };
-
-    holds = lib.mkOption {
-      type = lib.types.listOf holdType;
-      default = [ ];
-      example = [
-        {
-          startDate = "2026-07-06";
-          stopDate = "2026-07-19";
-        }
-      ];
-      description = ''
-        Inclusive local-date ranges during which unattended NixOS auto-upgrade
-        maintenance should be skipped. Timers still fire on schedule, but the
-        upgrade service and separately scheduled reboot service exit cleanly
-        before they perform changes.
-      '';
     };
   };
 }

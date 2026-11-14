@@ -7,6 +7,8 @@
     mountOptions = [
       "compress=zstd"
       "noatime"
+      # Keep SSH available when an interrupted reshape needs operator recovery.
+      "nofail"
     ];
     slowActivation = true;
     snapshots = true;
