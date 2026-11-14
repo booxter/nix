@@ -59,6 +59,7 @@ let
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       oomd = pkgs.oomd;
+      memory-reclaim-metrics = pkgs.memory-reclaim-metrics;
       repairr-package = pkgs.repairr;
       nv-gpconnect = pkgs.callPackage ../../nixos/nv/pkgs/gpconnect {
         interface = "lo";

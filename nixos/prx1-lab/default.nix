@@ -3,6 +3,7 @@
   system.stateVersion = "25.11";
 
   imports = [
+    ./memory-reclaim.nix
     ./netboot.nix
   ];
 
