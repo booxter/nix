@@ -26,6 +26,10 @@ locally; Nix delegates Linux builds to the builder hosts and macOS builds to
 `mmini`. The `mmini-ci` service provides the `nix-ci-darwin` label for checks
 and update jobs that must execute on macOS.
 
+Linux runners retain their private Nix fetch and evaluation caches under
+`/var/cache/github-runner/<runner>/nix`. Registration state and workspaces are
+still cleared after each job.
+
 The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
 `nix-vm-darwin` label.
 

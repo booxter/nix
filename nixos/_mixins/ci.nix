@@ -28,7 +28,13 @@ in
       extraLabels = [ "nix-ci" ];
       noDefaultLabels = true;
       replace = true;
+      extraEnvironment.NIX_CACHE_HOME = "/var/cache/github-runner/${name}/nix";
       serviceOverrides = {
+        # Registration wipes the state and work directories, so keep Nix's
+        # fetch and evaluation caches in a separate directory for each runner.
+        CacheDirectory = "github-runner/${name}";
+        CacheDirectoryMode = "0700";
+
         # Ephemeral runners must register again after job completion or an OOM kill.
         Restart = lib.mkForce "always";
         RestartSec = "5s";
