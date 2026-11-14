@@ -13,6 +13,7 @@ let
   webDnsRecords = import ../../../_lib/fleet-web-dns-records.nix {
     fleetServices = fleetWebServices;
     addressFor = siteNetwork.addressFor;
+    lanDomain = config.host.network.lanDomain;
   };
   wireguardStaticRoutes = lib.mapAttrsToList (name: network: {
     destination = network.cidr;
