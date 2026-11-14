@@ -61,6 +61,11 @@ let
       isGuest = true;
       allLibraries = false;
     }
+    {
+      name = "Alex";
+      isGuest = true;
+      extraLibraries = [ "Attic" ];
+    }
   ];
   getUser =
     {
