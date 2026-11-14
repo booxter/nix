@@ -36,7 +36,7 @@ in
   host.realm = "work";
 
   host.hardware.isLaptop = true;
-  host.network.homeCacheDns.enable = true;
+  host.network.homeSplitDns.enable = true;
   host.network.interfaces = {
     en0.kind = "wireless";
     en7 = { };
