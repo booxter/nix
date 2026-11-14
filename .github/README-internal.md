@@ -21,10 +21,11 @@ For pull requests, CI runs:
 
 ## Runners
 
-The `ci` host provides six ephemeral `nix-ci` runners. It does not build
-locally; Nix delegates Linux builds to the builder hosts and macOS builds to
-`mmini`. The `mmini-ci` service provides the `nix-ci-darwin` label for checks
-and update jobs that must execute on macOS.
+The `ci` host provides six ephemeral `nix-ci` runners (`ci-1` through `ci-6`),
+and `frame` provides four (`frame-1` through `frame-4`). Runner jobs delegate
+Linux builds to the builder hosts and macOS builds to `mmini`. The `mmini-ci`
+service provides the `nix-ci-darwin` label for checks and update jobs that must
+execute on macOS.
 
 Linux runners retain their private Nix fetch and evaluation caches under
 `/var/cache/github-runner/<runner>/nix`. Registration state and workspaces are
@@ -33,9 +34,9 @@ still cleared after each job.
 The separate `mmini-vm-ci` service serves `booxter/nix-darwin-vm` with the
 `nix-vm-darwin` label.
 
-Completed CI builds are published to both the private `default` Attic cache
-and the public `github` cache. Other managed hosts publish only to their
-realm's default cache.
+The `ci` and `mmini` hosts publish completed builds to both the private `default`
+Attic cache and the public `github` cache. Other managed hosts, including `frame`,
+publish only to their realm's default cache.
 
 ## Config diffs
 

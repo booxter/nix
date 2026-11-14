@@ -28,7 +28,12 @@ in
       extraLabels = [ "nix-ci" ];
       noDefaultLabels = true;
       replace = true;
-      extraEnvironment.NIX_CACHE_HOME = "/var/cache/github-runner/${name}/nix";
+      extraEnvironment = {
+        NIX_CACHE_HOME = "/var/cache/github-runner/${name}/nix";
+
+        # Runner hosts also serve interactive users; delegate only CI builds.
+        NIX_CONFIG = "max-jobs = 0";
+      };
       serviceOverrides = {
         # Registration wipes the state and work directories, so keep Nix's
         # fetch and evaluation caches in a separate directory for each runner.
