@@ -2,6 +2,7 @@ import Darwin
 import Foundation
 import HomeCacheDNS
 import Network
+import SystemConfiguration
 
 func log(_ message: String) {
   FileHandle.standardError.write(Data("home-cache-dns: \(message)\n".utf8))
@@ -10,6 +11,16 @@ func log(_ message: String) {
 func fail(_ error: Error) -> Never {
   log(String(describing: error))
   exit(1)
+}
+
+func notifyResolverChange() {
+  // Ask configd to rebuild DNS configuration after an /etc/resolver change.
+  // The work Mac initially omitted the override from its active DNS configuration.
+  guard let store = SCDynamicStoreCreate(nil, "home-cache-dns" as CFString, nil, nil),
+    SCDynamicStoreNotifyValue(store, "State:/Network/MulticastDNS" as CFString)
+  else {
+    fail(NSError(domain: NSOSStatusErrorDomain, code: Int(SCError())))
+  }
 }
 
 let usage = "usage: home-cache-dns --config PATH [--check]"
@@ -56,6 +67,7 @@ do {
     resolver: resolver,
     reportError: { fail($0) },
     reportChange: { enabled in
+      notifyResolverChange()
       log(enabled ? "LAN DNS enabled for \(configuration.hostname)" : "using default DNS for \(configuration.hostname)")
     }
   )
