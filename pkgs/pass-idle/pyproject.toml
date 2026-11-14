@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pass-idle"
+version = "0.1.0"
+description = "Reset GnuPG authorization after password-store inactivity"
+requires-python = ">=3.13"
+dependencies = ["atomic-file-writes"]
+
+[project.scripts]
+pass-idle = "pass_idle.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=pass_idle --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/pass_idle"]
+strict = true

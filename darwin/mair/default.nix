@@ -15,6 +15,8 @@ in
   system.stateVersion = 6;
 
   home-manager.users.${username} = {
+    host.hm.pass.idleTimeout = 15 * 60;
+
     programs = {
       gpg.publicKeys = [
         {

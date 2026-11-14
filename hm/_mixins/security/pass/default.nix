@@ -8,7 +8,18 @@ let
   cfg = config.host.hm.pass;
 in
 {
-  options.host.hm.pass.enable = lib.mkEnableOption "password-store environment";
+  options.host.hm.pass = {
+    enable = lib.mkEnableOption "password-store environment";
+    idleTimeout = lib.mkOption {
+      type = lib.types.nullOr lib.types.ints.positive;
+      default = null;
+      description = ''
+        Seconds of inactivity before pass stops scdaemon and gpg-agent to
+        require fresh authorization. Enforced on the next secret operation.
+        Null disables the wrapper.
+      '';
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     programs = {
@@ -16,6 +27,31 @@ in
 
       password-store = {
         enable = true;
+        package = lib.mkIf (cfg.idleTimeout != null) (
+          pkgs.symlinkJoin {
+            name = "pass-with-idle-timeout";
+            paths = [ pkgs.pass ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              rm "$out/bin/pass"
+              makeWrapper ${lib.getExe pkgs.pass-idle} "$out/bin/pass" \
+                --add-flags ${
+                  lib.escapeShellArg (
+                    lib.escapeShellArgs [
+                      "--pass-program"
+                      (lib.getExe pkgs.pass)
+                      "--gpgconf"
+                      "${config.programs.gpg.package}/bin/gpgconf"
+                      "--idle-seconds"
+                      (toString cfg.idleTimeout)
+                      "--"
+                    ]
+                  )
+                }
+            '';
+            meta.mainProgram = "pass";
+          }
+        );
         settings = {
           # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
           PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";

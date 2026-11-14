@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""Stand-in for pass; echo streams and arguments without reading a store."""
+
+import json
+import os
+import signal
+import sys
+
+if os.environ.get("TEST_SIGNAL"):
+    os.kill(os.getpid(), signal.SIGTERM)
+
+print(json.dumps({"arguments": sys.argv[1:], "input": sys.stdin.read()}))
+print("pass stderr", file=sys.stderr)
+sys.exit(int(os.environ.get("TEST_PASS_STATUS", "0")))

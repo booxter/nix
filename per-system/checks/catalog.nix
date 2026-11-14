@@ -44,6 +44,7 @@ let
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;
       letterboxd-sync = pkgs.letterboxd-sync;
+      pass-idle = pkgs.pass-idle;
       proxmox-bootstrap = pkgs.proxmox-bootstrap;
       gpclient = pkgs.gpclient;
       nr = pkgs.callPackage ../../hm/_mixins/dev/nix/pkgs/nr { };

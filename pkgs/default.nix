@@ -60,6 +60,8 @@ in
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
+  pass-idle = pkgs.callPackage ./pass-idle { };
+
   proxmox-bootstrap = pkgs.callPackage ./proxmox-bootstrap {
     inherit atomicFileWrites;
   };

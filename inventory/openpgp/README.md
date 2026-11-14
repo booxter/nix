@@ -16,6 +16,23 @@ Mair imports the public key and makes `pass` prefer it through
 `PASSWORD_STORE_GPG_OPTS`. This is a preference, not a requirement: other
 available secret keys can still decrypt entries if the Nano cannot.
 
+On mair, `pass` resets `scdaemon` and `gpg-agent` before its next secret
+operation after 15 minutes of inactivity. Successful operations restart
+the timer when they finish. Plain `pass`/`pass ls`, find, help, and version
+commands bypass it. Listings with arguments and Git commands participate:
+`pass ls NAME` can decrypt an entry, as can `pass git diff` through textconv.
+The first use also resets authorization. Concurrent secret operations wait for
+one another, so an active read or edit cannot be interrupted by another reset.
+State contains only a timestamp per GnuPG home under
+`$XDG_STATE_HOME/pass-idle` (default `~/.local/state/pass-idle`).
+
+This is enforced by the wrapper when invoked, not by a background timer or the
+YubiKey itself. Direct `gpg` use bypasses it, and resetting the shared agent
+also clears other GnuPG authorization for that home. GnuPG's ordinary cache
+TTLs do not expire its YubiKey PIN cache. A reset failure stops the operation.
+Configure other hosts through `host.hm.pass.idleTimeout` when their own keys
+are ready.
+
 The password store's `.gpg-id` remains the recipient policy. It currently
 retains the old software-key recipient for Android. Add and verify the future
 NFC key before removing that recipient. Public keys for every recipient must
