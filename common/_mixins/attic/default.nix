@@ -64,6 +64,7 @@ in
 {
   imports = [
     ./assertions.nix
+    ./ci.nix
     ./config.nix
   ]
   ++ lib.optionals isLinux [

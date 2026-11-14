@@ -12,6 +12,8 @@ Scope: whole repository.
   paste shared patterns; refactor them when useful, normally in a separate
   commit.
 - Prefer declarative Nix changes; keep unrelated worktree changes intact.
+- Keep documentation minimal: basic introductions and policy choices. Do not
+  expand docs with implementation details that are obvious from the code.
 - When repository code causes an issue, do not work around it with manual live
   actions. Stop and fix the code, or report the bug and ask before proceeding.
 - Investigate unexpected system behavior before explaining it. Inspect the

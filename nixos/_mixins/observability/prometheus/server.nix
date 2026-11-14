@@ -130,6 +130,7 @@ in
     # Prometheus scrapes and stores time-series metrics from this machine.
     services.prometheus = {
       enable = true;
+      globalConfig.scrape_interval = "1m";
       checkConfig = "syntax-only";
       listenAddress = "127.0.0.1";
       port = cfg.port;

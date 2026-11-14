@@ -1,20 +1,9 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
-  runnerNames = map (index: "ci-${toString index}") (lib.range 1 6);
-in
+{ lib, ... }:
 {
   system.stateVersion = "25.11";
 
   host = {
-    attic.publishCaches.beast = [
-      "default"
-      "github"
-    ];
+    ci.runners = 6;
     network.macAddress = "bc:24:11:7f:01:17";
     nix.builderClient = {
       buildUse = "ci";
@@ -28,32 +17,4 @@ in
   };
 
   nix.settings.max-jobs = lib.mkForce 0;
-
-  services.github-runners = lib.genAttrs runnerNames (name: {
-    enable = true;
-    url = "https://github.com/booxter/nix";
-    tokenFile = config.sops.secrets."github/actions_runner/token".path;
-    tokenType = "access";
-    inherit name;
-    ephemeral = true;
-    extraLabels = [ "nix-ci" ];
-    noDefaultLabels = true;
-    replace = true;
-    serviceOverrides = {
-      # Ephemeral runners must register again after job completion or an OOM kill.
-      Restart = lib.mkForce "always";
-      RestartSec = "5s";
-    };
-    extraPackages = with pkgs; [
-      findutils
-      gawk
-      gnumake
-      gnugrep
-      jq
-    ];
-  });
-
-  sops.secrets = {
-    "github/actions_runner/token" = { };
-  };
 }

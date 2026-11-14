@@ -1,14 +1,14 @@
 "use strict";
 
 function nixBuildCmd(attr) {
-  return `nix build .#${attr} -L --show-trace`;
+  return `nix run .#ci-build -- .#${attr}`;
 }
 
 function nixChecksBuildCmd(system, checks) {
   const attributes = checks.map(
     (check) => `".#checks.${system}.${check}"`,
   );
-  return `nix build --keep-going --no-link -L --show-trace ${attributes.join(" ")}`;
+  return `nix run .#ci-build -- ${attributes.join(" ")}`;
 }
 
 function checkRunner(system) {

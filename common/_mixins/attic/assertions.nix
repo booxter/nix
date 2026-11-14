@@ -9,6 +9,15 @@ in
 {
   assertions = [
     {
+      assertion = builtins.all (
+        serverName:
+        builtins.all (cacheName: !(servers.${serverName}.caches.${cacheName}.public or false)) (
+          publishCaches.${serverName}
+        )
+      ) knownPublishServerNames;
+      message = "Daemon build hooks may publish only to internal caches; public uploads belong to CI jobs.";
+    }
+    {
       assertion =
         localServer == null || localServer.endpoint == config.host.web.services.atticd.internal.url;
       message = "Attic server '${config.networking.hostName}' inventory endpoint must match its internal web URL";

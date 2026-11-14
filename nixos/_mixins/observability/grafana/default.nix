@@ -170,6 +170,7 @@ in
               url = "http://127.0.0.1:${toString prometheusPort}";
               isDefault = true;
               jsonData = {
+                timeInterval = config.services.prometheus.globalConfig.scrape_interval;
                 manageAlerts = true;
                 alertmanagerUid = grafanaAlertmanagerUid;
               };

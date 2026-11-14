@@ -458,7 +458,9 @@ fn generated_tree_copy_normalizes_text_and_skips_package_noise() {
     let destination = TempDir::new().expect("destination tree");
     let etc = source.path().join("etc");
     fs::create_dir_all(etc.join("nix")).expect("nix directory");
-    fs::create_dir_all(etc.join("ssl/certs")).expect("certificate directory");
+    fs::create_dir_all(etc.join("ssl")).expect("SSL directory");
+    fs::create_dir(source.path().join("certificates")).expect("certificate directory");
+    symlink("../../certificates", etc.join("ssl/certs")).expect("certificate link");
     fs::create_dir_all(etc.join("test-links")).expect("link directory");
     let config = etc.join("nix/nix.conf");
     fs::write(
@@ -504,6 +506,76 @@ fn generated_tree_copy_normalizes_text_and_skips_package_noise() {
         fs::read_to_string(destination.path().join("etc/test-links/broken"))
             .expect("broken link marker"),
         "broken symlink -> missing-target\n"
+    );
+}
+
+#[test]
+fn generated_tree_copy_keeps_external_links_without_reading_targets() {
+    let source = TempDir::new().expect("source tree");
+    let outside = TempDir::new().expect("outside tree");
+    let destination = TempDir::new().expect("destination tree");
+    fs::create_dir(source.path().join("etc")).expect("etc directory");
+    fs::write(outside.path().join("secret"), "private content\n").expect("secret");
+    fs::write(source.path().join("etc/config"), "safe content\n").expect("config");
+    symlink("config", source.path().join("etc/local")).expect("local link");
+    symlink(
+        outside.path().join("secret"),
+        source.path().join("etc/external"),
+    )
+    .expect("external link");
+    symlink(
+        outside.path().join("missing"),
+        source.path().join("etc/dangling"),
+    )
+    .expect("dangling external link");
+    symlink("external", source.path().join("etc/indirect")).expect("indirect link");
+    symlink(".", source.path().join("etc/cycle")).expect("cycle");
+    symlink("/", source.path().join("etc/root")).expect("root link");
+
+    copy_generated_path(source.path(), destination.path(), Path::new("etc"))
+        .expect("copy generated tree");
+
+    assert_eq!(
+        fs::read_to_string(destination.path().join("etc/local")).unwrap(),
+        "safe content\n"
+    );
+    for (name, target) in [
+        ("external", "secret"),
+        ("dangling", "missing"),
+        ("indirect", "secret"),
+    ] {
+        assert_eq!(
+            fs::read_to_string(destination.path().join("etc").join(name)).unwrap(),
+            format!("symlink -> {}\n", outside.path().join(target).display())
+        );
+    }
+    assert!(fs::read_to_string(destination.path().join("etc/cycle"))
+        .unwrap()
+        .starts_with("symlink cycle -> "));
+    assert_eq!(
+        fs::read_to_string(destination.path().join("etc/root")).unwrap(),
+        "symlink -> /\n"
+    );
+}
+
+#[test]
+fn generated_tree_copy_does_not_trust_an_external_root_link() {
+    let workspace = TempDir::new().expect("workspace");
+    let outside = TempDir::new().expect("outside tree");
+    let destination = TempDir::new().expect("destination tree");
+    fs::write(outside.path().join("secret"), "private content\n").expect("secret");
+    symlink(outside.path(), workspace.path().join("output")).expect("output link");
+
+    copy_generated_path(
+        &workspace.path().join("output"),
+        destination.path(),
+        Path::new("secret"),
+    )
+    .expect("copy generated tree");
+
+    assert_eq!(
+        fs::read_to_string(destination.path().join("secret")).unwrap(),
+        format!("symlink -> {}\n", outside.path().display())
     );
 }
 
