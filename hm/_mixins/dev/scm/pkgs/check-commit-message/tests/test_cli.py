@@ -69,6 +69,23 @@ def test_terminal_trailer_continuation_is_exempt() -> None:
     ]
 
 
+def test_sentence_with_colon_is_not_a_trailer() -> None:
+    body = (
+        "Keep the test mapping sparse after reclaim: khugepaged can otherwise fill "
+        "its discarded holes and turn the fixture back into mapped memory."
+    )
+    assert validate_message(f"oomd: add a reclaim-only service\n\n{body}\n") == [
+        Violation(3, len(body), "body prose exceeds 72 characters", body)
+    ]
+
+
+def test_trailer_keys_cannot_contain_whitespace() -> None:
+    for key in ("Signed off by", "Signed\toff-by", "Signed-off-by ", "Signed-off-by\t"):
+        assert reasons(f"Subject\n\n{key}: " + "long value " * 8 + "\n") == [
+            "body prose exceeds 72 characters"
+        ]
+
+
 def test_cli_reports_file_and_format_errors(tmp_path: Path) -> None:
     stderr = io.StringIO()
     missing = tmp_path / "missing"
@@ -147,4 +164,18 @@ def test_real_git_hook_rejects_bad_message_and_preserves_existing_hook(tmp_path:
     )
     assert rejected.returncode != 0
     assert "body prose exceeds 72 characters" in rejected.stderr
+    assert git(repo, "rev-list", "--count", "HEAD").stdout.strip() == "1"
+
+    rejected_colon = git(
+        repo,
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        "-m",
+        "Reject prose with a colon",
+        "-m",
+        "Keep the test mapping sparse after reclaim: " + "long explanatory prose " * 5,
+    )
+    assert rejected_colon.returncode != 0
+    assert "body prose exceeds 72 characters" in rejected_colon.stderr
     assert git(repo, "rev-list", "--count", "HEAD").stdout.strip() == "1"
