@@ -27,7 +27,7 @@ in
     services.github-runners = lib.genAttrs runnerNames (name: {
       enable = true;
       url = "https://github.com/booxter/nix";
-      tokenFile = config.sops.secrets."github/actions_runner/token".path;
+      tokenFile = "/run/credentials/github-runner-${name}.service/registration-token";
       tokenType = "access";
       inherit name;
       ephemeral = true;
@@ -42,7 +42,10 @@ in
         NIX_CONFIG = "max-jobs = ${toString localJobs}";
       };
       serviceOverrides = {
-        LoadCredential = [ "attic-ci.toml:${config.sops.templates."attic-ci.toml".path}" ];
+        LoadCredential = [
+          "registration-token:${config.sops.secrets."github/actions_runner/token".path}"
+          "attic-ci.toml:${config.sops.templates."attic-ci.toml".path}"
+        ];
 
         # Registration wipes the state and work directories, so keep Nix's
         # fetch and evaluation caches in a separate directory for each runner.

@@ -12,7 +12,7 @@ in
   systemd.tmpfiles.rules = lib.mapAttrsToList (name: _: "d ${root name} 0755 root root -") runners;
 
   systemd.services = lib.mapAttrs' (
-    name: _:
+    name: runner:
     lib.nameValuePair "github-runner-${name}" {
       after = [
         "systemd-tmpfiles-setup.service"
@@ -25,14 +25,15 @@ in
       ];
       serviceConfig = {
         RootDirectory = root name;
-        # The upstream registration scripts prepare tokens and clean state on
-        # the host. Only the listener (and all of its job children) enters the root.
-        RootDirectoryStartOnly = true;
-        # Pre-start commands resolve WorkingDirectory below RootDirectory even
-        # without entering it. Their scripts use absolute paths; the packaged
-        # listener changes directory itself and uses RUNNER_ROOT for its state.
-        WorkingDirectory = lib.mkForce "/";
+        # Registration must share the listener's root so DynamicUser state
+        # mounts resolve consistently during preparation and job execution.
         MountAPIVFS = true;
+        # '+' resolves these masks inside RootDirectory. The upstream masks
+        # use host paths, which do not hide mounts inside the isolated root.
+        InaccessiblePaths = [
+          "+${runner.tokenFile}"
+          "+/var/lib/github-runner/${name}/.current-token"
+        ];
 
         # State/Runtime/Logs/CacheDirectory and LoadCredential are mounted by
         # systemd. Never expose host homes, /run/secrets, or the rest of /run.

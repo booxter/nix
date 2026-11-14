@@ -19,12 +19,16 @@ let
 
     state = Path(os.environ["RUNNER_ROOT"])
     home = Path(os.environ["HOME"])
+    registration = {"agentId": 1, "agentName": "isolated"}
     if sys.argv[1] == "configure":
         assert sys.argv[sys.argv.index("--pat") + 1] == "registration-only"
         for name in [".credentials", ".credentials_rsaparams", ".runner"]:
-            (state / name).write_text("registered")
+            (state / name).write_text(json.dumps(registration))
         (state / "_diag").mkdir(exist_ok=True)
     else:
+        for name in [".credentials", ".credentials_rsaparams", ".runner"]:
+            assert json.loads((state / name).read_text()) == registration
+            assert json.loads((home / name).read_text()) == registration
         assert pwd.getpwuid(os.getuid()).pw_name.startswith("github-runner-")
         assert socket.gethostbyname("runner-target.test") == "127.0.0.1"
         for path in [
@@ -36,13 +40,18 @@ let
             "/var/cache/github-runner/other/private",
         ]:
             assert not os.path.lexists(path), path
-        try:
-            (state / ".current-token").read_text()
-        except PermissionError:
-            pass
-        else:
-            raise AssertionError("registration token is readable during jobs")
-        credential = Path(os.environ["CREDENTIALS_DIRECTORY"]) / "attic-ci.toml"
+        credentials = Path(os.environ["CREDENTIALS_DIRECTORY"])
+        for token in [
+            state / ".current-token",
+            credentials / "registration-token",
+        ]:
+            try:
+                token.read_text()
+            except PermissionError:
+                pass
+            else:
+                raise AssertionError(f"registration token is readable: {token}")
+        credential = credentials / "attic-ci.toml"
         assert credential.read_text() == "job-credential"
         assert not (home / "previous-job").exists()
         (home / "previous-job").write_text("disposable")
@@ -83,6 +92,11 @@ pkgs.testers.runNixOSTest {
     };
     networking.hosts."127.0.0.1" = [ "runner-target.test" ];
     systemd.tmpfiles.rules = [
+      # Existing DynamicUser services leave this private state layout on hosts.
+      "d /var/lib/private 0700 root root -"
+      "d /var/lib/private/github-runner/isolated 0700 nobody nogroup -"
+      "d /var/lib/github-runner 0755 root root -"
+      "L /var/lib/github-runner/isolated - - - - ../private/github-runner/isolated"
       "d /run/secrets 0755 root root -"
       "f /run/secrets/host-secret 0644 root root - host-secret"
       "f /run/secrets/registration-token 0600 root root - registration-only"
@@ -98,7 +112,7 @@ pkgs.testers.runNixOSTest {
       enable = true;
       package = runner;
       url = "https://github.com/example/test";
-      tokenFile = "/run/secrets/registration-token";
+      tokenFile = "/run/credentials/github-runner-isolated.service/registration-token";
       tokenType = "access";
       ephemeral = true;
       extraEnvironment = {
@@ -109,7 +123,10 @@ pkgs.testers.runNixOSTest {
         Restart = lib.mkForce "no";
         CacheDirectory = "github-runner/isolated";
         CacheDirectoryMode = "0700";
-        LoadCredential = [ "attic-ci.toml:/run/secrets/ci-upload" ];
+        LoadCredential = [
+          "registration-token:/run/secrets/registration-token"
+          "attic-ci.toml:/run/secrets/ci-upload"
+        ];
       };
     };
   };
