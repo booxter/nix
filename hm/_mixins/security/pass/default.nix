@@ -49,6 +49,11 @@ in
     programs = {
       gpg = {
         enable = true;
+        # GnuPG 2.4 does not fall back from its direct USB driver to PC/SC.
+        # Use the system reader service when it is already enabled for age.
+        scdaemonSettings = lib.optionalAttrs (pkgs.stdenv.isLinux && osConfig.services.pcscd.enable) {
+          disable-ccid = true;
+        };
         # Writers need every recipient's public certificate, not just their own.
         publicKeys = lib.optionals (cfg.yubikey != null) (
           map (key: {
