@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -63,7 +64,15 @@ in
       enable = true;
       enableSshSupport = false; # it's not 1:1 compatible and can mess output of `ssh-add -l`.
       enableZshIntegration = true;
-      pinentry.package = pkgs.pinentry-tty;
+      pinentry.package =
+        if pkgs.stdenv.hostPlatform.isDarwin then
+          pkgs.pinentry_mac
+        else if osConfig.host.desktop != null then
+          pkgs.pinentry-qt
+        else
+          pkgs.pinentry-tty;
+      # Ask pinentry to leave credential caching to the agent we reset on idle.
+      noAllowExternalCache = true;
     };
 
     # Refresh pinentry's store path before the old path is garbage-collected.

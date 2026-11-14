@@ -33,6 +33,11 @@ TTLs do not expire its YubiKey PIN cache. A reset failure stops the operation.
 Configure other hosts through `host.hm.pass.idleTimeout` when their own keys
 are ready.
 
+GnuPG prompts use `pinentry-mac` on macOS and `pinentry-qt` on Linux desktops
+(including frame's Hyprland session). Headless Linux hosts use `pinentry-tty`.
+These are separate from SSH's `SSH_ASKPASS` helpers. A Linux graphical prompt
+requires a running desktop session; verify it locally when provisioning frame.
+
 The password store's `.gpg-id` remains the recipient policy. It currently
 retains the old software-key recipient for Android. Add and verify the future
 NFC key before removing that recipient. Public keys for every recipient must
