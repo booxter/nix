@@ -4,10 +4,6 @@
 
   host = {
     ci.runners = 6;
-    attic.publishCaches.beast = [
-      "default"
-      "github"
-    ];
     network.macAddress = "bc:24:11:7f:01:17";
     nix.builderClient = {
       buildUse = "ci";

@@ -20,6 +20,8 @@ in
   };
 
   config = lib.mkIf (runnerCount > 0) {
+    host.attic.ci.enable = true;
+
     services.github-runners = lib.genAttrs runnerNames (name: {
       enable = true;
       url = "https://github.com/booxter/nix";
@@ -31,12 +33,15 @@ in
       noDefaultLabels = true;
       replace = true;
       extraEnvironment = {
+        CI_ATTIC_CONFIG = "%d/attic-ci.toml";
         NIX_CACHE_HOME = "/var/cache/github-runner/${name}/nix";
 
         # The remote builder pool excludes this host; use its CI capacity locally.
         NIX_CONFIG = "max-jobs = ${toString localJobs}";
       };
       serviceOverrides = {
+        LoadCredential = [ "attic-ci.toml:${config.sops.templates."attic-ci.toml".path}" ];
+
         # Registration wipes the state and work directories, so keep Nix's
         # fetch and evaluation caches in a separate directory for each runner.
         CacheDirectory = "github-runner/${name}";

@@ -13,10 +13,7 @@
 
   home-manager.users.${config.host.username}.host.hm.pass.yubikey = "main";
 
-  host.attic.publishCaches.beast = [
-    "default"
-    "github"
-  ];
+  host.attic.ci.enable = true;
 
   host.nix.builderClient = { };
 
@@ -56,6 +53,7 @@
     extraLabels = [ "nix-ci-darwin" ];
     noDefaultLabels = true;
     replace = true;
+    extraEnvironment.CI_ATTIC_CONFIG = config.sops.templates."attic-ci.toml".path;
     serviceOverrides = {
       # Restart after deleted-registration errors so ephemeral startup registers again.
       KeepAlive = lib.mkForce true;
