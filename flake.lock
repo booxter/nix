@@ -330,11 +330,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794700818,
-        "narHash": "sha256-M9Z/lyForP61NrZjt3bgzqRcqf2u6ThxwnnlhMtsxro=",
+        "lastModified": 1794701237,
+        "narHash": "sha256-9J0dPWc1Hh3Mfk66raMy0+EYj5bUYzyb0HBOwqVLTf0=",
         "owner": "booxter",
         "repo": "jellarr",
-        "rev": "c0f504ae717e63f798589d631f5f73e1e7eef210",
+        "rev": "1281e90debed6d8c1bde9505975c621a974b68bb",
         "type": "github"
       },
       "original": {
