@@ -1,6 +1,7 @@
 {
   imports = [
     ./libraries.nix
+    ./localization.nix
     ./plugins.nix
     ./server.nix
     ./users.nix

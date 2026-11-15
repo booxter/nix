@@ -1,5 +1,6 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
+  model = import ./model.nix { inherit config lib; };
   passwordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   definitions = [
     {
@@ -38,7 +39,6 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
     }
     {
       name = "ZD";
@@ -46,7 +46,6 @@ let
       isKid = false;
       isAdult = true;
       isGuest = true;
-      allLibraries = true;
     }
     {
       name = "ZS";
@@ -54,7 +53,6 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
       extraLibraries = [ "Attic" ];
     }
     {
@@ -63,10 +61,10 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
     }
     {
       name = "Alex";
+      localized = true;
       isGuest = true;
       extraLibraries = [ "Attic" ];
       excludedLibraries = [
@@ -88,7 +86,7 @@ let
       isKid ? false,
       isAdult ? false,
       isGuest ? false,
-      allLibraries ? false,
+      localized ? false,
       extraLibraries ? [ ],
       excludedLibraries ? [ ],
       audioLanguagePreference ? null,
@@ -101,7 +99,7 @@ let
       passwordSecret = passwordSecret name;
       policy = {
         isAdministrator = isAdmin;
-        enableAllFolders = allLibraries;
+        enableAllFolders = false;
         enableCollectionManagement = allowWrite || isAdmin;
         enableContentDownloading = true;
         loginAttemptsBeforeLockout = 3;
@@ -115,25 +113,27 @@ let
       // lib.optionalAttrs isGuest {
         maxActiveSessions = 4;
       }
-      // lib.optionalAttrs (!allLibraries) {
-        enabledLibraries = lib.subtractLists excludedLibraries (
-          [
-            "Family"
-          ]
-          ++ lib.optionals (!isKid) [
-            "Movies"
-            "Shows"
-            "Anime"
-            "Docu"
-            "Stand-up"
-            "Music"
-          ]
-          ++ lib.optionals isAdult [
-            "Attic"
-            "Fruit"
-            "Fruitsies"
-          ]
-          ++ extraLibraries
+      // {
+        enabledLibraries = map (name: if localized then model.localizedNames.${name} else name) (
+          lib.subtractLists excludedLibraries (
+            [
+              "Family"
+            ]
+            ++ lib.optionals (!isKid) [
+              "Movies"
+              "Shows"
+              "Anime"
+              "Docu"
+              "Stand-up"
+              "Music"
+            ]
+            ++ lib.optionals isAdult [
+              "Attic"
+              "Fruit"
+              "Fruitsies"
+            ]
+            ++ extraLibraries
+          )
         );
       };
       displayMissingEpisodes = true;

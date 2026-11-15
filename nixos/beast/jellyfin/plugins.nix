@@ -6,7 +6,10 @@
 let
   model = import ./model.nix { inherit config lib; };
   registry = import ./plugin-registry.nix;
-  requiredPlugins = model.requiredPlugins ++ [ "language-tags" ];
+  requiredPlugins = model.requiredPlugins ++ [
+    "language-tags"
+    "polyglot"
+  ];
   enabledPlugins = lib.filterAttrs (plugin: _: builtins.elem plugin requiredPlugins) registry.plugins;
   enabledRepositoryIds = lib.unique (
     map (plugin: plugin.repository) (builtins.attrValues enabledPlugins)
