@@ -68,14 +68,16 @@ let
       isGuest = true;
       extraLibraries = [ "Attic" ];
       excludedLibraries = [
-        "Music"
         "Anime"
         "Stand-up"
       ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
       subtitleMode = "Smart";
-      allowedTags = [ "language_Russian" ];
+      allowedTags = [
+        "language_Russian"
+        "non_media"
+      ];
     }
   ];
   getUser =
@@ -114,7 +116,8 @@ let
         maxActiveSessions = 4;
       }
       // {
-        enabledLibraries = map (name: if localized then model.localizedNames.${name} else name) (
+        # Libraries without a localized mirror, such as Music, stay shared.
+        enabledLibraries = map (name: if localized then model.localizedNames.${name} or name else name) (
           lib.subtractLists excludedLibraries (
             [
               "Family"
