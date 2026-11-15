@@ -71,6 +71,14 @@ let
         "Anime"
         "Stand-up"
       ];
+      orderedLibraries = [
+        "Movies"
+        "Attic"
+        "Family"
+        "Docu"
+        "Music"
+        "Shows"
+      ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
       subtitleMode = "Smart";
@@ -91,11 +99,15 @@ let
       localized ? false,
       extraLibraries ? [ ],
       excludedLibraries ? [ ],
+      orderedLibraries ? null,
       audioLanguagePreference ? null,
       subtitleLanguagePreference ? "eng",
       subtitleMode ? null,
       allowedTags ? null,
     }:
+    let
+      libraryName = name: if localized then model.localizedNames.${name} or name else name;
+    in
     {
       inherit name subtitleLanguagePreference;
       passwordSecret = passwordSecret name;
@@ -117,7 +129,7 @@ let
       }
       // {
         # Libraries without a localized mirror, such as Music, stay shared.
-        enabledLibraries = map (name: if localized then model.localizedNames.${name} or name else name) (
+        enabledLibraries = map libraryName (
           lib.subtractLists excludedLibraries (
             [
               "Family"
@@ -140,6 +152,9 @@ let
         );
       };
       displayMissingEpisodes = true;
+    }
+    // lib.optionalAttrs (orderedLibraries != null) {
+      orderedLibraries = map libraryName orderedLibraries;
     }
     // lib.optionalAttrs (subtitleMode != null) {
       inherit subtitleMode;
