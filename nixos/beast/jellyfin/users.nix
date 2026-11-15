@@ -67,6 +67,7 @@ let
       extraLibraries = [ "Attic" ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
+      allowedTags = [ "language_Russian" ];
     }
   ];
   getUser =
@@ -81,6 +82,7 @@ let
       extraLibraries ? [ ],
       audioLanguagePreference ? null,
       subtitleLanguagePreference ? "eng",
+      allowedTags ? null,
     }:
     {
       inherit name subtitleLanguagePreference;
@@ -94,6 +96,9 @@ let
         # 10 Mbps (Jellyfin policy expects bits/sec). Spectrum upload is
         # maxed at 35 Mbps, leaving room for several streams and backups.
         remoteClientBitrateLimit = 10 * 1000 * 1000;
+      }
+      // lib.optionalAttrs (allowedTags != null) {
+        inherit allowedTags;
       }
       // lib.optionalAttrs isGuest {
         maxActiveSessions = 4;
