@@ -1,25 +1,30 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
+  model = import ./model.nix { inherit config lib; };
   passwordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   definitions = [
     {
       name = "Ihar";
+      subtitleMode = "Always";
       isAdmin = true;
       isAdult = true;
       allowWrite = true;
     }
     {
       name = "jellyfin";
+      subtitleMode = "Always";
       isAdmin = false;
       isAdult = false;
     }
     {
       name = "Kasia";
+      subtitleMode = "Always";
       isAdult = true;
       allowWrite = true;
     }
     {
       name = "Vatslau";
+      subtitleMode = "Always";
       isKid = true;
     }
     {
@@ -34,7 +39,6 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
     }
     {
       name = "ZD";
@@ -42,7 +46,6 @@ let
       isKid = false;
       isAdult = true;
       isGuest = true;
-      allLibraries = true;
     }
     {
       name = "ZS";
@@ -50,7 +53,6 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
       extraLibraries = [ "Attic" ];
     }
     {
@@ -59,7 +61,21 @@ let
       isKid = false;
       isAdult = false;
       isGuest = true;
-      allLibraries = false;
+    }
+    {
+      name = "Alex";
+      localized = true;
+      isGuest = true;
+      extraLibraries = [ "Attic" ];
+      excludedLibraries = [
+        "Music"
+        "Anime"
+        "Stand-up"
+      ];
+      audioLanguagePreference = "rus";
+      subtitleLanguagePreference = "rus";
+      subtitleMode = "Smart";
+      allowedTags = [ "language_Russian" ];
     }
   ];
   getUser =
@@ -70,15 +86,20 @@ let
       isKid ? false,
       isAdult ? false,
       isGuest ? false,
-      allLibraries ? false,
+      localized ? false,
       extraLibraries ? [ ],
+      excludedLibraries ? [ ],
+      audioLanguagePreference ? null,
+      subtitleLanguagePreference ? "eng",
+      subtitleMode ? null,
+      allowedTags ? null,
     }:
     {
-      inherit name;
+      inherit name subtitleLanguagePreference;
       passwordSecret = passwordSecret name;
       policy = {
         isAdministrator = isAdmin;
-        enableAllFolders = allLibraries;
+        enableAllFolders = false;
         enableCollectionManagement = allowWrite || isAdmin;
         enableContentDownloading = true;
         loginAttemptsBeforeLockout = 3;
@@ -86,30 +107,43 @@ let
         # maxed at 35 Mbps, leaving room for several streams and backups.
         remoteClientBitrateLimit = 10 * 1000 * 1000;
       }
+      // lib.optionalAttrs (allowedTags != null) {
+        inherit allowedTags;
+      }
       // lib.optionalAttrs isGuest {
         maxActiveSessions = 4;
       }
-      // lib.optionalAttrs (!allLibraries) {
-        enabledLibraries = [
-          "Family"
-        ]
-        ++ lib.optionals (!isKid) [
-          "Movies"
-          "Shows"
-          "Anime"
-          "Docu"
-          "Stand-up"
-          "Music"
-        ]
-        ++ lib.optionals isAdult [
-          "Attic"
-          "Fruit"
-          "Fruitsies"
-        ]
-        ++ extraLibraries;
+      // {
+        enabledLibraries = map (name: if localized then model.localizedNames.${name} else name) (
+          lib.subtractLists excludedLibraries (
+            [
+              "Family"
+            ]
+            ++ lib.optionals (!isKid) [
+              "Movies"
+              "Shows"
+              "Anime"
+              "Docu"
+              "Stand-up"
+              "Music"
+            ]
+            ++ lib.optionals isAdult [
+              "Attic"
+              "Fruit"
+              "Fruitsies"
+            ]
+            ++ extraLibraries
+          )
+        );
       };
       displayMissingEpisodes = true;
-      subtitleLanguagePreference = "eng";
+    }
+    // lib.optionalAttrs (subtitleMode != null) {
+      inherit subtitleMode;
+    }
+    // lib.optionalAttrs (audioLanguagePreference != null) {
+      inherit audioLanguagePreference;
+      playDefaultAudioTrack = false;
     };
 in
 {

@@ -12,6 +12,7 @@ dependencies = ["jellyfin-apiclient-python", "pydantic", "pystemd"]
 [project.scripts]
 jellyfin-built-in-backup = "jellyfin_tools.cli:backup_main"
 wait-for-jellyfin-idle = "jellyfin_tools.cli:wait_main"
+jellyfin-polyglot = "jellyfin_tools.polyglot:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

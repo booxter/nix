@@ -11,9 +11,10 @@ let
       path,
       kind,
       typeOptions,
+      root ? libraryRoot,
     }:
     {
-      pathInfos = [ { path = "${libraryRoot}/${path}"; } ];
+      pathInfos = [ { path = "${root}/${path}"; } ];
       inherit typeOptions;
       automaticallyAddToCollection = true;
       enableChapterImageExtraction = true;
@@ -37,10 +38,31 @@ let
     };
 in
 {
-  host.jellyfinDeclarativeConfig.library.virtualFolders = map (library: {
-    inherit (library) name collectionType;
-    libraryOptions = getLibraryOptions {
-      inherit (library) path kind typeOptions;
-    };
-  }) model.libraries;
+  host.jellyfinDeclarativeConfig.library.virtualFolders =
+    map (library: {
+      inherit (library) name collectionType;
+      libraryOptions = getLibraryOptions {
+        inherit (library) path kind typeOptions;
+      };
+    }) model.libraries
+    ++ map (library: {
+      inherit (library) name collectionType;
+      libraryOptions =
+        (getLibraryOptions {
+          inherit (library) path kind typeOptions;
+          root = "${config.host.jellyfin.media.mountPoint}/localized/ru";
+        })
+        // {
+          preferredMetadataLanguage = "ru";
+          metadataCountryCode = "RU";
+          # Metadata belongs to this library; media and sidecars are hardlinked.
+          metadataSavers = [ ];
+          saveLocalMetadata = false;
+          saveSubtitlesWithMedia = false;
+          saveTrickplayWithMedia = false;
+          enableTrickplayImageExtraction = false;
+          automaticallyAddToCollection = false;
+          enableEmbeddedEpisodeInfos = false;
+        };
+    }) model.localizedLibraries;
 }

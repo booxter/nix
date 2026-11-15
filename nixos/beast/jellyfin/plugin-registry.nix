@@ -1,5 +1,10 @@
 {
   repositories = {
+    polyglot = {
+      name = "Polyglot";
+      url = "https://raw.githubusercontent.com/Maronato/jellyfin-plugin-polyglot/main/manifest.json";
+      enabled = true;
+    };
     jellyfin-stable = {
       name = "Jellyfin Stable";
       url = "https://repo.jellyfin.org/files/plugin/manifest.json";
@@ -20,8 +25,21 @@
       url = "https://raw.githubusercontent.com/danielfariati/jellyfin-plugin-lastfm/refs/heads/master/manifest.json";
       enabled = true;
     };
+    language-tags = {
+      name = "Language Tags";
+      url = "https://raw.githubusercontent.com/TheXaman/jellyfin-plugin-languageTags/main/manifest.json";
+      enabled = true;
+    };
   };
   plugins = {
+    polyglot = {
+      name = "Polyglot";
+      repository = "polyglot";
+    };
+    language-tags = {
+      name = "Language Tags";
+      repository = "language-tags";
+    };
     audiodb = {
       name = "AudioDB";
       repository = "jellyfin-stable";

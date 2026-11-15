@@ -14,8 +14,23 @@ let
       requiredPlugins = lib.unique (kind.requiredPlugins ++ audience.requiredPlugins);
     };
   libraries = map compileLibrary (builtins.attrValues config.host.jellyfin.libraries);
+  localizedNames = {
+    Family = "Семейное";
+    Movies = "Фильмы";
+    Shows = "Сериалы";
+    Docu = "Документальное";
+    Attic = "Чердак";
+  };
 in
 {
-  inherit libraries;
+  inherit libraries localizedNames;
+  localizedLibraries = map (
+    library:
+    library
+    // {
+      sourceName = library.name;
+      name = localizedNames.${library.name};
+    }
+  ) (builtins.filter (library: builtins.hasAttr library.name localizedNames) libraries);
   requiredPlugins = lib.unique (lib.concatMap (library: library.requiredPlugins) libraries);
 }

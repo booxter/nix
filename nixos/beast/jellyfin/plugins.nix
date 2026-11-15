@@ -6,9 +6,11 @@
 let
   model = import ./model.nix { inherit config lib; };
   registry = import ./plugin-registry.nix;
-  enabledPlugins = lib.filterAttrs (
-    plugin: _: builtins.elem plugin model.requiredPlugins
-  ) registry.plugins;
+  requiredPlugins = model.requiredPlugins ++ [
+    "language-tags"
+    "polyglot"
+  ];
+  enabledPlugins = lib.filterAttrs (plugin: _: builtins.elem plugin requiredPlugins) registry.plugins;
   enabledRepositoryIds = lib.unique (
     map (plugin: plugin.repository) (builtins.attrValues enabledPlugins)
   );
@@ -17,13 +19,13 @@ let
   ) registry.repositories;
   unknownPlugins = builtins.filter (
     plugin: !builtins.hasAttr plugin registry.plugins
-  ) model.requiredPlugins;
+  ) requiredPlugins;
 in
 {
   assertions = [
     {
       assertion = unknownPlugins == [ ];
-      message = "Jellarr library profiles require unknown plugins: ${lib.concatStringsSep ", " unknownPlugins}";
+      message = "Jellarr requires unknown plugins: ${lib.concatStringsSep ", " unknownPlugins}";
     }
   ];
 
