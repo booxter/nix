@@ -67,6 +67,7 @@ let
       extraLibraries = [ "Attic" ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
+      subtitleMode = "Smart";
       allowedTags = [ "language_Russian" ];
     }
   ];
@@ -82,10 +83,11 @@ let
       extraLibraries ? [ ],
       audioLanguagePreference ? null,
       subtitleLanguagePreference ? "eng",
+      subtitleMode ? "Always",
       allowedTags ? null,
     }:
     {
-      inherit name subtitleLanguagePreference;
+      inherit name subtitleLanguagePreference subtitleMode;
       passwordSecret = passwordSecret name;
       policy = {
         isAdministrator = isAdmin;
