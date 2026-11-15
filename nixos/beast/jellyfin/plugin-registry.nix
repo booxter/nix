@@ -20,8 +20,17 @@
       url = "https://raw.githubusercontent.com/danielfariati/jellyfin-plugin-lastfm/refs/heads/master/manifest.json";
       enabled = true;
     };
+    language-tags = {
+      name = "Language Tags";
+      url = "https://raw.githubusercontent.com/TheXaman/jellyfin-plugin-languageTags/main/manifest.json";
+      enabled = true;
+    };
   };
   plugins = {
+    language-tags = {
+      name = "Language Tags";
+      repository = "language-tags";
+    };
     audiodb = {
       name = "AudioDB";
       repository = "jellyfin-stable";
