@@ -65,6 +65,8 @@ let
       name = "Alex";
       isGuest = true;
       extraLibraries = [ "Attic" ];
+      audioLanguagePreference = "rus";
+      subtitleLanguagePreference = "rus";
     }
   ];
   getUser =
@@ -77,9 +79,11 @@ let
       isGuest ? false,
       allLibraries ? false,
       extraLibraries ? [ ],
+      audioLanguagePreference ? null,
+      subtitleLanguagePreference ? "eng",
     }:
     {
-      inherit name;
+      inherit name subtitleLanguagePreference;
       passwordSecret = passwordSecret name;
       policy = {
         isAdministrator = isAdmin;
@@ -114,7 +118,10 @@ let
         ++ extraLibraries;
       };
       displayMissingEpisodes = true;
-      subtitleLanguagePreference = "eng";
+    }
+    // lib.optionalAttrs (audioLanguagePreference != null) {
+      inherit audioLanguagePreference;
+      playDefaultAudioTrack = false;
     };
 in
 {
