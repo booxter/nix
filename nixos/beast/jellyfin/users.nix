@@ -69,7 +69,11 @@ let
       name = "Alex";
       isGuest = true;
       extraLibraries = [ "Attic" ];
-      excludedLibraries = [ "Music" ];
+      excludedLibraries = [
+        "Music"
+        "Anime"
+        "Stand-up"
+      ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
       subtitleMode = "Smart";
