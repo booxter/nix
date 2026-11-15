@@ -39,6 +39,9 @@
     language-tags = {
       name = "Language Tags";
       repository = "language-tags";
+      # Parallel episode updates can time out on Jellyfin's SQLite write lock.
+      # https://github.com/TheXaman/jellyfin-plugin-languageTags/issues/40
+      configuration.SynchronousRefresh = true;
     };
     audiodb = {
       name = "AudioDB";
