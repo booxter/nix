@@ -69,6 +69,7 @@ let
       name = "Alex";
       isGuest = true;
       extraLibraries = [ "Attic" ];
+      excludedLibraries = [ "Music" ];
       audioLanguagePreference = "rus";
       subtitleLanguagePreference = "rus";
       subtitleMode = "Smart";
@@ -85,6 +86,7 @@ let
       isGuest ? false,
       allLibraries ? false,
       extraLibraries ? [ ],
+      excludedLibraries ? [ ],
       audioLanguagePreference ? null,
       subtitleLanguagePreference ? "eng",
       subtitleMode ? null,
@@ -110,23 +112,25 @@ let
         maxActiveSessions = 4;
       }
       // lib.optionalAttrs (!allLibraries) {
-        enabledLibraries = [
-          "Family"
-        ]
-        ++ lib.optionals (!isKid) [
-          "Movies"
-          "Shows"
-          "Anime"
-          "Docu"
-          "Stand-up"
-          "Music"
-        ]
-        ++ lib.optionals isAdult [
-          "Attic"
-          "Fruit"
-          "Fruitsies"
-        ]
-        ++ extraLibraries;
+        enabledLibraries = lib.subtractLists excludedLibraries (
+          [
+            "Family"
+          ]
+          ++ lib.optionals (!isKid) [
+            "Movies"
+            "Shows"
+            "Anime"
+            "Docu"
+            "Stand-up"
+            "Music"
+          ]
+          ++ lib.optionals isAdult [
+            "Attic"
+            "Fruit"
+            "Fruitsies"
+          ]
+          ++ extraLibraries
+        );
       };
       displayMissingEpisodes = true;
     }
