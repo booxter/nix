@@ -4,22 +4,26 @@ let
   definitions = [
     {
       name = "Ihar";
+      subtitleMode = "Always";
       isAdmin = true;
       isAdult = true;
       allowWrite = true;
     }
     {
       name = "jellyfin";
+      subtitleMode = "Always";
       isAdmin = false;
       isAdult = false;
     }
     {
       name = "Kasia";
+      subtitleMode = "Always";
       isAdult = true;
       allowWrite = true;
     }
     {
       name = "Vatslau";
+      subtitleMode = "Always";
       isKid = true;
     }
     {
@@ -83,11 +87,11 @@ let
       extraLibraries ? [ ],
       audioLanguagePreference ? null,
       subtitleLanguagePreference ? "eng",
-      subtitleMode ? "Always",
+      subtitleMode ? null,
       allowedTags ? null,
     }:
     {
-      inherit name subtitleLanguagePreference subtitleMode;
+      inherit name subtitleLanguagePreference;
       passwordSecret = passwordSecret name;
       policy = {
         isAdministrator = isAdmin;
@@ -125,6 +129,9 @@ let
         ++ extraLibraries;
       };
       displayMissingEpisodes = true;
+    }
+    // lib.optionalAttrs (subtitleMode != null) {
+      inherit subtitleMode;
     }
     // lib.optionalAttrs (audioLanguagePreference != null) {
       inherit audioLanguagePreference;
