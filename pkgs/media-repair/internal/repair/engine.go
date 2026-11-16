@@ -77,7 +77,7 @@ func (engine *Engine) Run(ctx context.Context, id int64) error {
 	return engine.reconcile(ctx, attempt)
 }
 
-func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.Attempt) (returnedErr error) {
+func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
 	tracer := engine.Tracer
 	if tracer == nil {
 		tracer = otel.Tracer("repairr")
@@ -87,21 +87,28 @@ func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.At
 		attribute.Int64("attempt", attempt.Number),
 		attribute.String("servarr.service", string(job.Service)),
 	))
-	logger := slog.Default().With("job", job.ID, "attempt", attempt.Number,
-		"trace_id", span.SpanContext().TraceID().String(),
-		"span_id", span.SpanContext().SpanID().String())
-	logger.InfoContext(ctx, "repair attempt started")
-	defer func() {
-		if returnedErr != nil {
-			span.RecordError(returnedErr)
-			span.SetStatus(codes.Error, returnedErr.Error())
-			logger.ErrorContext(ctx, "repair attempt failed", "error", returnedErr)
-		} else {
-			logger.InfoContext(ctx, "repair submitted for import")
-		}
-		span.End()
-	}()
+	defer span.End()
 
+	logger := slog.Default().With(
+		"job", job.ID,
+		"attempt", attempt.Number,
+		"trace_id", span.SpanContext().TraceID().String(),
+		"span_id", span.SpanContext().SpanID().String(),
+	)
+	logger.InfoContext(ctx, "repair attempt started")
+
+	if err := engine.repairAndSubmit(ctx, job, attempt); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		logger.ErrorContext(ctx, "repair attempt failed", "error", err)
+		return err
+	}
+
+	logger.InfoContext(ctx, "repair submitted for import")
+	return nil
+}
+
+func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
 	prepared, err := engine.Adapter.Repair(ctx, job, attempt)
 	if err != nil {
 		state := jobs.Failed

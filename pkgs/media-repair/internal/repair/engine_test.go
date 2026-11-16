@@ -25,8 +25,14 @@ func TestFailedAttemptRecordsItsErrorInTrace(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 	spans := recorder.Ended()
-	if len(spans) != 1 || spans[0].Status().Code != codes.Error || len(spans[0].Events()) != 1 {
-		t.Fatalf("missing failed attempt trace: %v", spans)
+	if len(spans) != 1 {
+		t.Fatalf("attempt spans: got %d, want 1", len(spans))
+	}
+	if spans[0].Status().Code != codes.Error {
+		t.Fatalf("attempt status: %v", spans[0].Status())
+	}
+	if len(spans[0].Events()) != 1 {
+		t.Fatalf("exception events: %v", spans[0].Events())
 	}
 	if spans[0].EndTime().Before(spans[0].StartTime()) {
 		t.Fatal("invalid attempt duration")
