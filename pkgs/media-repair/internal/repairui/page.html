@@ -49,7 +49,7 @@
       {{if .ConfirmRemoval}}
       <section class="remove-confirmation">
         <h3>Remove from {{$entry.Job.Service}} queue?</h3>
-        <p>This removes queue tracking only. The download and media files are retained; the release is not blocklisted.</p>
+        <p>This removes the queue entry. SABnzbd downloads and their remaining files are deleted; torrents are retained. Library files are kept and the release is not blocklisted.</p>
         <form method="post" action="/jobs/{{$entry.Job.ID}}/remove">
           <input type="hidden" name="csrf_token" value="{{.CSRF}}">
           <button class="danger-button" type="submit">Remove from queue</button>

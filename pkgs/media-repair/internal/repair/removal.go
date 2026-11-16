@@ -10,7 +10,7 @@ import (
 
 type QueueRemover interface {
 	RemovalQueue(context.Context) ([]queuefinalize.Entry, error)
-	FinalizeQueue(context.Context, int64) error
+	FinalizeQueue(context.Context, int64, bool) error
 }
 
 func RemoveTracking(ctx context.Context, client QueueRemover, job jobs.Job) error {
@@ -35,8 +35,9 @@ func RemoveTracking(ctx context.Context, client QueueRemover, job jobs.Job) erro
 		return fmt.Errorf("queue identity or completion status changed; removal not performed")
 	}
 
-	// FinalizeQueue removes tracking only: never the download or source files.
-	if err := client.FinalizeQueue(ctx, selected.QueueID); err != nil {
+	// Preserve torrents for seeding; only SABnzbd owns disposable download output.
+	removeFromClient := selected.Protocol == "usenet" && selected.DownloadClient == "SABnzbd"
+	if err := client.FinalizeQueue(ctx, selected.QueueID, removeFromClient); err != nil {
 		return err
 	}
 	remaining, err := client.RemovalQueue(ctx)

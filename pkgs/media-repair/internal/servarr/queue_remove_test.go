@@ -11,7 +11,7 @@ func TestRemoveQueueTrackingPreservesDownloadAndAvoidsBlocklist(t *testing.T) {
 	t.Parallel()
 	called := false
 	err := RemoveQueueTracking(
-		context.Background(), "Lidarr", 42,
+		context.Background(), "Lidarr", 42, false,
 		func(_ context.Context, queueID int64, options *starr.QueueDeleteOpts) error {
 			called = true
 			if queueID != 42 || options == nil || options.RemoveFromClient == nil ||

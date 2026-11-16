@@ -28,7 +28,7 @@ type Client interface {
 	ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error)
 	ReadMovie(context.Context, int64) (controller.RadarrMovie, error)
 	RecoverMovieID(context.Context, string) (int64, bool, error)
-	FinalizeQueue(context.Context, int64) error
+	FinalizeQueue(context.Context, int64, bool) error
 	RequestManualImport(context.Context, controller.RadarrManualImportCommand) (servarr.Command, error)
 	ReadManualImportCommand(context.Context, int64) (servarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)

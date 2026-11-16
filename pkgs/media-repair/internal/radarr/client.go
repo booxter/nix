@@ -64,8 +64,8 @@ func (client *Client) ReadQueue(ctx context.Context) ([]controller.RadarrQueueRe
 	return records, nil
 }
 
-func (client *Client) FinalizeQueue(ctx context.Context, queueID int64) error {
-	return servarr.RemoveQueueTracking(ctx, "Radarr", queueID, client.api.DeleteQueueContext)
+func (client *Client) FinalizeQueue(ctx context.Context, queueID int64, removeFromClient bool) error {
+	return servarr.RemoveQueueTracking(ctx, "Radarr", queueID, removeFromClient, client.api.DeleteQueueContext)
 }
 
 type queueRecord struct {

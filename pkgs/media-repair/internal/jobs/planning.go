@@ -99,7 +99,7 @@ func (store *Store) FinishRemoval(ctx context.Context, requested Job, failure er
 			job.State = Removed
 			job.InQueue = false
 			job.PendingAction = ""
-			job.Reason = "queue tracking removed; media retained"
+			job.Reason = "queue removal completed"
 		} else {
 			job.State = Blocked
 			job.Reason = failure.Error()
