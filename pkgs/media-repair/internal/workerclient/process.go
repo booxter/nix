@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"time"
 
@@ -32,6 +34,10 @@ func (process Process) Run(ctx context.Context, operation string, input []byte, 
 	output := boundedOutput{limit: limit}
 	diagnostics := commanddiagnostics.NewRecorder()
 	command.Stdout, command.Stderr = &output, diagnostics
+	if operation == "transform" {
+		// Keep progress visible while the worker runs, including successful jobs.
+		command.Stderr = io.MultiWriter(os.Stderr, diagnostics)
+	}
 	if err := command.Run(); err != nil {
 		return nil, commanddiagnostics.Attach(fmt.Errorf("media helper %s: %w", operation, err), diagnostics.Diagnostics())
 	}

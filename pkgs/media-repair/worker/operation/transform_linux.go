@@ -14,6 +14,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/joinverification"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
+	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
 	"github.com/booxter/nix-config/media-repair/worker/bluraystage"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
@@ -34,7 +35,10 @@ type Transformer struct {
 	Timeout                 time.Duration
 }
 
-func (worker Transformer) Transform(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
+func (worker Transformer) Transform(ctx context.Context, request mediaoperation.Transform) (output mediaoperation.Output, returnedErr error) {
+	ctx = mediaprogress.WithFields(ctx, "job", request.JobID, "attempt", request.Attempt)
+	finish := mediaprogress.Start(ctx, "transform", "timeout_seconds", worker.Timeout.Seconds())
+	defer func() { finish(returnedErr) }()
 	if request.JobID <= 0 || request.Attempt <= 0 {
 		return mediaoperation.Output{}, fmt.Errorf("job and attempt must be positive")
 	}
@@ -50,6 +54,7 @@ func (worker Transformer) Transform(ctx context.Context, request mediaoperation.
 	}
 
 	if request.Join != nil {
+		ctx = mediaprogress.WithFields(ctx, "source_bytes", request.Join.SourceBytes, "parts", len(request.Join.OrderedParts))
 		return worker.join(ctx, request)
 	}
 	if request.Bluray != nil {
@@ -104,15 +109,21 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 
 	// An ffmpeg exit status is not sufficient: only validated output may
 	// become visible to Servarr. Sources remain untouched in either case.
-	if rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes); len(rejected) != 0 {
+	finish := mediaprogress.Start(ctx, "validate output metadata", "output_bytes", result.SizeBytes)
+	rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes)
+	if len(rejected) != 0 {
+		finish(fmt.Errorf("joined output rejected: %v", rejected))
 		if _, err := worker.Files.RemoveCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint); err != nil {
 			return mediaoperation.Output{}, fmt.Errorf("rejected output %v; discard: %w", rejected, err)
 		}
 
 		return mediaoperation.Output{}, fmt.Errorf("joined output rejected: %v", rejected)
 	}
+	finish(nil)
 
+	finish = mediaprogress.Start(ctx, "publish output")
 	published, err := worker.Files.PublishCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint, components)
+	finish(err)
 	if err != nil {
 		return mediaoperation.Output{}, err
 	}

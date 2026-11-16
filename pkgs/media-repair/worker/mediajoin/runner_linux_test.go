@@ -145,6 +145,9 @@ func TestRunnerReportsFFmpegFailureWithoutMediaPaths(t *testing.T) {
 		failure.Diagnostics.Text == "" {
 		t.Fatalf("failure = %#v, error = %v", failure, err)
 	}
+	if !strings.Contains(err.Error(), "normalize part 1") || !strings.Contains(err.Error(), "ffmpeg:") {
+		t.Fatalf("failure lost its phase or ffmpeg diagnostics: %v", err)
+	}
 	if strings.Contains(failure.Diagnostics.Text, directory) ||
 		strings.Contains(failure.Diagnostics.Text, filepath.Base(firstPath)) ||
 		strings.Contains(failure.Diagnostics.Text, filepath.Base(secondPath)) {

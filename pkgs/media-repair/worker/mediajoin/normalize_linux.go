@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
+	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
 )
 
 func (runner *Runner) normalize(ctx context.Context, parts []*os.File, output *os.File, format string) ([]*os.File, func(), error) {
@@ -40,9 +41,12 @@ func (runner *Runner) normalize(ctx context.Context, parts []*os.File, output *o
 			return nil, nil, err
 		}
 		normalized = append(normalized, file)
-		if err := runner.remux(ctx, part, file, format); err != nil {
+		finish := mediaprogress.Start(ctx, "normalize", "part", index+1)
+		err = runner.remux(ctx, part, file, format)
+		finish(err)
+		if err != nil {
 			cleanup()
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("normalize part %d: %w", index+1, err)
 		}
 	}
 	return normalized, cleanup, nil

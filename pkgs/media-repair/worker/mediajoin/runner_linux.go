@@ -15,6 +15,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/joinverification"
+	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
@@ -45,6 +46,17 @@ type Failure struct {
 }
 
 func (failure *Failure) Error() string {
+	message := failure.description()
+	if failure.cause != nil {
+		message += ": " + failure.cause.Error()
+	}
+	if failure.Diagnostics.Text != "" {
+		message += fmt.Sprintf("; ffmpeg: %q", failure.Diagnostics.Text)
+	}
+	return message
+}
+
+func (failure *Failure) description() string {
 	switch failure.Kind {
 	case FailureTimeout:
 		return "media join timed out"
@@ -126,7 +138,9 @@ func (runner *Runner) Join(
 
 	timelines := make([]ffprobe.Timeline, len(parts))
 	for index, part := range parts {
+		finish := mediaprogress.Start(joinContext, "source packet scan", "part", index+1)
 		timelines[index], err = runner.prober.Timeline(joinContext, part)
+		finish(err)
 		if err != nil {
 			return Result{}, fmt.Errorf("read source part %d timing: %w", index+1, err)
 		}
@@ -159,7 +173,14 @@ func (runner *Runner) Join(
 	command.ExtraFiles = append(append([]*os.File(nil), normalized...), output)
 	diagnosticOutput := commanddiagnostics.NewRecorder()
 	command.Stderr = diagnosticOutput
-	if err := command.Run(); err != nil {
+	finish := mediaprogress.Start(joinContext, "concatenate")
+	err = command.Run()
+	if err != nil {
+		finish(commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics()))
+	} else {
+		finish(nil)
+	}
+	if err != nil {
 		diagnostics := diagnosticOutput.Diagnostics()
 		if ctx.Err() != nil {
 			return Result{}, commanddiagnostics.Attach(ctx.Err(), diagnostics)
@@ -177,7 +198,10 @@ func (runner *Runner) Join(
 	}
 	diagnostics := diagnosticOutput.Diagnostics()
 
-	if err := output.Sync(); err != nil {
+	finish = mediaprogress.Start(joinContext, "flush output")
+	err = output.Sync()
+	finish(err)
+	if err != nil {
 		return Result{}, &Failure{
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics, cause: err,
 		}
@@ -193,11 +217,16 @@ func (runner *Runner) Join(
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics, cause: err,
 		}
 	}
+	finish = mediaprogress.Start(joinContext, "output packet scan")
 	joinedTimeline, err := runner.prober.Timeline(joinContext, output)
+	finish(err)
 	if err != nil {
 		return Result{}, fmt.Errorf("read joined packet timing: %w", err)
 	}
-	if err := joinverification.ValidateTimeline(timelines, joinedTimeline); err != nil {
+	finish = mediaprogress.Start(joinContext, "validate packet timing")
+	err = joinverification.ValidateTimeline(timelines, joinedTimeline)
+	finish(err)
+	if err != nil {
 		return Result{}, &Failure{
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics,
 			cause: fmt.Errorf("joined packet timing rejected: %w", err),

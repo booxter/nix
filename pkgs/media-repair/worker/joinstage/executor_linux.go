@@ -9,6 +9,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
+	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/joinstate"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
@@ -38,6 +39,14 @@ type Failure struct {
 }
 
 func (failure *Failure) Error() string {
+	message := failure.description()
+	if failure.cause != nil {
+		message += ": " + failure.cause.Error()
+	}
+	return message
+}
+
+func (failure *Failure) description() string {
 	switch failure.Reason {
 	case workercontracts.StageJoinUnknownRoot:
 		return "join input root is unknown"
@@ -148,12 +157,14 @@ func (executor *Executor) Stage(
 	}
 
 	// Normalized parts and the joined output coexist until validation finishes.
+	finish := mediaprogress.Start(ctx, "prepare staging", "source_bytes", sourceBytes)
 	artifact, err := executor.artifacts.CreateStaged(
 		execution.Specification.RootID,
 		execution.ArtifactID,
 		execution.Specification.OutputContainer,
 		2*execution.Specification.ExpectedSourceBytes,
 	)
+	finish(err)
 	if err != nil {
 		return Result{}, failureFor(err, mediajoin.Diagnostics{})
 	}
@@ -184,14 +195,18 @@ func (executor *Executor) Stage(
 		return Result{}, failureFor(joinErr, joinResult.Diagnostics)
 	}
 
+	finish = mediaprogress.Start(ctx, "probe output metadata")
 	evidence, probeErr := executor.prober.ProbeFile(ctx, artifact.File())
+	finish(probeErr)
 	if probeErr != nil {
 		return Result{}, failureFor(probeErr, joinResult.Diagnostics)
 	}
 	if err := ctx.Err(); err != nil {
 		return Result{}, failureFor(err, joinResult.Diagnostics)
 	}
+	finish = mediaprogress.Start(ctx, "snapshot output")
 	fingerprint, sizeBytes, err := artifact.Snapshot()
+	finish(err)
 	if err != nil {
 		return Result{}, failureFor(err, joinResult.Diagnostics)
 	}
