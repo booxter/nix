@@ -118,6 +118,9 @@
     loki = {
       declaration.internal.clientAuth = "mtls";
     };
+    tempo = {
+      declaration.internal.clientAuth = "mtls";
+    };
   };
   frame = {
     ollama = {
