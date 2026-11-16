@@ -378,7 +378,7 @@ in
 
     services.nginx.virtualHosts = lib.mkMerge (lib.mapAttrsToList protectedInternalVhostsFor gates);
 
-    services.nginx.appendHttpConfig = ''
+    services.nginx.commonHttpConfig = ''
       map $request_method $sso_oauth2_proxy_safe_method {
         default 0;
         GET 1;
