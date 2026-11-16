@@ -11,6 +11,8 @@ in
 
   host.network.interfaces.ens18 = { };
 
+  host.observability.tracing.enable = true;
+
   host.proxmox.guest = {
     cores = 16;
     memoryGiB = 32;

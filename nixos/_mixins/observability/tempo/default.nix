@@ -1,5 +1,7 @@
 { config, lib, ... }:
 {
+  imports = [ ./client.nix ];
+
   config = lib.mkIf (config.host.observability.server != null) {
     services.tempo = {
       enable = true;

@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -29,51 +28,51 @@ in
     };
     services.alloy = {
       enable = true;
-      configPath = pkgs.writeText "config.alloy" ''
-                    loki.write "default" {
-                      endpoint {
-                        url = "${lokiClient.writeUrl}"
-        ${lokiTlsConfig}
-                      }
-                    }
-
-                    loki.relabel "journal" {
-                      forward_to = []
-
-                      rule {
-                        source_labels = ["__journal_coredump_gid", "__journal_coredump_exe"]
-                        separator     = ";"
-                        regex         = "30000;/build/.*"
-                        action        = "drop"
-                      }
-
-                      rule {
-                        source_labels = ["__journal__hostname"]
-                        target_label  = "node_hostname"
-                      }
-
-                      rule {
-                        source_labels = ["__journal__systemd_unit"]
-                        target_label  = "systemd_unit"
-                      }
-
-                      rule {
-                        source_labels = ["__journal_priority_keyword"]
-                        target_label  = "level"
-                      }
-                    }
-
-                    loki.source.journal "read" {
-                      forward_to    = [loki.write.default.receiver]
-                      relabel_rules = loki.relabel.journal.rules
-                      max_age       = "12h"
-                      labels = {
-                        job  = "systemd-journal",
-                        host = "${hostLabel}",
-                      }
-                    }
-      '';
     };
+    environment.etc."alloy/loki.alloy".text = ''
+                  loki.write "default" {
+                    endpoint {
+                      url = "${lokiClient.writeUrl}"
+      ${lokiTlsConfig}
+                    }
+                  }
+
+                  loki.relabel "journal" {
+                    forward_to = []
+
+                    rule {
+                      source_labels = ["__journal_coredump_gid", "__journal_coredump_exe"]
+                      separator     = ";"
+                      regex         = "30000;/build/.*"
+                      action        = "drop"
+                    }
+
+                    rule {
+                      source_labels = ["__journal__hostname"]
+                      target_label  = "node_hostname"
+                    }
+
+                    rule {
+                      source_labels = ["__journal__systemd_unit"]
+                      target_label  = "systemd_unit"
+                    }
+
+                    rule {
+                      source_labels = ["__journal_priority_keyword"]
+                      target_label  = "level"
+                    }
+                  }
+
+                  loki.source.journal "read" {
+                    forward_to    = [loki.write.default.receiver]
+                    relabel_rules = loki.relabel.journal.rules
+                    max_age       = "12h"
+                    labels = {
+                      job  = "systemd-journal",
+                      host = "${hostLabel}",
+                    }
+                  }
+    '';
 
     systemd.services.alloy = {
       wants = [ "sops-install-secrets.service" ];
