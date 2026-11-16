@@ -9,6 +9,8 @@ in
 pkgs.testers.runNixOSTest {
   name = "tracing";
   nodes.machine = {
+    imports = [ ../../nixos/_mixins/observability/tempo/socket.nix ];
+    host.observability.tracing.enable = true;
     virtualisation.memorySize = 2048;
     networking.hosts."127.0.0.1" = [ "tempo.test" ];
     services.tempo = {
@@ -37,7 +39,22 @@ pkgs.testers.runNixOSTest {
         locations."/".proxyPass = "http://127.0.0.1:4319";
       };
     };
-    environment.systemPackages = [ pkgs.curl ];
+    environment.systemPackages = [
+      pkgs.curl
+      pkgs.python3
+    ];
+    environment.etc."trace-helper".source = import ../../nixos/_mixins/media-repair/helper.nix {
+      inherit pkgs;
+      inherit (pkgs) lib;
+      roots."root:test" = "/var/lib/tracing-test";
+    };
+    users.groups.media = { };
+    users.users.media-repair-worker = {
+      isSystemUser = true;
+      group = "media";
+      extraGroups = [ "telemetry" ];
+    };
+    systemd.tmpfiles.rules = [ "d /var/lib/tracing-test 0755 root root -" ];
   };
   testScript = builtins.readFile ./tracing/test.py;
 }

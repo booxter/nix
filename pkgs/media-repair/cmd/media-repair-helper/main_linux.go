@@ -27,10 +27,19 @@ import (
 	workerprobe "github.com/booxter/nix-config/media-repair/worker/probe"
 )
 
-func run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+func run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) (returnedErr error) {
 	config, err := parseConfig(args, stderr)
 	if err != nil {
 		return err
+	}
+	if config.traceEndpoint != "" {
+		traced, finish, err := config.startTracing(ctx)
+		if err != nil {
+			slog.New(slog.NewJSONHandler(stderr, nil)).Warn("initialize helper tracing", "error", err)
+		} else {
+			ctx = traced
+			defer func() { finish(returnedErr) }()
+		}
 	}
 
 	data, err := io.ReadAll(io.LimitReader(stdin, (8<<20)+1))

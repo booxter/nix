@@ -3,7 +3,7 @@ let
   client = config.host.pki.clients.tempo.materializations.default;
 in
 {
-  options.host.observability.tracing.enable = lib.mkEnableOption "local OTLP trace collection";
+  imports = [ ./socket.nix ];
 
   config = lib.mkIf config.host.observability.tracing.enable {
     services.alloy.enable = true;

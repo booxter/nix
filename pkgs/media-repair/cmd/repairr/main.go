@@ -80,7 +80,7 @@ func run(ctx context.Context, configuration config) error {
 	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots,
 		time.Duration(limits.ProbeSeconds)*time.Second,
 		time.Duration(limits.MediaSeconds)*time.Second,
-		time.Duration(limits.ResponseGraceSeconds)*time.Second)
+		time.Duration(limits.ResponseGraceSeconds)*time.Second, configuration.TraceEndpoint)
 	if err != nil {
 		return err
 	}

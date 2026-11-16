@@ -23,6 +23,9 @@ type configuration struct {
 	wvunpack       string
 	probeTimeout   time.Duration
 	mediaTimeout   time.Duration
+	traceEndpoint  string
+	traceparent    string
+	tracestate     string
 }
 
 func parseConfig(args []string, stderr io.Writer) (configuration, error) {
@@ -41,6 +44,9 @@ func parseConfig(args []string, stderr io.Writer) (configuration, error) {
 	flags.StringVar(&config.wvunpack, "wvunpack", "", "wvunpack executable")
 	flags.DurationVar(&config.probeTimeout, "timeout", 0, "required probe timeout")
 	flags.DurationVar(&config.mediaTimeout, "media-timeout", 0, "required media operation timeout")
+	flags.StringVar(&config.traceEndpoint, "trace-endpoint", "", "local OTLP Unix socket endpoint")
+	flags.StringVar(&config.traceparent, "traceparent", "", "W3C trace parent")
+	flags.StringVar(&config.tracestate, "tracestate", "", "W3C trace state")
 
 	roots := mediaroot.NewMappings()
 	flags.Var(roots, "root", "media root as ID=PATH; repeatable")

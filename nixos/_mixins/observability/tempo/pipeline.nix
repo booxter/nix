@@ -4,11 +4,15 @@
   certFile,
   keyFile,
 }:
+let
+  paths = import ./paths.nix;
+in
 ''
   otelcol.receiver.otlp "local" {
-    http {
-      endpoint = "127.0.0.1:4318"
-      max_request_body_size = "4MiB"
+    grpc {
+      endpoint = "${paths.socket}"
+      transport = "unix"
+      max_recv_msg_size = "4MiB"
     }
     output {
       traces = [otelcol.processor.memory_limiter.traces.input]

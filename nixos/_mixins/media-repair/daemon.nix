@@ -21,27 +21,10 @@ let
   );
   clients = config.host.downloads.clients;
   rootPaths = builtins.attrValues cfg.roots;
-  rootArguments = lib.concatLists (
-    lib.mapAttrsToList (id: path: [
-      "--root"
-      "${id}=${path}"
-    ]) cfg.roots
-  );
-  mediaHelper = pkgs.writeShellScript "repairr-media" ''
-    exec ${lib.getExe pkgs.bubblewrap} \
-      --unshare-all --die-with-parent --new-session --clearenv \
-      --ro-bind /nix/store /nix/store --dev /dev --proc /proc --tmpfs /tmp \
-      ${
-        lib.escapeShellArgs (
-          lib.concatMap (path: [
-            "--bind"
-            path
-            path
-          ]) rootPaths
-        )
-      } \
-      ${lib.getExe pkgs.media-repair-helper} ${lib.escapeShellArgs rootArguments} "$@"
-  '';
+  mediaHelper = import ./helper.nix {
+    inherit lib pkgs;
+    inherit (cfg) roots;
+  };
   credentials = "/run/credentials/repairr.service";
   configuration = pkgs.formats.json { };
   configFile = configuration.generate "repairr.json" {
@@ -52,7 +35,7 @@ let
     Roots = cfg.roots;
     Helper = mediaHelper;
     PlannerSocket = cfg.planner.socketPath;
-    TraceEndpoint = "http://127.0.0.1:4318/v1/traces";
+    TraceEndpoint = (import ../observability/tempo/paths.nix).endpoint;
     Timeouts = {
       RequestSeconds = 30;
       ProbeSeconds = 30;
@@ -98,9 +81,11 @@ in
       "d /var/lib/repairr 0700 ${serviceUser} repairr - -"
       "d /var/lib/prometheus-node-exporter-textfile/repairr 0755 ${serviceUser} repairr - -"
     ];
+    users.groups.telemetry = { };
     systemd.services.repairr = {
       description = "Media repair controller and operator inbox";
       wantedBy = [ "multi-user.target" ];
+      wants = lib.optional config.services.alloy.enable "alloy.service";
       requires = [ "media-repair-planner.socket" ];
       after = [
         "media-repair-planner.socket"
@@ -109,7 +94,8 @@ in
         "lidarr.service"
         "transmission.service"
         "sabnzbd.service"
-      ];
+      ]
+      ++ lib.optional config.services.alloy.enable "alloy.service";
       unitConfig.RequiresMountsFor = rootPaths;
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.repairr} --config ${configFile}";
@@ -117,6 +103,7 @@ in
         Group = "media";
         SupplementaryGroups = [
           "repairr"
+          "telemetry"
           cfg.planner.clientGroup
         ];
         StateDirectory = "repairr";

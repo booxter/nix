@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type RequestRunner interface {
@@ -17,14 +18,20 @@ type RequestRunner interface {
 }
 
 type Process struct {
-	Executable   string
-	ProbeTimeout time.Duration
-	MediaTimeout time.Duration
+	Executable    string
+	ProbeTimeout  time.Duration
+	MediaTimeout  time.Duration
+	TraceEndpoint string
 }
 
 // The worker owns execution deadlines; the client allows extra time for cleanup
 // and delivery of the worker's diagnostics after a deadline expires.
-func NewProcess(executable string, roots map[string]string, probeTimeout, mediaTimeout, responseGrace time.Duration) (*Client, error) {
+func NewProcess(
+	executable string,
+	roots map[string]string,
+	probeTimeout, mediaTimeout, responseGrace time.Duration,
+	traceEndpoint string,
+) (*Client, error) {
 	if probeTimeout <= 0 || mediaTimeout <= 0 || responseGrace <= 0 {
 		return nil, fmt.Errorf("worker timeouts and response grace must be positive")
 	}
@@ -32,7 +39,12 @@ func NewProcess(executable string, roots map[string]string, probeTimeout, mediaT
 	if err != nil {
 		return nil, err
 	}
-	client.runner = Process{Executable: executable, ProbeTimeout: probeTimeout, MediaTimeout: mediaTimeout}
+	client.runner = Process{
+		Executable:    executable,
+		ProbeTimeout:  probeTimeout,
+		MediaTimeout:  mediaTimeout,
+		TraceEndpoint: traceEndpoint,
+	}
 	return client, nil
 }
 
@@ -40,6 +52,17 @@ func (process Process) Run(ctx context.Context, operation string, input []byte, 
 	command := exec.CommandContext(ctx, process.Executable, "--operation", operation,
 		"--timeout", process.ProbeTimeout.String(), "--media-timeout", process.MediaTimeout.String())
 	command.WaitDelay = 5 * time.Second
+
+	if process.TraceEndpoint != "" {
+		carrier := propagation.MapCarrier{}
+		propagation.TraceContext{}.Inject(ctx, carrier)
+		command.Args = append(command.Args,
+			"--trace-endpoint", process.TraceEndpoint,
+			"--traceparent", carrier.Get("traceparent"),
+			"--tracestate", carrier.Get("tracestate"),
+		)
+	}
+
 	command.Stdin = bytes.NewReader(input)
 	output := boundedOutput{limit: limit}
 	diagnostics := commanddiagnostics.NewRecorder()
