@@ -40,8 +40,26 @@ def configure(mode):
     client.execute("tc qdisc del dev wg0 root")
     client.execute("tc qdisc del dev wg0 ingress")
     client.execute("ip link del ifb-inner")
-    if mode == "outer":
+    if mode in ("outer", "outer-cake"):
         client.succeed("systemctl start qos-tunnel.service")
+        if mode == "outer-cake":
+            # Keep the native ingress setup; change only the egress scheduler.
+            run(
+                client,
+                "tc",
+                "qdisc",
+                "replace",
+                "dev",
+                "eth1",
+                "root",
+                "cake",
+                "bandwidth",
+                "6mbit",
+                "besteffort",
+                "triple-isolate",
+                "wash",
+                "raw",
+            )
         return
 
     # Outer IPv4/UDP/WireGuard plus Ethernet is 74 bytes; padding adds up to 15.
@@ -99,9 +117,9 @@ def configure(mode):
     )
 
 
-def start_job(name, arguments):
+def start_job(name, arguments, machine=client):
     run(
-        client,
+        machine,
         "systemd-run",
         "--no-block",
         "--setenv=PATH=/run/current-system/sw/bin:/run/wrappers/bin",
@@ -114,38 +132,73 @@ def start_job(name, arguments):
     )
 
 
-def result(name):
-    client.wait_until_succeeds(
+def result(name, machine=client):
+    machine.wait_until_succeeds(
         f'test "$(systemctl show {name}.service --property ActiveState --value)" != activating',
         timeout=90,
     )
-    client.succeed(f"systemctl is-active {name}.service")
-    return json.loads(run(client, "cat", f"/tmp/{name}.json"))
+    machine.succeed(f"systemctl is-active {name}.service")
+    return json.loads(run(machine, "cat", f"/tmp/{name}.json"))
 
 
-def measure(mode, iteration):
+def measure(mode, iteration, duration, directions=("download", "upload")):
     configure(mode)
     client.succeed("ping -n -c 3 -W 2 10.77.0.2")
-    prefix = f"{mode}-{iteration}"
-    common = ["iperf3", "--client", "10.77.0.2", "--time", "40", "--omit", "2", "--json"]
-    start_job(f"{prefix}-download", [*common, "--port", "5201", "--reverse", "--parallel", "8"])
-    start_job(f"{prefix}-upload", [*common, "--port", "5202", "--parallel", "2"])
+    prefix = f"{mode}-{duration}-{'-'.join(directions)}-{iteration}"
+    for machine in (client, provider, wan):
+        start_job(
+            prefix + "-system",
+            ["python3", "/etc/cake-tunnel/probes.py", "--system-only", str(duration + 5)],
+            machine,
+        )
+    common = ["iperf3", "--client", "10.77.0.2", "--time", str(duration), "--omit", "2", "--json"]
+    for direction in directions:
+        options = (
+            ["--port", "5201", "--reverse", "--parallel", "8"]
+            if direction == "download"
+            else ["--port", "5202", "--parallel", "2"]
+        )
+        start_job(f"{prefix}-{direction}", [*common, *options])
     client.sleep(3)
     start_job(f"{prefix}-probes", ["python3", "/etc/cake-tunnel/probes.py"])
     probes = result(f"{prefix}-probes")
+    transfers = {direction: result(f"{prefix}-{direction}") for direction in directions}
     # Queue sampling must finish under load, including on slower builders.
-    for direction in ("download", "upload"):
-        state = run(
+    # Compare guest timestamps: fetching the JSON through the driver takes time.
+    for direction in directions:
+        exited = run(
             client,
             "systemctl",
             "show",
             f"{prefix}-{direction}.service",
-            "--property=ActiveState",
+            "--property=ExecMainExitTimestampMonotonic",
             "--value",
         )
-        assert state.strip() == "activating", (direction, state)
-    transfers = {direction: result(f"{prefix}-{direction}") for direction in ("download", "upload")}
-    summary = {"mode": mode, "iteration": iteration, "ping": probes["ping"], "dns": probes["dns"]}
+        assert probes["finished_monotonic"] < int(exited.strip()) / 1e6, (direction, exited)
+    systems = {
+        name: result(prefix + "-system", machine)
+        for name, machine in (("client", client), ("provider", provider), ("wan", wan))
+    }
+    summary = summarize(mode, probes, transfers)
+    summary.update(iteration=iteration, duration=duration, directions=directions)
+    (driver.out_dir / f"{prefix}.json").write_text(
+        json.dumps(
+            {"summary": summary, "probes": probes, "transfers": transfers, "systems": systems},
+            indent=2,
+        )
+    )
+    print(f"CAKE tunnel comparison: {json.dumps(summary, sort_keys=True)}")
+    return summary
+
+
+def summarize(mode, probes, transfers):
+    summary = {
+        "mode": mode,
+        **{
+            name: {key: value for key, value in probes[name].items() if key != "samples"}
+            for name in ("ping", "dns")
+        },
+    }
     for direction, transfer in transfers.items():
         assert "error" not in transfer, transfer
         end = transfer["end"]
@@ -188,10 +241,6 @@ def measure(mode, iteration):
         assert summary["ack_drops"] > 0, summary
     else:
         assert summary["ack_drops"] == 0, summary
-    (driver.out_dir / f"{prefix}.json").write_text(
-        json.dumps({"summary": summary, "probes": probes, "transfers": transfers}, indent=2)
-    )
-    print(f"CAKE tunnel comparison: {json.dumps(summary, sort_keys=True)}")
     return summary
 
 
@@ -229,10 +278,16 @@ for port in (5201, 5202):
     provider.wait_for_open_port(port)
 
 summaries = []
-for iteration, modes in enumerate(
-    (("outer", "inner", "inner-ack"), ("inner-ack", "inner", "outer"))
-):
-    for mode in modes:
-        with subtest(f"{mode}, repetition {iteration + 1}"):
-            summaries.append(measure(mode, iteration + 1))
+modes = ("outer", "outer-cake", "inner", "inner-ack")
+for iteration, durations in enumerate(((24, 40), (40, 24)), start=1):
+    for duration in durations:
+        for mode in modes:
+            with subtest(f"{mode}, {duration}s, repetition {iteration}"):
+                summaries.append(measure(mode, iteration, duration))
+        modes = tuple(reversed(modes))
+
+for direction in ("download", "upload"):
+    for mode in ("outer", "outer-cake"):
+        with subtest(f"{mode}, {direction} only"):
+            summaries.append(measure(mode, 1, 24, (direction,)))
 (driver.out_dir / "comparison.json").write_text(json.dumps(summaries, indent=2))

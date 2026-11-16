@@ -1,6 +1,7 @@
 { pkgs, ... }:
 let
   endpoint = {
+    environment.etc."cake-tunnel/probes.py".source = ./cake-tunnel/probes.py;
     networking.firewall.enable = false;
     boot.kernelModules = [
       "wireguard"
@@ -67,7 +68,6 @@ pkgs.testers.runNixOSTest {
           };
         };
       };
-      environment.etc."cake-tunnel/probes.py".source = ./cake-tunnel/probes.py;
     };
 
     provider = {
@@ -100,6 +100,7 @@ pkgs.testers.runNixOSTest {
     };
 
     wan = {
+      imports = [ endpoint ];
       virtualisation.vlans = [
         1
         2
@@ -121,7 +122,6 @@ pkgs.testers.runNixOSTest {
           }
         ];
       };
-      environment.systemPackages = [ pkgs.iproute2 ];
     };
   };
 
