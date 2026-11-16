@@ -287,20 +287,13 @@ impl Backend for SystemBackend {
         let target = minimum
             .saturating_sub(available)
             .saturating_add(gc_headroom_gib.saturating_mul(GIB));
-        let bounded = vec![
-            "-d".to_owned(),
-            "--max-freed".to_owned(),
-            format!("{}K", target / 1024),
-        ];
+        // Leave generation pruning to scheduled GC so deployments preserve rollback history.
+        let bounded = vec!["--max-freed".to_owned(), format!("{}K", target / 1024)];
         let collector = self.nix_collect_garbage.clone();
         self.run_privileged(&collector, &bounded, "bounded local Nix garbage collection")?;
         available = available_bytes(store)?;
         if available < minimum {
-            self.run_privileged(
-                &collector,
-                &["-d".to_owned()],
-                "full local Nix garbage collection",
-            )?;
+            self.run_privileged(&collector, &[], "full local Nix garbage collection")?;
         }
         Ok(())
     }
