@@ -181,9 +181,21 @@ lib.mkIf config.host.hm.env.roles.developer {
     "$HOME/.priv-bin"
   ];
 
-  home.file = {
-    # TODO: use native readline module for inputrc
-    ".inputrc".source = ./inputrc;
+  programs.readline = {
+    enable = true;
+    includeSystemConfig = false;
+    variables = {
+      completion-ignore-case = true;
+      editing-mode = "vi";
+      keymap = "vi-insert";
+      mark-directories = true;
+      mark-symlinked-directories = true;
+      match-hidden-files = false;
+      show-all-if-ambiguous = true;
+      show-mode-in-prompt = true;
+      skip-completed-text = true;
+      visible-stats = true;
+    };
   };
 
   home.activation.clearZshCompdump = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
