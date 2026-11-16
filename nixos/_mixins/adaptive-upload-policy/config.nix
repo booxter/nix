@@ -206,6 +206,9 @@ in
             partOf = [ qosService ];
             serviceConfig = commonServiceConfig // {
               ExecStart = command "apply-qos";
+              # qosctl reads /proc/net/psched to encode HTB token-bucket timing.
+              # Hiding it makes netlink silently program zero-sized buckets.
+              ProcSubset = "all";
               AmbientCapabilities = [ "CAP_NET_ADMIN" ];
               CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
               RestrictAddressFamilies = [

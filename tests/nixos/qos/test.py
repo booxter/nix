@@ -202,6 +202,10 @@ with subtest("adaptive policy updates the named CAKE limit"):
         "journalctl -u adaptive-upload-policy-qos.service -o cat "
         "| grep -F 'updated QoS limit to 3.0 Mbit/s'"
     )
+    updated_class = tc_object("class", DEVICE, "handle", CLASS_IDS["cake-egress"])
+    # Adaptive updates must preserve a packet-sized burst allowance.
+    assert updated_class["burst"] >= 1500, updated_class
+    assert updated_class["cburst"] >= 1500, updated_class
     assert_limited("adaptive CAKE egress", iperf_rate(shaper, PEER, 5208), 3)
     shaper.succeed("systemctl stop adaptive-upload-policy-qos.service")
     shaper.succeed("systemctl stop adaptive-upload-policy.service")
