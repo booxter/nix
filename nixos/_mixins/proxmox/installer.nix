@@ -30,6 +30,8 @@ in
   # Proxmox storage. The ISO builder derives its filename from image.baseName.
   image.baseName = pkgs.lib.mkOverride 40 "nixos-${installedSystem.config.networking.hostName}-installer";
 
+  boot.supportedFilesystems.zfs = pkgs.lib.mkForce false;
+
   services.qemuGuest.enable = true;
   environment.systemPackages = [ pkgs.proxmox-bootstrap ];
   environment.etc."proxmox-bootstrap/host.pub".text = publicHostKey + "\n";
