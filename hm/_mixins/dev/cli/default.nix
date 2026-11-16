@@ -11,6 +11,7 @@ lib.mkIf config.host.hm.env.roles.developer {
     gitlab-ci-local
     (lima.override { withAdditionalGuestAgents = true; })
     pre-commit
+    tokei
     trivy
   ];
 }
