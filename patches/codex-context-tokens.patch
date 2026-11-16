@@ -1,5 +1,5 @@
 diff --git a/app-server-protocol/src/protocol/v2/thread.rs b/app-server-protocol/src/protocol/v2/thread.rs
-index dca33cb..7bfd4db 100644
+index dca33cb..56b71ce 100644
 --- a/app-server-protocol/src/protocol/v2/thread.rs
 +++ b/app-server-protocol/src/protocol/v2/thread.rs
 @@ -2121,6 +2121,9 @@ pub struct RawResponseCompletedNotification {
@@ -8,19 +8,19 @@ index dca33cb..7bfd4db 100644
      pub usage_metadata: Option<ResponseUsageMetadata>,
 +    #[serde(default, skip_serializing_if = "Option::is_none")]
 +    #[ts(optional, type = "number")]
-+    pub generation_duration_ms: Option<u64>,
++    pub service_duration_ms: Option<u64>,
  }
  
  /// Usage metadata reported for one upstream response.
 diff --git a/app-server/src/bespoke_event_handling.rs b/app-server/src/bespoke_event_handling.rs
-index 485f8e1..cb672c7 100644
+index 485f8e1..fd32325 100644
 --- a/app-server/src/bespoke_event_handling.rs
 +++ b/app-server/src/bespoke_event_handling.rs
 @@ -1249,6 +1249,7 @@ pub(crate) async fn apply_bespoke_event_handling(
                  response_id: raw_response_completed_event.response_id,
                  usage: raw_response_completed_event.token_usage.map(Into::into),
                  usage_metadata: raw_response_completed_event.usage_metadata.map(Into::into),
-+                generation_duration_ms: raw_response_completed_event.generation_duration_ms,
++                service_duration_ms: raw_response_completed_event.service_duration_ms,
              };
              outgoing
                  .send_server_notification(ServerNotification::RawResponseCompleted(notification))
@@ -41,19 +41,19 @@ index b9062d6..5e9896f 100644
                      {
                          continue;
 diff --git a/app-server/tests/suite/v2/compaction.rs b/app-server/tests/suite/v2/compaction.rs
-index 784e6f9..1ced6ef 100644
+index 784e6f9..5031528 100644
 --- a/app-server/tests/suite/v2/compaction.rs
 +++ b/app-server/tests/suite/v2/compaction.rs
 @@ -561,6 +561,7 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
      assert_eq!(
          raw_completed,
          RawResponseCompletedNotification {
-+            generation_duration_ms: None,
++            service_duration_ms: None,
              thread_id: thread_id.clone(),
              turn_id: started.turn_id,
              response_id: "r1".to_string(),
 diff --git a/app-server/tests/suite/v2/turn_start.rs b/app-server/tests/suite/v2/turn_start.rs
-index 44014ab..4457886 100644
+index 44014ab..199e062 100644
 --- a/app-server/tests/suite/v2/turn_start.rs
 +++ b/app-server/tests/suite/v2/turn_start.rs
 @@ -1340,6 +1340,10 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
@@ -62,7 +62,7 @@ index 44014ab..4457886 100644
          responses::ev_assistant_message("msg-1", "Done"),
 +        json!({
 +            "type": "responsesapi.websocket_timing",
-+            "timing_metrics": {"engine_service_total_ms": 1250}
++            "timing_metrics": {"server_timing_total_ms": 1250}
 +        }),
          completed,
      ]);
@@ -71,25 +71,25 @@ index 44014ab..4457886 100644
      assert_eq!(
          notification,
          RawResponseCompletedNotification {
-+            generation_duration_ms: Some(1250),
++            service_duration_ms: Some(1250),
              thread_id: thread.id,
              turn_id: turn.id,
              response_id: "resp-1".to_string(),
 diff --git a/codex-api/src/common.rs b/codex-api/src/common.rs
-index 455836c..c76d68e 100644
+index 455836c..263eeec 100644
 --- a/codex-api/src/common.rs
 +++ b/codex-api/src/common.rs
 @@ -132,6 +132,8 @@ pub enum ResponseEvent {
      },
      RateLimits(RateLimitSnapshot),
      ModelsEtag(String),
-+    /// Backend inference time for this response, excluding client tools and transport.
-+    InferenceDuration(u64),
++    /// Server processing time for this response, including overhead but excluding client tools.
++    ServiceDuration(u64),
  }
  
  #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 diff --git a/codex-api/src/sse/responses.rs b/codex-api/src/sse/responses.rs
-index 9c12aae..6b17053 100644
+index 9c12aae..aa3c9dd 100644
 --- a/codex-api/src/sse/responses.rs
 +++ b/codex-api/src/sse/responses.rs
 @@ -164,6 +164,7 @@ pub struct ResponsesStreamEvent {
@@ -100,33 +100,35 @@ index 9c12aae..6b17053 100644
      response: Option<Value>,
      response_id: Option<Value>,
      error: Option<Value>,
-@@ -178,6 +179,11 @@ pub struct ResponsesStreamEvent {
+@@ -178,6 +179,13 @@ pub struct ResponsesStreamEvent {
      safety_buffering: Option<Value>,
  }
  
 +#[derive(Deserialize, Debug)]
 +struct ResponseTimingMetrics {
-+    engine_service_total_ms: Option<f64>,
++    // Logical-turn counters include earlier responses and tool pauses. Server
++    // timing is per response, so it can be paired with that response's usage.
++    server_timing_total_ms: Option<f64>,
 +}
 +
  fn deserialize_present_value<'de, D>(deserializer: D) -> Result<Option<Value>, D::Error>
  where
      D: serde::Deserializer<'de>,
-@@ -535,6 +541,13 @@ pub fn process_responses_event(
+@@ -535,6 +543,13 @@ pub fn process_responses_event(
                  }));
              }
          }
 +        "responsesapi.websocket_timing" => {
 +            return Ok(event
 +                .timing_metrics
-+                .and_then(|timing| timing.engine_service_total_ms)
++                .and_then(|timing| timing.server_timing_total_ms)
 +                .filter(|duration| duration.is_finite() && *duration > 0.0)
-+                .map(|duration| ResponseEvent::InferenceDuration(duration.round() as u64)));
++                .map(|duration| ResponseEvent::ServiceDuration(duration.round() as u64)));
 +        }
          "codex.response.metadata"
          | "response.content_part.added"
          | "response.content_part.done"
-@@ -544,8 +557,7 @@ pub fn process_responses_event(
+@@ -544,8 +559,7 @@ pub fn process_responses_event(
          | "response.in_progress"
          | "response.metadata"
          | "response.output_text.done"
@@ -136,26 +138,35 @@ index 9c12aae..6b17053 100644
              trace!("unhandled responses event: {}", event.kind);
          }
          kind if kind.ends_with(".delta") => {
-@@ -723,6 +735,31 @@ mod tests {
+@@ -723,6 +737,40 @@ mod tests {
      use tokio_test::io::Builder as IoBuilder;
      use tokio_util::io::ReaderStream;
  
 +    #[test]
-+    fn backend_timing_reports_inference_without_tool_or_transport_time() {
++    fn backend_timing_uses_response_time_instead_of_cumulative_turn_time() {
 +        let event = serde_json::from_value(json!({
 +            "type": "responsesapi.websocket_timing",
 +            "timing_metrics": {
-+                "engine_service_total_ms": 1250.5,
-+                "responses_duration_excl_engine_and_client_tool_time_ms": 9000
++                "timing_scope": "logical_turn",
++                "server_timing_total_ms": 989.652,
++                "client_tool_pause_total_ms": 8802.235655,
++                "total_turn_time_s": 11.347353636,
++                "num_sampled_tokens_total": 41,
++                "num_engine_calls": 2
 +            }
 +        }))
 +        .unwrap();
 +        assert_matches!(
 +            process_responses_event(event).unwrap(),
-+            Some(ResponseEvent::InferenceDuration(1251))
++            Some(ResponseEvent::ServiceDuration(990))
 +        );
 +
-+        for timing in [json!({}), json!({"engine_service_total_ms": -1})] {
++        for timing in [
++            json!({}),
++            json!({"server_timing_total_ms": null}),
++            json!({"server_timing_total_ms": 0}),
++            json!({"server_timing_total_ms": -1}),
++        ] {
 +            let event = serde_json::from_value(json!({
 +                "type": "responsesapi.websocket_timing",
 +                "timing_metrics": timing
@@ -169,43 +180,43 @@ index 9c12aae..6b17053 100644
          let mut builder = IoBuilder::new();
          for chunk in chunks {
 diff --git a/core/src/agent/control_tests.rs b/core/src/agent/control_tests.rs
-index 9c65c79..6db0ff0 100644
+index 9c65c79..afb4673 100644
 --- a/core/src/agent/control_tests.rs
 +++ b/core/src/agent/control_tests.rs
 @@ -2808,6 +2808,7 @@ async fn spawn_agent_fork_sanitizes_inherited_compaction_metadata() {
              "child-response",
              Some(&child_usage),
              /*usage_metadata*/ None,
-+            /*generation_duration_ms*/ None,
++            /*service_duration_ms*/ None,
          )
          .await;
      child_thread
 diff --git a/core/src/compact.rs b/core/src/compact.rs
-index 4aa7e07..243cb92 100644
+index 4aa7e07..4b7c5d6 100644
 --- a/core/src/compact.rs
 +++ b/core/src/compact.rs
 @@ -908,6 +908,7 @@ async fn drain_to_completed(
                      &response_id,
                      token_usage.as_ref(),
                      usage_metadata.as_ref(),
-+                    /*generation_duration_ms*/ None,
++                    /*service_duration_ms*/ None,
                  )
                  .await;
                  sess.update_token_usage_info(
 diff --git a/core/src/compact_remote_v2.rs b/core/src/compact_remote_v2.rs
-index 5656fb4..99101f3 100644
+index 5656fb4..634087d 100644
 --- a/core/src/compact_remote_v2.rs
 +++ b/core/src/compact_remote_v2.rs
 @@ -457,6 +457,7 @@ async fn collect_compaction_output(
                              &response_id,
                              token_usage.as_ref(),
                              usage_metadata.as_ref(),
-+                            /*generation_duration_ms*/ None,
++                            /*service_duration_ms*/ None,
                          )
                          .await;
                      }
 diff --git a/core/src/guardian/response_resampling.rs b/core/src/guardian/response_resampling.rs
-index f5a671c..fa9452b 100644
+index f5a671c..53eece9 100644
 --- a/core/src/guardian/response_resampling.rs
 +++ b/core/src/guardian/response_resampling.rs
 @@ -105,7 +105,8 @@ impl ResponseResampling {
@@ -214,19 +225,19 @@ index f5a671c..fa9452b 100644
              | ResponseEvent::RateLimits(_)
 -            | ResponseEvent::ModelsEtag(_) => {}
 +            | ResponseEvent::ModelsEtag(_)
-+            | ResponseEvent::InferenceDuration(_) => {}
++            | ResponseEvent::ServiceDuration(_) => {}
          }
          Some(event)
      }
 diff --git a/core/src/session/mod.rs b/core/src/session/mod.rs
-index ce93060..12ad6e3 100644
+index ce93060..e0f8099 100644
 --- a/core/src/session/mod.rs
 +++ b/core/src/session/mod.rs
 @@ -5681,6 +5681,7 @@ impl Session {
          response_id: &str,
          usage: Option<&TokenUsage>,
          usage_metadata: Option<&ResponseUsageMetadata>,
-+        generation_duration_ms: Option<u64>,
++        service_duration_ms: Option<u64>,
      ) {
          self.send_event(
              turn_context,
@@ -234,12 +245,12 @@ index ce93060..12ad6e3 100644
                  response_id: response_id.to_string(),
                  token_usage: usage.cloned(),
                  usage_metadata: usage_metadata.cloned(),
-+                generation_duration_ms,
++                service_duration_ms,
              }),
          )
          .await;
 diff --git a/core/src/session/session.rs b/core/src/session/session.rs
-index fba4ce1..fde9bd7 100644
+index fba4ce1..89e014e 100644
 --- a/core/src/session/session.rs
 +++ b/core/src/session/session.rs
 @@ -1939,7 +1939,8 @@ impl Session {
@@ -247,20 +258,20 @@ index fba4ce1..fde9bd7 100644
                  reasoning_effort_override_enabled,
                  config.features.enabled(Feature::EnableRequestCompression),
 -                config.features.enabled(Feature::RuntimeMetrics),
-+                // The context footer uses backend inference time for its session rate.
++                // The context footer uses server response time for its session rate.
 +                /*include_timing_metrics*/ true,
                  Self::build_model_client_beta_features_header(config.as_ref()),
                  /*concurrent_reasoning_summaries_enabled*/
                  config
 diff --git a/core/src/session/turn.rs b/core/src/session/turn.rs
-index d775099..be5ec17 100644
+index d775099..4574608 100644
 --- a/core/src/session/turn.rs
 +++ b/core/src/session/turn.rs
 @@ -3063,6 +3063,7 @@ async fn try_run_sampling_request(
          !sess.services.extensions.turn_item_contributors().is_empty();
      let mut active_item_is_streaming_to_client = false;
      let receiving_span = trace_span!("receiving_stream");
-+    let mut generation_duration_ms = None;
++    let mut service_duration_ms = None;
      let outcome: CodexResult<SamplingRequestResult> = loop {
          if response_completed && resampling.accepted_output.is_empty() {
              if resampling.update_usage_boundary {
@@ -268,7 +279,7 @@ index d775099..be5ec17 100644
  
          match event {
              ResponseEvent::Created { response_id } => {
-+                generation_duration_ms = None;
++                service_duration_ms = None;
                  answer_moderation = None;
                  response_id_for_assessment.clone_from(&response_id);
                  if let Some(response_id) = response_id {
@@ -276,8 +287,8 @@ index d775099..be5ec17 100644
                  sess.record_rate_limits_info(snapshot).await;
                  should_emit_token_count = true;
              }
-+            ResponseEvent::InferenceDuration(duration_ms) => {
-+                generation_duration_ms = Some(duration_ms);
++            ResponseEvent::ServiceDuration(duration_ms) => {
++                service_duration_ms = Some(duration_ms);
 +            }
              ResponseEvent::ModelsEtag(etag) => {
                  // Update internal state with latest models etag
@@ -286,12 +297,12 @@ index d775099..be5ec17 100644
                      &response_id,
                      token_usage.as_ref(),
                      usage_metadata.as_ref(),
-+                    generation_duration_ms.take(),
++                    service_duration_ms.take(),
                  )
                  .await;
                  let budget_result = sess
 diff --git a/core/src/turn_timing.rs b/core/src/turn_timing.rs
-index f666d7f..7a510de 100644
+index f666d7f..7fdd14e 100644
 --- a/core/src/turn_timing.rs
 +++ b/core/src/turn_timing.rs
 @@ -537,7 +537,8 @@ fn response_event_records_turn_ttft(event: &ResponseEvent) -> bool {
@@ -300,62 +311,62 @@ index f666d7f..7a510de 100644
          | ResponseEvent::RateLimits(_)
 -        | ResponseEvent::ModelsEtag(_) => false,
 +        | ResponseEvent::ModelsEtag(_)
-+        | ResponseEvent::InferenceDuration(_) => false,
++        | ResponseEvent::ServiceDuration(_) => false,
      }
  }
  
 diff --git a/otel/src/events/session_telemetry.rs b/otel/src/events/session_telemetry.rs
-index f6099b8..9ac3c12 100644
+index f6099b8..c2a9899 100644
 --- a/otel/src/events/session_telemetry.rs
 +++ b/otel/src/events/session_telemetry.rs
 @@ -1435,6 +1435,7 @@ impl SessionTelemetry {
              ResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
              ResponseEvent::RateLimits(_) => "rate_limits".into(),
              ResponseEvent::ModelsEtag(_) => "models_etag".into(),
-+            ResponseEvent::InferenceDuration(_) => "inference_duration".into(),
++            ResponseEvent::ServiceDuration(_) => "service_duration".into(),
          }
      }
  
 diff --git a/protocol/src/protocol.rs b/protocol/src/protocol.rs
-index dedf79e..777ca14 100644
+index dedf79e..6ffab9c 100644
 --- a/protocol/src/protocol.rs
 +++ b/protocol/src/protocol.rs
 @@ -2201,6 +2201,9 @@ pub struct RawResponseCompletedEvent {
      pub response_id: String,
      pub token_usage: Option<TokenUsage>,
      pub usage_metadata: Option<crate::ResponseUsageMetadata>,
-+    /// Backend inference time, excluding client tools and transport.
++    /// Server processing time for this response, including overhead but excluding client tools.
 +    #[serde(default, skip_serializing_if = "Option::is_none")]
-+    pub generation_duration_ms: Option<u64>,
++    pub service_duration_ms: Option<u64>,
  }
  
  #[derive(Debug, Clone, Deserialize, Serialize, TS, JsonSchema)]
 diff --git a/tui/src/chatwidget.rs b/tui/src/chatwidget.rs
-index e748352..7f3a096 100644
+index e748352..f2b5515 100644
 --- a/tui/src/chatwidget.rs
 +++ b/tui/src/chatwidget.rs
 @@ -577,6 +577,7 @@ pub(crate) struct ChatWidget {
      pub(crate) windows_sandbox_elevated_setup_complete: bool,
      token_info: Option<TokenUsageInfo>,
      token_usage_pending: bool,
-+    session_generation_rate: crate::token_usage::SessionGenerationRate,
++    session_generation_rate: crate::token_usage::GenerationRate,
      // Status and polling use account usage reads; response streams may identify meters differently.
      rate_limit_snapshots_by_limit_id: BTreeMap<String, RateLimitSnapshotDisplay>,
      refreshing_status_outputs: Vec<(u64, StatusHistoryHandle)>,
 diff --git a/tui/src/chatwidget/constructor.rs b/tui/src/chatwidget/constructor.rs
-index 1ae4323..d4c1deb 100644
+index 1ae4323..5a8f3f5 100644
 --- a/tui/src/chatwidget/constructor.rs
 +++ b/tui/src/chatwidget/constructor.rs
 @@ -157,6 +157,7 @@ impl ChatWidget {
              windows_sandbox_elevated_setup_complete: false,
              token_info: None,
              token_usage_pending: false,
-+            session_generation_rate: crate::token_usage::SessionGenerationRate::default(),
++            session_generation_rate: crate::token_usage::GenerationRate::default(),
              rate_limit_snapshots_by_limit_id: BTreeMap::new(),
              refreshing_status_outputs: Vec::new(),
              next_status_refresh_request_id: 0,
 diff --git a/tui/src/chatwidget/protocol.rs b/tui/src/chatwidget/protocol.rs
-index 3f1ea5a..f04ffc1 100644
+index 3f1ea5a..01b4454 100644
 --- a/tui/src/chatwidget/protocol.rs
 +++ b/tui/src/chatwidget/protocol.rs
 @@ -129,6 +129,16 @@ impl ChatWidget {
@@ -365,7 +376,7 @@ index 3f1ea5a..f04ffc1 100644
 +            ServerNotification::RawResponseCompleted(notification) => {
 +                if !from_replay
 +                    && let (Some(usage), Some(duration_ms)) =
-+                        (notification.usage, notification.generation_duration_ms)
++                        (notification.usage, notification.service_duration_ms)
 +                {
 +                    self.session_generation_rate
 +                        .record(usage.output_tokens, duration_ms);
@@ -418,7 +429,7 @@ index c7109c6..d84f795 100644
                  .status_line_context_used_percent()
                  .map(|used| format!("Context {used}% used")),
 diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/tests/status_and_layout.rs
-index 3491d38..2b84f58 100644
+index 3491d38..bafeb3d 100644
 --- a/tui/src/chatwidget/tests/status_and_layout.rs
 +++ b/tui/src/chatwidget/tests/status_and_layout.rs
 @@ -116,7 +116,7 @@ async fn resumed_session_hides_unknown_token_usage_until_an_update_arrives() {
@@ -478,7 +489,7 @@ index 3491d38..2b84f58 100644
 +    chat.refresh_status_line();
 +    assert!(!status_line_text(&chat).unwrap().contains("tk/s"));
 +
-+    let completed = |response_id: &str, output_tokens, generation_duration_ms| {
++    let completed = |response_id: &str, output_tokens, service_duration_ms| {
 +        ServerNotification::RawResponseCompleted(
 +            codex_app_server_protocol::RawResponseCompletedNotification {
 +                thread_id: String::new(),
@@ -493,7 +504,7 @@ index 3491d38..2b84f58 100644
 +                    reasoning_output_tokens: 0,
 +                }),
 +                usage_metadata: None,
-+                generation_duration_ms,
++                service_duration_ms,
 +            },
 +        )
 +    };
@@ -521,7 +532,7 @@ index 3491d38..2b84f58 100644
  async fn status_line_legacy_context_usage_renders_context_used_percent() {
      let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 diff --git a/tui/src/token_usage.rs b/tui/src/token_usage.rs
-index ac9a20b..1631139 100644
+index ac9a20b..1d88b91 100644
 --- a/tui/src/token_usage.rs
 +++ b/tui/src/token_usage.rs
 @@ -6,6 +6,9 @@ use codex_protocol::num_format::format_with_separators;
@@ -529,26 +540,27 @@ index ac9a20b..1631139 100644
  use serde::Serialize;
  
 +mod generation_rate;
-+pub(crate) use generation_rate::SessionGenerationRate;
++pub(crate) use generation_rate::GenerationRate;
 +
  const BASELINE_TOKENS: i64 = 12000;
  
  #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 diff --git a/tui/src/token_usage/generation_rate.rs b/tui/src/token_usage/generation_rate.rs
 new file mode 100644
-index 0000000..f6c785e
+index 0000000..a54f10a
 --- /dev/null
 +++ b/tui/src/token_usage/generation_rate.rs
-@@ -0,0 +1,55 @@
-+/// Average output rate for measured responses in this UI session. Resumed history
-+/// and responses without timing are excluded so tokens and time always match.
+@@ -0,0 +1,56 @@
++/// Output tokens divided by server processing time, including service overhead
++/// and excluding client tools, network transit, and pauses between user turns.
++/// Only responses with both usage and timing contribute to the average.
 +#[derive(Debug, Default)]
-+pub(crate) struct SessionGenerationRate {
++pub(crate) struct GenerationRate {
 +    output_tokens: u64,
 +    duration_ms: u64,
 +}
 +
-+impl SessionGenerationRate {
++impl GenerationRate {
 +    pub(crate) fn record(&mut self, output_tokens: i64, duration_ms: u64) {
 +        if output_tokens < 0 || duration_ms == 0 {
 +            return;
@@ -565,11 +577,11 @@ index 0000000..f6c785e
 +
 +#[cfg(test)]
 +mod tests {
-+    use super::SessionGenerationRate;
++    use super::GenerationRate;
 +
 +    #[test]
-+    fn rate_uses_total_tokens_over_total_generation_time() {
-+        let mut rate = SessionGenerationRate::default();
++    fn rate_weights_responses_by_server_time() {
++        let mut rate = GenerationRate::default();
 +        assert_eq!(rate.tokens_per_second(), None);
 +
 +        rate.record(200, 1_000);
@@ -581,7 +593,7 @@ index 0000000..f6c785e
 +
 +    #[test]
 +    fn invalid_samples_do_not_distort_the_rate() {
-+        let mut rate = SessionGenerationRate::default();
++        let mut rate = GenerationRate::default();
 +        rate.record(50_000, 0);
 +        rate.record(-1, 1_000);
 +        assert_eq!(rate.tokens_per_second(), None);
