@@ -6,9 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "claude-statusline"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = ["atomic-file-writes", "pydantic"]
+dependencies = ["atomic-file-writes", "pydantic", "sketchybar-applet"]
 
 [project.scripts]
+claude-sketchybar = "claude_statusline.sketchybar:main"
 claude-statusline = "claude_statusline:main"
 
 [tool.setuptools.packages.find]

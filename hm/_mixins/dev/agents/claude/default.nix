@@ -31,6 +31,10 @@ in
 {
   imports = [ ./mutable-settings.nix ];
 
+  host.hm.sketchybar.claude.enable = lib.mkDefault (
+    pkgs.stdenv.isDarwin && config.programs.claude-code.enable && config.host.hm.sketchybar.enable
+  );
+
   programs.claude-code =
     lib.mkIf (config.host.hm.env.roles.developer && config.host.hm.dev.claude.enable)
       {

@@ -4,6 +4,7 @@
     ./alertmanager.nix
     ./attention-inbox.nix
     ./battery.nix
+    ./claude.nix
     ./clock.nix
     ./codex.nix
     ./disk.nix

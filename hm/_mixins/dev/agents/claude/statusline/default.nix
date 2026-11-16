@@ -7,6 +7,9 @@ let
   atomicFileWrites = python3.pkgs.callPackage ../../../../../../pkgs/atomic-file-writes {
     inherit pythonRuffCheckHook;
   };
+  sketchybarApplet = python3.pkgs.callPackage ../../../../gui/sketchybar/pkgs/sketchybar-applet {
+    inherit pythonRuffCheckHook;
+  };
 in
 python3.pkgs.buildPythonApplication {
   pname = "claude-statusline";
@@ -18,6 +21,7 @@ python3.pkgs.buildPythonApplication {
   dependencies = [
     atomicFileWrites
     python3.pkgs.pydantic
+    sketchybarApplet
   ];
   nativeCheckInputs = with python3.pkgs; [
     pythonRuffCheckHook
@@ -31,7 +35,7 @@ python3.pkgs.buildPythonApplication {
   pythonImportsCheck = [ "claude_statusline" ];
 
   meta = {
-    description = "Claude status line with context, session token counts, and output rate";
+    description = "Claude status line and SketchyBar usage applet";
     license = lib.licenses.mit;
     mainProgram = "claude-statusline";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
