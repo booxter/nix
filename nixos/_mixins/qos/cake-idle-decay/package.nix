@@ -21,8 +21,11 @@ pkgs.stdenv.mkDerivation {
     "M=$(PWD)"
     "modules"
   ];
+  # NixOS merges this depmod configuration into the module tree before indexing
+  # it, so both explicit modprobe calls and qdisc autoloading select our copy.
   installPhase = ''
-    mkdir -p "$out"
-    cp sch_cake.ko "$out/"
+    install -D sch_cake.ko "$out/lib/modules/${kernel.modDirVersion}/updates/sch_cake.ko"
+    mkdir -p "$out/etc/depmod.d"
+    echo 'override sch_cake * updates' > "$out/etc/depmod.d/cake-idle-decay.conf"
   '';
 }
