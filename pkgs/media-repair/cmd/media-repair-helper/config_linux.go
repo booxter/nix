@@ -40,7 +40,7 @@ func parseConfig(args []string, stderr io.Writer) (configuration, error) {
 	flags.StringVar(&config.cuebreakpoints, "cuebreakpoints", "", "cuebreakpoints executable")
 	flags.StringVar(&config.wvunpack, "wvunpack", "", "wvunpack executable")
 	flags.DurationVar(&config.probeTimeout, "timeout", 30*time.Second, "probe timeout")
-	flags.DurationVar(&config.mediaTimeout, "media-timeout", 30*time.Minute, "media operation timeout")
+	flags.DurationVar(&config.mediaTimeout, "media-timeout", 60*time.Minute, "media operation timeout")
 
 	roots := mediaroot.NewMappings()
 	flags.Var(roots, "root", "media root as ID=PATH; repeatable")

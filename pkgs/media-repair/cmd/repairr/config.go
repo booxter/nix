@@ -31,7 +31,7 @@ type config struct {
 
 const (
 	requestTimeout = 30 * time.Second
-	mediaTimeout   = 31 * time.Minute
+	mediaTimeout   = 61 * time.Minute
 	plannerTimeout = 21 * time.Minute
 	queueInterval  = 15 * time.Minute
 )
