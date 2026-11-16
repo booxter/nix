@@ -1,6 +1,9 @@
 { pkgs, ... }:
 let
-  endpoint = {
+  endpoint = { lib, ... }: {
+    # The test framework's acpi_pm clock saturates a vCPU in this workload.
+    # Packet scheduling measurements need the paravirtual clock instead.
+    boot.kernelParams = lib.mkAfter [ "clocksource=kvm-clock" ];
     environment.etc."cake-tunnel/probes.py".source = ./cake-tunnel/probes.py;
     networking.firewall.enable = false;
     boot.kernelModules = [

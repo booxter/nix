@@ -247,6 +247,12 @@ def summarize(mode, probes, transfers):
 start_all()
 for machine in (client, provider, wan):
     machine.wait_for_unit("multi-user.target")
+    assert (
+        run(
+            machine, "cat", "/sys/devices/system/clocksource/clocksource0/current_clocksource"
+        ).strip()
+        == "kvm-clock"
+    )
 for device in ("eth1", "eth2"):
     run(
         wan,

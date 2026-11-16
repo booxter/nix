@@ -96,6 +96,9 @@ async def ping_probes():
 def system_state():
     return {
         "time": time.time(),
+        "clocksource": Path("/sys/devices/system/clocksource/clocksource0/current_clocksource")
+        .read_text()
+        .strip(),
         **{
             name: Path(path).read_text()
             for name, path in {
