@@ -41,7 +41,7 @@ in
     casks = [
       "sf-symbols"
     ]
-    ++ lib.optionals (config.host.realm != "work") [
+    ++ lib.optionals hmConfig.protonvpn.enable [
       "protonvpn"
     ]
     ++ lib.optionals wiresharkEnabled [
