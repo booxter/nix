@@ -23,7 +23,7 @@ python3.pkgs.buildPythonApplication {
   pythonImportsCheck = [ "claude_statusline" ];
 
   meta = {
-    description = "Claude status line with context and session token counts";
+    description = "Claude status line with context, session token counts, and output rate";
     license = lib.licenses.mit;
     mainProgram = "claude-statusline";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
