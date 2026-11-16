@@ -3,6 +3,8 @@
     http_listen_address = "127.0.0.1";
     http_listen_port = 3200;
     grpc_listen_address = "127.0.0.1";
+    # Loki already uses the shared default of 9095 on the monitoring host.
+    grpc_listen_port = 9096;
   };
   distributor.receivers.otlp.protocols.http.endpoint = "127.0.0.1:4319";
   ingester.lifecycler = {

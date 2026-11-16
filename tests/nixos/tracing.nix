@@ -13,6 +13,13 @@ pkgs.testers.runNixOSTest {
     host.observability.tracing.enable = true;
     virtualisation.memorySize = 2048;
     networking.hosts."127.0.0.1" = [ "tempo.test" ];
+    # Reserve Loki's gRPC port before Tempo starts, as on the monitoring host.
+    systemd.sockets.loki-grpc.listenStreams = [ "127.0.0.1:9095" ];
+    systemd.services.loki-grpc.serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+    systemd.services.tempo = {
+      requires = [ "loki-grpc.socket" ];
+      after = [ "loki-grpc.socket" ];
+    };
     services.tempo = {
       enable = true;
       settings = import ../../nixos/_mixins/observability/tempo/settings.nix;
