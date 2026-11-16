@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from claude_statusline import LocalTranscriptReader, Status, compact, render, run, session_usage
+from claude_statusline.usage import FileUsageStore, RateLimits, RateWindow
 
 
 @dataclass
@@ -110,12 +111,49 @@ def test_status_distinguishes_live_context_from_resumed_session(tmp_path: Path) 
         "transcript_path": str(transcript_path),
     }
     stdout = io.StringIO()
+    store = FileUsageStore(tmp_path / "rate-limits.json")
 
-    run(io.StringIO(json.dumps(payload)), stdout, Path("/home/user"), LocalTranscriptReader())
+    run(
+        io.StringIO(json.dumps(payload)),
+        stdout,
+        Path("/home/user"),
+        LocalTranscriptReader(),
+        store,
+    )
 
     assert stdout.getvalue() == (
         "Opus · high · ~/src/nix · Context 16.2K tokens, 92% left · Session 260 in, 10 out\n"
     )
+    assert store.load() is None
+
+
+def test_status_saves_rate_limits_for_other_tools(tmp_path: Path) -> None:
+    store = FileUsageStore(tmp_path / "cache" / "rate-limits.json")
+    payload = {
+        "rate_limits": {
+            "five_hour": {"used_percentage": 42.5, "resets_at": 1767225600},
+            "seven_day": {"used_percentage": 10, "resets_at": 1767744000},
+        }
+    }
+
+    run(io.StringIO(json.dumps(payload)), io.StringIO(), tmp_path, Transcript(), store)
+
+    assert store.load() == RateLimits(
+        five_hour=RateWindow(used_percentage=42.5, resets_at=1767225600),
+        seven_day=RateWindow(used_percentage=10, resets_at=1767744000),
+    )
+
+
+def test_unwritable_rate_limits_do_not_break_status(tmp_path: Path) -> None:
+    (tmp_path / "cache").write_text("not a directory")
+    store = FileUsageStore(tmp_path / "cache" / "rate-limits.json")
+    payload = {"rate_limits": {"five_hour": {"used_percentage": 1, "resets_at": 0}}}
+    stdout = io.StringIO()
+
+    run(io.StringIO(json.dumps(payload)), stdout, tmp_path, Transcript(), store)
+
+    assert stdout.getvalue() == "Session tokens unavailable\n"
+    assert store.load() is None
 
 
 def test_new_session_with_no_usage() -> None:

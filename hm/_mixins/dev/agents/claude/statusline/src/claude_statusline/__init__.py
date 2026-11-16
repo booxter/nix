@@ -3,11 +3,13 @@
 import sys
 from bisect import bisect_right
 from collections.abc import Iterable, Iterator
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol, TextIO
 
+from claude_statusline.usage import FileUsageStore, RateLimits, UsageStore, rate_limits_path
 from pydantic import AliasPath, BaseModel, Field, JsonValue, NonNegativeInt, ValidationError
 
 
@@ -25,6 +27,7 @@ class Status(BaseModel):
         None, validation_alias=AliasPath("context_window", "used_percentage")
     )
     transcript_path: Path | None = None
+    rate_limits: RateLimits | None = None
 
 
 class Usage(BaseModel):
@@ -168,10 +171,25 @@ def render(status: Status, home: Path, reader: TranscriptReader) -> str:
     return " · ".join(parts)
 
 
-def run(stdin: TextIO, stdout: TextIO, home: Path, reader: TranscriptReader) -> None:
+def save_rate_limits(status: Status, store: UsageStore) -> None:
+    limits = status.rate_limits
+    if limits is None or (limits.five_hour is None and limits.seven_day is None):
+        return
+
+    # The applet only goes stale; the status line itself must still render.
+    with suppress(OSError):
+        store.save(limits)
+
+
+def run(
+    stdin: TextIO, stdout: TextIO, home: Path, reader: TranscriptReader, store: UsageStore
+) -> None:
     status = Status.model_validate_json(stdin.read())
+    save_rate_limits(status, store)
     print(render(status, home, reader), file=stdout)
 
 
 def main() -> None:
-    run(sys.stdin, sys.stdout, Path.home(), LocalTranscriptReader())
+    home = Path.home()
+    store = FileUsageStore(rate_limits_path(home))
+    run(sys.stdin, sys.stdout, home, LocalTranscriptReader(), store)

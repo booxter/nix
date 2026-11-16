@@ -3,6 +3,11 @@
   python3,
   pythonRuffCheckHook,
 }:
+let
+  atomicFileWrites = python3.pkgs.callPackage ../../../../../../pkgs/atomic-file-writes {
+    inherit pythonRuffCheckHook;
+  };
+in
 python3.pkgs.buildPythonApplication {
   pname = "claude-statusline";
   version = "0.1.0";
@@ -10,7 +15,10 @@ python3.pkgs.buildPythonApplication {
   src = ./.;
 
   build-system = [ python3.pkgs.setuptools ];
-  dependencies = [ python3.pkgs.pydantic ];
+  dependencies = [
+    atomicFileWrites
+    python3.pkgs.pydantic
+  ];
   nativeCheckInputs = with python3.pkgs; [
     pythonRuffCheckHook
     mypy
