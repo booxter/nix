@@ -11,7 +11,8 @@ import (
 	"strconv"
 
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
-	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
+	"github.com/booxter/nix-config/media-repair/internal/telemetry"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (runner *Runner) normalize(ctx context.Context, parts []*os.File, output *os.File, format string) ([]*os.File, func(), error) {
@@ -41,9 +42,9 @@ func (runner *Runner) normalize(ctx context.Context, parts []*os.File, output *o
 			return nil, nil, err
 		}
 		normalized = append(normalized, file)
-		finish := mediaprogress.Start(ctx, "normalize", "part", index+1)
-		err = runner.remux(ctx, part, file, format)
-		finish(err)
+		phase, span := telemetry.StartPhase(ctx, "normalize", attribute.Int("part", index+1))
+		err = runner.remux(phase, part, file, format)
+		telemetry.EndPhase(phase, span, err)
 		if err != nil {
 			cleanup()
 			return nil, nil, fmt.Errorf("normalize part %d: %w", index+1, err)

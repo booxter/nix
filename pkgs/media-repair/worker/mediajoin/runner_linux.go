@@ -15,8 +15,9 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/joinverification"
-	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
+	"github.com/booxter/nix-config/media-repair/internal/telemetry"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -138,9 +139,9 @@ func (runner *Runner) Join(
 
 	timelines := make([]ffprobe.Timeline, len(parts))
 	for index, part := range parts {
-		finish := mediaprogress.Start(joinContext, "source packet scan", "part", index+1)
-		timelines[index], err = runner.prober.Timeline(joinContext, part)
-		finish(err)
+		phase, span := telemetry.StartPhase(joinContext, "source packet scan", attribute.Int("part", index+1))
+		timelines[index], err = runner.prober.Timeline(phase, part)
+		telemetry.EndPhase(phase, span, err)
 		if err != nil {
 			return Result{}, fmt.Errorf("read source part %d timing: %w", index+1, err)
 		}
@@ -166,19 +167,19 @@ func (runner *Runner) Join(
 		"-fd", strconv.Itoa(outputDescriptor),
 		"fd:",
 	}
-	command := exec.CommandContext(joinContext, runner.executable, arguments...)
+	phase, span := telemetry.StartPhase(joinContext, "concatenate")
+	command := exec.CommandContext(phase, runner.executable, arguments...)
 	command.WaitDelay = commandWaitDelay
 	command.Stdin = strings.NewReader(manifest)
 	command.Stdout = io.Discard
 	command.ExtraFiles = append(append([]*os.File(nil), normalized...), output)
 	diagnosticOutput := commanddiagnostics.NewRecorder()
 	command.Stderr = diagnosticOutput
-	finish := mediaprogress.Start(joinContext, "concatenate")
 	err = command.Run()
 	if err != nil {
-		finish(commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics()))
+		telemetry.EndPhase(phase, span, commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics()))
 	} else {
-		finish(nil)
+		telemetry.EndPhase(phase, span, nil)
 	}
 	if err != nil {
 		diagnostics := diagnosticOutput.Diagnostics()
@@ -198,9 +199,9 @@ func (runner *Runner) Join(
 	}
 	diagnostics := diagnosticOutput.Diagnostics()
 
-	finish = mediaprogress.Start(joinContext, "flush output")
+	phase, span = telemetry.StartPhase(joinContext, "flush output")
 	err = output.Sync()
-	finish(err)
+	telemetry.EndPhase(phase, span, err)
 	if err != nil {
 		return Result{}, &Failure{
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics, cause: err,
@@ -217,15 +218,15 @@ func (runner *Runner) Join(
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics, cause: err,
 		}
 	}
-	finish = mediaprogress.Start(joinContext, "output packet scan")
-	joinedTimeline, err := runner.prober.Timeline(joinContext, output)
-	finish(err)
+	phase, span = telemetry.StartPhase(joinContext, "output packet scan")
+	joinedTimeline, err := runner.prober.Timeline(phase, output)
+	telemetry.EndPhase(phase, span, err)
 	if err != nil {
 		return Result{}, fmt.Errorf("read joined packet timing: %w", err)
 	}
-	finish = mediaprogress.Start(joinContext, "validate packet timing")
+	phase, span = telemetry.StartPhase(joinContext, "validate packet timing")
 	err = joinverification.ValidateTimeline(timelines, joinedTimeline)
-	finish(err)
+	telemetry.EndPhase(phase, span, err)
 	if err != nil {
 		return Result{}, &Failure{
 			Kind: FailureInvalidOutput, Diagnostics: diagnostics,

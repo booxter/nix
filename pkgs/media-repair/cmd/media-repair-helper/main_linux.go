@@ -15,8 +15,8 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
-	"github.com/booxter/nix-config/media-repair/internal/mediaprogress"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/media-repair/internal/telemetry"
 	"github.com/booxter/nix-config/media-repair/worker/blurayidentify"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/cuesheet"
@@ -63,7 +63,7 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 
 	ctx, cancel := context.WithTimeout(ctx, config.mediaTimeout)
 	defer cancel()
-	ctx = mediaprogress.WithLogger(ctx, slog.New(slog.NewJSONHandler(stderr, nil)))
+	ctx = telemetry.WithLogger(ctx, slog.New(slog.NewJSONHandler(stderr, nil)))
 
 	return config.execute(ctx, data, stdout, files, prober)
 }
