@@ -15,7 +15,7 @@ def tmux(command):
 start_all()
 controller.wait_for_unit("multi-user.target")
 target.wait_for_unit("sshd.service")
-controller.succeed(as_deployer("ssh target true"))
+controller.succeed(as_deployer("ssh -n target true"))
 
 controller_system = controller.succeed("readlink -f /run/current-system").strip()
 target_system = target.succeed("readlink -f /run/current-system").strip()
@@ -58,4 +58,4 @@ with subtest("deploy switches the remote target and leaves the controller unchan
     assert deployed_system != target_system
     assert controller.succeed("readlink -f /run/current-system").strip() == controller_system
     assert controller.succeed("cat /etc/deploy-smoke").strip() == "before"
-    controller.succeed(as_deployer("ssh target true"))
+    controller.succeed(as_deployer("ssh -n target true"))

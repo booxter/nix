@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -10,14 +9,6 @@ let
   lokiPkiClient = config.host.pki.clients.loki;
   lokiClientCertCredentialPath = "/run/credentials/alloy.service/loki-client.crt";
   lokiClientKeyCredentialPath = "/run/credentials/alloy.service/loki-client.key";
-  lokiTlsConfig = lib.optionalString (lokiClient != null) ''
-    tls_config {
-      ca_file = "${lokiClient.trustedCaCertificate}"
-      cert_file = "${lokiClientCertCredentialPath}"
-      key_file = "${lokiClientKeyCredentialPath}"
-      server_name = "${lokiClient.serverName}"
-    }
-  '';
   hostLabel = config.services.avahi.hostName;
 in
 {
@@ -27,53 +18,56 @@ in
       secretPrefix = "observability/clients/loki";
       materializations.default.restartUnits = [ "alloy.service" ];
     };
-    services.alloy = {
-      enable = true;
-      configPath = pkgs.writeText "config.alloy" ''
-                    loki.write "default" {
-                      endpoint {
-                        url = "${lokiClient.writeUrl}"
-        ${lokiTlsConfig}
-                      }
-                    }
+    services.alloy.enable = true;
+    environment.etc."alloy/loki.alloy".text = ''
+      loki.write "default" {
+        endpoint {
+          url = "${lokiClient.writeUrl}"
+          tls_config {
+            ca_file = "${lokiClient.trustedCaCertificate}"
+            cert_file = "${lokiClientCertCredentialPath}"
+            key_file = "${lokiClientKeyCredentialPath}"
+            server_name = "${lokiClient.serverName}"
+          }
+        }
+      }
 
-                    loki.relabel "journal" {
-                      forward_to = []
+      loki.relabel "journal" {
+        forward_to = []
 
-                      rule {
-                        source_labels = ["__journal_coredump_gid", "__journal_coredump_exe"]
-                        separator     = ";"
-                        regex         = "30000;/build/.*"
-                        action        = "drop"
-                      }
+        rule {
+          source_labels = ["__journal_coredump_gid", "__journal_coredump_exe"]
+          separator     = ";"
+          regex         = "30000;/build/.*"
+          action        = "drop"
+        }
 
-                      rule {
-                        source_labels = ["__journal__hostname"]
-                        target_label  = "node_hostname"
-                      }
+        rule {
+          source_labels = ["__journal__hostname"]
+          target_label  = "node_hostname"
+        }
 
-                      rule {
-                        source_labels = ["__journal__systemd_unit"]
-                        target_label  = "systemd_unit"
-                      }
+        rule {
+          source_labels = ["__journal__systemd_unit"]
+          target_label  = "systemd_unit"
+        }
 
-                      rule {
-                        source_labels = ["__journal_priority_keyword"]
-                        target_label  = "level"
-                      }
-                    }
+        rule {
+          source_labels = ["__journal_priority_keyword"]
+          target_label  = "level"
+        }
+      }
 
-                    loki.source.journal "read" {
-                      forward_to    = [loki.write.default.receiver]
-                      relabel_rules = loki.relabel.journal.rules
-                      max_age       = "12h"
-                      labels = {
-                        job  = "systemd-journal",
-                        host = "${hostLabel}",
-                      }
-                    }
-      '';
-    };
+      loki.source.journal "read" {
+        forward_to    = [loki.write.default.receiver]
+        relabel_rules = loki.relabel.journal.rules
+        max_age       = "12h"
+        labels = {
+          job  = "systemd-journal",
+          host = "${hostLabel}",
+        }
+      }
+    '';
 
     systemd.services.alloy = {
       wants = [ "sops-install-secrets.service" ];

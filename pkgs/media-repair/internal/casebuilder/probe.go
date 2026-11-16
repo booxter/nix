@@ -199,7 +199,9 @@ func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {
 	if stream.Kind == nil {
 		return contracts.StreamElement{}, fmt.Errorf("%w: kind is missing", errIncompleteProbeMetadata)
 	}
-	if stream.CodecName == nil {
+	// RTP hint tracks can have no codec name while the audio/video metadata
+	// remains usable for import. Retain the unknown codec without inventing one.
+	if stream.CodecName == nil && *stream.Kind != controller.ProbeStreamData {
 		return contracts.StreamElement{}, fmt.Errorf(
 			"%w: codec name is missing",
 			errIncompleteProbeMetadata,
@@ -223,7 +225,7 @@ func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {
 	return contracts.StreamElement{
 		Index:       stream.Index,
 		Kind:        contracts.StreamKind(*stream.Kind),
-		CodecName:   *stream.CodecName,
+		CodecName:   stream.CodecName,
 		CodecTag:    stream.CodecTag,
 		Profile:     stream.Profile,
 		TimeBase:    mapRational(*stream.TimeBase),

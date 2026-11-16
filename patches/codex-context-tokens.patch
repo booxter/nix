@@ -1,29 +1,427 @@
+diff --git a/app-server-protocol/src/protocol/v2/thread.rs b/app-server-protocol/src/protocol/v2/thread.rs
+index dca33cb..7bfd4db 100644
+--- a/app-server-protocol/src/protocol/v2/thread.rs
++++ b/app-server-protocol/src/protocol/v2/thread.rs
+@@ -2121,6 +2121,9 @@ pub struct RawResponseCompletedNotification {
+     pub response_id: String,
+     pub usage: Option<TokenUsageBreakdown>,
+     pub usage_metadata: Option<ResponseUsageMetadata>,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    #[ts(optional, type = "number")]
++    pub generation_duration_ms: Option<u64>,
+ }
+ 
+ /// Usage metadata reported for one upstream response.
+diff --git a/app-server/src/bespoke_event_handling.rs b/app-server/src/bespoke_event_handling.rs
+index 485f8e1..cb672c7 100644
+--- a/app-server/src/bespoke_event_handling.rs
++++ b/app-server/src/bespoke_event_handling.rs
+@@ -1249,6 +1249,7 @@ pub(crate) async fn apply_bespoke_event_handling(
+                 response_id: raw_response_completed_event.response_id,
+                 usage: raw_response_completed_event.token_usage.map(Into::into),
+                 usage_metadata: raw_response_completed_event.usage_metadata.map(Into::into),
++                generation_duration_ms: raw_response_completed_event.generation_duration_ms,
+             };
+             outgoing
+                 .send_server_notification(ServerNotification::RawResponseCompleted(notification))
+diff --git a/app-server/src/request_processors/thread_lifecycle.rs b/app-server/src/request_processors/thread_lifecycle.rs
+index b9062d6..5e9896f 100644
+--- a/app-server/src/request_processors/thread_lifecycle.rs
++++ b/app-server/src/request_processors/thread_lifecycle.rs
+@@ -557,9 +557,10 @@ async fn start_listener(
+                             .then(|| thread_state.turn_summary.clone());
+                         (thread_state.experimental_raw_events, terminal)
+                     };
++                    // Response completion accounting also feeds the TUI's session rate.
+                     if matches!(
+                         &event.msg,
+-                        EventMsg::RawResponseItem(_) | EventMsg::RawResponseCompleted(_) | EventMsg::PrivateSessionEvent(_)
++                        EventMsg::RawResponseItem(_) | EventMsg::PrivateSessionEvent(_)
+                     ) && !raw_events_enabled
+                     {
+                         continue;
+diff --git a/app-server/tests/suite/v2/compaction.rs b/app-server/tests/suite/v2/compaction.rs
+index 784e6f9..1ced6ef 100644
+--- a/app-server/tests/suite/v2/compaction.rs
++++ b/app-server/tests/suite/v2/compaction.rs
+@@ -561,6 +561,7 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
+     assert_eq!(
+         raw_completed,
+         RawResponseCompletedNotification {
++            generation_duration_ms: None,
+             thread_id: thread_id.clone(),
+             turn_id: started.turn_id,
+             response_id: "r1".to_string(),
+diff --git a/app-server/tests/suite/v2/turn_start.rs b/app-server/tests/suite/v2/turn_start.rs
+index 44014ab..4457886 100644
+--- a/app-server/tests/suite/v2/turn_start.rs
++++ b/app-server/tests/suite/v2/turn_start.rs
+@@ -1340,6 +1340,10 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
+     let body = responses::sse(vec![
+         responses::ev_response_created("resp-1"),
+         responses::ev_assistant_message("msg-1", "Done"),
++        json!({
++            "type": "responsesapi.websocket_timing",
++            "timing_metrics": {"engine_service_total_ms": 1250}
++        }),
+         completed,
+     ]);
+     let response_mock = responses::mount_sse_once(&server, body).await;
+@@ -1396,6 +1400,7 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
+     assert_eq!(
+         notification,
+         RawResponseCompletedNotification {
++            generation_duration_ms: Some(1250),
+             thread_id: thread.id,
+             turn_id: turn.id,
+             response_id: "resp-1".to_string(),
+diff --git a/codex-api/src/common.rs b/codex-api/src/common.rs
+index 455836c..c76d68e 100644
+--- a/codex-api/src/common.rs
++++ b/codex-api/src/common.rs
+@@ -132,6 +132,8 @@ pub enum ResponseEvent {
+     },
+     RateLimits(RateLimitSnapshot),
+     ModelsEtag(String),
++    /// Backend inference time for this response, excluding client tools and transport.
++    InferenceDuration(u64),
+ }
+ 
+ #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+diff --git a/codex-api/src/sse/responses.rs b/codex-api/src/sse/responses.rs
+index 9c12aae..6b17053 100644
+--- a/codex-api/src/sse/responses.rs
++++ b/codex-api/src/sse/responses.rs
+@@ -164,6 +164,7 @@ pub struct ResponsesStreamEvent {
+     pub(crate) kind: String,
+     pub(crate) headers: Option<Value>,
+     metadata: Option<Value>,
++    timing_metrics: Option<ResponseTimingMetrics>,
+     response: Option<Value>,
+     response_id: Option<Value>,
+     error: Option<Value>,
+@@ -178,6 +179,11 @@ pub struct ResponsesStreamEvent {
+     safety_buffering: Option<Value>,
+ }
+ 
++#[derive(Deserialize, Debug)]
++struct ResponseTimingMetrics {
++    engine_service_total_ms: Option<f64>,
++}
++
+ fn deserialize_present_value<'de, D>(deserializer: D) -> Result<Option<Value>, D::Error>
+ where
+     D: serde::Deserializer<'de>,
+@@ -535,6 +541,13 @@ pub fn process_responses_event(
+                 }));
+             }
+         }
++        "responsesapi.websocket_timing" => {
++            return Ok(event
++                .timing_metrics
++                .and_then(|timing| timing.engine_service_total_ms)
++                .filter(|duration| duration.is_finite() && *duration > 0.0)
++                .map(|duration| ResponseEvent::InferenceDuration(duration.round() as u64)));
++        }
+         "codex.response.metadata"
+         | "response.content_part.added"
+         | "response.content_part.done"
+@@ -544,8 +557,7 @@ pub fn process_responses_event(
+         | "response.in_progress"
+         | "response.metadata"
+         | "response.output_text.done"
+-        | "response.reasoning_summary_part.done"
+-        | "responsesapi.websocket_timing" => {
++        | "response.reasoning_summary_part.done" => {
+             trace!("unhandled responses event: {}", event.kind);
+         }
+         kind if kind.ends_with(".delta") => {
+@@ -723,6 +735,31 @@ mod tests {
+     use tokio_test::io::Builder as IoBuilder;
+     use tokio_util::io::ReaderStream;
+ 
++    #[test]
++    fn backend_timing_reports_inference_without_tool_or_transport_time() {
++        let event = serde_json::from_value(json!({
++            "type": "responsesapi.websocket_timing",
++            "timing_metrics": {
++                "engine_service_total_ms": 1250.5,
++                "responses_duration_excl_engine_and_client_tool_time_ms": 9000
++            }
++        }))
++        .unwrap();
++        assert_matches!(
++            process_responses_event(event).unwrap(),
++            Some(ResponseEvent::InferenceDuration(1251))
++        );
++
++        for timing in [json!({}), json!({"engine_service_total_ms": -1})] {
++            let event = serde_json::from_value(json!({
++                "type": "responsesapi.websocket_timing",
++                "timing_metrics": timing
++            }))
++            .unwrap();
++            assert_matches!(process_responses_event(event).unwrap(), None);
++        }
++    }
++
+     async fn collect_events(chunks: &[&[u8]]) -> Vec<Result<ResponseEvent, ApiError>> {
+         let mut builder = IoBuilder::new();
+         for chunk in chunks {
+diff --git a/core/src/agent/control_tests.rs b/core/src/agent/control_tests.rs
+index 9c65c79..6db0ff0 100644
+--- a/core/src/agent/control_tests.rs
++++ b/core/src/agent/control_tests.rs
+@@ -2808,6 +2808,7 @@ async fn spawn_agent_fork_sanitizes_inherited_compaction_metadata() {
+             "child-response",
+             Some(&child_usage),
+             /*usage_metadata*/ None,
++            /*generation_duration_ms*/ None,
+         )
+         .await;
+     child_thread
+diff --git a/core/src/compact.rs b/core/src/compact.rs
+index 4aa7e07..243cb92 100644
+--- a/core/src/compact.rs
++++ b/core/src/compact.rs
+@@ -908,6 +908,7 @@ async fn drain_to_completed(
+                     &response_id,
+                     token_usage.as_ref(),
+                     usage_metadata.as_ref(),
++                    /*generation_duration_ms*/ None,
+                 )
+                 .await;
+                 sess.update_token_usage_info(
+diff --git a/core/src/compact_remote_v2.rs b/core/src/compact_remote_v2.rs
+index 5656fb4..99101f3 100644
+--- a/core/src/compact_remote_v2.rs
++++ b/core/src/compact_remote_v2.rs
+@@ -457,6 +457,7 @@ async fn collect_compaction_output(
+                             &response_id,
+                             token_usage.as_ref(),
+                             usage_metadata.as_ref(),
++                            /*generation_duration_ms*/ None,
+                         )
+                         .await;
+                     }
+diff --git a/core/src/guardian/response_resampling.rs b/core/src/guardian/response_resampling.rs
+index f5a671c..fa9452b 100644
+--- a/core/src/guardian/response_resampling.rs
++++ b/core/src/guardian/response_resampling.rs
+@@ -105,7 +105,8 @@ impl ResponseResampling {
+             | ResponseEvent::GuardianAssessment(_)
+             | ResponseEvent::ServerReasoningIncluded(_)
+             | ResponseEvent::RateLimits(_)
+-            | ResponseEvent::ModelsEtag(_) => {}
++            | ResponseEvent::ModelsEtag(_)
++            | ResponseEvent::InferenceDuration(_) => {}
+         }
+         Some(event)
+     }
+diff --git a/core/src/session/mod.rs b/core/src/session/mod.rs
+index ce93060..12ad6e3 100644
+--- a/core/src/session/mod.rs
++++ b/core/src/session/mod.rs
+@@ -5681,6 +5681,7 @@ impl Session {
+         response_id: &str,
+         usage: Option<&TokenUsage>,
+         usage_metadata: Option<&ResponseUsageMetadata>,
++        generation_duration_ms: Option<u64>,
+     ) {
+         self.send_event(
+             turn_context,
+@@ -5688,6 +5689,7 @@ impl Session {
+                 response_id: response_id.to_string(),
+                 token_usage: usage.cloned(),
+                 usage_metadata: usage_metadata.cloned(),
++                generation_duration_ms,
+             }),
+         )
+         .await;
+diff --git a/core/src/session/session.rs b/core/src/session/session.rs
+index fba4ce1..fde9bd7 100644
+--- a/core/src/session/session.rs
++++ b/core/src/session/session.rs
+@@ -1939,7 +1939,8 @@ impl Session {
+                 config.features.enabled(Feature::ContentItemKinds),
+                 reasoning_effort_override_enabled,
+                 config.features.enabled(Feature::EnableRequestCompression),
+-                config.features.enabled(Feature::RuntimeMetrics),
++                // The context footer uses backend inference time for its session rate.
++                /*include_timing_metrics*/ true,
+                 Self::build_model_client_beta_features_header(config.as_ref()),
+                 /*concurrent_reasoning_summaries_enabled*/
+                 config
+diff --git a/core/src/session/turn.rs b/core/src/session/turn.rs
+index d775099..be5ec17 100644
+--- a/core/src/session/turn.rs
++++ b/core/src/session/turn.rs
+@@ -3063,6 +3063,7 @@ async fn try_run_sampling_request(
+         !sess.services.extensions.turn_item_contributors().is_empty();
+     let mut active_item_is_streaming_to_client = false;
+     let receiving_span = trace_span!("receiving_stream");
++    let mut generation_duration_ms = None;
+     let outcome: CodexResult<SamplingRequestResult> = loop {
+         if response_completed && resampling.accepted_output.is_empty() {
+             if resampling.update_usage_boundary {
+@@ -3181,6 +3182,7 @@ async fn try_run_sampling_request(
+ 
+         match event {
+             ResponseEvent::Created { response_id } => {
++                generation_duration_ms = None;
+                 answer_moderation = None;
+                 response_id_for_assessment.clone_from(&response_id);
+                 if let Some(response_id) = response_id {
+@@ -3518,6 +3520,9 @@ async fn try_run_sampling_request(
+                 sess.record_rate_limits_info(snapshot).await;
+                 should_emit_token_count = true;
+             }
++            ResponseEvent::InferenceDuration(duration_ms) => {
++                generation_duration_ms = Some(duration_ms);
++            }
+             ResponseEvent::ModelsEtag(etag) => {
+                 // Update internal state with latest models etag
+                 sess.services
+@@ -3567,6 +3572,7 @@ async fn try_run_sampling_request(
+                     &response_id,
+                     token_usage.as_ref(),
+                     usage_metadata.as_ref(),
++                    generation_duration_ms.take(),
+                 )
+                 .await;
+                 let budget_result = sess
+diff --git a/core/src/turn_timing.rs b/core/src/turn_timing.rs
+index f666d7f..7a510de 100644
+--- a/core/src/turn_timing.rs
++++ b/core/src/turn_timing.rs
+@@ -537,7 +537,8 @@ fn response_event_records_turn_ttft(event: &ResponseEvent) -> bool {
+         | ResponseEvent::Completed { .. }
+         | ResponseEvent::ReasoningSummaryPartAdded { .. }
+         | ResponseEvent::RateLimits(_)
+-        | ResponseEvent::ModelsEtag(_) => false,
++        | ResponseEvent::ModelsEtag(_)
++        | ResponseEvent::InferenceDuration(_) => false,
+     }
+ }
+ 
+diff --git a/otel/src/events/session_telemetry.rs b/otel/src/events/session_telemetry.rs
+index f6099b8..9ac3c12 100644
+--- a/otel/src/events/session_telemetry.rs
++++ b/otel/src/events/session_telemetry.rs
+@@ -1435,6 +1435,7 @@ impl SessionTelemetry {
+             ResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
+             ResponseEvent::RateLimits(_) => "rate_limits".into(),
+             ResponseEvent::ModelsEtag(_) => "models_etag".into(),
++            ResponseEvent::InferenceDuration(_) => "inference_duration".into(),
+         }
+     }
+ 
+diff --git a/protocol/src/protocol.rs b/protocol/src/protocol.rs
+index dedf79e..777ca14 100644
+--- a/protocol/src/protocol.rs
++++ b/protocol/src/protocol.rs
+@@ -2201,6 +2201,9 @@ pub struct RawResponseCompletedEvent {
+     pub response_id: String,
+     pub token_usage: Option<TokenUsage>,
+     pub usage_metadata: Option<crate::ResponseUsageMetadata>,
++    /// Backend inference time, excluding client tools and transport.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub generation_duration_ms: Option<u64>,
+ }
+ 
+ #[derive(Debug, Clone, Deserialize, Serialize, TS, JsonSchema)]
+diff --git a/tui/src/chatwidget.rs b/tui/src/chatwidget.rs
+index e748352..7f3a096 100644
+--- a/tui/src/chatwidget.rs
++++ b/tui/src/chatwidget.rs
+@@ -577,6 +577,7 @@ pub(crate) struct ChatWidget {
+     pub(crate) windows_sandbox_elevated_setup_complete: bool,
+     token_info: Option<TokenUsageInfo>,
+     token_usage_pending: bool,
++    session_generation_rate: crate::token_usage::SessionGenerationRate,
+     // Status and polling use account usage reads; response streams may identify meters differently.
+     rate_limit_snapshots_by_limit_id: BTreeMap<String, RateLimitSnapshotDisplay>,
+     refreshing_status_outputs: Vec<(u64, StatusHistoryHandle)>,
+diff --git a/tui/src/chatwidget/constructor.rs b/tui/src/chatwidget/constructor.rs
+index 1ae4323..d4c1deb 100644
+--- a/tui/src/chatwidget/constructor.rs
++++ b/tui/src/chatwidget/constructor.rs
+@@ -157,6 +157,7 @@ impl ChatWidget {
+             windows_sandbox_elevated_setup_complete: false,
+             token_info: None,
+             token_usage_pending: false,
++            session_generation_rate: crate::token_usage::SessionGenerationRate::default(),
+             rate_limit_snapshots_by_limit_id: BTreeMap::new(),
+             refreshing_status_outputs: Vec::new(),
+             next_status_refresh_request_id: 0,
+diff --git a/tui/src/chatwidget/protocol.rs b/tui/src/chatwidget/protocol.rs
+index 3f1ea5a..f04ffc1 100644
+--- a/tui/src/chatwidget/protocol.rs
++++ b/tui/src/chatwidget/protocol.rs
+@@ -129,6 +129,16 @@ impl ChatWidget {
+             ServerNotification::ItemStarted(notification) => {
+                 self.handle_item_started_notification(notification, replay_kind);
+             }
++            ServerNotification::RawResponseCompleted(notification) => {
++                if !from_replay
++                    && let (Some(usage), Some(duration_ms)) =
++                        (notification.usage, notification.generation_duration_ms)
++                {
++                    self.session_generation_rate
++                        .record(usage.output_tokens, duration_ms);
++                    self.refresh_status_surfaces();
++                }
++            }
+             ServerNotification::ItemCompleted(notification) => {
+                 self.handle_item_completed_notification(notification, replay_kind);
+             }
+@@ -405,7 +415,6 @@ impl ChatWidget {
+             | ServerNotification::ThreadUnarchived(_)
+             | ServerNotification::ThreadAttachmentUpdated(_)
+             | ServerNotification::RawResponseItemCompleted(_)
+-            | ServerNotification::RawResponseCompleted(_)
+             | ServerNotification::CommandExecOutputDelta(_)
+             | ServerNotification::ProcessOutputDelta(_)
+             | ServerNotification::ProcessExited(_)
 diff --git a/tui/src/chatwidget/status_surfaces.rs b/tui/src/chatwidget/status_surfaces.rs
+index c7109c6..d84f795 100644
 --- a/tui/src/chatwidget/status_surfaces.rs
 +++ b/tui/src/chatwidget/status_surfaces.rs
-@@ -769,7 +769,17 @@
+@@ -772,9 +772,26 @@ impl ChatWidget {
+                     Some(format!("{} used", format_tokens_compact(total)))
+                 }
              }
-             StatusLineItem::ContextRemaining => self
-                 .status_line_context_remaining_percent()
+-            StatusLineItem::ContextRemaining => self
+-                .status_line_context_remaining_percent()
 -                .map(|remaining| format!("Context {remaining}% left")),
-+                .map(|remaining| {
-+                    let context = self.token_info.as_ref().map(|info| {
-+                        format_tokens_compact(info.last_token_usage.tokens_in_context_window())
-+                    });
-+                    match context {
-+                        Some(tokens) => {
-+                            format!("Context {tokens} tokens, {remaining}% left")
++            StatusLineItem::ContextRemaining => {
++                self.status_line_context_remaining_percent()
++                    .map(|remaining| {
++                        let context = self.token_info.as_ref().map(|info| {
++                            format_tokens_compact(info.last_token_usage.tokens_in_context_window())
++                        });
++                        match context {
++                            Some(tokens) => {
++                                let mut label =
++                                    format!("Context {tokens} tokens, {remaining}% left");
++                                if let Some(rate) = self.session_generation_rate.tokens_per_second()
++                                {
++                                    label.push_str(&format!(", {rate:.1} tk/s"));
++                                }
++                                label
++                            }
++                            None => format!("Context {remaining}% left"),
 +                        }
-+                        None => format!("Context {remaining}% left"),
-+                    }
-+                }),
++                    })
++            }
              StatusLineItem::ContextUsed => self
                  .status_line_context_used_percent()
                  .map(|used| format!("Context {used}% used")),
 diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/tests/status_and_layout.rs
+index 3491d38..2b84f58 100644
 --- a/tui/src/chatwidget/tests/status_and_layout.rs
 +++ b/tui/src/chatwidget/tests/status_and_layout.rs
-@@ -116,7 +116,7 @@
+@@ -116,7 +116,7 @@ async fn resumed_session_hides_unknown_token_usage_until_an_update_arrives() {
      chat.refresh_status_line();
      assert_eq!(
          status_line_text(&chat),
@@ -32,10 +430,11 @@ diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/
      );
  }
  
-@@ -3082,6 +3082,37 @@
+@@ -3287,6 +3287,89 @@ async fn status_line_context_remaining_renders_labeled_percent() {
+     );
  }
  
- #[tokio::test]
++#[tokio::test]
 +async fn status_line_distinguishes_context_from_session_tokens() {
 +    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 +    chat.thread_id = Some(ThreadId::new());
@@ -67,6 +466,132 @@ diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/
 +}
 +
 +#[tokio::test]
++async fn context_status_shows_session_generation_rate_for_measured_responses() {
++    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
++    chat.thread_id = Some(ThreadId::new());
++    chat.token_info = Some(TokenUsageInfo {
++        total_token_usage: TokenUsage::default(),
++        last_token_usage: TokenUsage::default(),
++        model_context_window: Some(108_000),
++    });
++    chat.local_settings.tui.status_line = Some(vec!["context-remaining".to_string()]);
++    chat.refresh_status_line();
++    assert!(!status_line_text(&chat).unwrap().contains("tk/s"));
++
++    let completed = |response_id: &str, output_tokens, generation_duration_ms| {
++        ServerNotification::RawResponseCompleted(
++            codex_app_server_protocol::RawResponseCompletedNotification {
++                thread_id: String::new(),
++                turn_id: "turn-1".to_string(),
++                response_id: response_id.to_string(),
++                usage: Some(codex_app_server_protocol::TokenUsageBreakdown {
++                    input_tokens: 0,
++                    output_tokens,
++                    total_tokens: output_tokens,
++                    cached_input_tokens: 0,
++                    cache_write_input_tokens: 0,
++                    reasoning_output_tokens: 0,
++                }),
++                usage_metadata: None,
++                generation_duration_ms,
++            },
++        )
++    };
++
++    chat.handle_server_notification(completed("first", 200, Some(1_000)), None);
++    assert!(status_line_text(&chat).unwrap().ends_with(", 200.0 tk/s"));
++
++    // Starting another turn retains the weighted session average, rather than
++    // averaging individual response rates or dividing by wall-clock session age.
++    handle_turn_started(&mut chat, "turn-2");
++    chat.handle_server_notification(completed("second", 400, Some(5_000)), None);
++    chat.handle_server_notification(completed("untimed", 50_000, None), None);
++    chat.handle_server_notification(completed("zero-duration", 50_000, Some(0)), None);
++    chat.handle_server_notification(
++        completed("replayed", 50_000, Some(1)),
++        Some(ReplayKind::ThreadSnapshot),
++    );
++    assert_eq!(
++        status_line_text(&chat),
++        Some("Context 0 tokens, 100% left, 100.0 tk/s".to_string())
++    );
++}
++
+ #[tokio::test]
  async fn status_line_legacy_context_usage_renders_context_used_percent() {
      let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-     chat.thread_id = Some(ThreadId::new());
+diff --git a/tui/src/token_usage.rs b/tui/src/token_usage.rs
+index ac9a20b..1631139 100644
+--- a/tui/src/token_usage.rs
++++ b/tui/src/token_usage.rs
+@@ -6,6 +6,9 @@ use codex_protocol::num_format::format_with_separators;
+ use serde::Deserialize;
+ use serde::Serialize;
+ 
++mod generation_rate;
++pub(crate) use generation_rate::SessionGenerationRate;
++
+ const BASELINE_TOKENS: i64 = 12000;
+ 
+ #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+diff --git a/tui/src/token_usage/generation_rate.rs b/tui/src/token_usage/generation_rate.rs
+new file mode 100644
+index 0000000..f6c785e
+--- /dev/null
++++ b/tui/src/token_usage/generation_rate.rs
+@@ -0,0 +1,55 @@
++/// Average output rate for measured responses in this UI session. Resumed history
++/// and responses without timing are excluded so tokens and time always match.
++#[derive(Debug, Default)]
++pub(crate) struct SessionGenerationRate {
++    output_tokens: u64,
++    duration_ms: u64,
++}
++
++impl SessionGenerationRate {
++    pub(crate) fn record(&mut self, output_tokens: i64, duration_ms: u64) {
++        if output_tokens < 0 || duration_ms == 0 {
++            return;
++        }
++
++        self.output_tokens = self.output_tokens.saturating_add(output_tokens as u64);
++        self.duration_ms = self.duration_ms.saturating_add(duration_ms);
++    }
++
++    pub(crate) fn tokens_per_second(&self) -> Option<f64> {
++        (self.duration_ms > 0).then(|| self.output_tokens as f64 * 1000.0 / self.duration_ms as f64)
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::SessionGenerationRate;
++
++    #[test]
++    fn rate_uses_total_tokens_over_total_generation_time() {
++        let mut rate = SessionGenerationRate::default();
++        assert_eq!(rate.tokens_per_second(), None);
++
++        rate.record(200, 1_000);
++        assert_eq!(rate.tokens_per_second(), Some(200.0));
++
++        rate.record(400, 5_000);
++        assert_eq!(rate.tokens_per_second(), Some(100.0));
++    }
++
++    #[test]
++    fn invalid_samples_do_not_distort_the_rate() {
++        let mut rate = SessionGenerationRate::default();
++        rate.record(50_000, 0);
++        rate.record(-1, 1_000);
++        assert_eq!(rate.tokens_per_second(), None);
++
++        rate.record(200, 1_000);
++        rate.record(50_000, 0);
++        rate.record(-1, 1_000);
++        assert_eq!(rate.tokens_per_second(), Some(200.0));
++
++        rate.record(0, 1_000);
++        assert_eq!(rate.tokens_per_second(), Some(100.0));
++    }
++}

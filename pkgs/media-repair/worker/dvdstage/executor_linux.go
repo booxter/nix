@@ -249,11 +249,14 @@ func (executor *Executor) openAndIdentify(
 		seen[filepath.Base(path)] = true
 	}
 	entries, err := os.ReadDir(directory)
-	if err != nil || len(entries) != len(seen) {
+	if err != nil {
 		closeFiles(opened)
 		return nil, "", fmt.Errorf("DVD source directory changed")
 	}
 	for _, entry := range entries {
+		if !dvdvideo.ValidFileName(entry.Name()) {
+			continue
+		}
 		info, infoErr := entry.Info()
 		if infoErr != nil || !seen[entry.Name()] || !info.Mode().IsRegular() {
 			closeFiles(opened)

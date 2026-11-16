@@ -17,6 +17,7 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
+  grafanaTempoUid = "tempo";
   dashboardManifest = {
     dataSources = {
       prometheus = {
@@ -196,8 +197,32 @@ in
               url = "http://127.0.0.1:${toString lokiPort}";
               jsonData = {
                 manageAlerts = false;
+                derivedFields = [
+                  {
+                    name = "TraceID";
+                    matcherRegex = ''"trace_id":"([a-f0-9]{32})"'';
+                    datasourceUid = grafanaTempoUid;
+                    url = "$\${__value.raw}";
+                    urlDisplayLabel = "View trace";
+                  }
+                ];
               };
               editable = false;
+            }
+            {
+              name = "Tempo";
+              uid = grafanaTempoUid;
+              type = "tempo";
+              access = "proxy";
+              url = "http://127.0.0.1:3200";
+              editable = false;
+              jsonData.tracesToLogsV2 = {
+                datasourceUid = grafanaLokiUid;
+                spanStartTimeShift = "-1m";
+                spanEndTimeShift = "1m";
+                customQuery = true;
+                query = ''{job="systemd-journal", systemd_unit="repairr.service"} | json | trace_id = "$''${__trace.traceId}"'';
+              };
             }
           ];
         };

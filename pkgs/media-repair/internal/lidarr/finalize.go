@@ -98,6 +98,7 @@ func FinalizationEntry(record QueueRecord) queuefinalize.Entry {
 		subjectID = *record.AlbumID
 	}
 	return queuefinalize.Entry{
+		Protocol: string(record.Protocol), DownloadClient: record.DownloadClient,
 		QueueID: record.ID, DownloadID: record.DownloadID, SubjectID: subjectID,
 		Status: string(record.Status), TrackedDownloadStatus: string(record.TrackedDownloadStatus),
 	}

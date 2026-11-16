@@ -14,7 +14,7 @@ import (
 type Client interface {
 	lidarrrepair.Lidarr
 	lidarrrepair.ImportClient
-	FinalizeQueue(context.Context, int64) error
+	FinalizeQueue(context.Context, int64, bool) error
 }
 
 type Inspector interface {

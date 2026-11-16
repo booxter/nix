@@ -104,4 +104,4 @@ with subtest("failed preparation blocks a new snapshot"):
     )
 
 with subtest("SFTP account cannot execute commands"):
-    client.fail("ssh restic-client@restic-backup-server true")
+    client.fail("ssh -n restic-client@restic-backup-server true")

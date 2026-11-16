@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Adapter owns media validation and the service-specific import command. The
@@ -37,6 +42,7 @@ type Engine struct {
 	Store   *jobs.Store
 	Adapter Adapter
 	Now     func() time.Time
+	Tracer  trace.Tracer
 }
 
 // The service scheduler runs one job at a time. An active attempt seen here
@@ -72,6 +78,37 @@ func (engine *Engine) Run(ctx context.Context, id int64) error {
 }
 
 func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
+	tracer := engine.Tracer
+	if tracer == nil {
+		tracer = otel.Tracer("repairr")
+	}
+	ctx, span := tracer.Start(ctx, "repair attempt", trace.WithAttributes(
+		attribute.Int64("job", job.ID),
+		attribute.Int64("attempt", attempt.Number),
+		attribute.String("servarr.service", string(job.Service)),
+	))
+	defer span.End()
+
+	logger := slog.Default().With(
+		"job", job.ID,
+		"attempt", attempt.Number,
+		"trace_id", span.SpanContext().TraceID().String(),
+		"span_id", span.SpanContext().SpanID().String(),
+	)
+	logger.InfoContext(ctx, "repair attempt started")
+
+	if err := engine.repairAndSubmit(ctx, job, attempt); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		logger.ErrorContext(ctx, "repair attempt failed", "error", err)
+		return err
+	}
+
+	logger.InfoContext(ctx, "repair submitted for import")
+	return nil
+}
+
+func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
 	prepared, err := engine.Adapter.Repair(ctx, job, attempt)
 	if err != nil {
 		state := jobs.Failed

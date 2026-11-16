@@ -31,6 +31,8 @@ const (
 )
 
 type Entry struct {
+	Protocol              string
+	DownloadClient        string
 	QueueID               int64
 	DownloadID            string
 	SubjectID             int64

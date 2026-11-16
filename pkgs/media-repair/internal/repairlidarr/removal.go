@@ -13,8 +13,8 @@ func (adapter *Adapter) Remove(ctx context.Context, job jobs.Job) error {
 	return repair.RemoveTracking(ctx, adapter, job)
 }
 
-func (adapter *Adapter) FinalizeQueue(ctx context.Context, id int64) error {
-	return adapter.Client.FinalizeQueue(ctx, id)
+func (adapter *Adapter) FinalizeQueue(ctx context.Context, id int64, removeFromClient bool) error {
+	return adapter.Client.FinalizeQueue(ctx, id, removeFromClient)
 }
 
 func (adapter *Adapter) RemovalQueue(ctx context.Context) ([]queuefinalize.Entry, error) {

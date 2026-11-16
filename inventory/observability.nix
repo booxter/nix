@@ -25,6 +25,13 @@
   };
 
   endpoints = {
+    srvarr.alloy = {
+      port = 12346;
+      path = "/metrics";
+      jobName = "alloy";
+      profile = "infrastructure";
+      component = "alloy";
+    };
     beast = {
       lolek = {
         port = 9568;

@@ -360,6 +360,42 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 	}
 }
 
+func TestAssemblePreservesMediaWithUnnamedDataStreams(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	evidence := observation.Probes[0].Outcome.Evidence
+	kind := controller.ProbeStreamData
+	tag := "rtp "
+	for index := int64(1); index <= 2; index++ {
+		evidence.Streams = append(evidence.Streams, controller.ProbeStream{
+			Index: index, Kind: &kind, CodecTag: &tag,
+			TimeBase:    &controller.Rational{Numerator: 1, Denominator: 90000},
+			Disposition: evidence.Streams[0].Disposition,
+		})
+	}
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := contracts.DecodeCase(assembly.EncodedRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	probe := decoded.Files[0].Probe
+	if probe.Status != contracts.Ok || probe.Format == nil ||
+		probe.Format.EffectiveDurationMS == nil || *probe.Format.EffectiveDurationMS != 3_600_000 ||
+		len(probe.Streams) != 3 {
+		t.Fatalf("usable media evidence was lost: %#v", probe)
+	}
+	for _, stream := range probe.Streams[1:] {
+		if stream.CodecName != nil || stream.CodecTag == nil || *stream.CodecTag != tag {
+			t.Fatalf("unnamed data stream was not preserved: %#v", stream)
+		}
+	}
+}
+
 func TestAssembleRetainsIncompleteProbeMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -367,6 +403,20 @@ func TestAssembleRetainsIncompleteProbeMetadata(t *testing.T) {
 		name   string
 		mutate func(*controller.ProbeEvidence)
 	}{
+		{
+			name: "missing video codec",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams[0].CodecName = nil
+			},
+		},
+		{
+			name: "missing audio codec",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				kind := controller.ProbeStreamAudio
+				evidence.Streams[0].Kind = &kind
+				evidence.Streams[0].CodecName = nil
+			},
+		},
 		{
 			name: "missing format size",
 			mutate: func(evidence *controller.ProbeEvidence) {

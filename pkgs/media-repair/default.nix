@@ -26,7 +26,7 @@ let
         ./go.sum
       ];
     };
-    vendorHash = "sha256-mY6wLOXTENSzN0hUhiS+D3iIJXfhKP2ptY2VP+GWlIA=";
+    vendorHash = "sha256-mA+7flNvteFibU/FFxQBNuILE+6ZDTd1R1bfXOuyw9Q=";
     postPatch = ''
       cp ${goModels}/models.gen.go contracts/models.gen.go
       cp ${goModels}/worker-models.gen.go worker/contracts/models.gen.go

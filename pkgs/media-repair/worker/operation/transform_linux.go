@@ -15,6 +15,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/joinverification"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/media-repair/internal/telemetry"
 	"github.com/booxter/nix-config/media-repair/worker/bluraystage"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/dvdremux"
@@ -24,6 +25,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"github.com/booxter/nix-config/media-repair/worker/mediajoin"
 	"github.com/booxter/nix-config/media-repair/worker/mediaremux"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Transformer struct {
@@ -34,7 +36,11 @@ type Transformer struct {
 	Timeout                 time.Duration
 }
 
-func (worker Transformer) Transform(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
+func (worker Transformer) Transform(ctx context.Context, request mediaoperation.Transform) (output mediaoperation.Output, returnedErr error) {
+	ctx, span := telemetry.StartPhase(ctx, "transform",
+		attribute.Int64("job", request.JobID), attribute.Int64("attempt", request.Attempt),
+		attribute.Float64("timeout_seconds", worker.Timeout.Seconds()))
+	defer func() { telemetry.EndPhase(ctx, span, returnedErr) }()
 	if request.JobID <= 0 || request.Attempt <= 0 {
 		return mediaoperation.Output{}, fmt.Errorf("job and attempt must be positive")
 	}
@@ -50,6 +56,7 @@ func (worker Transformer) Transform(ctx context.Context, request mediaoperation.
 	}
 
 	if request.Join != nil {
+		span.SetAttributes(attribute.Int64("source_bytes", request.Join.SourceBytes), attribute.Int("parts", len(request.Join.OrderedParts)))
 		return worker.join(ctx, request)
 	}
 	if request.Bluray != nil {
@@ -104,15 +111,21 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 
 	// An ffmpeg exit status is not sufficient: only validated output may
 	// become visible to Servarr. Sources remain untouched in either case.
-	if rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes); len(rejected) != 0 {
+	phase, span := telemetry.StartPhase(ctx, "validate output metadata", attribute.Int64("output_bytes", result.SizeBytes))
+	rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes)
+	if len(rejected) != 0 {
+		telemetry.EndPhase(phase, span, fmt.Errorf("joined output rejected: %v", rejected))
 		if _, err := worker.Files.RemoveCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint); err != nil {
 			return mediaoperation.Output{}, fmt.Errorf("rejected output %v; discard: %w", rejected, err)
 		}
 
 		return mediaoperation.Output{}, fmt.Errorf("joined output rejected: %v", rejected)
 	}
+	telemetry.EndPhase(phase, span, nil)
 
+	phase, span = telemetry.StartPhase(ctx, "publish output")
 	published, err := worker.Files.PublishCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint, components)
+	telemetry.EndPhase(phase, span, err)
 	if err != nil {
 		return mediaoperation.Output{}, err
 	}

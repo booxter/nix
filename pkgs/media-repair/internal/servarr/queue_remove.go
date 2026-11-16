@@ -13,13 +13,14 @@ func RemoveQueueTracking(
 	ctx context.Context,
 	service string,
 	queueID int64,
+	removeFromClient bool,
 	remove QueueDeleteFunc,
 ) error {
 	if service == "" || queueID <= 0 || remove == nil {
 		return fmt.Errorf("Servarr queue removal is invalid")
 	}
 	err := remove(ctx, queueID, &starr.QueueDeleteOpts{
-		RemoveFromClient: starr.False(),
+		RemoveFromClient: &removeFromClient,
 		BlockList:        false,
 		SkipRedownload:   true,
 		ChangeCategory:   false,

@@ -1,0 +1,71 @@
+rule_files:
+  - ../rules/tracing.rules.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="tempo",instance="fana"}'
+        values: "0x6 1x2"
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: TracingBackendDown
+      - eval_time: 5m
+        alertname: TracingBackendDown
+        exp_alerts:
+          - exp_labels:
+              job: tempo
+              instance: fana
+              severity: warning
+              category: observability
+            exp_annotations:
+              summary: "Tracing component unavailable on fana"
+              description: "Prometheus cannot scrape tempo; repair traces may be lost."
+      - eval_time: 8m
+        alertname: TracingBackendDown
+  - interval: 1m
+    input_series:
+      - series: 'otelcol_exporter_send_failed_spans_total{job="alloy",instance="srvarr"}'
+        values: "0+10x10"
+      - series: 'otelcol_exporter_queue_size{job="alloy",instance="srvarr"}'
+        values: "110x10"
+      - series: 'otelcol_exporter_queue_capacity{job="alloy",instance="srvarr"}'
+        values: "128x10"
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: TraceExportFailing
+        exp_alerts:
+          - exp_labels:
+              instance: srvarr
+              severity: warning
+              category: observability
+            exp_annotations:
+              summary: "Trace export failing on srvarr"
+              description: "Alloy has failed to export spans to Tempo. Check its queue and mTLS connection."
+      - eval_time: 5m
+        alertname: TraceQueueNearlyFull
+        exp_alerts:
+          - exp_labels:
+              instance: srvarr
+              job: alloy
+              severity: warning
+              category: observability
+            exp_annotations:
+              summary: "Trace queue nearly full on srvarr"
+              description: "Alloy's bounded trace queue is over 80% full; new spans may be dropped."
+  - interval: 1m
+    input_series:
+      - series: 'up{job="tempo",instance="fana"}'
+        values: "1x10"
+      - series: 'otelcol_exporter_send_failed_spans_total{job="alloy",instance="srvarr"}'
+        values: "0x10"
+      - series: 'otelcol_exporter_queue_size{job="alloy",instance="srvarr"}'
+        values: "1x10"
+      - series: 'otelcol_exporter_queue_capacity{job="alloy",instance="srvarr"}'
+        values: "128x10"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: TracingBackendDown
+      - eval_time: 10m
+        alertname: TraceExportFailing
+      - eval_time: 10m
+        alertname: TraceQueueNearlyFull

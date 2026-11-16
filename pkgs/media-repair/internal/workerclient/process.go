@@ -4,34 +4,73 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type RequestRunner interface {
 	Run(context.Context, string, []byte, int) ([]byte, error)
 }
 
-type Process struct{ Executable string }
+type Process struct {
+	Executable    string
+	ProbeTimeout  time.Duration
+	MediaTimeout  time.Duration
+	TraceEndpoint string
+}
 
-func NewProcess(executable string, roots map[string]string, timeout, mediaTimeout time.Duration) (*Client, error) {
-	client, err := newClient(roots, timeout, mediaTimeout)
+// The worker owns execution deadlines; the client allows extra time for cleanup
+// and delivery of the worker's diagnostics after a deadline expires.
+func NewProcess(
+	executable string,
+	roots map[string]string,
+	probeTimeout, mediaTimeout, responseGrace time.Duration,
+	traceEndpoint string,
+) (*Client, error) {
+	if probeTimeout <= 0 || mediaTimeout <= 0 || responseGrace <= 0 {
+		return nil, fmt.Errorf("worker timeouts and response grace must be positive")
+	}
+	client, err := newClient(roots, probeTimeout+responseGrace, mediaTimeout+responseGrace)
 	if err != nil {
 		return nil, err
 	}
-	client.runner = Process{Executable: executable}
+	client.runner = Process{
+		Executable:    executable,
+		ProbeTimeout:  probeTimeout,
+		MediaTimeout:  mediaTimeout,
+		TraceEndpoint: traceEndpoint,
+	}
 	return client, nil
 }
 
 func (process Process) Run(ctx context.Context, operation string, input []byte, limit int) ([]byte, error) {
-	command := exec.CommandContext(ctx, process.Executable, "--operation", operation)
+	command := exec.CommandContext(ctx, process.Executable, "--operation", operation,
+		"--timeout", process.ProbeTimeout.String(), "--media-timeout", process.MediaTimeout.String())
 	command.WaitDelay = 5 * time.Second
+
+	if process.TraceEndpoint != "" {
+		carrier := propagation.MapCarrier{}
+		propagation.TraceContext{}.Inject(ctx, carrier)
+		command.Args = append(command.Args,
+			"--trace-endpoint", process.TraceEndpoint,
+			"--traceparent", carrier.Get("traceparent"),
+			"--tracestate", carrier.Get("tracestate"),
+		)
+	}
+
 	command.Stdin = bytes.NewReader(input)
 	output := boundedOutput{limit: limit}
 	diagnostics := commanddiagnostics.NewRecorder()
 	command.Stdout, command.Stderr = &output, diagnostics
+	if operation == "transform" {
+		// Keep progress visible while the worker runs, including successful jobs.
+		command.Stderr = io.MultiWriter(os.Stderr, diagnostics)
+	}
 	if err := command.Run(); err != nil {
 		return nil, commanddiagnostics.Attach(fmt.Errorf("media helper %s: %w", operation, err), diagnostics.Diagnostics())
 	}

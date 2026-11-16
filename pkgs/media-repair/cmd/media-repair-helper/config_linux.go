@@ -23,6 +23,9 @@ type configuration struct {
 	wvunpack       string
 	probeTimeout   time.Duration
 	mediaTimeout   time.Duration
+	traceEndpoint  string
+	traceparent    string
+	tracestate     string
 }
 
 func parseConfig(args []string, stderr io.Writer) (configuration, error) {
@@ -39,8 +42,11 @@ func parseConfig(args []string, stderr io.Writer) (configuration, error) {
 	flags.StringVar(&config.cueconvert, "cueconvert", "", "cueconvert executable")
 	flags.StringVar(&config.cuebreakpoints, "cuebreakpoints", "", "cuebreakpoints executable")
 	flags.StringVar(&config.wvunpack, "wvunpack", "", "wvunpack executable")
-	flags.DurationVar(&config.probeTimeout, "timeout", 30*time.Second, "probe timeout")
-	flags.DurationVar(&config.mediaTimeout, "media-timeout", 30*time.Minute, "media operation timeout")
+	flags.DurationVar(&config.probeTimeout, "timeout", 0, "required probe timeout")
+	flags.DurationVar(&config.mediaTimeout, "media-timeout", 0, "required media operation timeout")
+	flags.StringVar(&config.traceEndpoint, "trace-endpoint", "", "local OTLP Unix socket endpoint")
+	flags.StringVar(&config.traceparent, "traceparent", "", "W3C trace parent")
+	flags.StringVar(&config.tracestate, "tracestate", "", "W3C trace state")
 
 	roots := mediaroot.NewMappings()
 	flags.Var(roots, "root", "media root as ID=PATH; repeatable")
@@ -49,6 +55,9 @@ func parseConfig(args []string, stderr io.Writer) (configuration, error) {
 	}
 	if flags.NArg() != 0 || config.operation == "" {
 		return config, fmt.Errorf("--operation is required; no positional arguments accepted")
+	}
+	if config.probeTimeout <= 0 || config.mediaTimeout <= 0 {
+		return config, fmt.Errorf("--timeout and --media-timeout must be positive")
 	}
 
 	config.roots = roots.Paths()

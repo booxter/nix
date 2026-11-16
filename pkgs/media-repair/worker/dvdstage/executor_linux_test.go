@@ -57,6 +57,11 @@ func TestStageOrRecoverBindsCompleteDVDDirectory(t *testing.T) {
 	t.Parallel()
 	root, spec, title, vobPath := stagedDVD(t)
 	defer root.Close()
+	companionPath := filepath.Join(filepath.Dir(vobPath), "VTS_01_1.txt")
+	companion := []byte("disc notes")
+	if err := os.WriteFile(companionPath, companion, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	remuxer := &testRemuxer{}
 	executor, err := NewExecutor(root, root, testIdentifier{title}, remuxer, testProber{})
 	if err != nil {
@@ -70,6 +75,9 @@ func TestStageOrRecoverBindsCompleteDVDDirectory(t *testing.T) {
 	second, err := executor.StageOrRecover(context.Background(), spec)
 	if err != nil || !reflect.DeepEqual(second, first) || remuxer.calls != 1 {
 		t.Fatalf("DVD recovery = %#v, calls = %d, error = %v", second, remuxer.calls, err)
+	}
+	if contents, err := os.ReadFile(companionPath); err != nil || string(contents) != string(companion) {
+		t.Fatalf("companion file changed: %q, %v", contents, err)
 	}
 	if err := os.WriteFile(vobPath, []byte("changed media"), 0o600); err != nil {
 		t.Fatal(err)

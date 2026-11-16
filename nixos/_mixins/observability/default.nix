@@ -22,6 +22,7 @@ in
     ./prometheus/server.nix
     ./systemd-expectations.nix
     ./textfile-producers.nix
+    ./tempo
     ./unifi/service.nix
   ];
 

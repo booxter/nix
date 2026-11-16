@@ -662,7 +662,14 @@
           "type": "integer"
         },
         "codec_name": {
-          "$ref": "#/$defs/nonEmptyText"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "codec_tag": {
           "oneOf": [

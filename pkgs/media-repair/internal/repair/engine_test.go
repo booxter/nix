@@ -9,7 +9,35 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
+
+func TestFailedAttemptRecordsItsErrorInTrace(t *testing.T) {
+	engine, adapter, job := fixture(t)
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	defer provider.Shutdown(context.Background())
+	engine.Tracer = provider.Tracer("test")
+	adapter.repairError = context.DeadlineExceeded
+	if err := engine.Run(context.Background(), job.ID); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error: %v", err)
+	}
+	spans := recorder.Ended()
+	if len(spans) != 1 {
+		t.Fatalf("attempt spans: got %d, want 1", len(spans))
+	}
+	if spans[0].Status().Code != codes.Error {
+		t.Fatalf("attempt status: %v", spans[0].Status())
+	}
+	if len(spans[0].Events()) != 1 {
+		t.Fatalf("exception events: %v", spans[0].Events())
+	}
+	if spans[0].EndTime().Before(spans[0].StartTime()) {
+		t.Fatal("invalid attempt duration")
+	}
+}
 
 func TestRepairImportsAndKeepsUIStateCurrent(t *testing.T) {
 	engine, adapter, job := fixture(t)

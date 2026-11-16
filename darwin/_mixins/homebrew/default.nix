@@ -8,7 +8,6 @@ let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username}.host.hm;
   env = hmConfig.env;
-  wiresharkEnabled = hmConfig.wireshark.enable;
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
@@ -39,10 +38,12 @@ in
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
-      "protonvpn"
       "sf-symbols"
     ]
-    ++ lib.optionals wiresharkEnabled [
+    ++ lib.optionals hmConfig.protonvpn.enable [
+      "protonvpn"
+    ]
+    ++ lib.optionals hmConfig.wireshark.enable [
       "wireshark-chmodbpf"
     ]
     ++ lib.optionals env.homerow.enable [
@@ -52,14 +53,6 @@ in
 
   nix-homebrew = {
     enable = true;
-    # nix-homebrew derives this metadata from its own lock, ignoring our override.
-    package = lib.mkForce (
-      inputs.nix-homebrew.inputs.brew-src
-      // {
-        name = "brew-7.0.11";
-        version = "7.0.11";
-      }
-    );
     mutableTaps = false;
     user = username;
     taps = {

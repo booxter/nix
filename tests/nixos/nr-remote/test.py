@@ -44,7 +44,7 @@ def attach():
 start_all()
 server.wait_for_unit("sshd.service")
 client.wait_for_unit("multi-user.target")
-client.succeed(as_reviewer("ssh server true"))
+client.succeed(as_reviewer("ssh -n server true"))
 # Persist the freshly provisioned SSH key before simulating power loss.
 client.succeed("sync")
 remote(

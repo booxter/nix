@@ -18,10 +18,13 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/internal/repairui"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
+	"github.com/booxter/nix-config/media-repair/internal/telemetry"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
+	"go.opentelemetry.io/otel"
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
 	path := flag.String("config", "", "Repairr JSON configuration file")
 	flag.Parse()
 
@@ -38,6 +41,16 @@ func main() {
 }
 
 func run(ctx context.Context, configuration config) error {
+	if configuration.TraceEndpoint != "" {
+		provider, err := telemetry.NewProvider(ctx, "repairr", configuration.TraceEndpoint)
+		if err != nil {
+			slog.Warn("initialize tracing", "error", err)
+		} else {
+			otel.SetTracerProvider(provider)
+			defer telemetry.Shutdown(provider)
+		}
+	}
+
 	store, err := jobs.Open(configuration.Database)
 	if err != nil {
 		return err
@@ -49,20 +62,25 @@ func run(ctx context.Context, configuration config) error {
 		return err
 	}
 	defer transport.CloseIdleConnections()
+	limits := configuration.Timeouts
 	httpClient := &http.Client{
 		Transport: transport,
-		Timeout:   requestTimeout,
+		Timeout:   time.Duration(limits.RequestSeconds) * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
 
-	planner, err := plannerclient.New(configuration.PlannerSocket, plannerTimeout)
+	planner, err := plannerclient.New(configuration.PlannerSocket,
+		time.Duration(limits.PlanningSeconds+limits.ResponseGraceSeconds)*time.Second)
 	if err != nil {
 		return err
 	}
 	defer planner.Close()
-	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots, requestTimeout, mediaTimeout)
+	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots,
+		time.Duration(limits.ProbeSeconds)*time.Second,
+		time.Duration(limits.MediaSeconds)*time.Second,
+		time.Duration(limits.ResponseGraceSeconds)*time.Second, configuration.TraceEndpoint)
 	if err != nil {
 		return err
 	}

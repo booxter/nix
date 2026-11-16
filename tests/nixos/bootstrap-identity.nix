@@ -152,6 +152,8 @@ let
     ];
     networking = targetNetwork;
     boot.loader.timeout = lib.mkForce 1;
+    # Test instrumentation supplies the empty root password through a file.
+    users.users.root.initialHashedPassword = lib.mkForce null;
     systemd.services.installer = {
       serviceConfig = {
         StandardOutput = lib.mkForce "journal+console";
