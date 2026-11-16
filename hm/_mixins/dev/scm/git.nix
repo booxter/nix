@@ -47,9 +47,6 @@ lib.mkIf config.host.hm.env.roles.developer {
       # Keep a generic pager for non-diff git commands. diff-so-fancy is only
       # suitable for diff-shaped output and breaks commands like `git grep`
       # when installed as the global core.pager.
-      # TODO: Report this integration bug to Home Manager and
-      # diff-so-fancy upstream docs. `enableGitIntegration` should not route
-      # all git pager traffic through diff-so-fancy.
       core.pager = "${pkgs.less}/bin/less '--tabs=4' -RFX";
       pager = {
         diff = "${pkgs.diff-so-fancy}/bin/diff-so-fancy | ${pkgs.less}/bin/less '--tabs=4' -RFX";
