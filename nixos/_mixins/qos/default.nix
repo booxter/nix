@@ -114,6 +114,7 @@ in
   imports = [
     ./assertions.nix
     ./cake-idle-decay
+    ./metrics.nix
   ];
 
   options.host.qos.interfaces = lib.mkOption {
