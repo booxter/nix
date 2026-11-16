@@ -110,3 +110,35 @@ print(
     f"Reproduced persistent CAKE loss: baseline={baseline_loss:.2f}%, "
     f"after overload and idle={affected_loss:.2f}%, reset={reset_loss:.2f}%"
 )
+
+with subtest("load the candidate module without changing the running kernel"):
+    receiver.succeed("tc qdisc del dev ifb0 root")
+    receiver.succeed("modprobe -r sch_cake")
+    receiver.succeed(command(["insmod", candidate_module]))
+    create_queue()
+
+with subtest("candidate still activates BLUE during overload"):
+    candidate_baseline = transfer("2M/20")
+    assert candidate_baseline < 1, candidate_baseline
+    overload_loss = transfer("20M")
+    overloaded = report("candidate after overload")
+    assert overload_loss > 5, overload_loss
+    assert any(flow["stats"]["blue_prob"] > 0 for flow in overloaded["flows"]), overloaded
+
+with subtest("short idle reduces the penalty without resetting it"):
+    receiver.sleep(1)
+    transfer("10K", seconds=1)
+    partially_recovered = report("candidate after short idle")
+    before = max(flow["stats"]["blue_prob"] for flow in overloaded["flows"])
+    after = max(flow["stats"]["blue_prob"] for flow in partially_recovered["flows"])
+    assert 0 < after < before, (before, after)
+
+with subtest("long idle clears the remaining penalty"):
+    receiver.sleep(30)
+    candidate_loss = transfer("2M/20")
+    recovered = report("candidate after idle and below-limit traffic")
+    assert candidate_loss < 1, candidate_loss
+    assert all(flow["stats"]["blue_prob"] == 0 for flow in recovered["flows"]), recovered
+    assert recovered["queue"]["tins"][0]["unresponsive_flows"] == 0, recovered
+
+print(f"Candidate recovery: {candidate_loss:.2f}% loss versus stock {affected_loss:.2f}%")

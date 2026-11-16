@@ -1,0 +1,65 @@
+--- a/sch_cake.c
++++ b/sch_cake.c
+@@ -110,6 +110,7 @@ struct cobalt_vars {
+ 	u32	rec_inv_sqrt;
+ 	ktime_t	drop_next;
+ 	ktime_t	blue_timer;
++	ktime_t	empty_since;
+ 	u32     p_drop;
+ 	bool	dropping;
+ 	bool    ecn_marked;
+@@ -450,6 +451,34 @@ static bool cobalt_queue_full(struct cobalt_vars *vars,
+ 	return up;
+ }
+ 
++/* Catch up BLUE decay when an idle flow receives another packet.  Only
++ * uninterrupted empty time counts; blue_timer excludes decrements already
++ * performed by the scheduler and any later overflow notification.
++ */
++static bool cobalt_idle_decay(struct cobalt_vars *vars,
++			      struct cobalt_params *p, ktime_t now)
++{
++	ktime_t start = max(vars->empty_since, vars->blue_timer);
++	u64 periods, decrement;
++	s64 elapsed;
++
++	if (!vars->empty_since || !vars->p_drop)
++		return false;
++
++	elapsed = ktime_to_ns(ktime_sub(now, start));
++	if (elapsed <= 0)
++		return false;
++
++	periods = div64_u64(elapsed, p->target);
++	/* Saturate before multiplication, including after very long idle times. */
++	decrement = min_t(u64, periods, U32_MAX) * p->p_dec;
++	vars->p_drop -= min_t(u64, vars->p_drop, decrement);
++	if (periods)
++		vars->blue_timer = now;
++
++	return !vars->p_drop;
++}
++
+ /* Call this when the queue was serviced but turned out to be empty.  Returns
+  * true if the BLUE state was active before but quiescent after this call.
+  */
+@@ -902,6 +931,8 @@ static struct sk_buff *dequeue_head(struct cake_flow *flow)
+ 
+ 	if (skb) {
+ 		flow->head = skb->next;
++		if (!flow->head)
++			flow->cvars.empty_since = ktime_get();
+ 		skb_mark_not_on_list(skb);
+ 	}
+ 
+@@ -1759,6 +1790,10 @@ static int cake_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+ 	idx--;
+ 	flow = &b->flows[idx];
+ 
++	if (!flow->head &&
++	    cobalt_idle_decay(&flow->cvars, &b->cparams, now))
++		b->unresponsive_flow_count--;
++
+ 	/* ensure shaper state isn't stale */
+ 	if (!b->tin_backlog) {
+ 		if (ktime_before(b->time_next_packet, now))

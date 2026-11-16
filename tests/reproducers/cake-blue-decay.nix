@@ -4,6 +4,12 @@
 #       pkgs = import flake.inputs.nixpkgs { system = "x86_64-linux"; };
 #   in import ./tests/reproducers/cake-blue-decay.nix { inherit pkgs; }'
 { pkgs }:
+let
+  candidate = import ./cake-module.nix {
+    inherit pkgs;
+    kernel = pkgs.linuxPackages.kernel;
+  };
+in
 pkgs.testers.runNixOSTest {
   name = "cake-blue-decay-reproducer";
 
@@ -27,5 +33,8 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  testScript = builtins.readFile ./cake-blue-decay.py;
+  testScript = ''
+    candidate_module = "${candidate}/sch_cake.ko"
+  ''
+  + builtins.readFile ./cake-blue-decay.py;
 }
