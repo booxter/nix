@@ -52,6 +52,7 @@ let
     Roots = cfg.roots;
     Helper = mediaHelper;
     PlannerSocket = cfg.planner.socketPath;
+    TraceEndpoint = "http://127.0.0.1:4318/v1/traces";
     Timeouts = {
       RequestSeconds = 30;
       ProbeSeconds = 30;

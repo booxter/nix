@@ -28,6 +28,7 @@ type config struct {
 	Roots           map[string]string
 	PlannerSocket   string
 	Timeouts        timeouts
+	TraceEndpoint   string
 }
 
 const queueInterval = 15 * time.Minute
