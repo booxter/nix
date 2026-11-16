@@ -39,6 +39,15 @@
     language-tags = {
       name = "Language Tags";
       repository = "language-tags";
+      configuration = {
+        # Parallel episode updates can time out on Jellyfin's SQLite write lock.
+        # https://github.com/TheXaman/jellyfin-plugin-languageTags/issues/40
+        SynchronousRefresh = true;
+        # Jellyfin applies allowed-tag filters to people and music as well as videos.
+        EnableNonMediaTagging = true;
+        NonMediaItemTypes = "Person,Audio,MusicAlbum,MusicArtist,MusicGenre";
+        NonMediaTag = "non_media";
+      };
     };
     audiodb = {
       name = "AudioDB";

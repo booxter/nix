@@ -5,6 +5,9 @@
   ...
 }:
 let
+  # TODO: Consider Multilang as a Polyglot replacement and verify whether its
+  # locale-aware sorting and alphabet navigation fix Russian title ordering.
+  # https://git.ajpanton.se/ajp_anton/jellyfin-multilang
   model = import ./model.nix { inherit config lib; };
   root = "${config.host.jellyfin.media.mountPoint}/localized/ru";
   tools = pkgs.callPackage ../../_mixins/jellyfin/packages/tools { };
