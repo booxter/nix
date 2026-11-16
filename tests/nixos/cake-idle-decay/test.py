@@ -2,6 +2,7 @@
 # The NixOS test driver supplies the machines and subtest context manager.
 
 import json
+import re
 import shlex
 
 
@@ -10,8 +11,8 @@ def command(arguments):
 
 
 def cake_state():
-    queues = json.loads(receiver.succeed("tc -j -s qdisc show dev ifb0"))
-    flows = json.loads(receiver.succeed("tc -j -s class show dev ifb0"))
+    queues = json.loads(receiver.succeed("tc -j -s qdisc show dev ifb-q0-0"))
+    flows = json.loads(receiver.succeed("tc -j -s class show dev ifb-q0-0"))
     return {
         "queue": queues[0],
         "flows": flows,
@@ -26,9 +27,19 @@ def report(label):
 
 def create_queue():
     receiver.succeed(
-        "tc qdisc add dev ifb0 root cake bandwidth 10mbit "
+        "tc qdisc replace dev ifb-q0-0 root cake bandwidth 10mbit "
         "besteffort triple-isolate ingress memlimit 128kb"
     )
+
+
+def metric(name):
+    receiver.succeed("systemctl start cake-metrics.service")
+    text = receiver.succeed("cat /var/lib/prometheus-node-exporter-textfile/cake-metrics/cake.prom")
+    values = re.findall(
+        r"^host_observability_cake_" + name + r"\{[^\n]*\} ([^\n]+)$", text, re.MULTILINE
+    )
+    assert len(values) == 1, text
+    return float(values[0])
 
 
 def transfer(rate, seconds=5):
@@ -71,22 +82,17 @@ sender.wait_for_unit("multi-user.target")
 print(receiver.succeed("uname -r"))
 
 with subtest("the option substitutes CAKE for boot loading and autoloading"):
+    receiver.wait_for_unit("qos-test.service")
     receiver.succeed("test -d /sys/module/sch_cake")
     selected = receiver.succeed("modinfo -n sch_cake").strip()
     assert "/updates/sch_cake.ko" in selected, selected
     stock = sender.succeed("modinfo -n sch_cake").strip()
     assert "/kernel/net/sched/sch_cake.ko" in stock, stock
+    receiver.succeed("tc qdisc del dev ifb-q0-0 root")
     receiver.succeed("modprobe -r sch_cake")
 
-receiver.succeed("ip link add ifb0 type ifb")
-receiver.succeed("ip link set ifb0 up")
 create_queue()
 receiver.succeed("test -d /sys/module/sch_cake")
-receiver.succeed("tc qdisc add dev eth1 ingress")
-receiver.succeed(
-    "tc filter add dev eth1 parent ffff: protocol ip flower "
-    "ip_proto udp dst_port 5201 action mirred egress redirect dev ifb0"
-)
 receiver.succeed("iperf3 --server --daemon")
 receiver.wait_for_open_port(5201)
 
@@ -100,6 +106,8 @@ with subtest("BLUE still activates during overload"):
     overloaded = report("after overload")
     assert overload_loss > 5, overload_loss
     assert any(flow["stats"]["blue_prob"] > 0 for flow in overloaded["flows"]), overloaded
+    assert metric("collection_success") == 1
+    assert metric("blue_probability_max") > 0
 
 with subtest("short idle reduces the penalty without resetting it"):
     receiver.sleep(1)
@@ -118,5 +126,8 @@ with subtest("long idle clears the remaining penalty"):
     assert recovered_loss < 1, recovered_loss
     assert all(flow["stats"]["blue_prob"] == 0 for flow in recovered["flows"]), recovered
     assert recovered["queue"]["tins"][0]["unresponsive_flows"] == 0, recovered
+    assert metric("blue_probability_max") == 0
+    assert metric("blue_flows") == 0
+    assert metric("rate_bits_per_second") == 10_000_000
 
 print(f"CAKE recovery: baseline={baseline_loss:.2f}%, after idle={recovered_loss:.2f}% loss")

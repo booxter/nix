@@ -1,6 +1,9 @@
 {
   realms.home.prometheusServer = "fana";
 
+  # Scrape only CAKE textfile metrics at high resolution on these nodes.
+  cakeSources = [ "srvarr" ];
+
   blackboxSources = {
     beast = { };
     frame = { };

@@ -28,6 +28,7 @@ let
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
+      fleetInventory
       observabilityCatalog
       prometheusMtlsTlsConfig
       ;
