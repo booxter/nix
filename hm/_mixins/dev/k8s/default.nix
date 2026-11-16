@@ -17,6 +17,7 @@ in
       kind
       kubectl
       kubectx
+      kubelogin-oidc
       kubevirt
       (wrapHelm kubernetes-helm {
         plugins = with kubernetes-helmPlugins; [
