@@ -139,6 +139,9 @@
       # Keep unstable until the stable branch provides that interface.
       inherit (pkgsNixpkgsUnstable) dix;
 
+      # Stable still has 1.12.0, without the 1.12.1 security fix.
+      inherit (pkgsNixpkgsUnstable) kanidmWithSecretProvisioning_1_12;
+
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
           # FIXME(nixpkgs): pystemd installs complete .pyi files but omits

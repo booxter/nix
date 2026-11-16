@@ -241,7 +241,9 @@ pub async fn send_with_kanidm(
         .await
         .map_err(|error| {
             client::client_error("Kanidm rejected the credential reset request", error)
-        })
+        })?;
+
+    Ok(())
 }
 
 #[cfg(test)]
