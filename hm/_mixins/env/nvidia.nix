@@ -49,12 +49,7 @@
       obsidian.enable = true;
       sketchybar.attentionInbox.enable = true;
       slack.enable = true;
-      spotify = {
-        enable = true;
-        spicetify.enable = true;
-      };
       teams.enable = true;
-      telegram.enable = true;
       thunderbird = {
         enable = true;
         account = {
