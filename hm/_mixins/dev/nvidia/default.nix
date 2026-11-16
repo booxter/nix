@@ -15,6 +15,9 @@ in
   options.host.hm.dev.nvidia.enable = lib.mkEnableOption "NVIDIA development environment";
 
   config = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
+    # Remote hosts may not have terminfo for the local terminal emulator.
+    home.shellAliases.tsh = "env TERM=xterm tsh";
+
     home.sessionPath = [
       "$HOME/src/ngn2-ssh-utils"
       "$HOME/src/nvpn"
