@@ -39,8 +39,10 @@ in
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
-      "protonvpn"
       "sf-symbols"
+    ]
+    ++ lib.optionals (config.host.realm != "work") [
+      "protonvpn"
     ]
     ++ lib.optionals wiresharkEnabled [
       "wireshark-chmodbpf"
