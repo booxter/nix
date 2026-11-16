@@ -37,7 +37,9 @@ in
         enable = true;
         mutableSettings = true;
         context = shared.context models + mcps.instructions;
-        skills = shared.skills;
+        skills = shared.skills // {
+          worktree = ./skills/worktree;
+        };
 
         # Home Manager wraps Claude with --plugin-dir. Secret-backed servers use
         # a SOPS-rendered runtime plugin instead of embedding values in the store.
