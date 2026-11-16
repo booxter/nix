@@ -183,7 +183,7 @@ with subtest("install-time host identity enables real SOPS decryption on first b
     assert (
         installed.succeed("getent shadow bootstrap | cut -d: -f2").strip() == "!bootstrap-fixture"
     )
-    controller.succeed("ssh target true")
+    controller.succeed("ssh -n target true")
     assert installed.succeed("cat /etc/bootstrap-marker").strip() == "before"
 
 with subtest("the first deployment builds its uncached helper remotely and activates"):
@@ -192,4 +192,4 @@ with subtest("the first deployment builds its uncached helper remotely and activ
     deploy_uncached_helper()
     assert installed.succeed("cat /etc/bootstrap-marker").strip() == "after"
     builder.succeed("test -n \"$(find /nix/store -maxdepth 1 -name '*-bootstrap-deploy-helper')\"")
-    controller.succeed("ssh target true")
+    controller.succeed("ssh -n target true")
