@@ -111,7 +111,10 @@ let
     ];
 in
 {
-  imports = [ ./assertions.nix ];
+  imports = [
+    ./assertions.nix
+    ./cake-idle-decay
+  ];
 
   options.host.qos.interfaces = lib.mkOption {
     type = lib.types.attrsOf interfaceType;

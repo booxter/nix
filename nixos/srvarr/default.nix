@@ -11,6 +11,8 @@ in
 
   host.network.interfaces.ens18 = { };
 
+  host.qos.cakeIdleDecay.enable = true;
+
   host.observability.tracing.enable = true;
 
   host.proxmox.guest = {
