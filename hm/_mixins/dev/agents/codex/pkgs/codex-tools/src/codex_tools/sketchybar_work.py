@@ -10,16 +10,17 @@ from typing import Protocol, TextIO
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import UrllibJsonHttpClient
-from codex_tools.sketchybar import (
-    Config,
+from codex_tools.sketchybar import Config
+from codex_tools.work_usage import WorkUsage, WorkUsageService
+from sketchybar_applet import (
     Sketchybar,
     SketchybarCommand,
+    SketchybarError,
     format_duration,
     format_epoch_local,
     pace_color,
     rounded_risk_bps,
 )
-from codex_tools.work_usage import WorkUsage, WorkUsageService
 
 ITEM = "codex.work"
 POPUP_CREDITS_ITEM = "codex.work.credits"
@@ -187,7 +188,7 @@ def main(
             sketchybar,
             now=time.time() if now is None else now,
         )
-    except CodexToolsError as error:
+    except (CodexToolsError, SketchybarError) as error:
         print(f"codex-work-sketchybar: {error}", file=stderr)
         return 1
     return 0

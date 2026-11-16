@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from codex_tools.errors import CodexToolsError
-from codex_tools.sketchybar import Colors, Config
+from codex_tools.sketchybar import Config
 from codex_tools.sketchybar_work import (
     format_number,
     main,
@@ -22,6 +22,7 @@ from fakes import (
     sketchybar_properties,
     write_codex_auth,
 )
+from sketchybar_applet import Colors, SketchybarError
 
 NOW = 1_784_203_200
 COLORS = Colors(
@@ -211,7 +212,7 @@ def test_provider_failure_shows_error(tmp_path: Path) -> None:
 
 def test_reports_sketchybar_failure() -> None:
     stderr = io.StringIO()
-    bar = RecordingSketchybar(error=CodexToolsError("unavailable"))
+    bar = RecordingSketchybar(error=SketchybarError("unavailable"))
     assert (
         main(
             bar=bar,

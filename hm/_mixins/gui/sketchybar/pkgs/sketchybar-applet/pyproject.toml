@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sketchybar-applet"
+version = "0.1.0"
+description = "Typed helpers shared by SketchyBar applets"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sketchybar_applet = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=sketchybar_applet --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/sketchybar_applet"]
+strict = true
