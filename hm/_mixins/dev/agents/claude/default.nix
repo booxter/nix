@@ -16,6 +16,17 @@ let
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 
   statusLine = pkgs.callPackage ./statusline { };
+  worktree = lib.getExe (pkgs.callPackage ./worktree { });
+  worktreeHook = subcommand: [
+    {
+      hooks = [
+        {
+          type = "command";
+          command = "${worktree} ${subcommand}";
+        }
+      ];
+    }
+  ];
 in
 {
   imports = [ ./mutable-settings.nix ];
@@ -48,6 +59,11 @@ in
           permissions = {
             allow = [ "WebFetch" ];
             defaultMode = "auto";
+          };
+          # Keep worktrees outside the repository on branches named as requested.
+          hooks = {
+            WorktreeCreate = worktreeHook "create";
+            WorktreeRemove = worktreeHook "remove";
           };
           editorMode = "vim";
           # Draw with the terminal palette, which Stylix themes, as Codex does.
