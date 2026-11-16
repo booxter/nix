@@ -27,14 +27,22 @@ type config struct {
 	Helper          string
 	Roots           map[string]string
 	PlannerSocket   string
+	Timeouts        timeouts
 }
 
-const (
-	requestTimeout = 30 * time.Second
-	mediaTimeout   = 61 * time.Minute
-	plannerTimeout = 21 * time.Minute
-	queueInterval  = 15 * time.Minute
-)
+const queueInterval = 15 * time.Minute
+
+type timeouts struct {
+	RequestSeconds       int
+	ProbeSeconds         int
+	MediaSeconds         int
+	PlanningSeconds      int
+	ResponseGraceSeconds int
+}
+
+func (limits timeouts) mediaRequest() time.Duration {
+	return time.Duration(limits.MediaSeconds+limits.ResponseGraceSeconds) * time.Second
+}
 
 func readConfig(path string) (config, error) {
 	file, err := os.Open(path)
@@ -48,6 +56,11 @@ func readConfig(path string) (config, error) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&configuration); err != nil {
 		return config{}, fmt.Errorf("read configuration: %w", err)
+	}
+	limits := configuration.Timeouts
+	if limits.RequestSeconds <= 0 || limits.ProbeSeconds <= 0 || limits.MediaSeconds <= 0 ||
+		limits.PlanningSeconds <= 0 || limits.ResponseGraceSeconds <= 0 {
+		return config{}, fmt.Errorf("all timeout settings must be positive")
 	}
 	return configuration, nil
 }

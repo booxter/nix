@@ -49,20 +49,25 @@ func run(ctx context.Context, configuration config) error {
 		return err
 	}
 	defer transport.CloseIdleConnections()
+	limits := configuration.Timeouts
 	httpClient := &http.Client{
 		Transport: transport,
-		Timeout:   requestTimeout,
+		Timeout:   time.Duration(limits.RequestSeconds) * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
 
-	planner, err := plannerclient.New(configuration.PlannerSocket, plannerTimeout)
+	planner, err := plannerclient.New(configuration.PlannerSocket,
+		time.Duration(limits.PlanningSeconds+limits.ResponseGraceSeconds)*time.Second)
 	if err != nil {
 		return err
 	}
 	defer planner.Close()
-	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots, requestTimeout, mediaTimeout)
+	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots,
+		time.Duration(limits.ProbeSeconds)*time.Second,
+		time.Duration(limits.MediaSeconds)*time.Second,
+		time.Duration(limits.ResponseGraceSeconds)*time.Second)
 	if err != nil {
 		return err
 	}

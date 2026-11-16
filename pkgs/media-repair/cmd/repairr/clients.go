@@ -66,7 +66,7 @@ func (configuration config) services(
 		Playlists:         media,
 		DVDs:              media,
 		Archives:          archives,
-		CollectionTimeout: mediaTimeout,
+		CollectionTimeout: configuration.Timeouts.mediaRequest(),
 	})
 	if err != nil {
 		return nil, nil, err
@@ -87,6 +87,7 @@ func (configuration config) services(
 }
 
 func (configuration config) downloads(httpClient *http.Client) (*downloadsource.Resolver, error) {
+	requestTimeout := time.Duration(configuration.Timeouts.RequestSeconds) * time.Second
 	torrents, err := transmission.New(configuration.TransmissionURL, requestTimeout, httpClient)
 	if err != nil {
 		return nil, err

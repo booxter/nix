@@ -52,6 +52,13 @@ let
     Roots = cfg.roots;
     Helper = mediaHelper;
     PlannerSocket = cfg.planner.socketPath;
+    Timeouts = {
+      RequestSeconds = 30;
+      ProbeSeconds = 30;
+      MediaSeconds = 60 * 60;
+      PlanningSeconds = cfg.planner.planningTimeoutSeconds;
+      ResponseGraceSeconds = 60;
+    };
     TransmissionURL = clients.transmission.endpoint;
     SABnzbdURL = clients.sabnzbd.endpoint;
     SABnzbdKeyFile = "${credentials}/sabnzbd-api-key";
