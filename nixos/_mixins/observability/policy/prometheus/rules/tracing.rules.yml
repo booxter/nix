@@ -1,0 +1,30 @@
+groups:
+  - name: tracing
+    rules:
+      - alert: TracingBackendDown
+        expr: up{job=~"tempo|alloy"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Tracing component unavailable on {{ $labels.instance }}"
+          description: "Prometheus cannot scrape {{ $labels.job }}; repair traces may be lost."
+      - alert: TraceExportFailing
+        expr: sum by(instance) (increase(otelcol_exporter_send_failed_spans_total{job="alloy"}[10m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Trace export failing on {{ $labels.instance }}"
+          description: "Alloy has failed to export spans to Tempo. Check its queue and mTLS connection."
+      - alert: TraceQueueNearlyFull
+        expr: otelcol_exporter_queue_size{job="alloy"} / otelcol_exporter_queue_capacity{job="alloy"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Trace queue nearly full on {{ $labels.instance }}"
+          description: "Alloy's bounded trace queue is over 80% full; new spans may be dropped."

@@ -8,6 +8,18 @@
       settings = import ./settings.nix;
     };
 
+    services.prometheus.scrapeConfigs = [
+      {
+        job_name = "tempo";
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:3200" ];
+            labels.instance = "fana";
+          }
+        ];
+      }
+    ];
+
     # Only ingestion is exposed remotely; Grafana queries Tempo over loopback.
     host.web.services.tempo = {
       upstream = "http://127.0.0.1:4319";

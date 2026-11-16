@@ -7,6 +7,10 @@ in
 
   config = lib.mkIf config.host.observability.tracing.enable {
     services.alloy.enable = true;
+    host.observability.prometheusEndpoints.alloy = {
+      port = 12346;
+      upstream = "http://127.0.0.1:12345/metrics";
+    };
     environment.etc."alloy/traces.alloy".text = import ./pipeline.nix {
       endpoint = "https://tempo.${config.host.network.lanDomain}";
       caFile = config.host.pki.authority.rootCaCertificate;
