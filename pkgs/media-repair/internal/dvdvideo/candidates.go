@@ -22,8 +22,8 @@ type Candidate struct {
 	Details          Title
 }
 
-// ListFeatureTitles offers title navigation only when every inventoried file
-// beside the navigation file belongs to a complete, selected DVD structure.
+// ListFeatureTitles requires complete, selected DVD files. Unrelated companion
+// files remain in the inventory but are not remux sources.
 func ListFeatureTitles(
 	ctx context.Context, inventory controller.FileInventory, identifier Identifier,
 ) ([]Candidate, error) {
@@ -105,10 +105,10 @@ func discFiles(
 	files := make([]controller.InventoryFile, 0)
 	for _, file := range inventory {
 		path := paths[file.ID]
-		if filepath.Dir(path) != directory {
+		if filepath.Dir(path) != directory || !ValidFileName(filepath.Base(path)) {
 			continue
 		}
-		if !ValidFileName(filepath.Base(path)) || !available(file) {
+		if !available(file) {
 			return nil, false
 		}
 		files = append(files, file)

@@ -22,6 +22,7 @@ func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
 		"Movie/VIDEO_TS/VIDEO_TS.BUP",
 		"Movie/VIDEO_TS/VTS_01_0.IFO",
 		"Movie/VIDEO_TS/VTS_01_1.VOB",
+		"Movie/VIDEO_TS/VTS_01_1.txt",
 	)
 	identifier := fixtureIdentifier{titles: []Title{
 		{Number: 1, DurationMS: 9_779_000, Chapters: 12, Angles: 1,
@@ -39,6 +40,11 @@ func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
 		len(candidates[0].SourceFileIDs) != 4 ||
 		candidates[0].NavigationFileID != controller.FileID("Movie/VIDEO_TS/VIDEO_TS.IFO") {
 		t.Fatalf("DVD feature candidates = %#v", candidates)
+	}
+	for _, id := range candidates[0].SourceFileIDs {
+		if id == controller.FileID("Movie/VIDEO_TS/VTS_01_1.txt") {
+			t.Fatal("companion text file was selected for remuxing")
+		}
 	}
 
 	inventory.Files[3].DownloadFile.BytesCompleted--
