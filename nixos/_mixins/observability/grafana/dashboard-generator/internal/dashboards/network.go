@@ -112,9 +112,46 @@ func NetworkOverview(config Config) (dashboard.Dashboard, error) {
 		},
 	}
 
+	cake := func(name string) string {
+		return `host_observability_cake_` + name + `{job="cake"}`
+	}
+	cakeLegend := "{{instance}} {{profile}}/{{limit}} ({{direction}})"
+	cakeTinLegend := cakeLegend + " tin {{tin}}"
+	series = append(series,
+		networkSeries{title: "CAKE Delivered Traffic", unit: units.BitsPerSecondSI, legend: cakeLegend,
+			expression: `rate(` + cake("sent_bytes_total") + `[30s]) * 8`},
+		networkSeries{title: "CAKE Configured Shaping Rate", unit: units.BitsPerSecondSI, legend: cakeLegend,
+			expression: cake("rate_bits_per_second")},
+		networkSeries{title: "CAKE Observed Packet Drop Percentage", unit: units.Percent, legend: cakeLegend,
+			expression: `100 * rate(` + cake("dropped_packets_total") + `[30s]) / clamp_min(rate(` +
+				cake("sent_packets_total") + `[30s]) + rate(` + cake("dropped_packets_total") + `[30s]), 1e-9)`},
+		networkSeries{title: "CAKE Maximum BLUE Probability (Not Measured Loss)", unit: units.Percent, legend: cakeTinLegend,
+			expression: cake("blue_probability_max") + ` * 100`},
+		networkSeries{title: "CAKE Queue Backlog", unit: units.BytesIEC, legend: cakeLegend,
+			expression: cake("backlog_bytes")},
+		networkSeries{title: "CAKE Average Queue Delay", unit: units.Seconds, legend: cakeTinLegend,
+			expression: cake("delay_average_seconds")},
+		networkSeries{title: "CAKE Flow Buckets With BLUE Penalty", unit: units.Short, legend: cakeTinLegend,
+			expression: cake("blue_flows")},
+		networkSeries{title: "CAKE Empty Flow Buckets With BLUE Penalty", unit: units.Short, legend: cakeTinLegend,
+			expression: cake("blue_empty_flows")},
+		networkSeries{title: "CAKE CoDel Dropping Flow Buckets", unit: units.Short, legend: cakeTinLegend,
+			expression: cake("codel_dropping_flows")},
+		networkSeries{title: "CAKE Maximum CoDel Count", unit: units.Short, legend: cakeTinLegend,
+			expression: cake("codel_count_max")},
+		networkSeries{title: "CAKE ECN Marks", unit: units.Short, legend: cakeTinLegend,
+			expression: `rate(` + cake("ecn_marks_total") + `[30s])`},
+		networkSeries{title: "CAKE Collection Success", unit: units.Short, legend: cakeLegend,
+			expression: cake("collection_success")},
+		networkSeries{title: "CAKE Collection Age", unit: units.Seconds, legend: cakeLegend,
+			expression: `time() - ` + cake("collection_timestamp_seconds")},
+		networkSeries{title: "CAKE Collection Duration", unit: units.Seconds, legend: cakeLegend,
+			expression: cake("collection_duration_seconds")},
+	)
+
 	builder := newDashboard(DashboardOptions{
 		Title: "Network", UID: "fana-network-overview", Tags: []string{"network", "fleet"},
-		From: "now-6h", Refresh: "30s",
+		From: "now-6h", Refresh: "5s",
 	})
 	placements := make([]panelPlacement, 0, len(series))
 	for range len(series) / 2 {

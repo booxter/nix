@@ -21,6 +21,9 @@ let
   invalidBlackboxSources = builtins.filter (
     name: !builtins.elem name observedHostNames || hosts.${name}.platform != "nixos"
   ) (builtins.attrNames observability.blackboxSources);
+  invalidCakeSources = builtins.filter (
+    name: !builtins.elem name observedHostNames || hosts.${name}.platform != "nixos"
+  ) observability.cakeSources;
   unknownDashboardOverrides = builtins.filter (name: !builtins.hasAttr name hosts) (
     builtins.attrNames observability.dashboardOverrides
   );
@@ -71,6 +74,9 @@ lib.optional (invalidServers != [ ]) (
 ++ lib.optional (invalidBlackboxSources != [ ]) (
   "remote blackbox sources must be observed NixOS hosts: "
   + lib.concatStringsSep ", " invalidBlackboxSources
+)
+++ lib.optional (invalidCakeSources != [ ]) (
+  "CAKE sources must be observed NixOS hosts: " + lib.concatStringsSep ", " invalidCakeSources
 )
 ++ lib.optional (unknownDashboardOverrides != [ ]) (
   "observability dashboard overrides reference unknown hosts: "
