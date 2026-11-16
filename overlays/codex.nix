@@ -3,7 +3,7 @@ codex.overrideAttrs (old: {
   patches = (old.patches or [ ]) ++ [
     # https://github.com/openai/codex/issues/47390
     ../patches/codex-show-full-patches.patch
-    # Include the current token count alongside the context percentage.
+    # Include context tokens and the session's average output rate.
     ../patches/codex-context-tokens.patch
     # Show current-turn tokens beside the working timer and completion metadata.
     ../patches/codex-turn-tokens.patch
