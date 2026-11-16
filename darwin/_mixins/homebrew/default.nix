@@ -8,7 +8,6 @@ let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username}.host.hm;
   env = hmConfig.env;
-  wiresharkEnabled = hmConfig.wireshark.enable;
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
@@ -44,7 +43,7 @@ in
     ++ lib.optionals hmConfig.protonvpn.enable [
       "protonvpn"
     ]
-    ++ lib.optionals wiresharkEnabled [
+    ++ lib.optionals hmConfig.wireshark.enable [
       "wireshark-chmodbpf"
     ]
     ++ lib.optionals env.homerow.enable [
