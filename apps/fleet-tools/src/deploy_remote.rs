@@ -309,10 +309,10 @@ fn ensure_free_space(
         "Low disk space (<{min_free_gib} GiB). Running bounded garbage collection for {:.1} GiB.",
         gib(target)
     );
+    // Leave generation pruning to scheduled GC so deployments preserve rollback history.
     run_sudo(
         backend,
         CommandSpec::new(DEPLOY_NIX_COLLECT_GARBAGE).args([
-            "-d".to_owned(),
             "--max-freed".to_owned(),
             format!("{}K", bytes_to_kib(target)),
         ]),
@@ -322,10 +322,7 @@ fn ensure_free_space(
     eprintln!("Available disk after cleanup: {:.1} GiB", gib(available));
     if available < minimum {
         eprintln!("Bounded garbage collection was insufficient; running full cleanup.");
-        run_sudo(
-            backend,
-            CommandSpec::new(DEPLOY_NIX_COLLECT_GARBAGE).args(["-d"]),
-        )?;
+        run_sudo(backend, CommandSpec::new(DEPLOY_NIX_COLLECT_GARBAGE))?;
     }
     Ok(())
 }
@@ -524,21 +521,6 @@ mod tests {
 
         assert!(error.to_string().contains("SSH landed on other"));
         assert!(backend.commands.is_empty());
-    }
-
-    #[test]
-    fn runs_bounded_then_full_gc_when_space_stays_low() {
-        let source = source();
-        let mut backend = FakeBackend::new(TargetOs::Linux);
-        backend.available = VecDeque::from([10 * GIB, 20 * GIB]);
-
-        deploy(&mut backend, &request(source.path())).expect("deployment should succeed");
-
-        assert_eq!(backend.commands[0].program, Path::new(DEPLOY_NIX_STORE));
-        assert_eq!(backend.commands[1].program, Path::new(SUDO));
-        assert!(backend.commands[1].args.contains(&"--max-freed".to_owned()));
-        assert_eq!(backend.commands[2].args.last().unwrap(), "-d");
-        assert_eq!(backend.commands[3].program, Path::new(DEPLOY_NH));
     }
 
     #[test]

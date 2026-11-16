@@ -31,6 +31,6 @@ in
 
   host.jellyfinDeclarativeConfig = {
     system.pluginRepositories = builtins.attrValues enabledRepositories;
-    plugins = map (plugin: { inherit (plugin) name; }) (builtins.attrValues enabledPlugins);
+    plugins = map (plugin: removeAttrs plugin [ "repository" ]) (builtins.attrValues enabledPlugins);
   };
 }
