@@ -227,23 +227,29 @@ index 67ced84..53cb1e8 100644
  use codex_utils_sleep_inhibitor::SleepInhibitor;
  
  #[derive(Debug)]
-@@ -11,6 +13,8 @@ pub(super) struct TurnLifecycleState {
+@@ -12,10 +14,12 @@ pub(super) struct TurnLifecycleState {
      /// Tracks whether codex-core currently considers an agent turn to be in progress.
      pub(super) agent_turn_running: bool,
      pub(super) last_turn_id: Option<String>,
 +    pub(super) token_usage_start: Option<TokenUsage>,
 +    pub(super) token_usage: Option<TurnTokenUsage>,
+     /// A live or restored turn makes the parent available for side-chat creation.
+     pub(super) has_turn_history: bool,
+     /// Cloud confirmed admission to a turn whose live start we have yet to process.
+     pub(super) admitted_turn_id: Option<String>,
      pub(super) budget_limited_turn_ids: HashSet<String>,
-     /// Completion labels already inserted into this thread's visible history.
-     pub(super) rendered_completion_turn_ids: HashSet<String>,
-@@ -23,6 +27,8 @@ impl TurnLifecycleState {
+     /// False records an untimed turn boundary that may still receive a completion label.
+     pub(super) rendered_completion_turn_ids: HashMap<String, bool>,
+@@ -28,8 +32,10 @@ impl TurnLifecycleState {
              sleep_inhibitor: SleepInhibitor::new(prevent_idle_sleep),
              agent_turn_running: false,
              last_turn_id: None,
 +            token_usage_start: None,
 +            token_usage: None,
+             has_turn_history: false,
+             admitted_turn_id: None,
              budget_limited_turn_ids: HashSet::new(),
-             rendered_completion_turn_ids: HashSet::new(),
+             rendered_completion_turn_ids: HashMap::new(),
              goal_status_active_turn_started_at: None,
 @@ -37,6 +43,8 @@ impl TurnLifecycleState {
  
@@ -322,7 +328,7 @@ index 7c39887..c788910 100644
              completed_at: None,
              display_date: Local::now().date_naive(),
              clock_format: ClockFormat::TwelveHour,
-@@ -56,6 +59,11 @@ impl FinalMessageSeparator {
+@@ -56,14 +59,19 @@ impl FinalMessageSeparator {
          self
      }
  
@@ -331,6 +337,14 @@ index 7c39887..c788910 100644
 +        self
 +    }
 +
+     pub(crate) fn has_timing(&self) -> bool {
+         self.completed_at.is_some() || self.elapsed_seconds.is_some()
+     }
+ 
+     pub(crate) fn display_label(&self) -> Option<String> {
+         self.label(self.display_date)
+     }
+ 
      fn label(&self, today: NaiveDate) -> Option<String> {
          let mut label_parts = Vec::new();
          if let Some(elapsed_seconds) = self.elapsed_seconds {
