@@ -81,7 +81,13 @@
       });
 
       # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
-      inherit (pkgsNixpkgsUnstable) paperless-ngx;
+      paperless-ngx = pkgsNixpkgsUnstable.paperless-ngx.overrideAttrs (old: {
+        disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
+          # TODO: report upstream. Real sleeps can exceed the 100 ms stability
+          # delay for both files, returning two stable files when one is expected.
+          "src/documents/tests/test_management_consumer.py::TestFileStabilityTracker::test_multiple_files_tracking"
+        ];
+      });
 
       lidarr = prev.lidarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
