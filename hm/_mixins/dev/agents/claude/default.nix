@@ -45,6 +45,10 @@ in
             CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS = "2";
             CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
           };
+          permissions = {
+            allow = [ "WebFetch" ];
+            defaultMode = "auto";
+          };
           editorMode = "vim";
           # Draw with the terminal palette, which Stylix themes, as Codex does.
           theme = "dark-ansi";
