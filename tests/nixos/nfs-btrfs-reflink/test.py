@@ -31,7 +31,11 @@ with subtest("export separate subvolumes with deliberately colliding inode numbe
     probe(server, "seed-library", root="/srv/media")
     server.succeed("btrfs subvolume create /srv/media/torrents")
     probe(server, "seed-torrent", root="/srv/media")
-    # NFS needs a mount boundary to switch to the child's export identity.
+    # Btrfs subvolumes have independent inode namespaces. Separate export fsids
+    # alone do not make NFS switch identities when traversing into a subvolume;
+    # nfsd needs a server-side mount boundary too. Without this mount, distinct
+    # files can have identical client (device, inode) pairs, making shutil reject
+    # a copy with SameFileError. Mounting the child only on the client is not enough.
     server.succeed("mount -t btrfs -o subvol=torrents /dev/vdb /srv/media/torrents")
     server.succeed("systemctl start nfs-server")
     print(server.succeed("exportfs -v"))
