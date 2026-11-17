@@ -13,11 +13,12 @@ from urllib.request import Request, urlopen
 @dataclass(frozen=True)
 class Arr:
     port: int
+    version: int = 3
 
     def request(self, path: str, payload=None, *, method: str | None = None):
         data = None if payload is None else json.dumps(payload).encode()
         query = Request(
-            f"http://127.0.0.1:{self.port}/api/v3/{path}",
+            f"http://127.0.0.1:{self.port}/api/v{self.version}/{path}",
             data=data,
             method=method,
             headers={"Content-Type": "application/json", "X-Api-Key": "reflink-test-api-key"},
@@ -96,9 +97,73 @@ def import_episode() -> str:
     )
 
 
+def import_track() -> str:
+    api = Arr(8686, version=1)
+    library = "/mnt/media/library/music"
+    source = Path("/mnt/media/torrents/lidarr/Reflink Track.flac")
+    quality_profile = api.request("qualityprofile")[0]["id"]
+    metadata_profile = api.request("metadataprofile")[0]["id"]
+    api.request(
+        "rootfolder",
+        {
+            "name": "Music",
+            "path": library,
+            "defaultQualityProfileId": quality_profile,
+            "defaultMetadataProfileId": metadata_profile,
+            "defaultMonitorOption": "none",
+            "defaultNewItemMonitorOption": "none",
+        },
+    )
+    artist = api.request(
+        "artist",
+        {
+            "artistName": "Reflink Artist",
+            "foreignArtistId": "11111111-1111-4111-8111-111111111111",
+            "qualityProfileId": quality_profile,
+            "metadataProfileId": metadata_profile,
+            "rootFolderPath": library,
+            "monitored": False,
+            "addOptions": {"searchForMissingAlbums": False},
+        },
+    )
+    refresh = api.request("command", {"name": "RefreshArtist", "artistId": artist["id"]})
+    api.wait_for_command(refresh["id"])
+    albums = api.request(f"album?artistId={artist['id']}")
+    assert len(albums) == 1, albums
+    album = albums[0]
+    refresh = api.request("command", {"name": "RefreshAlbum", "albumId": album["id"]})
+    api.wait_for_command(refresh["id"])
+    tracks = api.request(f"track?albumId={album['id']}")
+    assert len(tracks) == 1, tracks
+
+    # Isolate copying from subsequent tag edits, which intentionally change data.
+    metadata = api.request("config/metadataprovider")
+    metadata["writeAudioTags"] = "no"
+    api.request("config/metadataprovider", metadata, method="PUT")
+    return import_copy(
+        api,
+        source,
+        {
+            "artistId": artist["id"],
+            "albumId": album["id"],
+            "albumReleaseId": album["releases"][0]["id"],
+            "trackIds": [tracks[0]["id"]],
+        },
+        f"trackfile?artistId={artist['id']}",
+        quality=6,
+    )
+
+
 def import_copy(
-    api: Arr, source: Path, selection: dict, file_query: str, *, permissions: bool = False
+    api: Arr,
+    source: Path,
+    selection: dict,
+    file_query: str,
+    *,
+    permissions: bool = False,
+    quality: int = 4,
 ) -> str:
+    original = source.read_bytes()
     media_management = api.request("config/mediamanagement")
     media_management["copyUsingHardlinks"] = True
     media_management["setPermissionsLinux"] = permissions
@@ -113,7 +178,7 @@ def import_copy(
                 {
                     "path": str(source),
                     **selection,
-                    "quality": {"quality": {"id": 4}, "revision": {"version": 1}},
+                    "quality": {"quality": {"id": quality}, "revision": {"version": 1}},
                     "languages": [{"id": 1, "name": "English"}],
                 }
             ],
@@ -123,7 +188,8 @@ def import_copy(
     files = api.request(file_query)
     assert len(files) == 1, files
     destination = Path(files[0]["path"])
-    assert source.read_bytes() == destination.read_bytes()
+    assert source.read_bytes() == original, "Import changed the torrent source"
+    assert original == destination.read_bytes()
     assert not source.samefile(destination)
     with destination.open("rb") as stream:
         os.fsync(stream.fileno())
@@ -132,9 +198,10 @@ def import_copy(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("app", choices=("radarr", "sonarr"))
+    imports = {"radarr": import_movie, "sonarr": import_episode, "lidarr": import_track}
+    parser.add_argument("app", choices=imports)
     args = parser.parse_args()
-    destination = import_movie() if args.app == "radarr" else import_episode()
+    destination = imports[args.app]()
     Path(f"/tmp/{args.app}-results.json").write_text(json.dumps([destination]))
 
 

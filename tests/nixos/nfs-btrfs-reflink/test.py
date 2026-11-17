@@ -125,6 +125,22 @@ with subtest("Sonarr falls back from hardlinks when importing across subvolumes"
         raise
     check_imports("/tmp/sonarr-results.json")
 
+with subtest("Lidarr falls back from hardlinks when importing across subvolumes"):
+    server.succeed("mkdir -p /srv/media/torrents/lidarr /srv/media/library/music")
+    server.succeed("chown 1000:1000 /srv/media/torrents/lidarr /srv/media/library/music")
+    server.succeed(
+        "ffmpeg -hide_banner -loglevel error -f lavfi -i anoisesrc=r=44100:seed=1 "
+        "-t 10 -sample_fmt s16 -c:a flac '/srv/media/torrents/lidarr/Reflink Track.flac'"
+    )
+    client.succeed("systemctl start lidarr")
+    client.wait_for_open_port(8686)
+    try:
+        client.succeed("python3 /etc/arr-import.py lidarr", timeout=240)
+    except Exception:
+        print(client.succeed("journalctl -u lidarr --no-pager"))
+        raise
+    check_imports("/tmp/lidarr-results.json")
+
 with subtest("parent snapshots retain the library and exclude torrent payloads"):
     server.succeed("btrfs subvolume snapshot -r /srv/media /srv/media/snapshot")
     server.succeed("test -f /srv/media/snapshot/library.bin")
