@@ -32,7 +32,7 @@ def write_claude_config(home: Path, extra_usage: object, fetched_at: int = NOW -
     (home / ".claude.json").write_text(json.dumps(config))
 
 
-def spend(used_cents: int) -> dict[str, object]:
+def spend(used_cents: float) -> dict[str, object]:
     return {
         "is_enabled": True,
         "monthly_limit": 1_000_000,
@@ -63,6 +63,16 @@ def test_shows_remaining_spend_with_details(tmp_path: Path) -> None:
         "claude.work.spend": ("spent: 12.28 USD of 10,000.00 USD; updated 5m ago", "neutral"),
         "claude.work.reset": ("reset: Dec 1", "neutral"),
     }
+
+
+def test_fractional_cents_are_shown(tmp_path: Path) -> None:
+    write_claude_config(tmp_path, spend(1_538.6))
+
+    bar = update(tmp_path)
+
+    assert labels(bar)["claude.work.spend"][0] == (
+        "spent: 15.39 USD of 10,000.00 USD; updated 5m ago"
+    )
 
 
 def test_spending_ahead_of_the_month_is_red(tmp_path: Path) -> None:

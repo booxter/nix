@@ -11,18 +11,29 @@ import time
 from pathlib import Path
 from typing import Protocol
 
-from pydantic import AliasPath, BaseModel, Field, NonNegativeInt, PositiveInt, ValidationError
+from pydantic import (
+    AliasPath,
+    BaseModel,
+    Field,
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveFloat,
+    ValidationError,
+)
 
 
 class Spend(BaseModel):
-    """Spend in minor currency units, for example cents for USD."""
+    """Spend in minor currency units, for example cents for USD.
 
-    used: NonNegativeInt = Field(validation_alias="used_credits")
-    limit: PositiveInt = Field(validation_alias="monthly_limit")
+    The API sends amounts as JSON numbers that may carry fractions of a cent.
+    """
+
+    used: NonNegativeFloat = Field(validation_alias="used_credits")
+    limit: PositiveFloat = Field(validation_alias="monthly_limit")
     currency: str
     decimal_places: NonNegativeInt
 
-    def format(self, amount: int) -> str:
+    def format(self, amount: float) -> str:
         value = amount / 10**self.decimal_places
         return f"{value:,.{self.decimal_places}f} {self.currency}"
 
