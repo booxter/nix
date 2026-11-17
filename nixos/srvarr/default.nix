@@ -31,6 +31,18 @@ in
     mountPoint = "/data/media";
   };
 
+  host.storage.claims.torrents = {
+    provider = "beast";
+    mountPoint = "/data/media/torrents";
+    attachments = {
+      transmission = { };
+      sonarr = { };
+      radarr = { };
+      lidarr = { };
+      shelfmark = { };
+    };
+  };
+
   # Arr stack
   host.bazarr = {
     enable = true;
