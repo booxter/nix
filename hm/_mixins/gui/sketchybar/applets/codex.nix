@@ -13,7 +13,9 @@ let
     sketchybar --add item codex.5h ${cfg.position} \
                --set codex.5h script="$PLUGIN_DIR/codex.sh" \
                               update_freq=60 \
-                              icon.drawing=off \
+                              icon=":codex:" \
+                              icon.font="$APP_ICON_FONT" \
+                              icon.padding_left=6 \
                               label.padding_left=6 \
                               label.padding_right=6 \
                               background.border_width=0 \
@@ -55,7 +57,9 @@ let
     sketchybar --add item codex.work ${cfg.position} \
                --set codex.work script="$PLUGIN_DIR/codex-corporate.sh" \
                                 update_freq=60 \
-                                icon.drawing=off \
+                                icon=":codex:" \
+                                icon.font="$APP_ICON_FONT" \
+                                icon.padding_left=6 \
                                 label.padding_left=6 \
                                 label.padding_right=6 \
                                 background.border_width=0 \

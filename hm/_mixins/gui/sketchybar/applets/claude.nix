@@ -32,7 +32,9 @@ in
         sketchybar --add item claude.5h ${cfg.position} \
                    --set claude.5h script="$PLUGIN_DIR/claude.sh" \
                                    update_freq=60 \
-                                   icon.drawing=off \
+                                   icon=":claude:" \
+                                   icon.font="$APP_ICON_FONT" \
+                                   icon.padding_left=6 \
                                    label.padding_left=6 \
                                    label.padding_right=6 \
                                    background.border_width=0 \

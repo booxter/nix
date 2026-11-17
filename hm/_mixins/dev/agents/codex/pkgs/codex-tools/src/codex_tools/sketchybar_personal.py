@@ -115,7 +115,6 @@ def show_error(config: Config, bar: Sketchybar) -> None:
             "--set",
             FIVE_HOUR_ITEM,
             "drawing=on",
-            "icon.drawing=off",
             "label=err",
             f"label.color={config.colors.red}",
             "--set",

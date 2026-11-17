@@ -106,7 +106,7 @@ def test_renders_credits_reset_and_limit_state() -> None:
     rendered = sketchybar_properties(bar.calls[0])
     assert rendered["codex.work"] == {
         "drawing": "on",
-        "label": "work 75%",
+        "label": "75%",
         "label.color": "red",
         "popup.drawing": "off",
     }
@@ -189,7 +189,7 @@ def test_fetches_and_renders_work_usage(tmp_path: Path) -> None:
     )
     assert service.calls[0][0].account_id == "account"
     assert service.calls[0][1] == NOW
-    assert sketchybar_properties(bar.calls[0])["codex.work"]["label"] == "work 75%"
+    assert sketchybar_properties(bar.calls[0])["codex.work"]["label"] == "75%"
 
 
 def test_provider_failure_shows_error(tmp_path: Path) -> None:
@@ -205,7 +205,7 @@ def test_provider_failure_shows_error(tmp_path: Path) -> None:
         == 0
     )
     rendered = sketchybar_properties(bar.calls[0])
-    assert rendered["codex.work"]["label"] == "work err"
+    assert rendered["codex.work"]["label"] == "err"
     assert rendered["codex.work"]["label.color"] == "0xfffb4934"
     assert rendered["codex.work.credits"]["drawing"] == "off"
 
