@@ -205,6 +205,25 @@ func StorageOverview(config Config) (dashboard.Dashboard, error) {
 		}
 	}
 
+	commits := layout.row(8, 12, 12)
+	builder.
+		WithPanel(timeSeries(TimeseriesOptions{
+			ID: commits[0].ID, Grid: commits[0].Grid, Title: "Btrfs Transaction Commit Rate",
+			Unit: units.OpsPerSecond, DataSource: datasource, Min: ptr(0.0),
+			Targets: []PrometheusTarget{{
+				RefID: "A", Expression: "rate(" + node("node_btrfs_commits_total") + "[5m])",
+				Legend: "{{uuid}}",
+			}},
+		}).Description("Completed filesystem transactions per second, averaged over five minutes. Indicates commit activity, not metadata bytes written or snapshot cleanup progress. A stalled transaction does not increment this counter until it commits.")).
+		WithPanel(timeSeries(TimeseriesOptions{
+			ID: commits[1].ID, Grid: commits[1].Grid, Title: "Btrfs Last Commit Duration",
+			Unit: units.Seconds, DataSource: datasource, Min: ptr(0.0),
+			Targets: []PrometheusTarget{{
+				RefID: "A", Expression: node("node_btrfs_last_commit_seconds"),
+				Legend: "{{uuid}}",
+			}},
+		}).Description("Duration of the most recently completed transaction commit. Updates after a commit finishes; it does not measure an ongoing stall or all metadata work performed before the commit."))
+
 	thermal := layout.row(8, 12, 12)
 	builder.
 		WithPanel(timeSeries(TimeseriesOptions{
