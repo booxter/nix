@@ -44,13 +44,11 @@ lib.mkIf config.host.hm.env.roles.developer {
         command = lib.getExe scmPkgs.check-commit-message;
       };
 
-      # Keep a generic pager for non-diff git commands. diff-so-fancy is only
-      # suitable for diff-shaped output and breaks commands like `git grep`
-      # when installed as the global core.pager.
+      # Keep a generic pager for non-diff commands such as `git grep`.
       core.pager = "${pkgs.less}/bin/less '--tabs=4' -RFX";
       pager = {
-        diff = "${pkgs.diff-so-fancy}/bin/diff-so-fancy | ${pkgs.less}/bin/less '--tabs=4' -RFX";
-        show = "${pkgs.diff-so-fancy}/bin/diff-so-fancy | ${pkgs.less}/bin/less '--tabs=4' -RFX";
+        diff = lib.getExe config.programs.delta.finalPackage;
+        show = lib.getExe config.programs.delta.finalPackage;
       };
 
       # ovs/ovn
@@ -80,10 +78,17 @@ lib.mkIf config.host.hm.env.roles.developer {
     };
   };
 
-  programs.diff-so-fancy = {
+  programs.delta = {
     enable = true;
     enableGitIntegration = false;
-    settings.markEmptyLines = true;
+    options = {
+      syntax-theme = "gruvbox-dark";
+      dark = true;
+      keep-plus-minus-markers = true;
+      minus-style = "syntax auto";
+      plus-style = "syntax auto";
+      pager = "${pkgs.less}/bin/less '--tabs=4' -RFX";
+    };
   };
 
   # TODO: Replace these shell initializers and the package below with
