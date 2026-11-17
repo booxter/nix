@@ -11,6 +11,7 @@ dependencies = ["atomic-file-writes", "pydantic", "sketchybar-applet"]
 [project.scripts]
 claude-sketchybar = "claude_statusline.sketchybar:main"
 claude-statusline = "claude_statusline:main"
+claude-work-sketchybar = "claude_statusline.sketchybar_work:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

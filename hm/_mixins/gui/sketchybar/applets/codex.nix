@@ -12,7 +12,7 @@ let
   personalScript = ''
     sketchybar --add item codex.5h ${cfg.position} \
                --set codex.5h script="$PLUGIN_DIR/codex.sh" \
-                              update_freq=60 \
+                              update_freq=300 \
                               icon=":codex:" \
                               icon.font="$APP_ICON_FONT" \
                               icon.padding_left=6 \
@@ -56,7 +56,7 @@ let
   corporateScript = ''
     sketchybar --add item codex.work ${cfg.position} \
                --set codex.work script="$PLUGIN_DIR/codex-corporate.sh" \
-                                update_freq=60 \
+                                update_freq=300 \
                                 icon=":codex:" \
                                 icon.font="$APP_ICON_FONT" \
                                 icon.padding_left=6 \

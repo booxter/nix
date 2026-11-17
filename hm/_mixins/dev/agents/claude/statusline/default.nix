@@ -29,6 +29,8 @@ python3.pkgs.buildPythonApplication {
     pytestCheckHook
     pytest-cov
   ];
+  # Tests run a loopback server in place of Claude's usage API.
+  __darwinAllowLocalNetworking = true;
   preCheck = ''
     mypy src/claude_statusline
   '';
