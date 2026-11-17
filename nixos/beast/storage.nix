@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   host.storage.volumes.bulk = {
     # Keep /volume2 as the durable path published to existing NFS clients.
@@ -12,6 +13,23 @@
     ];
     slowActivation = true;
     snapshots = true;
+  };
+
+  host.storage.volumes.torrents = {
+    mountPoint = "/volume2/Media/torrents";
+    device = config.host.storage.volumes.bulk.device;
+    fsType = "btrfs";
+    # Migration must create this subvolume before activation. Keep it outside
+    # parent snapshots, but on the same filesystem so library copies can reflink.
+    # NFS also needs this server-side mount boundary to select the child fsid.
+    # An export alone leaves colliding subvolume inode numbers under one client
+    # device number, making different files appear identical to copy utilities.
+    mountOptions = [
+      "subvol=base/Media/torrents"
+      "compress=zstd"
+      "noatime"
+    ];
+    slowActivation = true;
   };
 
   host.storage.resources = {
@@ -41,6 +59,12 @@
       nfs = {
         fsid = 10;
       };
+    };
+    torrents = {
+      volume = "torrents";
+      relativePath = ".";
+      directoryDefaults.group = "media";
+      nfs.fsid = 11;
     };
     paperless = {
       volume = "bulk";

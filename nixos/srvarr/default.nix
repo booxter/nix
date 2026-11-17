@@ -31,6 +31,18 @@ in
     mountPoint = "/data/media";
   };
 
+  host.storage.claims.torrents = {
+    provider = "beast";
+    mountPoint = "/data/media/torrents";
+    attachments = {
+      transmission = { };
+      sonarr = { };
+      radarr = { };
+      lidarr = { };
+      shelfmark = { };
+    };
+  };
+
   # Arr stack
   host.bazarr = {
     enable = true;
@@ -47,6 +59,7 @@ in
     };
   };
 
+  # TODO: Investigate why Lidarr's live copyUsingHardlinks setting is disabled.
   host.lidarr = {
     stateDir = "/data/.state/nixarr/lidarr";
   };

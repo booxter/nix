@@ -15,7 +15,7 @@ pkgs.runCommand "nixos-test-tls-pki" { nativeBuildInputs = [ pkgs.openssl ]; } '
     -days 36500
 
   openssl req -new -newkey rsa:2048 -nodes \
-    -subj /CN=${serverName} \
+    -subj ${pkgs.lib.escapeShellArg "/CN=${serverName}"} \
     -addext "subjectAltName=DNS:${serverName}" \
     -addext "extendedKeyUsage=serverAuth" \
     -keyout "$out/server.key" \
@@ -31,7 +31,7 @@ pkgs.runCommand "nixos-test-tls-pki" { nativeBuildInputs = [ pkgs.openssl ]; } '
 
   ${pkgs.lib.optionalString (clientName != null) ''
     openssl req -new -newkey rsa:2048 -nodes \
-      -subj /CN=${clientName} \
+      -subj ${pkgs.lib.escapeShellArg "/CN=${clientName}"} \
       -addext "extendedKeyUsage=clientAuth" \
       -keyout "$out/client.key" \
       -out "$out/client.csr"

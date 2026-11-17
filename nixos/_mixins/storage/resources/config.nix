@@ -9,14 +9,17 @@ let
   model = storageModel;
   siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   remoteClaims = lib.filterAttrs (_: claim: !claim.local) model.localClaims;
+  nestedClaim =
+    claim:
+    lib.any (parent: lib.hasPrefix "${parent.mountPoint}/" claim.mountPoint) (
+      builtins.attrValues remoteClaims
+    );
   mountOptions = [
     "nfsvers=4"
     "hard"
     "nofail"
     "_netdev"
     "noatime"
-    "x-systemd.automount"
-    "x-systemd.idle-timeout=0"
     "x-systemd.mount-timeout=30s"
     "x-systemd.requires=network-online.target"
     "x-systemd.after=network-online.target"
@@ -38,7 +41,15 @@ let
         {
           device = "${siteNetwork.addressFor claim.provider}:${claim.resolvedResource.sourcePath}";
           fsType = "nfs";
-          options = mountOptions;
+          # NFS already discovers nested exports while resolving the mountpoint.
+          # An autofs mount above that discovered mount hides it and loops with
+          # ELOOP. Use an ordinary mount for claims below another remote claim.
+          options =
+            mountOptions
+            ++ lib.optionals (!(nestedClaim claim)) [
+              "x-systemd.automount"
+              "x-systemd.idle-timeout=0"
+            ];
         }
     )
   ) model.localClaims;
