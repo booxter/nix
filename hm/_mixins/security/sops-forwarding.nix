@@ -8,6 +8,11 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin isLinux;
+  sshBackend = import ../ssh/backend.nix {
+    inherit pkgs;
+    backend = osConfig.host.ssh.credentials.backend;
+  };
+  inherit (sshBackend) openssh;
   identity = osConfig.host.security.secrets.operator.ageIdentity;
   username = config.home.username;
   socketDirectory = "${config.home.homeDirectory}/.ssh/sops";
@@ -41,8 +46,8 @@ let
   ssh = pkgs.symlinkJoin {
     name = "openssh-with-sops";
     paths = [
-      pkgs.openssh
-      pkgs.openssh.man
+      openssh
+      openssh.man
     ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
@@ -50,14 +55,14 @@ let
       makeWrapper ${sopsTools}/bin/sops-ssh "$out/bin/ssh" \
         --add-flags ${
           lib.escapeShellArg (
-            "--ssh ${pkgs.openssh}/bin/ssh"
+            "--ssh ${lib.getExe' openssh "ssh"}"
             + " --forwarding-config ${forwardingConfig}"
             + lib.optionalString (identity != null) " --local-socket ${localSocket}"
             + " --"
           )
         }
     '';
-    meta = removeAttrs pkgs.openssh.meta [ "outputsToInstall" ];
+    meta = removeAttrs openssh.meta [ "outputsToInstall" ];
   };
   targets = lib.filterAttrs (_: host: host.realm == osConfig.host.realm) fleetInventory.hosts;
   targetBlock =

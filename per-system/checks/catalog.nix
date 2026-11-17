@@ -48,6 +48,9 @@ let
       media-repair-contracts = pkgs.media-repair-contracts;
       letterboxd-sync = pkgs.letterboxd-sync;
       pass-idle = pkgs.pass-idle;
+      ssh-device = pkgs.ssh-device;
+      ssh-ticket = pkgs.ssh-ticket;
+      ssh-ticket-yubikey = pkgs.ssh-ticket-yubikey;
       pass-indicator = import ./pass-indicator.nix { inherit pkgs; };
       proxmox-bootstrap = pkgs.proxmox-bootstrap;
       gpclient = pkgs.gpclient;

@@ -1,0 +1,56 @@
+diff --git a/ssh-agent.c b/ssh-agent.c
+--- a/ssh-agent.c
++++ b/ssh-agent.c
+@@ -91,6 +91,8 @@
+ #include "myproposal.h"
+ #include "version.h"
+ 
++#include "ssh-device-pin.h"
++
+ #ifndef DEFAULT_ALLOWED_PROVIDERS
+ # define DEFAULT_ALLOWED_PROVIDERS "/usr/lib*/*,/usr/local/lib*/*"
+ #endif
+@@ -940,7 +942,8 @@ process_sign_request2(SocketEntry *e)
+  retry_pin:
+ 	/* The PIN prompt closes the notifier; restart it for the retry. */
+ 	if (sshkey_is_sk(id->key) &&
+-	    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
++	    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD) &&
++	    (pin != NULL || !ssh_device_pin_first(id->key, id->sk_provider))) {
+ 		notifier = notify_start(0,
+ 		    "Confirm user presence for key %s %s%s%s",
+ 		    sshkey_type(id->key), fp,
+diff --git a/ssh-device-pin.h b/ssh-device-pin.h
+new file mode 100644
+--- /dev/null
++++ b/ssh-device-pin.h
+@@ -0,0 +1,29 @@
++/* Only mapped, PIN-only devices can skip the initial touch notification.
++ * Other providers and keys retain discovery and built-in verification prompts.
++ */
++static int
++ssh_device_pin_first(struct sshkey *key, const char *provider)
++{
++	static const char *public_keys[] = {
++@public_keys@
++		NULL
++	};
++	char *encoded = NULL;
++	size_t i;
++	int found = 0;
++
++	if (provider == NULL || strcmp(provider, "internal") != 0 ||
++	    !(key->sk_flags & SSH_SK_USER_VERIFICATION_REQD))
++		return 0;
++	if (sshkey_to_base64(key, &encoded) != 0)
++		return 0;
++
++	for (i = 0; public_keys[i] != NULL; i++) {
++		if (strcmp(encoded, public_keys[i]) == 0) {
++			found = 1;
++			break;
++		}
++	}
++	free(encoded);
++	return found;
++}

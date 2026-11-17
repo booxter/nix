@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, fleetInventory, ... }:
 {
   additions = final: _prev: import ../pkgs final.pkgs;
 
@@ -40,6 +40,12 @@
       });
 
       codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
+
+      openssh-yubikey = prev.callPackage ./openssh {
+        inherit fleetInventory;
+        openssh = prev.openssh;
+      };
+      ssh-device = final.openssh-yubikey.resolver;
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [

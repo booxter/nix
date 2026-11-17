@@ -1,25 +1,30 @@
 { pkgs }:
 let
-  fixtures = pkgs.runCommand "hardware-signing-fixtures" { nativeBuildInputs = [ pkgs.openssh ]; } ''
+  openssh = pkgs.openssh-yubikey;
+  fixtures = pkgs.runCommand "hardware-signing-fixtures" { nativeBuildInputs = [ openssh ]; } ''
     mkdir -p "$out"
     for name in local forwarded unapproved; do
       ssh-keygen -q -t ed25519 -N "" -C "$name" -f "$out/$name"
     done
     cat "$out/local.pub" "$out/forwarded.pub" > "$out/approved"
   '';
-  selectKey = pkgs.callPackage ../../hm/_mixins/ssh/pkgs/git-hardware-signing-key.nix {
+  selectKey = pkgs.callPackage ../../hm/_mixins/ssh/pkgs/git-hardware-signing-key {
+    inherit openssh;
     approvedKeysFile = "${fixtures}/approved";
-    localIdentityFiles = [
-      "unapproved-key"
-      "local-key"
-    ];
+    localIdentityCommand = toString (
+      pkgs.writeShellScript "load-signing-key" ''
+        set -eu
+        ${openssh}/bin/ssh-add -q unapproved-key local-key
+        cat ${fixtures}/local.pub
+      ''
+    );
   };
 in
 pkgs.runCommand "hardware-signing"
   {
     nativeBuildInputs = [
       pkgs.git
-      pkgs.openssh
+      openssh
     ];
     __darwinAllowLocalNetworking = true;
   }
@@ -46,8 +51,11 @@ pkgs.runCommand "hardware-signing"
 
     # Local signing selects an approved identity among the configured handles.
     unset SSH_CONNECTION
+    ssh-add forwarded-key
     git commit --allow-empty -m local
     git verify-commit HEAD
+    printf 'operator@example.test %s\n' "$(cat ${fixtures}/local.pub)" > local-signers
+    git -c gpg.ssh.allowedSignersFile="$PWD/local-signers" verify-commit HEAD
 
     # Remote signing uses the originating key, even with other agent identities.
     ssh-add -D

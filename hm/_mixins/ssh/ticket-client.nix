@@ -7,21 +7,22 @@
 }:
 let
   username = osConfig.host.username;
-  homeManagerPkgs = import ../../pkgs pkgs;
-  ticketPackage = homeManagerPkgs.ssh-ticket;
+  sshBackend = import ./backend.nix {
+    inherit pkgs;
+    backend = osConfig.host.ssh.credentials.backend;
+  };
+  ticketPackage = sshBackend.ssh-ticket;
   issuer = osConfig.host.ssh.tickets.issuer;
   ticketStateDir = "${config.xdg.stateHome}/ssh-ticket";
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
-  agentIdentityArgs =
-    lib.concatMapStrings
-      (name: " --agent-identity ${lib.escapeShellArg "${config.home.homeDirectory}/.ssh/${name}"}")
-      (
-        lib.optionals (
-          osConfig.host.ssh.credentials.backend == "yubikey"
-        ) osConfig.host.ssh.credentials.yubikey.identityFiles
-      );
+  yubikeyAgent = pkgs.callPackage ./pkgs/yubikey-agent.nix {
+    identityFiles = map (
+      name: "${config.home.homeDirectory}/.ssh/${name}"
+    ) osConfig.host.ssh.credentials.yubikey.identityFiles;
+  };
+  agentIdentityArgs = lib.optionalString sshBackend.useYubikey " --agent-command ${lib.getExe' yubikeyAgent "yubikey-agent"}";
   ticketTargets = map (
     target: target // { principal = "${username}@${target.name}"; }
   ) osConfig.host.ssh.tickets.targets;
@@ -70,7 +71,7 @@ let
         target.name
         "${target.name}.local"
       ];
-      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs}${agentIdentityArgs} --cert-alias %n ${target.name}";
+      ensureCommand = "${lib.getExe ticketPackage} ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs}${agentIdentityArgs} --cert-alias %n ${target.name}";
     in
     {
       name = "ssh-ticket-ensure-${target.name}";
