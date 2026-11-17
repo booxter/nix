@@ -58,7 +58,7 @@ with subtest("parent mount discovers the separately mounted and exported subvolu
     check_shared_copy("implicit-child-copy")
 
 with subtest("explicit child mount preserves identity and shared copies"):
-    client.succeed("mount -t nfs -o vers=4.2 server:/srv/media/torrents /mnt/media/torrents")
+    client.succeed("systemctl start mnt-media-torrents.mount")
     print(probe(client, "identity"))
     check_shared_copy("explicit-child-copy")
 

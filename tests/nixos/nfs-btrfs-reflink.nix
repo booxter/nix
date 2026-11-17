@@ -40,6 +40,16 @@ pkgs.testers.runNixOSTest {
   };
 
   nodes.client = { lib, ... }: {
+    # NFS discovers the child while resolving this path. A systemd automount
+    # would cover that discovered mount and make path lookup fail with ELOOP.
+    systemd.mounts = [
+      {
+        what = "server:/srv/media/torrents";
+        where = "/mnt/media/torrents";
+        type = "nfs";
+        options = "vers=4.2";
+      }
+    ];
     boot.supportedFilesystems = [ "nfs" ];
     environment.systemPackages = [ pkgs.python314 ];
     environment.etc."reflink-probe.py".source = ./nfs-btrfs-reflink/probe.py;
