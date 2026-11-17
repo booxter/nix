@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -9,9 +8,6 @@ let
 in
 {
   system.stateVersion = "25.11";
-
-  # Remove after the torrent subvolume mounts are merged into master.
-  host.maintenance.holds.torrentMigration = "${pkgs.coreutils}/bin/false";
 
   host.network.interfaces.ens18 = { };
 
