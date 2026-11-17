@@ -2,6 +2,7 @@
   lib,
   python3,
   pythonRuffCheckHook,
+  sketchybarApplet,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -17,6 +18,7 @@ pythonPackages.buildPythonApplication {
 
   dependencies = with pythonPackages; [
     pydantic
+    sketchybarApplet
   ];
 
   nativeCheckInputs = with pythonPackages; [

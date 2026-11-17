@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from codex_tools.errors import CodexToolsError
-from codex_tools.sketchybar import Colors, Config
+from codex_tools.sketchybar import Config
 from codex_tools.sketchybar_work import (
     format_number,
     main,
@@ -22,6 +22,7 @@ from fakes import (
     sketchybar_properties,
     write_codex_auth,
 )
+from sketchybar_applet import Colors, SketchybarError
 
 NOW = 1_784_203_200
 COLORS = Colors(
@@ -105,7 +106,7 @@ def test_renders_credits_reset_and_limit_state() -> None:
     rendered = sketchybar_properties(bar.calls[0])
     assert rendered["codex.work"] == {
         "drawing": "on",
-        "label": "work 75%",
+        "label": "75%",
         "label.color": "red",
         "popup.drawing": "off",
     }
@@ -188,7 +189,7 @@ def test_fetches_and_renders_work_usage(tmp_path: Path) -> None:
     )
     assert service.calls[0][0].account_id == "account"
     assert service.calls[0][1] == NOW
-    assert sketchybar_properties(bar.calls[0])["codex.work"]["label"] == "work 75%"
+    assert sketchybar_properties(bar.calls[0])["codex.work"]["label"] == "75%"
 
 
 def test_provider_failure_shows_error(tmp_path: Path) -> None:
@@ -204,14 +205,14 @@ def test_provider_failure_shows_error(tmp_path: Path) -> None:
         == 0
     )
     rendered = sketchybar_properties(bar.calls[0])
-    assert rendered["codex.work"]["label"] == "work err"
+    assert rendered["codex.work"]["label"] == "err"
     assert rendered["codex.work"]["label.color"] == "0xfffb4934"
     assert rendered["codex.work.credits"]["drawing"] == "off"
 
 
 def test_reports_sketchybar_failure() -> None:
     stderr = io.StringIO()
-    bar = RecordingSketchybar(error=CodexToolsError("unavailable"))
+    bar = RecordingSketchybar(error=SketchybarError("unavailable"))
     assert (
         main(
             bar=bar,

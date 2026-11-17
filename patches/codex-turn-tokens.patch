@@ -75,7 +75,7 @@ index 4b9d285..c29cf3d 100644
          self.token_usage_pending = false;
          self.bottom_pane
 diff --git a/tui/src/chatwidget/protocol.rs b/tui/src/chatwidget/protocol.rs
-index 5bd2254..339bd03 100644
+index 01b4454..f2c80de 100644
 --- a/tui/src/chatwidget/protocol.rs
 +++ b/tui/src/chatwidget/protocol.rs
 @@ -59,9 +59,18 @@ impl ChatWidget {
@@ -100,11 +100,28 @@ index 5bd2254..339bd03 100644
              }
              ServerNotification::ThreadNameUpdated(notification) => {
                  match ThreadId::from_string(&notification.thread_id) {
+@@ -136,6 +145,16 @@ impl ChatWidget {
+                 {
+                     self.session_generation_rate
+                         .record(usage.output_tokens, duration_ms);
++                    // A restored turn lacks its earlier response timings. Keep its
++                    // partial rate out of completion stats, like its token totals.
++                    if self.turn_lifecycle.token_usage_start.is_some()
++                        && self.turn_lifecycle.last_turn_id.as_deref()
++                            == Some(notification.turn_id.as_str())
++                    {
++                        self.turn_lifecycle
++                            .generation_rate
++                            .record(usage.output_tokens, duration_ms);
++                    }
+                     self.refresh_status_surfaces();
+                 }
+             }
 diff --git a/tui/src/chatwidget/tests/completion_styling_tests.rs b/tui/src/chatwidget/tests/completion_styling_tests.rs
-index 6838e3a..57392c8 100644
+index f5356e2..29c4dd5 100644
 --- a/tui/src/chatwidget/tests/completion_styling_tests.rs
 +++ b/tui/src/chatwidget/tests/completion_styling_tests.rs
-@@ -64,6 +64,109 @@ fn saved_completion_label() -> String {
+@@ -68,6 +68,167 @@ fn saved_completion_label() -> String {
          .to_string()
  }
  
@@ -162,6 +179,62 @@ index 6838e3a..57392c8 100644
 +    assert!(label.contains("1K in · 5 out"), "{label}");
 +}
 +
++fn report_response_time(
++    chat: &mut ChatWidget,
++    turn_id: &str,
++    output_tokens: i64,
++    duration_ms: u64,
++) {
++    chat.handle_server_notification(
++        ServerNotification::RawResponseCompleted(
++            codex_app_server_protocol::RawResponseCompletedNotification {
++                thread_id: chat.thread_id.map(|id| id.to_string()).unwrap_or_default(),
++                turn_id: turn_id.to_string(),
++                response_id: uuid::Uuid::new_v4().to_string(),
++                usage: Some(codex_app_server_protocol::TokenUsageBreakdown {
++                    input_tokens: 0,
++                    output_tokens,
++                    total_tokens: output_tokens,
++                    cached_input_tokens: 0,
++                    cache_write_input_tokens: 0,
++                    reasoning_output_tokens: 0,
++                }),
++                usage_metadata: None,
++                service_duration_ms: Some(duration_ms),
++            },
++        ),
++        /*replay_kind*/ None,
++    );
++}
++
++#[tokio::test]
++async fn completion_rates_reset_each_turn_while_context_keeps_the_weighted_session_rate() {
++    let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
++    chat.thread_id = Some(ThreadId::new());
++    chat.local_settings.tui.status_line = Some(vec!["context-remaining".to_string()]);
++    handle_turn_started(&mut chat, "turn-1");
++    report_response_time(&mut chat, "turn-1", 200, 1_000);
++    report_response_time(&mut chat, "turn-1", 400, 5_000);
++    report_turn_tokens(&mut chat, "turn-1", 12_000, 600);
++
++    // Wall time includes tool execution; the rate uses only measured server time.
++    complete_turn(&mut chat, completed_turn(Some(35_000), Some(COMPLETED_AT)));
++    let label = completion_labels(&mut rx);
++    assert!(
++        label.contains("Worked for 35s • 12K in · 600 out • 100.0 tk/s"),
++        "{label}"
++    );
++    assert!(status_line_text(&chat).unwrap().ends_with(", 100.0 tk/s"));
++
++    handle_turn_started(&mut chat, "turn-2");
++    report_response_time(&mut chat, "turn-2", 10, 1_000);
++    report_turn_tokens(&mut chat, "turn-2", 13_000, 610);
++    handle_turn_completed(&mut chat, "turn-2", Some(1_000));
++    let label = completion_labels(&mut rx);
++    assert!(label.contains("1K in · 10 out • 10.0 tk/s"), "{label}");
++    assert!(status_line_text(&chat).unwrap().ends_with(", 87.1 tk/s"));
++}
++
 +#[tokio::test]
 +async fn turn_tokens_survive_status_recreation_and_ignore_other_turns() {
 +    let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
@@ -200,6 +273,7 @@ index 6838e3a..57392c8 100644
 +                Some(ReplayKind::ThreadSnapshot),
 +            );
 +            report_turn_tokens(&mut chat, "turn-1", 12_000, 840);
++            report_response_time(&mut chat, "turn-1", 200, 1_000);
 +        } else {
 +            handle_turn_started(&mut chat, "turn-1");
 +        }
@@ -208,6 +282,7 @@ index 6838e3a..57392c8 100644
 +        let label = completion_labels(&mut rx);
 +        assert!(label.starts_with("Worked for 35s • "), "{label}");
 +        assert!(!label.contains(" in · "), "{label}");
++        assert!(!label.contains("tk/s"), "{label}");
 +    }
 +}
 +
@@ -215,24 +290,26 @@ index 6838e3a..57392c8 100644
  async fn completion_follows_plain_and_streamed_tool_answers() {
      for streamed in [false, true] {
 diff --git a/tui/src/chatwidget/turn_lifecycle.rs b/tui/src/chatwidget/turn_lifecycle.rs
-index 67ced84..53cb1e8 100644
+index a6ed333..5f575c6 100644
 --- a/tui/src/chatwidget/turn_lifecycle.rs
 +++ b/tui/src/chatwidget/turn_lifecycle.rs
-@@ -3,6 +3,8 @@
+@@ -4,6 +4,9 @@ use std::collections::HashMap;
  use std::collections::HashSet;
  use std::time::Instant;
  
++use crate::token_usage::GenerationRate;
 +use crate::token_usage::TokenUsage;
 +use crate::token_usage::TurnTokenUsage;
  use codex_utils_sleep_inhibitor::SleepInhibitor;
  
  #[derive(Debug)]
-@@ -12,10 +14,12 @@ pub(super) struct TurnLifecycleState {
+@@ -12,10 +15,13 @@ pub(super) struct TurnLifecycleState {
      /// Tracks whether codex-core currently considers an agent turn to be in progress.
      pub(super) agent_turn_running: bool,
      pub(super) last_turn_id: Option<String>,
 +    pub(super) token_usage_start: Option<TokenUsage>,
 +    pub(super) token_usage: Option<TurnTokenUsage>,
++    pub(super) generation_rate: GenerationRate,
      /// A live or restored turn makes the parent available for side-chat creation.
      pub(super) has_turn_history: bool,
      /// Cloud confirmed admission to a turn whose live start we have yet to process.
@@ -240,41 +317,44 @@ index 67ced84..53cb1e8 100644
      pub(super) budget_limited_turn_ids: HashSet<String>,
      /// False records an untimed turn boundary that may still receive a completion label.
      pub(super) rendered_completion_turn_ids: HashMap<String, bool>,
-@@ -28,8 +32,10 @@ impl TurnLifecycleState {
+@@ -28,8 +34,11 @@ impl TurnLifecycleState {
              sleep_inhibitor: SleepInhibitor::new(prevent_idle_sleep),
              agent_turn_running: false,
              last_turn_id: None,
 +            token_usage_start: None,
 +            token_usage: None,
++            generation_rate: GenerationRate::default(),
              has_turn_history: false,
              admitted_turn_id: None,
              budget_limited_turn_ids: HashSet::new(),
              rendered_completion_turn_ids: HashMap::new(),
              goal_status_active_turn_started_at: None,
-@@ -37,6 +43,8 @@ impl TurnLifecycleState {
+@@ -44,6 +53,9 @@ impl TurnLifecycleState {
  
      pub(super) fn finish(&mut self) {
          self.agent_turn_running = false;
 +        self.token_usage_start = None;
 +        self.token_usage = None;
++        self.generation_rate = GenerationRate::default();
          self.goal_status_active_turn_started_at = None;
          self.sleep_inhibitor
              .set_turn_running(/*turn_running*/ false);
 diff --git a/tui/src/chatwidget/turn_runtime.rs b/tui/src/chatwidget/turn_runtime.rs
-index d9726d2..f53107a 100644
+index d1acdfc..b815c27 100644
 --- a/tui/src/chatwidget/turn_runtime.rs
 +++ b/tui/src/chatwidget/turn_runtime.rs
-@@ -82,6 +82,9 @@ impl ChatWidget {
+@@ -93,6 +93,10 @@ impl ChatWidget {
          self.input_queue.user_turn_pending_start = false;
          self.reset_safety_buffering_for_turn_start();
          self.turn_lifecycle.start(Instant::now());
 +        self.turn_lifecycle.token_usage_start = Some(self.token_usage());
 +        self.turn_lifecycle.token_usage = None;
++        self.turn_lifecycle.generation_rate = crate::token_usage::GenerationRate::default();
 +        self.bottom_pane.set_turn_output_tokens(None);
          self.transcript.reset_turn_flags();
          self.adaptive_chunking.reset();
          if self.plan_stream_controller.take().is_some() {
-@@ -118,6 +121,9 @@ impl ChatWidget {
+@@ -129,6 +133,9 @@ impl ChatWidget {
  
      pub(super) fn on_replayed_task_started(&mut self, started_at: Option<i64>) {
          self.on_task_started();
@@ -284,7 +364,7 @@ index d9726d2..f53107a 100644
          if let Some(started_at) = started_at {
              let elapsed_secs = chrono::Utc::now().timestamp().saturating_sub(started_at);
              self.bottom_pane.reset_status_timer(Duration::from_secs(
-@@ -166,7 +172,14 @@ impl ChatWidget {
+@@ -177,7 +184,18 @@ impl ChatWidget {
          let runtime_metrics = (!from_replay && !self.turn_runtime_metrics.is_empty())
              .then_some(self.turn_runtime_metrics);
          if let Some(completion) = completion {
@@ -292,16 +372,20 @@ index d9726d2..f53107a 100644
 +            let usage = (!from_replay)
 +                .then_some(self.turn_lifecycle.token_usage)
 +                .flatten();
++            let rate = (!from_replay)
++                .then(|| self.turn_lifecycle.generation_rate.tokens_per_second())
++                .flatten();
 +            self.add_to_history(
 +                completion
 +                    .with_runtime_metrics(runtime_metrics)
-+                    .with_token_usage(usage),
++                    .with_token_usage(usage)
++                    .with_generation_rate(rate),
 +            );
          } else if let Some(runtime_metrics) = runtime_metrics {
              self.add_to_history(history_cell::FinalMessageSeparator::new(
                  /*elapsed_seconds*/ None,
 diff --git a/tui/src/history_cell/separators.rs b/tui/src/history_cell/separators.rs
-index 7c39887..c788910 100644
+index 14b8c93..caa4327 100644
 --- a/tui/src/history_cell/separators.rs
 +++ b/tui/src/history_cell/separators.rs
 @@ -2,6 +2,7 @@
@@ -312,28 +396,35 @@ index 7c39887..c788910 100644
  use chrono::DateTime;
  use chrono::Datelike;
  use chrono::Local;
-@@ -19,6 +20,7 @@ use chrono::NaiveDate;
+@@ -21,6 +22,8 @@ use std::collections::HashMap;
  pub struct FinalMessageSeparator {
      elapsed_seconds: Option<u64>,
      runtime_metrics: Option<RuntimeMetricsSummary>,
 +    token_usage: Option<TurnTokenUsage>,
++    generation_rate: Option<f64>,
      completed_at: Option<DateTime<Local>>,
      display_date: NaiveDate,
      clock_format: ClockFormat,
-@@ -32,6 +34,7 @@ impl FinalMessageSeparator {
+@@ -66,6 +69,8 @@ impl FinalMessageSeparator {
          Self {
              elapsed_seconds,
              runtime_metrics,
 +            token_usage: None,
++            generation_rate: None,
              completed_at: None,
              display_date: Local::now().date_naive(),
              clock_format: ClockFormat::TwelveHour,
-@@ -56,14 +59,19 @@ impl FinalMessageSeparator {
+@@ -90,14 +95,24 @@ impl FinalMessageSeparator {
          self
      }
  
 +    pub(crate) fn with_token_usage(mut self, usage: Option<TurnTokenUsage>) -> Self {
 +        self.token_usage = usage;
++        self
++    }
++
++    pub(crate) fn with_generation_rate(mut self, rate: Option<f64>) -> Self {
++        self.generation_rate = rate;
 +        self
 +    }
 +
@@ -348,12 +439,15 @@ index 7c39887..c788910 100644
      fn label(&self, today: NaiveDate) -> Option<String> {
          let mut label_parts = Vec::new();
          if let Some(elapsed_seconds) = self.elapsed_seconds {
-@@ -73,6 +81,9 @@ impl FinalMessageSeparator {
+@@ -115,6 +130,12 @@ impl FinalMessageSeparator {
              };
              label_parts.push(format!("Worked for {elapsed}"));
          }
 +        if let Some(usage) = self.token_usage {
 +            label_parts.push(usage.label());
++        }
++        if let Some(rate) = self.generation_rate {
++            label_parts.push(format!("{rate:.1} tk/s"));
 +        }
          if let Some(completed_at) = self.completed_at {
              let date_format = if completed_at.date_naive() == today {

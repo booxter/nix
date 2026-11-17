@@ -3,9 +3,9 @@ codex.overrideAttrs (old: {
   patches = (old.patches or [ ]) ++ [
     # https://github.com/openai/codex/issues/47390
     ../patches/codex-show-full-patches.patch
-    # Include context tokens and the session's average output rate.
+    # Include context tokens and session throughput using server response timings.
     ../patches/codex-context-tokens.patch
-    # Show current-turn tokens beside the working timer and completion metadata.
+    # Show current-turn tokens and completion throughput.
     ../patches/codex-turn-tokens.patch
     # Retry capacity errors without server advice within the existing retry budget.
     ../patches/codex-capacity-retry.patch

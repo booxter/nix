@@ -7,13 +7,6 @@ from pathlib import Path
 
 import pytest
 from codex_tools.errors import CodexToolsError
-from codex_tools.sketchybar import (
-    Colors,
-    format_duration,
-    format_epoch_local,
-    gradient_color,
-    pace_color,
-)
 from codex_tools.sketchybar_personal import (
     Config,
     main,
@@ -30,6 +23,7 @@ from fakes import (
     sketchybar_properties,
     write_codex_auth,
 )
+from sketchybar_applet import Colors, SketchybarError, format_epoch_local
 
 NOW = 1_784_203_200
 COLORS = Colors(
@@ -74,30 +68,9 @@ def usage(
     )
 
 
-@pytest.mark.parametrize(
-    ("seconds", "expected"),
-    [
-        (None, "?"),
-        (-1, "expired"),
-        (59, "59s"),
-        (60, "1m"),
-        (3_661, "1h01"),
-        (90_000, "1d01h"),
-    ],
-)
-def test_formats_compact_durations(seconds: int | None, expected: str) -> None:
-    assert format_duration(seconds) == expected
-
-
-def test_calculates_pace_and_limit_colors() -> None:
+def test_calculates_pace_and_limit_state() -> None:
     exactly_on_pace = window(used=50, remaining=50, length=100, reset_after=50)
     assert window_pace_risk_bps(exactly_on_pace) == 1_000
-    assert pace_color(1_000, reached=False, colors=COLORS) == "green"
-    assert pace_color(None, reached=False, colors=COLORS) == "blue"
-    assert pace_color(1_501, reached=False, colors=COLORS) == "red"
-    assert gradient_color(1_100, COLORS) == "0xffe0af68"
-    assert gradient_color(1_250, COLORS) == "0xffff9e64"
-    assert gradient_color(1_500, COLORS) == "0xfff7768e"
 
     all_reached = usage(limit_reached=True, limit_reached_type="all")
     weekly_reached = usage(limit_reached=True, limit_reached_type="secondary")
@@ -236,7 +209,7 @@ def test_reports_configuration_and_sketchybar_failures() -> None:
     assert "missing environment setting SKETCHYBAR_BIN" in stderr.getvalue()
 
     stderr = io.StringIO()
-    bar = RecordingSketchybar(error=CodexToolsError("unavailable"))
+    bar = RecordingSketchybar(error=SketchybarError("unavailable"))
     assert (
         main(
             bar=bar,

@@ -16,9 +16,24 @@ let
   hasMcpSecrets = mcps.requiredSecrets != [ ];
 
   statusLine = pkgs.callPackage ./statusline { };
+  worktree = lib.getExe (pkgs.callPackage ./worktree { });
+  worktreeHook = subcommand: [
+    {
+      hooks = [
+        {
+          type = "command";
+          command = "${worktree} ${subcommand}";
+        }
+      ];
+    }
+  ];
 in
 {
   imports = [ ./mutable-settings.nix ];
+
+  host.hm.sketchybar.claude.enable = lib.mkDefault (
+    pkgs.stdenv.isDarwin && config.programs.claude-code.enable && config.host.hm.sketchybar.enable
+  );
 
   programs.claude-code =
     lib.mkIf (config.host.hm.env.roles.developer && config.host.hm.dev.claude.enable)
@@ -26,7 +41,9 @@ in
         enable = true;
         mutableSettings = true;
         context = shared.context models + mcps.instructions;
-        skills = shared.skills;
+        skills = shared.skills // {
+          worktree = ./skills/worktree;
+        };
 
         # Home Manager wraps Claude with --plugin-dir. Secret-backed servers use
         # a SOPS-rendered runtime plugin instead of embedding values in the store.
@@ -44,6 +61,15 @@ in
             CLAUDE_CODE_EFFORT_LEVEL = "high";
             CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS = "2";
             CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1";
+          };
+          permissions = {
+            allow = [ "WebFetch" ];
+            defaultMode = "auto";
+          };
+          # Keep worktrees outside the repository on branches named as requested.
+          hooks = {
+            WorktreeCreate = worktreeHook "create";
+            WorktreeRemove = worktreeHook "remove";
           };
           editorMode = "vim";
           # Draw with the terminal palette, which Stylix themes, as Codex does.
