@@ -1,0 +1,28 @@
+{
+  "alternativeTitles": [],
+  "certifications": [],
+  "credits": {
+    "cast": [],
+    "crew": []
+  },
+  "genres": [],
+  "images": [],
+  "imdbId": "tt0000001",
+  "inCinema": "2020-01-01T00:00:00Z",
+  "movieRatings": {
+    "tmdb": {
+      "count": 1,
+      "type": "user",
+      "value": 5
+    }
+  },
+  "originalLanguage": "en",
+  "originalTitle": "Reflink Movie",
+  "overview": "A generated movie for the filesystem import test.",
+  "runtime": 1,
+  "title": "Reflink Movie",
+  "titleSlug": "reflink-movie-1",
+  "tmdbId": 1,
+  "translations": [],
+  "year": 2020
+}

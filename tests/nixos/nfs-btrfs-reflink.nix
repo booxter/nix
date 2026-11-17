@@ -1,6 +1,7 @@
 { pkgs, ... }:
 pkgs.testers.runNixOSTest {
   name = "nfs-btrfs-reflink";
+  imports = [ (import ./nfs-btrfs-reflink/arr.nix { inherit pkgs; }) ];
 
   nodes.server = {
     boot.supportedFilesystems = [ "btrfs" ];

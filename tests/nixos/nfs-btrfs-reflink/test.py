@@ -10,13 +10,22 @@ def probe(machine, action, *arguments, root="/mnt/media"):
     return machine.succeed(shlex.join(command))
 
 
-def check_shared_copy(name):
-    probe(client, "copy", name)
-    usage = server.succeed(f"btrfs filesystem du --raw /srv/media/{name}.bin")
+def check_shared_file(path):
+    usage = server.succeed(shlex.join(["btrfs", "filesystem", "du", "--raw", path]))
     print(usage)
     total, exclusive, shared = map(int, usage.splitlines()[-1].split()[:3])
     assert total > 0 and exclusive == 0 and shared == total, usage
 
+
+def check_imports(manifest):
+    destinations = json.loads(client.succeed(shlex.join(["cat", manifest])))
+    for destination in destinations:
+        check_shared_file(destination.replace("/mnt/media/", "/srv/media/", 1))
+
+
+def check_shared_copy(name):
+    probe(client, "copy", name)
+    check_shared_file(f"/srv/media/{name}.bin")
     probe(client, "independent-write", name)
 
 
@@ -81,13 +90,22 @@ with subtest("Shelfmark imports ebooks and audiobooks through its service sandbo
     finally:
         print(client.succeed("journalctl -u shelfmark -u transmission --no-pager"))
         print(server.succeed("journalctl -u test-indexer --no-pager"))
-    destinations = json.loads(client.succeed("cat /tmp/shelfmark-results.json"))
-    for destination in destinations:
-        server_path = destination.replace("/mnt/media/", "/srv/media/", 1)
-        usage = server.succeed(shlex.join(["btrfs", "filesystem", "du", "--raw", server_path]))
-        print(usage)
-        total, exclusive, shared = map(int, usage.splitlines()[-1].split()[:3])
-        assert total > 0 and exclusive == 0 and shared == total, usage
+    check_imports("/tmp/shelfmark-results.json")
+
+with subtest("Radarr falls back from hardlinks when importing across subvolumes"):
+    server.succeed("mkdir -p /srv/media/torrents/radarr /srv/media/library/movies")
+    server.succeed("chown 1000:1000 /srv/media/torrents/radarr /srv/media/library/movies")
+    server.succeed(
+        "ffmpeg -hide_banner -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 "
+        "-t 2 -c:v ffv1 '/srv/media/torrents/radarr/Reflink Movie (2020).mkv'"
+    )
+    client.succeed("systemctl start radarr")
+    client.wait_for_open_port(7878)
+    try:
+        client.succeed("python3 /etc/arr-import.py", timeout=180)
+    finally:
+        print(client.succeed("journalctl -u radarr --no-pager"))
+    check_imports("/tmp/arr-results.json")
 
 with subtest("parent snapshots retain the library and exclude torrent payloads"):
     server.succeed("btrfs subvolume snapshot -r /srv/media /srv/media/snapshot")
