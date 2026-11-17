@@ -1,0 +1,29 @@
+{
+  "aniListIds": [],
+  "episodes": [
+    {
+      "airDate": "2020-01-01",
+      "airDateUtc": "2020-01-01T00:00:00Z",
+      "episodeNumber": 1,
+      "runtime": 1,
+      "seasonNumber": 1,
+      "title": "Reflink Episode",
+      "tvdbId": 2
+    }
+  ],
+  "firstAired": "2020-01-01",
+  "malIds": [],
+  "originalLanguage": "en",
+  "overview": "A generated series for the filesystem import test.",
+  "runtime": 1,
+  "seasons": [
+    {
+      "images": [],
+      "seasonNumber": 1
+    }
+  ],
+  "slug": "reflink-series",
+  "status": "ended",
+  "title": "Reflink Series",
+  "tvdbId": 1
+}

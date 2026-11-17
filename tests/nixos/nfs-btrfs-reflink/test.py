@@ -87,9 +87,10 @@ with subtest("Shelfmark imports ebooks and audiobooks through its service sandbo
     client.wait_until_succeeds("curl --fail http://127.0.0.1:8084/api/health")
     try:
         client.succeed("python3 /etc/shelfmark-import.py", timeout=400)
-    finally:
+    except Exception:
         print(client.succeed("journalctl -u shelfmark -u transmission --no-pager"))
         print(server.succeed("journalctl -u test-indexer --no-pager"))
+        raise
     check_imports("/tmp/shelfmark-results.json")
 
 with subtest("Radarr falls back from hardlinks when importing across subvolumes"):
@@ -102,10 +103,27 @@ with subtest("Radarr falls back from hardlinks when importing across subvolumes"
     client.succeed("systemctl start radarr")
     client.wait_for_open_port(7878)
     try:
-        client.succeed("python3 /etc/arr-import.py", timeout=180)
-    finally:
+        client.succeed("python3 /etc/arr-import.py radarr", timeout=180)
+    except Exception:
         print(client.succeed("journalctl -u radarr --no-pager"))
-    check_imports("/tmp/arr-results.json")
+        raise
+    check_imports("/tmp/radarr-results.json")
+
+with subtest("Sonarr falls back from hardlinks when importing across subvolumes"):
+    server.succeed("mkdir -p /srv/media/torrents/sonarr /srv/media/library/series")
+    server.succeed("chown 1000:1000 /srv/media/torrents/sonarr /srv/media/library/series")
+    server.succeed(
+        "ffmpeg -hide_banner -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 "
+        "-t 2 -c:v ffv1 '/srv/media/torrents/sonarr/Reflink Series S01E01.mkv'"
+    )
+    client.succeed("systemctl start sonarr")
+    client.wait_for_open_port(8989)
+    try:
+        client.succeed("python3 /etc/arr-import.py sonarr", timeout=240)
+    except Exception:
+        print(client.succeed("journalctl -u sonarr --no-pager"))
+        raise
+    check_imports("/tmp/sonarr-results.json")
 
 with subtest("parent snapshots retain the library and exclude torrent payloads"):
     server.succeed("btrfs subvolume snapshot -r /srv/media /srv/media/snapshot")
