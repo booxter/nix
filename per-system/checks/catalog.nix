@@ -42,6 +42,7 @@ let
       claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       hardware-signing = import ./hardware-signing.nix { inherit pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
+      claude-worktree = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/worktree { };
       darwin-etc = import ./darwin-etc.nix { inherit inputs lib pkgs; };
       darwin-tmpfiles = import ./darwin-tmpfiles.nix { inherit lib pkgs; };
       media-repair-contracts = pkgs.media-repair-contracts;

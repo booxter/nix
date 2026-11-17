@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from claude_statusline import LocalTranscriptReader, Status, compact, render, run, session_usage
+from claude_statusline.usage import FileUsageStore, RateLimits, RateWindow
 
 
 @dataclass
@@ -17,11 +18,17 @@ class Transcript:
 
 
 def response(
-    message_id: str, *, input_tokens: int = 10, output_tokens: int = 5, cached: int = 100
+    message_id: str,
+    *,
+    input_tokens: int = 10,
+    output_tokens: int = 5,
+    cached: int = 100,
+    timestamp: str | None = None,
 ) -> str:
     return json.dumps(
         {
             "type": "assistant",
+            "timestamp": timestamp,
             "message": {
                 "id": message_id,
                 "usage": {
@@ -51,8 +58,42 @@ def test_totals_deduplicate_blocks_and_keep_final_usage() -> None:
     usage = session_usage(Path("session.jsonl"), transcript)
 
     assert usage is not None
-    assert usage.total_input == 152
+    assert usage.input_tokens == 152
     assert usage.output_tokens == 10
+
+
+def request(timestamp: str) -> str:
+    return json.dumps({"type": "api-request", "timestamp": timestamp})
+
+
+def test_rate_times_each_response_from_its_own_request() -> None:
+    transcript = Transcript(
+        (
+            request("2026-01-01T00:00:00Z"),
+            # The second request is logged before the first response's blocks.
+            request("2026-01-01T00:00:10Z"),
+            response("first", output_tokens=900, timestamp="2026-01-01T00:00:02Z"),
+            response("first", output_tokens=900, timestamp="2026-01-01T00:00:09Z"),
+            response("second", output_tokens=100, timestamp="2026-01-01T00:00:11Z"),
+        )
+    )
+
+    usage = session_usage(Path("session.jsonl"), transcript)
+
+    assert usage is not None
+    assert usage.tokens_per_second == 100.0
+
+
+def test_status_shows_session_rate() -> None:
+    transcript = Transcript(
+        (
+            request("2026-01-01T00:00:00Z"),
+            response("first", output_tokens=870, timestamp="2026-01-01T00:00:10Z"),
+        )
+    )
+    status = Status.model_validate({"transcript_path": "session.jsonl"})
+
+    assert render(status, Path("/home/user"), transcript) == "Session 130 in, 870 out, 87.0 tk/s"
 
 
 def test_status_distinguishes_live_context_from_resumed_session(tmp_path: Path) -> None:
@@ -70,12 +111,49 @@ def test_status_distinguishes_live_context_from_resumed_session(tmp_path: Path) 
         "transcript_path": str(transcript_path),
     }
     stdout = io.StringIO()
+    store = FileUsageStore(tmp_path / "rate-limits.json")
 
-    run(io.StringIO(json.dumps(payload)), stdout, Path("/home/user"), LocalTranscriptReader())
+    run(
+        io.StringIO(json.dumps(payload)),
+        stdout,
+        Path("/home/user"),
+        LocalTranscriptReader(),
+        store,
+    )
 
     assert stdout.getvalue() == (
         "Opus · high · ~/src/nix · Context 16.2K tokens, 92% left · Session 260 in, 10 out\n"
     )
+    assert store.load() is None
+
+
+def test_status_saves_rate_limits_for_other_tools(tmp_path: Path) -> None:
+    store = FileUsageStore(tmp_path / "cache" / "rate-limits.json")
+    payload = {
+        "rate_limits": {
+            "five_hour": {"used_percentage": 42.5, "resets_at": 1767225600},
+            "seven_day": {"used_percentage": 10, "resets_at": 1767744000},
+        }
+    }
+
+    run(io.StringIO(json.dumps(payload)), io.StringIO(), tmp_path, Transcript(), store)
+
+    assert store.load() == RateLimits(
+        five_hour=RateWindow(used_percentage=42.5, resets_at=1767225600),
+        seven_day=RateWindow(used_percentage=10, resets_at=1767744000),
+    )
+
+
+def test_unwritable_rate_limits_do_not_break_status(tmp_path: Path) -> None:
+    (tmp_path / "cache").write_text("not a directory")
+    store = FileUsageStore(tmp_path / "cache" / "rate-limits.json")
+    payload = {"rate_limits": {"five_hour": {"used_percentage": 1, "resets_at": 0}}}
+    stdout = io.StringIO()
+
+    run(io.StringIO(json.dumps(payload)), stdout, tmp_path, Transcript(), store)
+
+    assert stdout.getvalue() == "Session tokens unavailable\n"
+    assert store.load() is None
 
 
 def test_new_session_with_no_usage() -> None:

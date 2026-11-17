@@ -143,6 +143,9 @@ in
         ]);
     };
 
+    # App logos for applets, drawn with $APP_ICON_FONT.
+    home.packages = [ pkgs.sketchybar-app-font ];
+
     launchd.agents.sketchybar.config = {
       StandardOutPath = lib.mkForce logPath;
       StandardErrorPath = lib.mkForce logPath;

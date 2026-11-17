@@ -7,7 +7,7 @@ name = "codex-tools"
 version = "0.1.0"
 description = "Typed helpers for local Codex account automation"
 requires-python = ">=3.13"
-dependencies = ["pydantic"]
+dependencies = ["pydantic", "sketchybar-applet"]
 
 [project.scripts]
 codex-sketchybar = "codex_tools.sketchybar_personal:main"

@@ -9,17 +9,18 @@ from typing import Protocol, TextIO
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import UrllibJsonHttpClient
-from codex_tools.sketchybar import (
+from codex_tools.sketchybar import Config
+from codex_tools.usage import PersonalUsage, PersonalUsageService, ResetCredits, UsageWindow
+from sketchybar_applet import (
     Colors,
-    Config,
     Sketchybar,
     SketchybarCommand,
+    SketchybarError,
     format_duration,
     format_epoch_local,
     pace_color,
     rounded_risk_bps,
 )
-from codex_tools.usage import PersonalUsage, PersonalUsageService, ResetCredits, UsageWindow
 
 FIVE_HOUR_ITEM = "codex.5h"
 WEEKLY_ITEM = "codex.weekly"
@@ -114,7 +115,6 @@ def show_error(config: Config, bar: Sketchybar) -> None:
             "--set",
             FIVE_HOUR_ITEM,
             "drawing=on",
-            "icon.drawing=off",
             "label=err",
             f"label.color={config.colors.red}",
             "--set",
@@ -216,7 +216,7 @@ def main(
             sketchybar,
             now=time.time() if now is None else now,
         )
-    except CodexToolsError as error:
+    except (CodexToolsError, SketchybarError) as error:
         print(f"codex-sketchybar: {error}", file=stderr)
         return 1
     return 0
