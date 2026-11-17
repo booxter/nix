@@ -32,12 +32,11 @@ let
                                    background.corner_radius=6 \
                                    background.height=24
   '';
-  # Claude Code saves the spend shown here; see claude_statusline/spend.py
-  # for how fresh it is.
+  # The spend comes from Claude's usage API; see claude_statusline/spend.py.
   corporateScript = ''
     sketchybar --add item claude.work ${cfg.position} \
                --set claude.work script="$PLUGIN_DIR/claude-corporate.sh" \
-                                 update_freq=60 \
+                                 update_freq=300 \
                                  icon=":claude:" \
                                  icon.font="$APP_ICON_FONT" \
                                  icon.padding_left=6 \

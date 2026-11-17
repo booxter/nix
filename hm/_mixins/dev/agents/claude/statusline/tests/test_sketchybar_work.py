@@ -2,14 +2,40 @@ import io
 import json
 import time
 from collections.abc import Iterator
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 from claude_statusline.sketchybar_work import main
+from claude_statusline.spend import LiveSpendSource, SavedSpendSource, claude_config_path
 from fakes import ENVIRONMENT, RecordingSketchybar, labels
 
 NOW = 1_794_848_400  # 2026-11-16 12:00 in New York, mid-month
 LAST_OCTOBER_EVENING = 1_793_502_000  # 2026-10-31 23:00 in New York
+
+
+@dataclass
+class FakeKeychain:
+    credentials: str | None = None
+
+    def read_credentials(self) -> str | None:
+        return self.credentials
+
+
+@dataclass
+class FakeUsageApi:
+    body: str | None = None
+    tokens: list[str] = field(default_factory=list)
+
+    def get_usage(self, access_token: str) -> str | None:
+        self.tokens.append(access_token)
+        return self.body
+
+
+def credentials(expires_at: int) -> str:
+    return json.dumps(
+        {"claudeAiOauth": {"accessToken": "token", "expiresAt": expires_at * 1000, "scopes": []}}
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -43,14 +69,73 @@ def spend(used_cents: float) -> dict[str, object]:
     }
 
 
-def update(home: Path, sender: str | None = None, now: int = NOW) -> RecordingSketchybar:
-    environment = {**ENVIRONMENT, "HOME": str(home)}
+def source(
+    home: Path, keychain: FakeKeychain | None = None, api: FakeUsageApi | None = None
+) -> LiveSpendSource:
+    saved = SavedSpendSource(claude_config_path(home))
+    return LiveSpendSource(keychain or FakeKeychain(), api or FakeUsageApi(), fallback=saved)
+
+
+def update(
+    home: Path,
+    sender: str | None = None,
+    now: int = NOW,
+    keychain: FakeKeychain | None = None,
+    api: FakeUsageApi | None = None,
+) -> RecordingSketchybar:
+    environment = {**ENVIRONMENT}
     if sender is not None:
         environment["SENDER"] = sender
     bar = RecordingSketchybar()
 
-    assert main(environment=environment, bar=bar, now=now) == 0
+    assert main(environment=environment, source=source(home, keychain, api), bar=bar, now=now) == 0
     return bar
+
+
+def test_shows_fresh_spend_from_the_api(tmp_path: Path) -> None:
+    write_claude_config(tmp_path, spend(1_228))
+    api = FakeUsageApi(json.dumps({"extra_usage": spend(1_539.0), "limits": []}))
+
+    bar = update(tmp_path, keychain=FakeKeychain(credentials(NOW + 3_600)), api=api)
+
+    assert api.tokens == ["token"]
+    assert labels(bar)["claude.work.spend"][0] == (
+        "spent: 15.39 USD of 10,000.00 USD; updated 0s ago"
+    )
+
+
+@pytest.mark.parametrize(
+    ("keychain", "api"),
+    [
+        pytest.param(FakeKeychain(), FakeUsageApi(), id="no credentials"),
+        pytest.param(FakeKeychain("not json"), FakeUsageApi(), id="unreadable credentials"),
+        pytest.param(FakeKeychain(credentials(NOW)), FakeUsageApi(), id="expired token"),
+        pytest.param(FakeKeychain(credentials(NOW + 60)), FakeUsageApi(), id="API failure"),
+        pytest.param(
+            FakeKeychain(credentials(NOW + 60)),
+            FakeUsageApi(json.dumps({"extra_usage": None})),
+            id="no spend in the response",
+        ),
+    ],
+)
+def test_falls_back_to_spend_claude_code_saved(
+    tmp_path: Path, keychain: FakeKeychain, api: FakeUsageApi
+) -> None:
+    write_claude_config(tmp_path, spend(1_228))
+
+    bar = update(tmp_path, keychain=keychain, api=api)
+
+    assert labels(bar)["claude.work.spend"][0] == (
+        "spent: 12.28 USD of 10,000.00 USD; updated 5m ago"
+    )
+
+
+def test_never_sends_an_expired_token(tmp_path: Path) -> None:
+    api = FakeUsageApi()
+
+    update(tmp_path, keychain=FakeKeychain(credentials(NOW - 1)), api=api)
+
+    assert api.tokens == []
 
 
 def test_shows_remaining_spend_with_details(tmp_path: Path) -> None:
@@ -138,9 +223,8 @@ def test_hover_toggles_details(tmp_path: Path) -> None:
 def test_sketchybar_failures_go_to_stderr(tmp_path: Path) -> None:
     stderr = io.StringIO()
     bar = RecordingSketchybar(error="SketchyBar exited with status 1")
-    environment = {**ENVIRONMENT, "HOME": str(tmp_path)}
 
-    code = main(environment=environment, bar=bar, now=NOW, stderr=stderr)
+    code = main(environment=ENVIRONMENT, source=source(tmp_path), bar=bar, now=NOW, stderr=stderr)
 
     assert code == 1
     assert stderr.getvalue() == "claude-work-sketchybar: SketchyBar exited with status 1\n"

@@ -1,18 +1,22 @@
 """Read the monthly spend of a Claude Enterprise seat billed by usage.
 
 Such seats have no 5-hour or 7-day windows, so the status line never receives
-rate limits. Instead, Claude Code saves its last usage API response in
-~/.claude.json, including the seat's monthly spend and limit. Claude Code
-refreshes that copy only now and then (for example, when /usage runs), so it
-can lag behind the real spend; the applet shows its age.
+rate limits. Instead, the applet asks Claude's usage API with the OAuth token
+Claude Code keeps in the Keychain. It never refreshes that token: refreshing
+rotates the token Claude Code holds and could sign it out.
+
+When the token has expired or the API fails, the applet falls back to the last
+usage response Claude Code saved in ~/.claude.json. Claude Code refreshes that
+copy only now and then (for example, when /usage runs), so the applet shows
+its age.
 """
 
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 from pydantic import (
-    AliasPath,
     BaseModel,
     Field,
     NonNegativeFloat,
@@ -38,17 +42,34 @@ class Spend(BaseModel):
         return f"{value:,.{self.decimal_places}f} {self.currency}"
 
 
-class SavedSpend(BaseModel):
-    fetched_at_ms: NonNegativeInt = Field(validation_alias="fetchedAtMs")
-    spend: Spend = Field(validation_alias=AliasPath("utilization", "extra_usage"))
+class Usage(BaseModel):
+    """The part of a usage API response the applet shows."""
 
-    @property
-    def fetched_at(self) -> int:
-        return self.fetched_at_ms // 1000
+    spend: Spend = Field(validation_alias="extra_usage")
+
+
+class SavedUsage(BaseModel):
+    fetched_at_ms: NonNegativeInt = Field(validation_alias="fetchedAtMs")
+    usage: Usage = Field(validation_alias="utilization")
 
 
 class ClaudeConfig(BaseModel):
-    saved: SavedSpend | None = Field(None, validation_alias="cachedUsageUtilization")
+    saved: SavedUsage | None = Field(None, validation_alias="cachedUsageUtilization")
+
+
+class OAuthToken(BaseModel):
+    access_token: str = Field(validation_alias="accessToken")
+    expires_at_ms: NonNegativeInt = Field(validation_alias="expiresAt")
+
+
+class Credentials(BaseModel):
+    oauth: OAuthToken = Field(validation_alias="claudeAiOauth")
+
+
+@dataclass(frozen=True)
+class SpendSnapshot:
+    fetched_at: int  # Unix seconds
+    spend: Spend
 
 
 def claude_config_path(home: Path) -> Path:
@@ -67,16 +88,66 @@ def month_bounds(now: int) -> tuple[int, int]:
     return int(start), int(end)
 
 
-class SpendStore(Protocol):
-    def load(self) -> SavedSpend | None: ...
+class Keychain(Protocol):
+    def read_credentials(self) -> str | None: ...
 
 
-class ClaudeConfigSpendStore:
+class UsageApi(Protocol):
+    def get_usage(self, access_token: str) -> str | None: ...
+
+
+class SpendSource(Protocol):
+    def load(self, now: int) -> SpendSnapshot | None: ...
+
+
+class SavedSpendSource:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def load(self) -> SavedSpend | None:
+    def load(self, now: int) -> SpendSnapshot | None:
         try:
-            return ClaudeConfig.model_validate_json(self.path.read_text()).saved
+            saved = ClaudeConfig.model_validate_json(self.path.read_text()).saved
         except (OSError, ValidationError):
             return None
+
+        if saved is None:
+            return None
+        return SpendSnapshot(saved.fetched_at_ms // 1000, saved.usage.spend)
+
+
+class LiveSpendSource:
+    def __init__(self, keychain: Keychain, api: UsageApi, fallback: SpendSource) -> None:
+        self.keychain = keychain
+        self.api = api
+        self.fallback = fallback
+
+    def load(self, now: int) -> SpendSnapshot | None:
+        return self.fetch(now) or self.fallback.load(now)
+
+    def fetch(self, now: int) -> SpendSnapshot | None:
+        token = self.access_token(now)
+        if token is None:
+            return None
+
+        body = self.api.get_usage(token)
+        if body is None:
+            return None
+
+        try:
+            return SpendSnapshot(now, Usage.model_validate_json(body).spend)
+        except ValidationError:
+            return None
+
+    def access_token(self, now: int) -> str | None:
+        secret = self.keychain.read_credentials()
+        if secret is None:
+            return None
+
+        try:
+            token = Credentials.model_validate_json(secret).oauth
+        except ValidationError:
+            return None
+
+        if token.expires_at_ms <= now * 1000:
+            return None
+        return token.access_token

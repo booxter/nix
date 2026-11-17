@@ -10,10 +10,12 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import TextIO
 
+from claude_statusline.account import SecurityKeychain, UrllibUsageApi
 from claude_statusline.spend import (
-    ClaudeConfigSpendStore,
-    SavedSpend,
-    SpendStore,
+    LiveSpendSource,
+    SavedSpendSource,
+    SpendSnapshot,
+    SpendSource,
     claude_config_path,
     month_bounds,
 )
@@ -38,22 +40,22 @@ def format_day(epoch: int) -> str:
     return f"{time.strftime('%b', day)} {day.tm_mday}"
 
 
-def spend_arguments(saved: SavedSpend, now: int, colors: Colors) -> list[str]:
+def spend_arguments(snapshot: SpendSnapshot, now: int, colors: Colors) -> list[str]:
     start, end = month_bounds(now)
-    updated = f"updated {format_duration(now - saved.fetched_at)} ago"
+    updated = f"updated {format_duration(now - snapshot.fetched_at)} ago"
 
-    # Spend saved before the month reset belongs to the previous month.
-    if saved.fetched_at < start:
+    # Spend fetched before the month reset belongs to the previous month.
+    if snapshot.fetched_at < start:
         label, color = "???", pace_color(None, reached=False, colors=colors)
         spend = f"spent: unknown since the reset; {updated}"
     else:
-        used = saved.spend.used * 100 / saved.spend.limit
+        used = snapshot.spend.used * 100 / snapshot.spend.limit
         risk = rounded_risk_bps(used, end - start, now - start)
         label = f"{max(0.0, 100 - used):.1f}%"
         color = pace_color(risk, reached=used >= 100, colors=colors)
         spend = (
-            f"spent: {saved.spend.format(saved.spend.used)} "
-            f"of {saved.spend.format(saved.spend.limit)}; {updated}"
+            f"spent: {snapshot.spend.format(snapshot.spend.used)} "
+            f"of {snapshot.spend.format(snapshot.spend.limit)}; {updated}"
         )
 
     return [
@@ -75,19 +77,24 @@ def spend_arguments(saved: SavedSpend, now: int, colors: Colors) -> list[str]:
     ]
 
 
-def update(store: SpendStore, bar: Sketchybar, now: int, colors: Colors) -> None:
-    saved = store.load()
-    if saved is None:
+def update(source: SpendSource, bar: Sketchybar, now: int, colors: Colors) -> None:
+    snapshot = source.load(now)
+    if snapshot is None:
         bar.run(["--set", ITEM, "drawing=off", "popup.drawing=off"])
         return
 
-    bar.run(spend_arguments(saved, now, colors))
+    bar.run(spend_arguments(snapshot, now, colors))
+
+
+def default_source(home: Path) -> SpendSource:
+    saved = SavedSpendSource(claude_config_path(home))
+    return LiveSpendSource(SecurityKeychain(), UrllibUsageApi(), fallback=saved)
 
 
 def main(
     *,
     environment: Mapping[str, str] | None = None,
-    store: SpendStore | None = None,
+    source: SpendSource | None = None,
     bar: Sketchybar | None = None,
     now: int | None = None,
     stderr: TextIO = sys.stderr,
@@ -105,7 +112,7 @@ def main(
 
         home = Path(settings.get("HOME", str(Path.home())))
         update(
-            store or ClaudeConfigSpendStore(claude_config_path(home)),
+            source or default_source(home),
             sketchybar,
             int(time.time()) if now is None else now,
             Colors.from_environment(settings),
