@@ -59,6 +59,7 @@ in
     };
   };
 
+  # TODO: Investigate why Lidarr's live copyUsingHardlinks setting is disabled.
   host.lidarr = {
     stateDir = "/data/.state/nixarr/lidarr";
   };
