@@ -1,6 +1,9 @@
-{ ... }:
+{ pkgs, ... }:
 {
   system.stateVersion = "25.11";
+
+  # Remove after the torrent subvolume exports are merged into master.
+  host.maintenance.holds.torrentMigration = "${pkgs.coreutils}/bin/false";
 
   imports = [
     ./jellyfin
