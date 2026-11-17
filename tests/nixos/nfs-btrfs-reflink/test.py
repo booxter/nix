@@ -1,6 +1,7 @@
 # ruff: noqa: F821
 # The NixOS test driver supplies server, client, and subtest.
 
+import json
 import shlex
 
 
@@ -51,3 +52,44 @@ with subtest("explicit child mount preserves identity and shared copies"):
     client.succeed("mount -t nfs -o vers=4.2 server:/srv/media/torrents /mnt/media/torrents")
     print(probe(client, "identity"))
     check_shared_copy("explicit-child-copy")
+
+with subtest("Shelfmark imports ebooks and audiobooks through its service sandbox"):
+    server.succeed(
+        "mkdir -p /srv/media/torrents/shelfmark "
+        "/srv/media/library/books /srv/media/library/audiobooks"
+    )
+    server.succeed("chown -R 1000:1000 /srv/media/torrents/shelfmark /srv/media/library")
+    probe(server, "seed-releases", root="/srv/seeds")
+    server.succeed("mkdir -p /srv/indexer")
+    server.wait_for_unit("transmission")
+    server.wait_for_open_port(6969)
+    for suffix in ("epub", "m4b"):
+        server.succeed(
+            f"transmission-create /srv/seeds/source.{suffix} --private "
+            f"--tracker http://server:6969/announce --outfile /srv/indexer/source.{suffix}.torrent"
+        )
+        server.succeed(
+            f"transmission-remote --add /srv/indexer/source.{suffix}.torrent "
+            "--download-dir /srv/seeds --no-portmap --no-dht"
+        )
+    server.succeed("systemctl start test-indexer")
+    client.succeed("systemctl start transmission shelfmark")
+    client.wait_for_open_port(8084)
+    client.wait_until_succeeds("curl --fail http://127.0.0.1:8084/api/health")
+    try:
+        client.succeed("python3 /etc/shelfmark-import.py", timeout=400)
+    finally:
+        print(client.succeed("journalctl -u shelfmark -u transmission --no-pager"))
+        print(server.succeed("journalctl -u test-indexer --no-pager"))
+    destinations = json.loads(client.succeed("cat /tmp/shelfmark-results.json"))
+    for destination in destinations:
+        server_path = destination.replace("/mnt/media/", "/srv/media/", 1)
+        usage = server.succeed(shlex.join(["btrfs", "filesystem", "du", "--raw", server_path]))
+        print(usage)
+        total, exclusive, shared = map(int, usage.splitlines()[-1].split()[:3])
+        assert total > 0 and exclusive == 0 and shared == total, usage
+
+with subtest("parent snapshots retain the library and exclude torrent payloads"):
+    server.succeed("btrfs subvolume snapshot -r /srv/media /srv/media/snapshot")
+    server.succeed("test -f /srv/media/snapshot/library.bin")
+    server.fail("test -e /srv/media/snapshot/torrents/source.bin")

@@ -20,11 +20,83 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  nodes.client = {
+  nodes.server.services.opentracker.enable = true;
+  nodes.server.systemd.tmpfiles.rules = [ "d /srv/seeds 0755 transmission transmission - -" ];
+  # Follow nixpkgs' bittorrent test: a real tracker and Transmission seeder.
+  nodes.server.services.transmission = {
+    enable = true;
+    package = pkgs.transmission_4;
+    settings = {
+      download-dir = "/srv/seeds";
+      dht-enabled = false;
+      lpd-enabled = false;
+      pex-enabled = false;
+    };
+  };
+  nodes.server.systemd.services.test-indexer.serviceConfig = {
+    ExecStart = "${pkgs.python314}/bin/python ${./nfs-btrfs-reflink/indexer.py}";
+    WorkingDirectory = "/srv/indexer";
+  };
+
+  nodes.client = { lib, ... }: {
     boot.supportedFilesystems = [ "nfs" ];
     environment.systemPackages = [ pkgs.python314 ];
     environment.etc."reflink-probe.py".source = ./nfs-btrfs-reflink/probe.py;
+    environment.etc."shelfmark-import.py".source = ./nfs-btrfs-reflink/shelfmark-import.py;
     networking.firewall.enable = false;
+    users.groups.media.gid = 1000;
+    users.users.importer = {
+      isSystemUser = true;
+      uid = 1000;
+      group = "media";
+    };
+    services.transmission = {
+      enable = true;
+      package = pkgs.transmission_4;
+      user = "importer";
+      group = "media";
+      settings = {
+        download-dir = "/mnt/media/torrents/shelfmark";
+        dht-enabled = false;
+        lpd-enabled = false;
+        pex-enabled = false;
+        umask = 2;
+      };
+    };
+    systemd.services.transmission.wantedBy = lib.mkForce [ ];
+    services.shelfmark = {
+      enable = true;
+      package = pkgs.shelfmark;
+      environment = {
+        AUTH_METHOD = "none";
+        INGEST_DIR = "/mnt/media/library/books";
+        DESTINATION_AUDIOBOOK = "/mnt/media/library/audiobooks";
+        HARDLINK_TORRENTS = "false";
+        HARDLINK_TORRENTS_AUDIOBOOK = "false";
+        FILE_ORGANIZATION = "rename";
+        FILE_ORGANIZATION_AUDIOBOOK = "rename";
+        PROWLARR_ENABLED = "true";
+        PROWLARR_URL = "http://server:9000";
+        PROWLARR_API_KEY = "test-indexer-key";
+        PROWLARR_TORRENT_CLIENT = "transmission";
+        PROWLARR_TORRENT_ACTION = "keep";
+        TRANSMISSION_URL = "http://127.0.0.1:9091";
+        TRANSMISSION_DOWNLOAD_DIR = "/mnt/media/torrents/shelfmark";
+      };
+    };
+    systemd.services.shelfmark = {
+      wantedBy = lib.mkForce [ ];
+      serviceConfig = {
+        User = "importer";
+        Group = "media";
+        UMask = lib.mkForce "0002";
+        ReadWritePaths = [
+          "/mnt/media/torrents/shelfmark"
+          "/mnt/media/library/books"
+          "/mnt/media/library/audiobooks"
+        ];
+      };
+    };
   };
 
   testScript = builtins.readFile ./nfs-btrfs-reflink/test.py;

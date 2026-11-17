@@ -11,6 +11,12 @@ def seed_library(root: Path) -> None:
     (root / "library.bin").write_bytes(b"library")
 
 
+def seed_releases(root: Path) -> None:
+    root.mkdir(parents=True, exist_ok=True)
+    for suffix in ("epub", "m4b"):
+        (root / f"source.{suffix}").write_bytes(os.urandom(1048699))
+
+
 def seed_torrent(root: Path) -> None:
     source = root / "torrents/source.bin"
     source.write_bytes(os.urandom(1048699))
@@ -57,7 +63,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     actions = parser.add_subparsers(dest="action", required=True)
-    for action in ("seed-library", "seed-torrent", "identity"):
+    for action in ("seed-library", "seed-torrent", "seed-releases", "identity"):
         actions.add_parser(action)
     for action in ("copy", "independent-write"):
         actions.add_parser(action).add_argument("name")
@@ -66,6 +72,8 @@ def main() -> None:
     match args.action:
         case "seed-library":
             seed_library(args.root)
+        case "seed-releases":
+            seed_releases(args.root)
         case "seed-torrent":
             seed_torrent(args.root)
         case "identity":
