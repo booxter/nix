@@ -74,6 +74,27 @@ in
     programs.codex = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
       enable = true;
       context = codexContext;
+      package = pkgs.symlinkJoin {
+        name = "codex-preferred-model-${pkgs.codex.version}";
+        paths = [ pkgs.codex ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          rm "$out/bin/codex"
+          makeWrapper ${lib.getExe pkgs.codex-launcher} "$out/bin/codex" \
+            --add-flags ${
+              lib.escapeShellArg (
+                lib.escapeShellArgs [
+                  (lib.getExe pkgs.codex)
+                  models.default
+                  "high"
+                ]
+              )
+            }
+        '';
+        # The voice prompt follows the unwrapped Codex source.
+        passthru = { inherit (pkgs.codex) src; };
+        meta.mainProgram = "codex";
+      };
 
       settings = {
         model = models.default;

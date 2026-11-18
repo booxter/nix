@@ -39,6 +39,8 @@ in
 
   codex-mcp-login = pkgs.callPackage ./codex-mcp-login { };
 
+  codex-launcher = pkgs.callPackage ./codex-launcher { };
+
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
   firefox-migrate-app-data = pkgs.callPackage ./firefox-migrate-app-data { };

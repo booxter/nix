@@ -14,6 +14,12 @@ Codex model IDs are centralized in its mapping; update them when adopting a new
 generation. Claude uses its rolling family aliases. Codex V2 enforces the worker
 limit but leaves the no-nesting rule to the prompt.
 
+The Codex launcher explicitly selects the preferred
+model and high effort when the model catalog lists it, overriding workspace
+defaults. Unavailable models or failed lookups use normal configuration instead.
+Explicit model, profile, or configuration options pass through. Codex handles
+the preferred defaults for each subcommand.
+
 MCP URLs, header values, and values in `oauth.clientIds` accept strings or
 `{ secret = "sops/key"; }`. OAuth client IDs are keyed by `codex` or `claude`
 because each application has its own registered callbacks. Shared `instructions`

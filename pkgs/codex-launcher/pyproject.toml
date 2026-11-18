@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-launcher"
+version = "0.1.0"
+description = "Prefer an available Codex model"
+requires-python = ">=3.13"
+dependencies = ["pydantic"]
+
+[project.scripts]
+codex-launcher = "codex_launcher.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+codex_launcher = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=codex_launcher --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true
