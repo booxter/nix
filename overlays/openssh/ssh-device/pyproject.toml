@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssh-device"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = ["pydantic", "yubikey-manager"]
+
+[project.scripts]
+ssh-device = "ssh_device:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["ykman.*", "yubikit.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=ssh_device --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]

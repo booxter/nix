@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -44,6 +45,11 @@ def ticket(tmp_path, agent):
         )
     targets = tmp_path / "targets.json"
     targets.write_text(json.dumps([{"name": "frame", "principal": "operator@frame"}]))
+    loader = tmp_path / "load-agent"
+    loader.write_text(
+        "#!/bin/sh\nexec ssh-add -q " + shlex.quote(str(tmp_path / "hardware")) + "\n"
+    )
+    loader.chmod(0o700)
     return [
         sys.executable,
         "-m",
@@ -58,8 +64,8 @@ def ticket(tmp_path, agent):
         "--ca-key",
         str(tmp_path / "ca"),
         "--no-ca-agent",
-        "--agent-identity",
-        str(tmp_path / "hardware"),
+        "--agent-command",
+        str(loader),
         "--quiet",
         "frame",
     ]
@@ -104,4 +110,4 @@ def test_cached_ticket_reports_unavailable_local_agent(tmp_path, agent, ticket):
     result = run(ticket, unavailable_env, check=False)
 
     assert result.returncode == 1
-    assert "ssh-ticket: command failed: ssh-add" in result.stderr
+    assert "ssh-ticket: command failed:" in result.stderr

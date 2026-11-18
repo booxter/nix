@@ -294,10 +294,10 @@ def issue_ticket(
 def ensure_ticket(args: argparse.Namespace, target: Target, runtime: Runtime) -> TicketPaths:
     # Cached tickets still need a usable agent for remote sudo and onward SSH.
     # Never load the destination's identities from inside an SSH session.
-    if args.agent_identity and not os.environ.get("SSH_CONNECTION"):
+    if args.agent_command and not os.environ.get("SSH_CONNECTION"):
         runtime.commands.run(
-            ["ssh-add", "-q", *[str(expand_path(path)) for path in args.agent_identity]],
-            capture=False,
+            [args.agent_command],
+            capture=True,
         )
 
     state_dir = state_dir_arg(args)
@@ -488,10 +488,8 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
 
 def add_agent_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--agent-identity",
-        action="append",
-        default=[],
-        help="load a local identity into the forwarded agent (repeatable; ignored inside SSH)",
+        "--agent-command",
+        help="program that prepares the local agent (ignored inside SSH)",
     )
 
 

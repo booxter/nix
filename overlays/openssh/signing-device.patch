@@ -1,0 +1,86 @@
+diff --git a/ssh-sk.c b/ssh-sk.c
+--- a/ssh-sk.c
++++ b/ssh-sk.c
+@@ -636,8 +636,10 @@ sshsk_ed25519_sig(struct sk_sign_response *resp, struct sshbuf *sig)
+  out:
+ 	return r;
+ }
+ 
++#include "ssh-device.h"
++
+ int
+ sshsk_sign(const char *provider_path, struct sshkey *key,
+     u_char **sigp, size_t *lenp, const u_char *data, size_t datalen,
+     u_int compat, const char *pin)
+@@ -686,6 +688,9 @@ sshsk_sign(const char *provider_path, struct sshkey *key,
+ 	fprintf(stderr, "%s: sk_key_handle:\n", __func__);
+ 	sshbuf_dump(key->sk_key_handle, stderr);
+ #endif
++	if (strcmp(provider_path, "internal") == 0 &&
++	    (r = ssh_device_options(key, &opts)) != 0)
++		goto out;
+ 	if ((r = skp->sk_sign(alg, data, datalen, key->sk_application,
+ 	    sshbuf_ptr(key->sk_key_handle), sshbuf_len(key->sk_key_handle),
+ 	    key->sk_flags, pin, opts, &resp)) != 0) {
+diff --git a/ssh-device.h b/ssh-device.h
+new file mode 100644
+--- /dev/null
++++ b/ssh-device.h
+@@ -0,0 +1,57 @@
++/* Resolve on every signing attempt: USB paths may change after undocking.
++ * The helper receives only a public-key fingerprint, never a PIN or key handle.
++ * An unknown key produces empty output and retains upstream discovery. A known
++ * but absent key fails instead of asking for its PIN on an unrelated device.
++ */
++static int
++ssh_device_options(struct sshkey *key, struct sk_option ***opts)
++{
++	char *fingerprint = NULL, *line = NULL;
++	char *argv[4];
++	size_t capacity = 0;
++	ssize_t length;
++	FILE *output = NULL;
++	pid_t pid;
++	int extra, failed, result = SSH_ERR_DEVICE_NOT_FOUND;
++
++	fingerprint = sshkey_fingerprint(key, SSH_DIGEST_SHA256, SSH_FP_DEFAULT);
++	if (fingerprint == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++
++	argv[0] = "@resolver@/bin/ssh-device";
++	argv[1] = "device";
++	argv[2] = fingerprint;
++	argv[3] = NULL;
++	/* This compiled-in, immutable store path is trusted by Nix. Its sticky,
++	 * group-writable /nix/store parent fails OpenSSH's generic safe_path check.
++	 */
++	pid = subprocess("SSH device resolver", argv[0], 3, argv, &output,
++	    SSH_SUBPROCESS_STDOUT_CAPTURE | SSH_SUBPROCESS_UNSAFE_PATH,
++	    NULL, NULL, NULL);
++	if (pid == 0)
++		goto out;
++
++	length = getline(&line, &capacity, output);
++	extra = fgetc(output);
++	failed = ferror(output);
++	fclose(output);
++	if (exited_cleanly(pid, "SSH device resolver", argv[0], 0) != 0 ||
++	    failed || extra != EOF)
++		goto out;
++
++	if (length == -1) {
++		result = 0;
++		goto out;
++	}
++	if (length < 2 || line[length - 1] != '\n' ||
++	    memchr(line, '\0', length) != NULL)
++		goto out;
++
++	line[length - 1] = '\0';
++	debug_f("selected device %s for %s", line, fingerprint);
++	result = make_options(line, NULL, opts);
++ out:
++	free(line);
++	free(fingerprint);
++	return result;
++}

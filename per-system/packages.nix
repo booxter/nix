@@ -13,6 +13,8 @@
   fleet-tools = appSet.packages.deploy;
   pki-certificates = appSet.packages.issue-internal-service-cert;
 
+  inherit (pkgs) openssh-yubikey ssh-device;
+
   qemu-host-package = plainPkgs.qemu;
 }
 // lib.optionalAttrs (system == "x86_64-linux") {

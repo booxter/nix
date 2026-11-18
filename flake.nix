@@ -162,7 +162,7 @@
       packages = selectPerSystem "packages";
       updatePackages = selectPerSystem "update-packages";
 
-      overlays = import ./overlays { inherit inputs; };
+      overlays = import ./overlays { inherit inputs fleetInventory; };
 
       lib.ci = {
         inherit (import ./ci { inherit hosts lib; }) buildTargets;

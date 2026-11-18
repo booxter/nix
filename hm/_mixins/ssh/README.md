@@ -3,10 +3,13 @@
 Operators sign Git commits and tags with approved hardware identities from
 `sshKeys.hardware`. Signing fails when no approved key is available.
 
-Local sessions use the configured agent: nixpkgs OpenSSH for file and YubiKey
-credentials, Secretive for Secure Enclave credentials. SSH sessions preserve
-the forwarded agent, so approval happens on the originating machine.
-YubiKey handles are loaded automatically before ticket connections.
+Local sessions use the configured agent: stock OpenSSH for file credentials,
+`openssh-yubikey` for YubiKeys, and Secretive for Secure Enclave credentials.
+SSH sessions preserve the forwarded agent, so approval happens on the originating
+machine.
+Before local SSH connections and Git signing, the first connected YubiKey
+in the configured preference order is loaded. Other configured YubiKey handles
+are removed from the agent; unrelated identities are preserved.
 Open a fresh shell after changing agent configuration.
 
 SSH tickets are scoped to their destination and stay out of the agent.
@@ -16,6 +19,8 @@ Device names, serials, and public keys belong in the
 [YubiKey inventory](../../../inventory/yubikeys.nix) and
 [SSH inventory](../../../inventory/ssh/default.nix).
 Configure handle paths with `host.ssh.credentials.yubikey.identityFiles`.
+Keep the corresponding `.pub` files beside the handles. OpenSSH patches and
+the device resolver live in [overlays/openssh](../../../overlays/openssh).
 
 PIN and touch prompts identify known keys by inventory name. macOS uses native
 dialogs and a SketchyBar indicator; Linux graphical sessions use Zenity.

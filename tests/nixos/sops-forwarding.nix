@@ -31,6 +31,7 @@ let
     config = {
       host = {
         realm = "home";
+        ssh.credentials.backend = "files";
         security.secrets.operator.ageIdentity.path = "/home/operator/.config/sops/age/keys.txt";
       };
       users.users.operator = {

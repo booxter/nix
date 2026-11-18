@@ -9,7 +9,11 @@
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
   enabled = config.host.hm.env.roles.developer;
-  useOpenSshAgent = osConfig.host.ssh.credentials.backend != "secretive";
+  sshBackend = import ./backend.nix {
+    inherit pkgs;
+    backend = osConfig.host.ssh.credentials.backend;
+  };
+  useOpenSshAgent = !sshBackend.useSecretive;
   agentLogPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/ssh-agent.log";
   namedYubikeys = lib.concatLists (
     lib.mapAttrsToList (
@@ -62,17 +66,11 @@ in
       SSH_ASKPASS = lib.getExe sshAskpass;
       # Direct signing must also show touch prompts when the agent starts empty.
       # macOS has no DISPLAY, so "prefer" cannot launch the native helper there.
-      SSH_ASKPASS_REQUIRE =
-        if osConfig.host.ssh.credentials.backend == "yubikey" then "force" else "prefer";
+      SSH_ASKPASS_REQUIRE = if sshBackend.useYubikey then "force" else "prefer";
     };
 
     services.ssh-agent.enable = useOpenSshAgent;
-    services.ssh-agent.package = pkgs.openssh.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [
-        # Drop when OpenSSH restores touch notifications after requesting a PIN.
-        ./patches/agent-touch-after-pin.patch
-      ];
-    });
+    services.ssh-agent.package = sshBackend.openssh;
     systemd.user.services.ssh-agent.Service = lib.mkIf isLinux {
       Environment = [
         "SSH_ASKPASS=${lib.getExe sshAskpass}"
@@ -98,7 +96,7 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      package = lib.mkDefault pkgs.openssh;
+      package = lib.mkDefault sshBackend.openssh;
       settings = preBootSettings;
 
       includes = [

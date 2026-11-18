@@ -7,10 +7,12 @@
   ...
 }:
 let
-  backend = osConfig.host.ssh.credentials.backend;
+  sshBackend = import ./backend.nix {
+    inherit pkgs;
+    backend = osConfig.host.ssh.credentials.backend;
+  };
   enabled = config.host.hm.env.roles.developer;
-  useSecretive = backend == "secretive";
-  useYubikey = backend == "yubikey";
+  inherit (sshBackend) useSecretive useYubikey;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   secretiveAuthSockInit = ''
     if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
@@ -21,6 +23,9 @@ let
     name: "${config.home.homeDirectory}/.ssh/${name}"
   ) osConfig.host.ssh.credentials.yubikey.identityFiles;
   yubikeyIdentityConfig = ''
+    # Refresh local agent selection before SSH reads its identities.
+    Match exec "test -z \"$SSH_CONNECTION\" && ${lib.getExe' yubikeyAgent "yubikey-agent"} >/dev/null"
+
     Match exec "test -z \"$SSH_CONNECTION\""
     ${lib.concatMapStrings (path: "  IdentityFile ${path}\n") yubikeyIdentityFiles}
       IdentitiesOnly yes
@@ -30,11 +35,15 @@ let
 
     Host *
   '';
-  signingKey = pkgs.callPackage ./pkgs/git-hardware-signing-key.nix {
+  signingKey = pkgs.callPackage ./pkgs/git-hardware-signing-key {
+    openssh = sshBackend.openssh;
     approvedKeysFile = pkgs.writeText "hardware-signing-keys" (
       lib.concatMapStrings (key: key + "\n") sshKeys.hardware
     );
-    localIdentityFiles = lib.optionals useYubikey yubikeyIdentityFiles;
+    localIdentityCommand = if useYubikey then lib.getExe' yubikeyAgent "yubikey-agent" else null;
+  };
+  yubikeyAgent = pkgs.callPackage ./pkgs/yubikey-agent.nix {
+    identityFiles = yubikeyIdentityFiles;
   };
 in
 {

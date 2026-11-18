@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "git-hardware-signing-key"
+version = "0.1.0"
+requires-python = ">=3.13"
+
+[project.scripts]
+git-hardware-signing-key = "git_hardware_signing_key:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=git_hardware_signing_key --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
