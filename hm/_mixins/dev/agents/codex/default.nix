@@ -17,9 +17,9 @@ let
   };
   shared = import ../shared.nix { inherit config lib osConfig; };
   models = {
-    default = "gpt-6.1-sol";
+    default = "gpt-6.2-sol";
     implementer = "gpt-6.1-terra";
-    specialist = "gpt-6-astra";
+    specialist = "gpt-6.2-astra";
   };
   codexContext = shared.context models + mcps.instructions;
   # Follow the configured Codex version and preserve its voice prompt. Overrides
@@ -74,6 +74,27 @@ in
     programs.codex = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
       enable = true;
       context = codexContext;
+      package = pkgs.symlinkJoin {
+        name = "codex-preferred-model-${pkgs.codex.version}";
+        paths = [ pkgs.codex ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          rm "$out/bin/codex"
+          makeWrapper ${lib.getExe pkgs.codex-launcher} "$out/bin/codex" \
+            --add-flags ${
+              lib.escapeShellArg (
+                lib.escapeShellArgs [
+                  (lib.getExe pkgs.codex)
+                  models.default
+                  "high"
+                ]
+              )
+            }
+        '';
+        # The voice prompt follows the unwrapped Codex source.
+        passthru = { inherit (pkgs.codex) src; };
+        meta.mainProgram = "codex";
+      };
 
       settings = {
         model = models.default;
@@ -81,6 +102,7 @@ in
         agents = {
           enabled = true;
           default_subagent_model = models.default;
+          default_subagent_reasoning_effort = "medium";
           max_concurrent_threads_per_session = 2;
           # V2 ignores max_depth; the shared prompt also prohibits nesting.
           max_depth = 1;

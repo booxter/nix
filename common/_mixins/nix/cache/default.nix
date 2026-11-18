@@ -29,7 +29,6 @@ let
   };
   cacheType = lib.types.submodule { options = commonCacheOptions; };
   cacheLib = import ./lib.nix { inherit lib; };
-  proxmoxCache = import ./proxmox.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
   builderParticipant =
     config.host.realm == "home"
@@ -47,10 +46,6 @@ in
       substituter = "https://cache.nixos.org/";
       trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
     };
-
-    host.nix.caches.proxmox = lib.mkIf (
-      config.host.nix.builder != null || config.host.nix.builderClient != null
-    ) proxmoxCache;
 
     nix.settings = {
       substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);
