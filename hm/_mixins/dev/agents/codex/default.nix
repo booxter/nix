@@ -81,6 +81,7 @@ in
         agents = {
           enabled = true;
           default_subagent_model = models.default;
+          default_subagent_reasoning_effort = "medium";
           max_concurrent_threads_per_session = 2;
           # V2 ignores max_depth; the shared prompt also prohibits nesting.
           max_depth = 1;
