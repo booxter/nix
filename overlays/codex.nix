@@ -14,5 +14,8 @@ codex.overrideAttrs (old: {
     # Name checkout directories with /worktree <name>; keep managed hash buckets.
     # https://github.com/openai/codex/issues/38326
     ../patches/codex-named-worktrees.patch
+    # F10 mutes spoken replies while keeping the microphone live.
+    # Adapted from https://github.com/FrostBy/agent-kit/releases/tag/v0.6.2
+    ../patches/codex-mute-agent-speaker.patch
   ];
 })
