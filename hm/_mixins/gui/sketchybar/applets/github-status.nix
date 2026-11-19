@@ -15,11 +15,13 @@ in
     // {
       components = lib.mkOption {
         type = lib.types.listOf lib.types.nonEmptyStr;
-        default = [ ];
-        example = [
+        default = [
           "Git Operations"
-          "Pull Requests"
+          "API Requests"
+          "Issues"
           "Actions"
+          "Pull Requests"
+          "Webhooks"
         ];
         description = "Exact GitHub Status component names to watch. An empty list watches the entire status page.";
       };
