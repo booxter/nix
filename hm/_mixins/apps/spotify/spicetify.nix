@@ -40,7 +40,6 @@ in
       fullAlbumDate
       listPlaylistsWithSong
       sleepTimer
-      beautifulLyrics
     ];
 
     enabledCustomApps = with spicePkgs.apps; [
