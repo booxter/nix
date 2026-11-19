@@ -22,10 +22,8 @@ from sketchybar_applet import (
     rounded_risk_bps,
 )
 
-FIVE_HOUR_ITEM = "codex.5h"
-WEEKLY_ITEM = "codex.weekly"
-RESETS_ITEM = "codex.resets"
-RESETS_POPUP_ITEM = "codex.resets.expiry"
+ITEM = "codex.personal"
+RESETS_POPUP_ITEM = "codex.personal.resets"
 EXPIRING_RESET_SECONDS = 604_800
 
 
@@ -33,16 +31,15 @@ class PersonalUsageProvider(Protocol):
     def fetch(self, auth: CodexAuth, *, now: float) -> PersonalUsage: ...
 
 
-def format_window_label(name: str, window: UsageWindow | None) -> str:
-    if window is None or window.remaining_percent is None or window.reset_after_seconds is None:
+def format_window_label(name: str, window: UsageWindow) -> str:
+    if window.remaining_percent is None or window.reset_after_seconds is None:
         return f"{name} ???"
     return f"{name} {window.remaining_percent}%/{format_duration(window.reset_after_seconds)}"
 
 
-def window_pace_risk_bps(window: UsageWindow | None) -> int | None:
+def window_pace_risk_bps(window: UsageWindow) -> int | None:
     if (
-        window is None
-        or window.used_percent is None
+        window.used_percent is None
         or window.limit_window_seconds is None
         or window.reset_after_seconds is None
     ):
@@ -93,13 +90,7 @@ def hide_items(bar: Sketchybar) -> None:
     bar.run(
         [
             "--set",
-            FIVE_HOUR_ITEM,
-            "drawing=off",
-            "--set",
-            WEEKLY_ITEM,
-            "drawing=off",
-            "--set",
-            RESETS_ITEM,
+            ITEM,
             "drawing=off",
             "popup.drawing=off",
             "--set",
@@ -113,16 +104,10 @@ def show_error(config: Config, bar: Sketchybar) -> None:
     bar.run(
         [
             "--set",
-            FIVE_HOUR_ITEM,
+            ITEM,
             "drawing=on",
             "label=err",
             f"label.color={config.colors.red}",
-            "--set",
-            WEEKLY_ITEM,
-            "drawing=off",
-            "--set",
-            RESETS_ITEM,
-            "drawing=off",
             "popup.drawing=off",
             "--set",
             RESETS_POPUP_ITEM,
@@ -132,40 +117,35 @@ def show_error(config: Config, bar: Sketchybar) -> None:
 
 
 def render_usage(config: Config, usage: PersonalUsage, bar: Sketchybar) -> None:
-    five_color = pace_color(
-        window_pace_risk_bps(usage.five_hour),
-        reached=window_limit_reached(usage, "five_hour"),
-        colors=config.colors,
-    )
-    weekly_color = pace_color(
-        window_pace_risk_bps(usage.weekly),
-        reached=window_limit_reached(usage, "weekly"),
-        colors=config.colors,
-    )
-    credits_color = reset_color(usage.reset_credits, config.colors)
+    labels: list[str] = []
+    risks: list[int] = []
+    reached = False
+    windows = (("5h", "five_hour", usage.five_hour), ("1w", "weekly", usage.weekly))
+    for name, kind, window in windows:
+        if window is None:
+            continue
+        labels.append(format_window_label(name, window))
+        risk = window_pace_risk_bps(window)
+        if risk is not None:
+            risks.append(risk)
+        reached = reached or window_limit_reached(usage, kind)
+
+    reset = usage.reset_credits
+    labels.append(f"+{reset.available_count}")
+    color = pace_color(max(risks, default=None), reached=reached, colors=config.colors)
     bar.run(
         [
             "--set",
-            FIVE_HOUR_ITEM,
+            ITEM,
             "drawing=on",
-            f"label={format_window_label('5h', usage.five_hour)}",
-            f"label.color={five_color}",
-            "--set",
-            WEEKLY_ITEM,
-            "drawing=on",
-            f"label={format_window_label('1w', usage.weekly)}",
-            f"label.color={weekly_color}",
-            "--set",
-            RESETS_ITEM,
-            "drawing=on",
-            f"label=+{usage.reset_credits.available_count}",
-            f"label.color={credits_color}",
+            f"label={' · '.join(labels)}",
+            f"label.color={color}",
             "popup.drawing=off",
             "--set",
             RESETS_POPUP_ITEM,
             "drawing=on",
-            f"label={reset_tooltip(usage.reset_credits)}",
-            f"label.color={credits_color}",
+            f"label={reset_tooltip(reset)}",
+            f"label.color={reset_color(reset, config.colors)}",
         ]
     )
 
@@ -203,12 +183,10 @@ def main(
         sketchybar = bar or SketchybarCommand(config.sketchybar_executable)
         sender = settings.get("SENDER")
         if sender == "mouse.entered":
-            sketchybar.run(["--set", RESETS_ITEM, "popup.drawing=on"])
+            sketchybar.run(["--set", ITEM, "popup.drawing=on"])
             return 0
         if sender in {"mouse.exited", "mouse.exited.global"}:
-            sketchybar.run(["--set", RESETS_ITEM, "popup.drawing=off"])
-            return 0
-        if settings.get("NAME") == RESETS_ITEM:
+            sketchybar.run(["--set", ITEM, "popup.drawing=off"])
             return 0
         update(
             config,
