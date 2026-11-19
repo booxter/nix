@@ -67,6 +67,22 @@
         nix = pkgsNixpkgsUnstable.nixVersions.latest;
       };
 
+      nginxStable =
+        let
+          version = "1.30.7";
+        in
+        assert lib.asserts.assertMsg (lib.versionOlder (lib.getVersion prev.nginxStable) version)
+          "nixpkgs already provides NGINX ${version} or newer. Remove this override for the updated input and check the separate Proxmox pin.";
+        # Use the security release from nixpkgs#589970 until the pinned inputs catch up.
+        prev.nginxStable.overrideAttrs (_: {
+          inherit version;
+          nginxVersion = version;
+          src = prev.fetchurl {
+            url = "https://nginx.org/download/nginx-${version}.tar.gz";
+            hash = "sha256-JWW1yDcFDpWPcPsPc8SOK8pFQq00n9NW9G+wxyYQvG4=";
+          };
+        });
+
       nix-update = prev.nix-update.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Remove when upstream materializes local flake sources before evaluation.
