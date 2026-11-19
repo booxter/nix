@@ -80,7 +80,7 @@ def test_calculates_pace_and_limit_state() -> None:
     assert window_limit_reached(weekly_reached, "weekly")
 
 
-def test_renders_unavailable_window_with_compact_placeholder() -> None:
+def test_renders_weekly_usage_without_a_five_hour_placeholder() -> None:
     bar = RecordingSketchybar()
     render_usage(
         Config(Path("/auth"), COLORS, "/sketchybar"),
@@ -88,10 +88,9 @@ def test_renders_unavailable_window_with_compact_placeholder() -> None:
         bar,
     )
     rendered = sketchybar_properties(bar.calls[0])
-    assert rendered["codex.5h"]["label"] == "5h ???"
-    assert rendered["codex.weekly"]["label"] == "1w 96%/6d19h"
-    assert rendered["codex.resets"]["label"] == "+0"
-    assert rendered["codex.resets.expiry"]["label"] == ("No rate-limit reset credits available")
+    assert rendered["codex.personal"]["drawing"] == "on"
+    assert rendered["codex.personal"]["label"] == "1w 96%/6d19h · +0"
+    assert rendered["codex.personal.resets"]["label"] == "No rate-limit reset credits available"
 
 
 @contextmanager
@@ -144,7 +143,7 @@ def test_handles_hover_without_fetching(sender: str, drawing: str) -> None:
         )
         == 0
     )
-    assert sketchybar_properties(bar.calls[0])["codex.resets"]["popup.drawing"] == drawing
+    assert sketchybar_properties(bar.calls[0])["codex.personal"]["popup.drawing"] == drawing
     assert service.calls == []
 
 
@@ -160,15 +159,18 @@ def test_missing_auth_hides_items(tmp_path: Path) -> None:
         == 0
     )
     rendered = sketchybar_properties(bar.calls[0])
-    assert rendered["codex.5h"]["drawing"] == "off"
-    assert rendered["codex.weekly"]["drawing"] == "off"
-    assert rendered["codex.resets"]["popup.drawing"] == "off"
+    assert rendered["codex.personal"]["drawing"] == "off"
+    assert rendered["codex.personal"]["popup.drawing"] == "off"
 
 
 def test_fetches_and_renders_usage(tmp_path: Path) -> None:
     write_codex_auth(tmp_path)
     service = FakePersonalUsageService(
-        usage=usage(five_hour=window(length=18_000, reset_after=17_000))
+        usage=usage(
+            five_hour=window(length=18_000, reset_after=17_000),
+            weekly=window(used=10, remaining=90),
+            resets=ResetCredits(2, (), None),
+        )
     )
     bar = RecordingSketchybar()
     assert (
@@ -182,7 +184,9 @@ def test_fetches_and_renders_usage(tmp_path: Path) -> None:
     )
     assert service.calls[0][0].access_token == "token"
     assert service.calls[0][1] == NOW
-    assert sketchybar_properties(bar.calls[0])["codex.5h"]["label"] == "5h 96%/4h43"
+    rendered = sketchybar_properties(bar.calls[0])
+    assert rendered["codex.personal"]["label"] == "5h 96%/4h43 · 1w 90%/6d19h · +2"
+    assert rendered["codex.personal"]["label.color"] == "0xfffb4934"
 
 
 def test_provider_failure_shows_error(tmp_path: Path) -> None:
@@ -198,9 +202,9 @@ def test_provider_failure_shows_error(tmp_path: Path) -> None:
         == 0
     )
     rendered = sketchybar_properties(bar.calls[0])
-    assert rendered["codex.5h"]["label"] == "err"
-    assert rendered["codex.5h"]["label.color"] == "0xfffb4934"
-    assert rendered["codex.weekly"]["drawing"] == "off"
+    assert rendered["codex.personal"]["label"] == "err"
+    assert rendered["codex.personal"]["label.color"] == "0xfffb4934"
+    assert rendered["codex.personal.resets"]["drawing"] == "off"
 
 
 def test_reports_configuration_and_sketchybar_failures() -> None:

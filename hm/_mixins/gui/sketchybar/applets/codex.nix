@@ -10,48 +10,31 @@ let
   codexTools = (import ../../../dev/agents/codex/pkgs { inherit pkgs; }).codex-usage-status;
   inherit (import ./lib.nix { inherit lib; }) mkAppletOptions;
   personalScript = ''
-    sketchybar --add item codex.5h ${cfg.position} \
-               --set codex.5h script="$PLUGIN_DIR/codex.sh" \
-                              update_freq=300 \
-                              icon=":codex:" \
-                              icon.font="$APP_ICON_FONT" \
-                              icon.padding_left=6 \
-                              label.padding_left=6 \
-                              label.padding_right=6 \
-                              background.border_width=0 \
-                              background.corner_radius=6 \
-                              background.height=24 \
-               --subscribe codex.5h system_woke \
-               --add item codex.weekly ${cfg.position} \
-               --set codex.weekly updates=off \
-                                  icon.drawing=off \
-                                  label.padding_left=6 \
-                                  label.padding_right=6 \
-                                  background.border_width=0 \
-                                  background.corner_radius=6 \
-                                  background.height=24 \
-               --add item codex.resets ${cfg.position} \
-               --set codex.resets script="$PLUGIN_DIR/codex.sh" \
-                                 click_script="sketchybar --set codex.resets popup.drawing=toggle" \
-                                 icon.drawing=off \
-                                 label.padding_left=6 \
-                                 label.padding_right=6 \
-                                 background.border_width=0 \
-                                 background.corner_radius=6 \
-                                 background.height=24 \
-                                 popup.align=${cfg.position} \
-                                 popup.background.color="$BACKGROUND_COLOR" \
-                                 popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
-                                 popup.background.border_width=1 \
-                                 popup.background.corner_radius=6 \
-               --subscribe codex.resets mouse.entered mouse.exited \
-               --add item codex.resets.expiry popup.codex.resets \
-               --set codex.resets.expiry updates=off \
-                                        icon.drawing=off \
-                                        label.padding_left=8 \
-                                        label.padding_right=8 \
-                                        background.border_width=0 \
-                                        background.height=24
+    sketchybar --add item codex.personal ${cfg.position} \
+               --set codex.personal script="$PLUGIN_DIR/codex.sh" \
+                                     click_script="sketchybar --set codex.personal popup.drawing=toggle" \
+                                     update_freq=300 \
+                                     icon=":codex:" \
+                                     icon.font="$APP_ICON_FONT" \
+                                     icon.padding_left=6 \
+                                     label.padding_left=6 \
+                                     label.padding_right=6 \
+                                     background.border_width=0 \
+                                     background.corner_radius=6 \
+                                     background.height=24 \
+                                     popup.align=${cfg.position} \
+                                     popup.background.color="$BACKGROUND_COLOR" \
+                                     popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
+                                     popup.background.border_width=1 \
+                                     popup.background.corner_radius=6 \
+               --subscribe codex.personal system_woke mouse.entered mouse.exited \
+               --add item codex.personal.resets popup.codex.personal \
+               --set codex.personal.resets updates=off \
+                                            icon.drawing=off \
+                                            label.padding_left=8 \
+                                            label.padding_right=8 \
+                                            background.border_width=0 \
+                                            background.height=24
   '';
   corporateScript = ''
     sketchybar --add item codex.work ${cfg.position} \
