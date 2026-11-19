@@ -5,12 +5,24 @@ let
   inherit (import ./lib.nix { inherit lib; }) mkAppletOptions;
 in
 {
-  options.host.hm.sketchybar.openaiStatus = mkAppletOptions {
-    description = "OpenAI service status";
-    defaultEnable = true;
-    defaultPosition = "right";
-    defaultOrder = 410;
-  };
+  options.host.hm.sketchybar.openaiStatus =
+    mkAppletOptions {
+      description = "OpenAI service status";
+      defaultEnable = true;
+      defaultPosition = "right";
+      defaultOrder = 410;
+    }
+    // {
+      groups = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = [
+          "APIs"
+          "ChatGPT"
+          "Codex"
+        ];
+        description = "Exact OpenAI Status group names to watch. An empty list watches the entire status page.";
+      };
+    };
 
   config.host.hm.sketchybar.internal.applets.openaiStatus = lib.mkIf cfg.enable {
     inherit (cfg) position order;

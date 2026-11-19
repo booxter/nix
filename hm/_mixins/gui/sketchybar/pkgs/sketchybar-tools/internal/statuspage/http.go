@@ -56,6 +56,9 @@ func (fetcher HTTPSummaryFetcher) Fetch(ctx context.Context) (Summary, error) {
 	if err != nil {
 		return Summary{}, fmt.Errorf("fetch status page summary: %w", err)
 	}
+	if fetcher.config.SummaryFormat == incidentIOFormat {
+		return decodeIncidentIOSummary(body)
+	}
 	return decodeSummary(body)
 }
 
