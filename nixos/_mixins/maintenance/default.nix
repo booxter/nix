@@ -6,13 +6,29 @@ in
   imports = [ ./vacations.nix ];
 
   options.host.maintenance.holds = lib.mkOption {
-    type = with lib.types; attrsOf nonEmptyStr;
+    type =
+      with lib.types;
+      attrsOf (submodule {
+        options = {
+          scope = lib.mkOption {
+            type = enum [
+              "full"
+              "reboot"
+            ];
+            description = "Hold upgrades and reboots (full), or only reboots (reboot).";
+          };
+          condition = lib.mkOption {
+            type = nonEmptyStr;
+            description = ''
+              Command checked before maintenance. Exit zero to proceed or 1–254
+              to skip this run, following systemd ExecCondition semantics.
+            '';
+          };
+        };
+      });
     default = { };
     internal = true;
-    description = ''
-      Commands checked before unattended maintenance. Exit zero to proceed or
-      1–254 to skip this run, following systemd ExecCondition semantics.
-    '';
+    description = "Named holds on unattended maintenance.";
   };
 
   options.host.maintenance.guards = lib.mkOption {

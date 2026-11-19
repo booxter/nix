@@ -71,11 +71,14 @@ in
     }
 
     (lib.mkIf (vacations != [ ]) {
-      host.maintenance.holds.vacations = command [
-        "guard"
-        "--config"
-        toolsConfig
-      ];
+      host.maintenance.holds.vacations = {
+        scope = "full";
+        condition = command [
+          "guard"
+          "--config"
+          toolsConfig
+        ];
+      };
     })
 
     (lib.mkIf config.host.observability.enable {

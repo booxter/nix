@@ -50,11 +50,21 @@ let
     "/var/lib/nixos-reboot-metrics/pending-since"
   ];
   maintenanceGuards = builtins.attrValues config.host.maintenance.guards;
-  maintenanceConditions = builtins.attrValues config.host.maintenance.holds;
+  holds = builtins.attrValues config.host.maintenance.holds;
+  upgradeConditions = map (hold: hold.condition) (lib.filter (hold: hold.scope == "full") holds);
+  rebootConditions = map (hold: hold.condition) holds;
+  rebootWithUpgrade = schedule.reboot.mode == "with-upgrade";
 in
 {
   config = lib.mkMerge [
     {
+      assertions = [
+        {
+          assertion = !rebootWithUpgrade || lib.all (hold: hold.scope == "full") holds;
+          message = "${hostname}: reboot-only maintenance holds require a separate reboot schedule.";
+        }
+      ];
+
       host.autoUpgrade = {
         claims.baseline = {
           switch.cadence = "daily";
@@ -72,8 +82,8 @@ in
         dates = schedule.switch;
         randomizedDelaySec = randomizedDelay;
         persistent = false;
-        allowReboot = schedule.reboot.mode == "with-upgrade";
-        rebootWindow = if schedule.reboot.mode == "with-upgrade" then rebootWindow else null;
+        allowReboot = rebootWithUpgrade;
+        rebootWindow = if rebootWithUpgrade then rebootWindow else null;
       };
 
       systemd.services.nixos-upgrade.serviceConfig.TimeoutStartSec = "12h";
@@ -88,6 +98,7 @@ in
         description = "Reboot on schedule if the current NixOS profile needs it";
         serviceConfig = {
           Type = "oneshot";
+          ExecCondition = rebootConditions;
           ExecStart = rebootIfNeeded;
           ExecStartPre = maintenanceGuards;
           TimeoutStartSec = lib.mkIf (maintenanceGuards != [ ]) "infinity";
@@ -105,12 +116,8 @@ in
       };
     })
 
-    (lib.mkIf (maintenanceConditions != [ ]) {
-      systemd.services.nixos-upgrade.serviceConfig.ExecCondition = maintenanceConditions;
-    })
-
-    (lib.mkIf (maintenanceConditions != [ ] && schedule.reboot.mode == "scheduled") {
-      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = maintenanceConditions;
+    (lib.mkIf (upgradeConditions != [ ]) {
+      systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeConditions;
     })
 
     (lib.mkIf metricsEnabled {
