@@ -41,6 +41,7 @@ let
   sketchybarPlugins = import ./pkgs {
     inherit pkgs pluginNames pluginPackages;
     pluginColors = theme.pluginEnvironment;
+    githubStatusComponents = cfg.githubStatus.components;
     alertmanager = lib.optionalAttrs cfg.alertmanager.enable {
       url = cfg.alertmanager.url;
       caCertificate = pkiRootCa;

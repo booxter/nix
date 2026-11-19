@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/booxter/nix-config/sketchybar-tools/internal/httpclient"
@@ -19,14 +20,20 @@ type Summary struct {
 }
 
 type Component struct {
-	Status any `json:"status"`
+	Name   string `json:"name"`
+	Status any    `json:"status"`
 }
 
-func (summary Summary) HasIssues() bool {
-	if summary.Indicator != "none" || summary.Incidents > 0 {
+func (summary Summary) HasIssues(watchedComponents []string) bool {
+	watchAll := len(watchedComponents) == 0
+	// Page-wide indicators can reflect issues outside the watch list.
+	if watchAll && (summary.Indicator != "none" || summary.Incidents > 0) {
 		return true
 	}
 	for _, component := range summary.Components {
+		if !watchAll && !slices.Contains(watchedComponents, component.Name) {
+			continue
+		}
 		status, ok := component.Status.(string)
 		if !ok || status != "operational" {
 			return true

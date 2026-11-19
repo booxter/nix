@@ -1,5 +1,6 @@
 {
   alertmanager ? null,
+  githubStatusComponents,
   jellyfin ? null,
   pkgs,
   pluginNames,
@@ -41,6 +42,7 @@ let
       ALERTMANAGER_CLIENT_KEY = alertmanager.clientKey;
     };
     "github-status" = {
+      STATUSPAGE_COMPONENTS = builtins.toJSON githubStatusComponents;
       STATUSPAGE_ICON = "";
       STATUSPAGE_URL = "https://www.githubstatus.com/api/v2/summary.json";
     };

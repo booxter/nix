@@ -3,9 +3,18 @@ package statuspage
 import "testing"
 
 func TestSummaryHasIssues(t *testing.T) {
+	const githubSummary = `{
+		"status":{"indicator":"minor"},
+		"components":[
+			{"name":"Git Operations","status":"operational"},
+			{"name":"Pages","status":"degraded_performance"}
+		],
+		"incidents":[{"status":"investigating"}]
+	}`
 	cases := map[string]struct {
-		body      string
-		hasIssues bool
+		body              string
+		watchedComponents []string
+		hasIssues         bool
 	}{
 		"operational": {
 			body: `{"status":{"indicator":"none"},"components":[{"status":"operational"}],"incidents":[]}`,
@@ -25,6 +34,15 @@ func TestSummaryHasIssues(t *testing.T) {
 			body:      `{"status":{"indicator":"none"},"components":[{"status":"operational"}],"incidents":[{"status":"investigating"}]}`,
 			hasIssues: true,
 		},
+		"issue outside watch list": {
+			body:              githubSummary,
+			watchedComponents: []string{"Git Operations"},
+		},
+		"issue inside watch list": {
+			body:              githubSummary,
+			watchedComponents: []string{"Git Operations", "Pages"},
+			hasIssues:         true,
+		},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -32,7 +50,7 @@ func TestSummaryHasIssues(t *testing.T) {
 			if err != nil {
 				t.Fatalf("decodeSummary returned an error: %v", err)
 			}
-			if got := summary.HasIssues(); got != test.hasIssues {
+			if got := summary.HasIssues(test.watchedComponents); got != test.hasIssues {
 				t.Errorf("HasIssues = %v, want %v", got, test.hasIssues)
 			}
 		})

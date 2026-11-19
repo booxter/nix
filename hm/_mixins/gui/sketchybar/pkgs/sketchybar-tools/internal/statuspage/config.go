@@ -1,6 +1,9 @@
 package statuspage
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 const defaultRed = "0xfffb4934"
 
@@ -8,6 +11,7 @@ type Config struct {
 	Name                 string
 	URL                  string
 	Icon                 string
+	Components           []string
 	Red                  string
 	SketchybarExecutable string
 }
@@ -22,6 +26,11 @@ func ConfigFromEnvironment(getenv func(string) string) (Config, error) {
 	}
 	if config.Red == "" {
 		config.Red = defaultRed
+	}
+	if components := getenv("STATUSPAGE_COMPONENTS"); components != "" {
+		if err := json.Unmarshal([]byte(components), &config.Components); err != nil {
+			return Config{}, fmt.Errorf("decode STATUSPAGE_COMPONENTS: %w", err)
+		}
 	}
 
 	required := []struct {
