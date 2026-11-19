@@ -5,12 +5,27 @@ let
   inherit (import ./lib.nix { inherit lib; }) mkAppletOptions;
 in
 {
-  options.host.hm.sketchybar.githubStatus = mkAppletOptions {
-    description = "GitHub service status";
-    defaultEnable = true;
-    defaultPosition = "right";
-    defaultOrder = 400;
-  };
+  options.host.hm.sketchybar.githubStatus =
+    mkAppletOptions {
+      description = "GitHub service status";
+      defaultEnable = true;
+      defaultPosition = "right";
+      defaultOrder = 400;
+    }
+    // {
+      components = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = [
+          "Git Operations"
+          "API Requests"
+          "Issues"
+          "Actions"
+          "Pull Requests"
+          "Webhooks"
+        ];
+        description = "Exact GitHub Status component names to watch. An empty list watches the entire status page.";
+      };
+    };
 
   config.host.hm.sketchybar.internal.applets.githubStatus = lib.mkIf cfg.enable {
     inherit (cfg) position order;

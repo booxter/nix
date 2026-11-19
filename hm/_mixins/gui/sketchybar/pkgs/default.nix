@@ -5,6 +5,7 @@
   pluginNames,
   pluginPackages,
   pluginColors,
+  statusPageComponents,
 }:
 let
   inherit (pkgs) lib;
@@ -33,6 +34,11 @@ let
     pkgs.bash
     pkgs.sketchybar
   ];
+  statusPageEnvironment = name: url: icon: {
+    STATUSPAGE_COMPONENTS = builtins.toJSON statusPageComponents.${name};
+    STATUSPAGE_ICON = icon;
+    STATUSPAGE_URL = url;
+  };
   pluginEnvironments = {
     alertmanager = lib.optionalAttrs (alertmanager != null) {
       ALERTMANAGER_URL = alertmanager.url;
@@ -40,20 +46,21 @@ let
       ALERTMANAGER_CLIENT_CERTIFICATE = alertmanager.clientCertificate;
       ALERTMANAGER_CLIENT_KEY = alertmanager.clientKey;
     };
-    "github-status" = {
-      STATUSPAGE_ICON = "";
-      STATUSPAGE_URL = "https://www.githubstatus.com/api/v2/summary.json";
-    };
+    "github-status" =
+      statusPageEnvironment "github-status" "https://www.githubstatus.com/api/v2/summary.json"
+        "";
     jellyfin = lib.optionalAttrs (jellyfin != null) {
       JELLYFIN_METRICS_URL = jellyfin.metricsUrl;
       JELLYFIN_CA_CERTIFICATE = jellyfin.caCertificate;
       JELLYFIN_CLIENT_CERTIFICATE = jellyfin.clientCertificate;
       JELLYFIN_CLIENT_KEY = jellyfin.clientKey;
     };
-    "openai-status" = {
-      STATUSPAGE_ICON = "󰚩";
-      STATUSPAGE_URL = "https://status.openai.com/api/v2/summary.json";
-    };
+    # The compatibility summary omits some components and their group membership.
+    "openai-status" =
+      statusPageEnvironment "openai-status" "https://status.openai.com/proxy/status.openai.com" "󰚩"
+      // {
+        STATUSPAGE_FORMAT = "incident-io";
+      };
     stock = {
       STOCK_API_URL = "https://api.nasdaq.com/api/quote";
     };

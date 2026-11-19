@@ -15,7 +15,7 @@ func Run(ctx context.Context, config Config, fetcher SummaryFetcher, bar sketchy
 	if err != nil {
 		return nil
 	}
-	if !summary.HasIssues() {
+	if !summary.HasIssues(config.Components) {
 		return bar.Run("--set", config.Name, "drawing=off")
 	}
 	return bar.Run(
