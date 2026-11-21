@@ -68,6 +68,10 @@
         ./nix/reset-signal-callbacks-after-fork.patch
       ];
 
+      # Drop once stable's monitor accepts the activity types emitted by Nix 2.36.
+      # https://github.com/maralorn/nix-output-monitor/pull/321
+      inherit (pkgsNixpkgsUnstable) nix-output-monitor;
+
       nix-update = prev.nix-update.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Remove when upstream materializes local flake sources before evaluation.
