@@ -10,17 +10,17 @@
 
 buildNpmPackage rec {
   pname = "firefox-devtools-mcp";
-  version = "0.10.7";
+  version = "0.11.0";
 
   src = fetchFromGitHub {
     owner = "mozilla";
     repo = "firefox-devtools-mcp";
     tag = "v${version}";
-    hash = "sha256-B/BL2ou9l5wgAzvc0PiuMphYp/mRmw3c4bRsynugAKs=";
+    hash = "sha256-ELxWz0N7IfRGeE6WlxwH68bqP2ZRmuPVV0z2W10gQGQ=";
   };
 
   nodejs = nodejs_24;
-  npmDepsHash = "sha256-tSufdG4ov8GCrB7bZmLpw78fJlc5qo7EKy4FikVy938=";
+  npmDepsHash = "sha256-DWVdaLsJINQ0EloydHX2KjvY1AfpyEeO5saYiF1Pdvw=";
 
   nativeBuildInputs = [
     makeWrapper
@@ -31,7 +31,7 @@ buildNpmPackage rec {
   ];
 
   postInstall = ''
-    wrapProgram "$out/bin/firefox-devtools-mcp" \
+    wrapProgram "$out/bin/firefox-mcp" \
       --prefix PATH : ${lib.makeBinPath [ geckodriver ]}
   '';
 
@@ -48,7 +48,7 @@ buildNpmPackage rec {
       asl20
       mit
     ];
-    mainProgram = "firefox-devtools-mcp";
+    mainProgram = "firefox-mcp";
     platforms = lib.platforms.unix;
   };
 }
