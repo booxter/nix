@@ -1,8 +1,8 @@
 diff --git a/config/src/tui_keymap.rs b/config/src/tui_keymap.rs
-index 2d7ae5d..f60eba1 100644
+index e1e4cc4..e87b281 100644
 --- a/config/src/tui_keymap.rs
 +++ b/config/src/tui_keymap.rs
-@@ -211,6 +211,8 @@ pub struct TuiChatKeymap {
+@@ -213,6 +213,8 @@ pub struct TuiChatKeymap {
      pub toggle_voice: Option<KeybindingsSpec>,
      /// Toggle the microphone in an active voice conversation.
      pub toggle_voice_mute: Option<KeybindingsSpec>,
@@ -12,10 +12,10 @@ index 2d7ae5d..f60eba1 100644
      pub interrupt_turn: Option<KeybindingsSpec>,
      /// Decrease the active reasoning effort.
 diff --git a/core/config.schema.json b/core/config.schema.json
-index 5f72e10..dd31bc6 100644
+index b99d436..92b4a0a 100644
 --- a/core/config.schema.json
 +++ b/core/config.schema.json
-@@ -5340,7 +5340,8 @@
+@@ -5524,7 +5524,8 @@
                "prompt_stack_back": null,
                "skip_question": null,
                "toggle_voice": null,
@@ -25,7 +25,7 @@ index 5f72e10..dd31bc6 100644
              },
              "composer": {
                "history_search_next": null,
-@@ -5952,6 +5953,14 @@
+@@ -6148,6 +6149,14 @@
              }
            ],
            "description": "Toggle the microphone in an active voice conversation."
@@ -40,7 +40,7 @@ index 5f72e10..dd31bc6 100644
          }
        },
        "type": "object"
-@@ -6513,7 +6522,8 @@
+@@ -6733,7 +6742,8 @@
              "prompt_stack_back": null,
              "skip_question": null,
              "toggle_voice": null,
@@ -51,10 +51,10 @@ index 5f72e10..dd31bc6 100644
          },
          "composer": {
 diff --git a/tui/src/app.rs b/tui/src/app.rs
-index ddddc61..fb5809a 100644
+index a83022f..99a611b 100644
 --- a/tui/src/app.rs
 +++ b/tui/src/app.rs
-@@ -1180,10 +1180,10 @@ impl App {
+@@ -1276,10 +1276,10 @@ impl App {
              && self
                  .active_keymap_contexts()
                  .contains(crate::keymap::KeymapContext::Voice)
@@ -68,10 +68,10 @@ index ddddc61..fb5809a 100644
              return Ok(AppRunControl::Continue);
          }
 diff --git a/tui/src/app/tests/realtime_requests.rs b/tui/src/app/tests/realtime_requests.rs
-index d4cb7cc..aaa20c2 100644
+index d6bd9ef..54e5060 100644
 --- a/tui/src/app/tests/realtime_requests.rs
 +++ b/tui/src/app/tests/realtime_requests.rs
-@@ -358,6 +358,14 @@ async fn switching_agent_threads_preserves_backend_voice_and_routes_pending_spee
+@@ -543,6 +543,14 @@ async fn switching_agent_threads_preserves_backend_voice_and_routes_pending_spee
      assert_eq!(app.chat_widget.thread_id(), Some(target));
      // The newer user caption interrupted this queued answer, even across navigation.
      assert!(recorded_params(&requests, "thread/realtime/appendSpeech").is_empty());
@@ -100,7 +100,7 @@ index 2cee857..e9d0ad4 100644
  
  › Ask Codex to do anything
 diff --git a/tui/src/app/voice_owner.rs b/tui/src/app/voice_owner.rs
-index 3b0af9f..e461908 100644
+index e72cd69..a894137 100644
 --- a/tui/src/app/voice_owner.rs
 +++ b/tui/src/app/voice_owner.rs
 @@ -48,6 +48,16 @@ impl App {
@@ -129,10 +129,10 @@ index 3b0af9f..e461908 100644
          } else if matches!(control, VoiceControl::Toggle) && !self.reconnect.offline {
              // Preserve the ended owner's transcript before allowing another call.
 diff --git a/tui/src/app_event.rs b/tui/src/app_event.rs
-index c858e81..d5d2594 100644
+index 24592bf..8733325 100644
 --- a/tui/src/app_event.rs
 +++ b/tui/src/app_event.rs
-@@ -83,6 +83,7 @@ pub(crate) enum VoiceControl {
+@@ -84,6 +84,7 @@ pub(crate) enum VoiceControl {
      Toggle,
      Stop,
      Mute,
@@ -141,7 +141,7 @@ index c858e81..d5d2594 100644
  
  /// Confirmed server lifecycle operations available from the agents dashboard.
 diff --git a/tui/src/bottom_pane/chat_composer/snapshot_tests.rs b/tui/src/bottom_pane/chat_composer/snapshot_tests.rs
-index f15a360..3db2383 100644
+index fa3455e..90a44bf 100644
 --- a/tui/src/bottom_pane/chat_composer/snapshot_tests.rs
 +++ b/tui/src/bottom_pane/chat_composer/snapshot_tests.rs
 @@ -108,9 +108,11 @@ fn draft_and_voice_composer_snapshots() {
@@ -255,7 +255,7 @@ index 208544c..65e0477 100644
 +    }
 +}
 diff --git a/tui/src/chatwidget/realtime.rs b/tui/src/chatwidget/realtime.rs
-index e5dd41e..80e7454 100644
+index cdffddc..b8365be 100644
 --- a/tui/src/chatwidget/realtime.rs
 +++ b/tui/src/chatwidget/realtime.rs
 @@ -152,6 +152,7 @@ pub(super) struct RealtimeConversationUiState {
@@ -278,7 +278,7 @@ index e5dd41e..80e7454 100644
      pub(super) fn live_transcript_cells(&self) -> impl Iterator<Item = &Box<dyn HistoryCell>> {
          // Keep the user above the reply even when their last packets interleave.
          let cells = if self.transcript_role.as_deref() == Some("user") {
-@@ -442,6 +448,9 @@ impl ChatWidget {
+@@ -444,6 +450,9 @@ impl ChatWidget {
              self.on_realtime_error(message, cause);
              return;
          }
@@ -288,7 +288,7 @@ index e5dd41e..80e7454 100644
          self.realtime_conversation.handle = Some(offer.handle);
          self.update_realtime_footer();
          self.refresh_terminal_title();
-@@ -594,6 +603,7 @@ impl ChatWidget {
+@@ -618,6 +627,7 @@ impl ChatWidget {
          input_generation: u64,
      ) -> bool {
          self.realtime_conversation.phase == RealtimeConversationPhase::Active
@@ -296,7 +296,7 @@ index e5dd41e..80e7454 100644
              && self.realtime_conversation.thread_id == Some(thread_id)
              && self.realtime_conversation.attempt_id == attempt_id
              && self.realtime_conversation.input_generation == input_generation
-@@ -1010,11 +1020,12 @@ impl ChatWidget {
+@@ -1034,11 +1044,12 @@ impl ChatWidget {
              return;
          }
          *may_speak = false;
@@ -312,7 +312,7 @@ index e5dd41e..80e7454 100644
              self.handle_thread_item(
                  item.clone(),
                  turn_id.to_string(),
-@@ -1070,9 +1081,7 @@ impl ChatWidget {
+@@ -1094,9 +1105,7 @@ impl ChatWidget {
                  RealtimeFailureCause::SpeechDelivery,
              );
          } else {
@@ -323,7 +323,7 @@ index e5dd41e..80e7454 100644
          }
      }
  
-@@ -1272,11 +1281,9 @@ impl ChatWidget {
+@@ -1296,11 +1305,9 @@ impl ChatWidget {
          }
      }
  
@@ -337,7 +337,7 @@ index e5dd41e..80e7454 100644
          });
      }
  
-@@ -1761,6 +1768,7 @@ impl ChatWidget {
+@@ -1785,6 +1792,7 @@ impl ChatWidget {
          self.restore_all_undelivered_realtime_speech();
          self.finish_realtime_partial_transcripts();
          let muted = self.realtime_conversation.microphone_muted;
@@ -345,7 +345,7 @@ index e5dd41e..80e7454 100644
          let thread_id = self.realtime_conversation.thread_id;
          let retry_thread_id = if retry_after_stop || retry_after_early_close {
              thread_id.filter(|id| Some(*id) == self.thread_id())
-@@ -1787,6 +1795,7 @@ impl ChatWidget {
+@@ -1811,6 +1819,7 @@ impl ChatWidget {
              // The old backend is closed. A late peer result belongs to its attempt ID.
              self.realtime_conversation.startup_retry = StartupRetry::Used;
              self.realtime_conversation.microphone_muted = muted;
@@ -542,10 +542,10 @@ index 01b0a9b..30ad98a 100644
  async fn paraphrased_voice_answers_do_not_reappear_on_overflow_or_stop() {
      let (mut chat, _sender, mut events, mut ops) = make_chatwidget_manual_with_sender().await;
 diff --git a/tui/src/keymap.rs b/tui/src/keymap.rs
-index 499a5ca..568947f 100644
+index 72929a2..d4c1f20 100644
 --- a/tui/src/keymap.rs
 +++ b/tui/src/keymap.rs
-@@ -163,6 +163,8 @@ pub(crate) struct ChatKeymap {
+@@ -164,6 +164,8 @@ pub(crate) struct ChatKeymap {
      pub(crate) toggle_voice: Vec<KeyBinding>,
      /// Toggle capture in the active voice session.
      pub(crate) toggle_voice_mute: Vec<KeyBinding>,
@@ -554,7 +554,7 @@ index 499a5ca..568947f 100644
      pub(crate) chord_hints: Arc<RuntimeChordKeymap>,
      /// Interrupt the active turn.
      pub(crate) interrupt_turn: Vec<KeyBinding>,
-@@ -188,6 +190,12 @@ impl ChatKeymap {
+@@ -189,6 +191,12 @@ impl ChatKeymap {
          self.chord_hints
              .primary_hint(action, &self.toggle_voice_mute)
      }
@@ -567,7 +567,7 @@ index 499a5ca..568947f 100644
  }
  
  /// Composer-level keybindings validated in the second app-scope conflict pass.
-@@ -731,13 +739,16 @@ impl RuntimeKeymap {
+@@ -735,13 +743,16 @@ impl RuntimeKeymap {
              });
  
          // Voice mute yields to existing shortcuts and chord prefixes.
@@ -589,7 +589,7 @@ index 499a5ca..568947f 100644
  
          // New activity defaults yield to existing custom keys and chord prefixes.
          let focus_activity_defaults: Vec<_> = defaults
-@@ -939,7 +950,9 @@ impl RuntimeKeymap {
+@@ -948,7 +959,9 @@ impl RuntimeKeymap {
                      "tui.keymap.chat.toggle_voice",
                  )?
              },
@@ -600,7 +600,7 @@ index 499a5ca..568947f 100644
                  Vec::new()
              } else {
                  resolve_bindings(
-@@ -948,6 +961,17 @@ impl RuntimeKeymap {
+@@ -957,6 +970,17 @@ impl RuntimeKeymap {
                      "tui.keymap.chat.toggle_voice_mute",
                  )?
              },
@@ -618,7 +618,7 @@ index 499a5ca..568947f 100644
              chord_hints: Arc::clone(&chords),
              interrupt_turn: resolve_bindings(
                  keymap.chat.interrupt_turn.as_ref(),
-@@ -1862,6 +1886,7 @@ impl RuntimeKeymap {
+@@ -1924,6 +1948,7 @@ impl RuntimeKeymap {
                  open_presets: Vec::new(),
                  toggle_voice: default_bindings![plain(KeyCode::F(8))],
                  toggle_voice_mute: default_bindings![plain(KeyCode::F(9))],
@@ -626,7 +626,7 @@ index 499a5ca..568947f 100644
                  chord_hints: Arc::default(),
                  interrupt_turn: default_bindings![plain(KeyCode::Esc)],
                  decrease_reasoning_effort: default_bindings![
-@@ -2292,6 +2317,10 @@ impl RuntimeKeymap {
+@@ -2373,6 +2398,10 @@ impl RuntimeKeymap {
                  "chat.toggle_voice_mute",
                  self.chat.toggle_voice_mute.as_slice(),
              ),
@@ -637,7 +637,7 @@ index 499a5ca..568947f 100644
              ("chat.interrupt_turn", self.chat.interrupt_turn.as_slice()),
              (
                  "chat.decrease_reasoning_effort",
-@@ -2478,6 +2507,10 @@ impl RuntimeKeymap {
+@@ -2561,6 +2590,10 @@ impl RuntimeKeymap {
                      "chat.toggle_voice_mute",
                      self.chat.toggle_voice_mute.as_slice(),
                  ),
@@ -649,10 +649,10 @@ index 499a5ca..568947f 100644
                  (
                      "chat.decrease_reasoning_effort",
 diff --git a/tui/src/keymap/bindings.rs b/tui/src/keymap/bindings.rs
-index 7bb98cd..6786483 100644
+index 97639e3..9acc226 100644
 --- a/tui/src/keymap/bindings.rs
 +++ b/tui/src/keymap/bindings.rs
-@@ -355,7 +355,7 @@ define_runtime_action_bindings! {
+@@ -364,7 +364,7 @@ define_runtime_action_bindings! {
          prompt_stack_back,
          skip_question,
      ],
@@ -662,7 +662,7 @@ index 7bb98cd..6786483 100644
          submit,
          queue,
 diff --git a/tui/src/keymap_setup/actions.rs b/tui/src/keymap_setup/actions.rs
-index 7634902..719efb5 100644
+index 64878ea..5a3438d 100644
 --- a/tui/src/keymap_setup/actions.rs
 +++ b/tui/src/keymap_setup/actions.rs
 @@ -161,6 +161,7 @@ define_keymap_actions! {
@@ -674,15 +674,15 @@ index 7634902..719efb5 100644
      composer "Composer" {
          submit => "Submit the current composer draft.",
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_custom.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_custom.snap
-index bec1df2..e7ab98e 100644
+index 1991aa9..820185d 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_custom.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_custom.snap
 @@ -5,7 +5,7 @@ expression: "render_picker(params, 120)"
  
    Keymap
    All configurable shortcuts.
--  153 actions, 1 customized, 5 unbound.
-+  154 actions, 1 customized, 5 unbound.
+-  156 actions, 1 customized, 5 unbound.
++  157 actions, 1 customized, 5 unbound.
  
     All   Common   Customized (1)   Unbound (5)   App   Composer   Editor   Vim   Navigation   Agents   Approval      ›
  
@@ -696,15 +696,15 @@ index bec1df2..e7ab98e 100644
  ↓
    left/right group · enter edit shortcut · * custom · - unbound · esc close
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_fast_mode_enabled.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_fast_mode_enabled.snap
-index ae034db..516f652 100644
+index 177db85..02d9744 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_fast_mode_enabled.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_fast_mode_enabled.snap
 @@ -5,7 +5,7 @@ expression: "render_picker(params, 120)"
  
    Keymap
    All configurable shortcuts.
--  154 actions, 0 customized, 6 unbound.
-+  155 actions, 0 customized, 6 unbound.
+-  157 actions, 0 customized, 6 unbound.
++  158 actions, 0 customized, 6 unbound.
  
     All   Common   Customized (0)   Unbound (6)   App   Composer   Editor   Vim   Navigation   Agents   Approval      ›
  
@@ -717,35 +717,35 @@ index ae034db..516f652 100644
  ↓
    left/right group · enter edit shortcut · * custom · - unbound · esc close
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_first_actions.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_first_actions.snap
-index f68a02d..d7961c5 100644
+index eafff9a..c44e4cc 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_first_actions.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_first_actions.snap
 @@ -2,11 +2,11 @@
  source: tui/src/keymap_setup.rs
  expression: snapshot
  ---
--tab: All (153 selectable)
-+tab: All (154 selectable)
+-tab: All (156 selectable)
++tab: All (157 selectable)
  tab: Common (20 selectable)
  tab: Customized (0) (0 selectable)
  tab: Unbound (5) (5 selectable)
 -tab: App (22 selectable)
 +tab: App (23 selectable)
- tab: Composer (5 selectable)
+ tab: Composer (7 selectable)
  tab: Editor (17 selectable)
  tab: Vim (69 selectable)
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_global_chord.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_global_chord.snap
-index 401b5ed..9e4b21d 100644
+index 7afb72b..7f273b0 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_global_chord.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_global_chord.snap
 @@ -5,7 +5,7 @@ expression: "render_picker(params, 120)"
  
    Keymap
    All configurable shortcuts.
--  153 actions, 1 customized, 7 unbound.
-+  154 actions, 1 customized, 7 unbound.
+-  156 actions, 1 customized, 8 unbound.
++  157 actions, 1 customized, 8 unbound.
  
-    All   Common   Customized (1)   Unbound (7)   App   Composer   Editor   Vim   Navigation   Agents   Approval      ›
+    All   Common   Customized (1)   Unbound (8)   App   Composer   Editor   Vim   Navigation   Agents   Approval      ›
  
 @@ -33,7 +33,7 @@ expression: "render_picker(params, 120)"
    Chat           Toggle Voice               f8
@@ -757,15 +757,15 @@ index 401b5ed..9e4b21d 100644
  ↓
    left/right group · enter edit shortcut · * custom · - unbound · esc close
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_narrow.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_narrow.snap
-index 959a54c..02e9024 100644
+index 730fc49..265263e 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_narrow.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_narrow.snap
 @@ -5,7 +5,7 @@ expression: "render_picker(params, 78)"
  
    Keymap
    All configurable shortcuts.
--  153 actions, 0 customized, 5 unbound.
-+  154 actions, 0 customized, 5 unbound.
+-  156 actions, 0 customized, 5 unbound.
++  157 actions, 0 customized, 5 unbound.
  
     All   Common   Customized (0)   Unbound (5)   App   Composer   Editor   ›
  
@@ -779,15 +779,15 @@ index 959a54c..02e9024 100644
  ↓
    left/right group · enter edit shortcut · * custom · - unbound · esc close
 diff --git a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_wide.snap b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_wide.snap
-index edf78a1..d08a31c 100644
+index 85568ba..cf58f80 100644
 --- a/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_wide.snap
 +++ b/tui/src/snapshots/codex_tui__keymap_setup__tests__keymap_picker_wide.snap
 @@ -5,7 +5,7 @@ expression: "render_picker(params, 120)"
  
    Keymap
    All configurable shortcuts.
--  153 actions, 0 customized, 5 unbound.
-+  154 actions, 0 customized, 5 unbound.
+-  156 actions, 0 customized, 5 unbound.
++  157 actions, 0 customized, 5 unbound.
  
     All   Common   Customized (0)   Unbound (5)   App   Composer   Editor   Vim   Navigation   Agents   Approval      ›
  
