@@ -1,32 +1,52 @@
-Backport https://github.com/NixOS/nix/pull/16581 to Nix 2.35.2.
-Upstream commit: 29ddc0eecd85beb135ad4a7468b6d04608857584
+From 29ddc0eecd85beb135ad4a7468b6d04608857584 Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Fri, 9 Oct 2026 01:26:39 -0400
+Subject: [PATCH] libutil: reset signal callbacks after fork
 
-Keep the interrupt-only registry used by this release. Skip the reset for
-Linux vfork children, which share the parent's address space, and cover that
-with an additional regression test. Retain the upstream fork isolation,
-inherited-handle removal, and inherited-lock regression tests unchanged.
+A daemon worker can inherit the signal callback mutex while another
+thread holds it, then deadlock when registering its own callbacks.
 
-Omit the upstream daemon SIGWINCH stress test: SIGWINCH does not use the
-callback registry in 2.35.2. The deterministic unit test exercises the
-inherited-lock deadlock directly. Drop this backport once the packaged
-release includes the upstream fix.
+Discard the inherited registry in children created by startProcess()
+and create a fresh one on first use. Keep registry identities on
+callback handles so inherited handles cannot touch discarded state.
+Leave the inherited allocations untouched because destroying their
+mutex or callback captures is unsafe.
+
+Cover callback isolation and removal across fork with deterministic
+unit tests, and exercise daemon connections under a signal flood with
+bounded requests and worker cleanup.
+
+Signed-off-by: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Assisted-by: Codex, GPT-6-Astra high
+---
+ src/libutil-tests/unix/meson.build     |   1 +
+ src/libutil-tests/unix/signals.cc      | 111 +++++++++++++++++++++++++
+ src/libutil/unix/processes.cc          |   4 +
+ src/libutil/unix/signals-private.hh    |   7 ++
+ src/libutil/unix/signals.cc            |  64 ++++++++++----
+ tests/functional/daemon-fork-signal.sh |  62 ++++++++++++++
+ tests/functional/meson.build           |   1 +
+ 7 files changed, 234 insertions(+), 16 deletions(-)
+ create mode 100644 src/libutil-tests/unix/signals.cc
+ create mode 100644 tests/functional/daemon-fork-signal.sh
 
 diff --git a/src/libutil-tests/unix/meson.build b/src/libutil-tests/unix/meson.build
-index 7092118..37fdbb1 100644
 --- a/src/libutil-tests/unix/meson.build
 +++ b/src/libutil-tests/unix/meson.build
-@@ -1,4 +1,5 @@
+@@ -1,6 +1,7 @@
  sources += files(
+   'file-descriptor.cc',
    'file-system-at.cc',
+   'file-system.cc',
 +  'signals.cc',
    'unix-domain-socket.cc',
  )
 diff --git a/src/libutil-tests/unix/signals.cc b/src/libutil-tests/unix/signals.cc
 new file mode 100644
-index 0000000..1f67204
+index 000000000000..5e5efe1b16a7
 --- /dev/null
 +++ b/src/libutil-tests/unix/signals.cc
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,111 @@
 +#include "nix/util/processes.hh"
 +#include "nix/util/signals.hh"
 +
@@ -137,59 +157,38 @@ index 0000000..1f67204
 +    });
 +}
 +
-+TEST(SignalCallbacks, vforkPreservesParentRegistration)
-+{
-+    inChildProcess([] {
-+        int parentCalls = 0;
-+        auto parentCallback = createInterruptCallback([&] { ++parentCalls; });
-+
-+        Pid child = startProcess([] { _exit(0); }, {.allowVfork = true});
-+        EXPECT_EQ(child.wait(false), 0);
-+
-+        unix::triggerInterrupt();
-+        EXPECT_EQ(parentCalls, 1);
-+    });
-+}
-+
 +} // namespace nix
 diff --git a/src/libutil/unix/processes.cc b/src/libutil/unix/processes.cc
-index 32d5953..b0affd5 100644
 --- a/src/libutil/unix/processes.cc
 +++ b/src/libutil/unix/processes.cc
-@@ -7,6 +7,8 @@
+@@ -7,8 +7,10 @@
  #include "nix/util/finally.hh"
  #include "nix/util/serialise.hh"
+ #include "nix/util/config.hh"
+ #include "nix/util/system-error.hh"
  
 +#include "unix/signals-private.hh"
 +
  #include <cerrno>
  #include <filesystem>
  #include <cstdlib>
-@@ -237,6 +239,12 @@ pid_t startProcess(fun<void()> processMain, const ProcessOptions & options)
- {
+@@ -243,6 +245,8 @@ pid_t startProcess(fun<void()> processMain, const ProcessOptions & options)
+ 
      auto newLogger = makeSimpleLogger().release();
      ChildWrapperFunction wrapper = [&] {
-+#ifdef __linux__
-+        // A vfork child shares the parent's registry until exec or exit.
-+        if (!options.allowVfork || options.cloneFlags)
-+#endif
-+            unix::resetSignalCallbacksAfterFork();
++        unix::resetSignalCallbacksAfterFork();
 +
-         if (!options.allowVfork) {
-             /* Set a simple logger, while leaking (not destroying)
-                the parent logger. We don't want to run the parent
+         /* Set a simple logger, while leaking (not destroying)
+            the parent logger. We don't want to run the parent
+            logger's destructor since that will crash (e.g. when
 diff --git a/src/libutil/unix/signals-private.hh b/src/libutil/unix/signals-private.hh
-new file mode 100644
-index 0000000..8126086
---- /dev/null
+index ef2b5cc16f8e..923ab5f89b02 100644
+--- a/src/libutil/unix/signals-private.hh
 +++ b/src/libutil/unix/signals-private.hh
-@@ -0,0 +1,15 @@
-+#pragma once
-+///@file
-+
-+namespace nix {
-+namespace unix {
-+
+@@ -8,5 +8,12 @@ namespace unix {
+ extern sigset_t savedSignalMask;
+ extern bool savedSignalMaskIsSet;
+ 
 +/**
 + * Discard inherited registrations, which may refer to vanished threads or
 + * unusable parent state. Call only in a fork/clone child, before starting any
@@ -197,43 +196,41 @@ index 0000000..8126086
 + */
 +void resetSignalCallbacksAfterFork();
 +
-+} // namespace unix
-+} // namespace nix
+ } // namespace unix
+ } // namespace nix
 diff --git a/src/libutil/unix/signals.cc b/src/libutil/unix/signals.cc
-index 38030a7..c8df9c0 100644
+index 975ff00d8b7c..7a8b613ceb3f 100644
 --- a/src/libutil/unix/signals.cc
 +++ b/src/libutil/unix/signals.cc
-@@ -5,6 +5,9 @@
- #include "nix/util/sync.hh"
- #include "nix/util/terminal.hh"
+@@ -7,6 +7,7 @@
  
-+#include "unix/signals-private.hh"
-+
+ #include "unix/signals-private.hh"
+ 
 +#include <atomic>
  #include <thread>
  
  namespace nix {
-@@ -47,15 +50,36 @@ struct InterruptCallbacks
+@@ -49,15 +50,36 @@ struct SignalCallbacks
  
  InterruptCallback::~InterruptCallback() {}
  
 -/* Required to avoid static initialization order fiasco. This allows global
 -   objects to safely register callbacks. */
--static Sync<InterruptCallbacks> & getInterruptCallbacks()
-+using InterruptCallbacksSync = Sync<InterruptCallbacks>;
+-static Sync<SignalCallbacks> & getSignalCallbacks()
++using SignalCallbacksSync = Sync<SignalCallbacks>;
 +
-+static std::atomic<InterruptCallbacksSync *> interruptCallbacksRegistry{nullptr};
++static std::atomic<SignalCallbacksSync *> signalCallbacksRegistry{nullptr};
 +
 +/* Avoid a function-local static's initialization guard: another thread could
 +   be initializing the registry when the process forks. */
-+static InterruptCallbacksSync & getInterruptCallbacks()
++static SignalCallbacksSync & getSignalCallbacks()
 +{
-+    auto * current = interruptCallbacksRegistry.load(std::memory_order_acquire);
++    auto * current = signalCallbacksRegistry.load(std::memory_order_acquire);
 +    if (current)
 +        return *current;
 +
-+    auto * fresh = new InterruptCallbacksSync();
-+    if (!interruptCallbacksRegistry.compare_exchange_strong(
++    auto * fresh = new SignalCallbacksSync();
++    if (!signalCallbacksRegistry.compare_exchange_strong(
 +            current, fresh, std::memory_order_release, std::memory_order_acquire))
 +        delete fresh;
 +    else
@@ -246,64 +243,145 @@ index 38030a7..c8df9c0 100644
  {
 -    /* Intentionally leak, according to the Construct On First Use Idiom.
 -       An alternative is to use the Nifty Counter Idiom, but
--       InterruptCallbacks' destructor is not very important. */
--    static Sync<InterruptCallbacks> * _interruptCallbacks = new Sync<InterruptCallbacks>();
--    return *_interruptCallbacks;
+-       SignalCallbacks' destructor is not very important. */
+-    static Sync<SignalCallbacks> * _signalCallbacks = new Sync<SignalCallbacks>();
+-    return *_signalCallbacks;
 +    /* The inherited mutex may be locked and the map mid-update. Even destroying
 +       callback captures could touch locks or threads that are unusable here.
 +       Leave this state untouched until exit or exec reclaims it, and create a
 +       fresh registry on first use. This abandons only the child's copy; repeated
 +       forks do not accumulate discarded registries in the parent. */
-+    interruptCallbacksRegistry.store(nullptr, std::memory_order_release);
++    signalCallbacksRegistry.store(nullptr, std::memory_order_release);
  }
  
- static void signalHandlerThread(sigset_t set)
-@@ -156,10 +180,12 @@ namespace {
+ static void triggerSignalCallbacks(SignalType type)
+@@ -192,11 +214,13 @@ namespace {
  /* RAII helper to automatically deregister a callback. */
  struct InterruptCallbackImpl : InterruptCallback
  {
-+    InterruptCallbacksSync * registry;
-     InterruptCallbacks::Token token;
++    SignalCallbacksSync * registry;
+     SignalType type;
+     SignalCallbacks::Token token;
  
--    InterruptCallbackImpl(InterruptCallbacks::Token token)
--        : token(token)
-+    InterruptCallbackImpl(InterruptCallbacksSync * registry, InterruptCallbacks::Token token)
+-    InterruptCallbackImpl(SignalType type, SignalCallbacks::Token token)
+-        : type(type)
++    InterruptCallbackImpl(SignalCallbacksSync * registry, SignalType type, SignalCallbacks::Token token)
 +        : registry(registry)
-+        , token(token)
++        , type(type)
+         , token(token)
      {
      }
- 
-@@ -170,8 +196,15 @@ struct InterruptCallbackImpl : InterruptCallback
+@@ -208,8 +232,15 @@ struct InterruptCallbackImpl : InterruptCallback
  
      ~InterruptCallbackImpl() override
      {
--        auto interruptCallbacks(getInterruptCallbacks().lock());
--        interruptCallbacks->callbacks.erase(token);
+-        auto signalCallbacks(getSignalCallbacks().lock());
+-        signalCallbacks->callbacks[type].erase(token);
 +        /* A handle inherited across a fork belongs to discarded parent state,
 +           whose mutex may be permanently locked. Published registries are never
 +           freed, so their addresses identify registrations' owning processes
 +           without address reuse confusing an inherited handle with a new one. */
-+        if (registry != interruptCallbacksRegistry.load(std::memory_order_acquire))
++        if (registry != signalCallbacksRegistry.load(std::memory_order_acquire))
 +            return;
 +
 +        auto callbacks(registry->lock());
-+        callbacks->callbacks.erase(token);
++        callbacks->callbacks[type].erase(token);
      }
  };
  
-@@ -179,10 +212,11 @@ struct InterruptCallbackImpl : InterruptCallback
+@@ -217,10 +248,11 @@ struct InterruptCallbackImpl : InterruptCallback
  
- std::unique_ptr<InterruptCallback> createInterruptCallback(fun<void()> callback)
+ std::unique_ptr<InterruptCallback> createSignalCallback(SignalType type, fun<void()> callback)
  {
--    auto interruptCallbacks(getInterruptCallbacks().lock());
--    auto token = interruptCallbacks->nextToken++;
--    interruptCallbacks->callbacks.emplace(token, callback);
--    return std::make_unique<InterruptCallbackImpl>(token);
-+    auto & registry = getInterruptCallbacks();
+-    auto signalCallbacks(getSignalCallbacks().lock());
+-    auto token = signalCallbacks->nextToken++;
+-    signalCallbacks->callbacks[type].emplace(token, callback);
+-    return std::make_unique<InterruptCallbackImpl>(type, token);
++    auto & registry = getSignalCallbacks();
 +    auto callbacks(registry.lock());
 +    auto token = callbacks->nextToken++;
-+    callbacks->callbacks.emplace(token, callback);
-+    return std::make_unique<InterruptCallbackImpl>(&registry, token);
++    callbacks->callbacks[type].emplace(token, callback);
++    return std::make_unique<InterruptCallbackImpl>(&registry, type, token);
  }
  
- } // namespace nix
+ std::unique_ptr<InterruptCallback> createInterruptCallback(fun<void()> callback)
+diff --git a/tests/functional/daemon-fork-signal.sh b/tests/functional/daemon-fork-signal.sh
+new file mode 100644
+index 000000000000..2a4c8b92f604
+--- /dev/null
++++ b/tests/functional/daemon-fork-signal.sh
+@@ -0,0 +1,62 @@
++#!/usr/bin/env bash
++
++source common.sh
++
++TODO_NixOS
++
++# The daemon forks a worker for each client while a separate thread handles
++# signals. If the fork happens while that thread holds the callback mutex, the
++# worker inherits a permanently locked mutex and the client stops responding.
++
++daemonPid=
++signalPid=
++
++cleanup() {
++    set +e
++
++    # Stop accepting connections before enumerating workers. A deadlocked worker
++    # outlives both its client and the daemon, on any failure path.
++    kill -STOP "$daemonPid" 2>/dev/null
++
++    local workers=()
++    if [[ $(uname) == Linux ]]; then
++        read -r -a workers < "/proc/$daemonPid/task/$daemonPid/children" || true
++    else
++        local pid
++        while read -r pid; do
++            workers+=("$pid")
++        done < <(ps -axo pid=,ppid= | awk -v parent="$daemonPid" '$2 == parent { print $1 }')
++    fi
++
++    kill -KILL "${workers[@]}" "$signalPid" "$daemonPid" 2>/dev/null
++    wait "$signalPid" "$daemonPid" 2>/dev/null
++}
++
++killDaemon
++startDaemon
++daemonPid=$_NIX_TEST_DAEMON_PID
++trap cleanup EXIT
++
++# SIGWINCH exercises the callback registry mutex without requesting daemon
++# shutdown, so the accept loop keeps creating workers during the signal flood.
++# Flooding increases the chance of forking while the mutex is locked. The child
++# inherits the locked mutex, but not the signal thread that could unlock it.
++(
++    set +x
++    while kill -0 "$daemonPid" 2>/dev/null; do
++        kill -WINCH "$daemonPid" 2>/dev/null || break
++    done
++) &
++signalPid=$!
++
++for ((attempt = 0; attempt < 100; attempt++)); do
++    # Each connection makes the daemon fork a worker. A healthy worker answers
++    # immediately; cap the wait so an affected worker cannot hang the test.
++    clientStatus=0
++    "$coreutils/timeout" --kill-after=1 10 nix store info > "$TEST_ROOT/client.log" 2>&1 || clientStatus=$?
++
++    if [[ $clientStatus -ne 0 ]]; then
++        cat "$TEST_ROOT/client.log" >&2
++        fail "daemon client failed or timed out (status $clientStatus)"
++    fi
++done
+diff --git a/tests/functional/meson.build b/tests/functional/meson.build
+index f19da7ef06fe..9ba9fdb32124 100644
+--- a/tests/functional/meson.build
++++ b/tests/functional/meson.build
+@@ -81,6 +81,7 @@ suites = [
+       'completions.sh',
+       'compression-levels.sh',
+       'config.sh',
++      'daemon-fork-signal.sh',
+       'db-migration.sh',
+       'delete-no-keep.sh',
+       'dependencies.sh',

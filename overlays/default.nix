@@ -63,9 +63,10 @@
         patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
       });
 
-      nix = prev.callPackage ./nix {
-        nix = pkgsNixpkgsUnstable.nixVersions.latest;
-      };
+      nix = pkgsNixpkgsUnstable.nixVersions.latest.appendPatches [
+        # Avoid inheriting a locked signal callback registry in daemon workers.
+        ./nix/reset-signal-callbacks-after-fork.patch
+      ];
 
       nix-update = prev.nix-update.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
