@@ -31,7 +31,7 @@ buildNpmPackage rec {
   ];
 
   postInstall = ''
-    wrapProgram "$out/bin/firefox-devtools-mcp" \
+    wrapProgram "$out/bin/firefox-mcp" \
       --prefix PATH : ${lib.makeBinPath [ geckodriver ]}
   '';
 
@@ -48,7 +48,7 @@ buildNpmPackage rec {
       asl20
       mit
     ];
-    mainProgram = "firefox-devtools-mcp";
+    mainProgram = "firefox-mcp";
     platforms = lib.platforms.unix;
   };
 }
