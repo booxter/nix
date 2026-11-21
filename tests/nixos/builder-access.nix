@@ -117,7 +117,8 @@ pkgs.testers.runNixOSTest {
         assert info["trusted"] is False, info
 
     with subtest("the key cannot run shell commands or log in as the operator"):
-        client.fail(ssh + " nix-ssh@server 'touch /tmp/shell-access'")
+        # The forced daemon can exit successfully when stdin closes.
+        client.execute(ssh + " nix-ssh@server 'touch /tmp/shell-access'")
         server.fail("test -e /tmp/shell-access")
         client.fail(ssh + " operator@server true")
         client.fail(ssh + " -N -o ExitOnForwardFailure=yes -R 19999:localhost:22 nix-ssh@server")
