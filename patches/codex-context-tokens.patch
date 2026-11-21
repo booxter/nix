@@ -1,8 +1,8 @@
 diff --git a/app-server-protocol/src/protocol/v2/thread.rs b/app-server-protocol/src/protocol/v2/thread.rs
-index dca33cb..56b71ce 100644
+index 0f2bb10..105e777 100644
 --- a/app-server-protocol/src/protocol/v2/thread.rs
 +++ b/app-server-protocol/src/protocol/v2/thread.rs
-@@ -2121,6 +2121,9 @@ pub struct RawResponseCompletedNotification {
+@@ -2162,6 +2162,9 @@ pub struct RawResponseCompletedNotification {
      pub response_id: String,
      pub usage: Option<TokenUsageBreakdown>,
      pub usage_metadata: Option<ResponseUsageMetadata>,
@@ -13,10 +13,10 @@ index dca33cb..56b71ce 100644
  
  /// Usage metadata reported for one upstream response.
 diff --git a/app-server/src/bespoke_event_handling.rs b/app-server/src/bespoke_event_handling.rs
-index 485f8e1..fd32325 100644
+index a321186..965caef 100644
 --- a/app-server/src/bespoke_event_handling.rs
 +++ b/app-server/src/bespoke_event_handling.rs
-@@ -1249,6 +1249,7 @@ pub(crate) async fn apply_bespoke_event_handling(
+@@ -1267,6 +1267,7 @@ pub(crate) async fn apply_bespoke_event_handling(
                  response_id: raw_response_completed_event.response_id,
                  usage: raw_response_completed_event.token_usage.map(Into::into),
                  usage_metadata: raw_response_completed_event.usage_metadata.map(Into::into),
@@ -25,11 +25,11 @@ index 485f8e1..fd32325 100644
              outgoing
                  .send_server_notification(ServerNotification::RawResponseCompleted(notification))
 diff --git a/app-server/src/request_processors/thread_lifecycle.rs b/app-server/src/request_processors/thread_lifecycle.rs
-index b9062d6..5e9896f 100644
+index f95d09f..7ba1a8b 100644
 --- a/app-server/src/request_processors/thread_lifecycle.rs
 +++ b/app-server/src/request_processors/thread_lifecycle.rs
-@@ -557,9 +557,10 @@ async fn start_listener(
-                             .then(|| thread_state.turn_summary.clone());
+@@ -559,9 +559,10 @@ async fn start_listener(
+                             .then(|| thread_state.turn_summaries.get(&event.id).cloned().unwrap_or_default());
                          (thread_state.experimental_raw_events, terminal)
                      };
 +                    // Response completion accounting also feeds the TUI's session rate.
@@ -53,7 +53,7 @@ index 784e6f9..5031528 100644
              turn_id: started.turn_id,
              response_id: "r1".to_string(),
 diff --git a/app-server/tests/suite/v2/turn_start.rs b/app-server/tests/suite/v2/turn_start.rs
-index 44014ab..199e062 100644
+index 5419761..1be3a68 100644
 --- a/app-server/tests/suite/v2/turn_start.rs
 +++ b/app-server/tests/suite/v2/turn_start.rs
 @@ -1340,6 +1340,10 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
@@ -76,10 +76,10 @@ index 44014ab..199e062 100644
              turn_id: turn.id,
              response_id: "resp-1".to_string(),
 diff --git a/codex-api/src/common.rs b/codex-api/src/common.rs
-index 455836c..263eeec 100644
+index 4e62543..a99dbb8 100644
 --- a/codex-api/src/common.rs
 +++ b/codex-api/src/common.rs
-@@ -132,6 +132,8 @@ pub enum ResponseEvent {
+@@ -170,6 +170,8 @@ pub enum ResponseEvent {
      },
      RateLimits(RateLimitSnapshot),
      ModelsEtag(String),
@@ -89,10 +89,10 @@ index 455836c..263eeec 100644
  
  #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 diff --git a/codex-api/src/sse/responses.rs b/codex-api/src/sse/responses.rs
-index 9c12aae..aa3c9dd 100644
+index eafc92d..babf056 100644
 --- a/codex-api/src/sse/responses.rs
 +++ b/codex-api/src/sse/responses.rs
-@@ -164,6 +164,7 @@ pub struct ResponsesStreamEvent {
+@@ -166,6 +166,7 @@ pub struct ResponsesStreamEvent {
      pub(crate) kind: String,
      pub(crate) headers: Option<Value>,
      metadata: Option<Value>,
@@ -100,7 +100,7 @@ index 9c12aae..aa3c9dd 100644
      response: Option<Value>,
      response_id: Option<Value>,
      error: Option<Value>,
-@@ -178,6 +179,13 @@ pub struct ResponsesStreamEvent {
+@@ -180,6 +181,13 @@ pub struct ResponsesStreamEvent {
      safety_buffering: Option<Value>,
  }
  
@@ -114,7 +114,7 @@ index 9c12aae..aa3c9dd 100644
  fn deserialize_present_value<'de, D>(deserializer: D) -> Result<Option<Value>, D::Error>
  where
      D: serde::Deserializer<'de>,
-@@ -535,6 +543,13 @@ pub fn process_responses_event(
+@@ -562,6 +570,13 @@ pub fn process_responses_event(
                  }));
              }
          }
@@ -128,7 +128,7 @@ index 9c12aae..aa3c9dd 100644
          "codex.response.metadata"
          | "response.content_part.added"
          | "response.content_part.done"
-@@ -544,8 +559,7 @@ pub fn process_responses_event(
+@@ -571,8 +586,7 @@ pub fn process_responses_event(
          | "response.in_progress"
          | "response.metadata"
          | "response.output_text.done"
@@ -138,7 +138,7 @@ index 9c12aae..aa3c9dd 100644
              trace!("unhandled responses event: {}", event.kind);
          }
          kind if kind.ends_with(".delta") => {
-@@ -723,6 +737,40 @@ mod tests {
+@@ -750,6 +764,40 @@ mod tests {
      use tokio_test::io::Builder as IoBuilder;
      use tokio_util::io::ReaderStream;
  
@@ -180,10 +180,10 @@ index 9c12aae..aa3c9dd 100644
          let mut builder = IoBuilder::new();
          for chunk in chunks {
 diff --git a/core/src/agent/control_tests.rs b/core/src/agent/control_tests.rs
-index 9c65c79..afb4673 100644
+index b22f68f..1f6f77d 100644
 --- a/core/src/agent/control_tests.rs
 +++ b/core/src/agent/control_tests.rs
-@@ -2808,6 +2808,7 @@ async fn spawn_agent_fork_sanitizes_inherited_compaction_metadata() {
+@@ -2841,6 +2841,7 @@ async fn spawn_agent_fork_sanitizes_inherited_compaction_metadata() {
              "child-response",
              Some(&child_usage),
              /*usage_metadata*/ None,
@@ -192,10 +192,10 @@ index 9c65c79..afb4673 100644
          .await;
      child_thread
 diff --git a/core/src/compact.rs b/core/src/compact.rs
-index 4aa7e07..4b7c5d6 100644
+index 497a8f5..fc7a150 100644
 --- a/core/src/compact.rs
 +++ b/core/src/compact.rs
-@@ -908,6 +908,7 @@ async fn drain_to_completed(
+@@ -946,6 +946,7 @@ async fn drain_to_completed(
                      &response_id,
                      token_usage.as_ref(),
                      usage_metadata.as_ref(),
@@ -204,22 +204,22 @@ index 4aa7e07..4b7c5d6 100644
                  .await;
                  sess.update_token_usage_info(
 diff --git a/core/src/compact_remote_v2.rs b/core/src/compact_remote_v2.rs
-index 5656fb4..634087d 100644
+index 92d6d48..b28d0b2 100644
 --- a/core/src/compact_remote_v2.rs
 +++ b/core/src/compact_remote_v2.rs
-@@ -457,6 +457,7 @@ async fn collect_compaction_output(
-                             &response_id,
-                             token_usage.as_ref(),
-                             usage_metadata.as_ref(),
-+                            /*service_duration_ms*/ None,
-                         )
-                         .await;
-                     }
+@@ -517,6 +517,7 @@ async fn collect_compaction_output(
+                         &response_id,
+                         usage.provider.as_ref(),
+                         usage_metadata.as_ref(),
++                        /*service_duration_ms*/ None,
+                     )
+                     .await;
+                 }
 diff --git a/core/src/guardian/response_resampling.rs b/core/src/guardian/response_resampling.rs
-index f5a671c..53eece9 100644
+index 3750c82..d2030bb 100644
 --- a/core/src/guardian/response_resampling.rs
 +++ b/core/src/guardian/response_resampling.rs
-@@ -105,7 +105,8 @@ impl ResponseResampling {
+@@ -103,7 +103,8 @@ impl ResponseResampling {
              | ResponseEvent::GuardianAssessment(_)
              | ResponseEvent::ServerReasoningIncluded(_)
              | ResponseEvent::RateLimits(_)
@@ -230,10 +230,10 @@ index f5a671c..53eece9 100644
          Some(event)
      }
 diff --git a/core/src/session/mod.rs b/core/src/session/mod.rs
-index ce93060..e0f8099 100644
+index 8852fc7..0025a02 100644
 --- a/core/src/session/mod.rs
 +++ b/core/src/session/mod.rs
-@@ -5681,6 +5681,7 @@ impl Session {
+@@ -5732,6 +5732,7 @@ impl Session {
          response_id: &str,
          usage: Option<&TokenUsage>,
          usage_metadata: Option<&ResponseUsageMetadata>,
@@ -241,7 +241,7 @@ index ce93060..e0f8099 100644
      ) {
          self.send_event(
              turn_context,
-@@ -5688,6 +5689,7 @@ impl Session {
+@@ -5739,6 +5740,7 @@ impl Session {
                  response_id: response_id.to_string(),
                  token_usage: usage.cloned(),
                  usage_metadata: usage_metadata.cloned(),
@@ -250,10 +250,10 @@ index ce93060..e0f8099 100644
          )
          .await;
 diff --git a/core/src/session/session.rs b/core/src/session/session.rs
-index fba4ce1..89e014e 100644
+index c8d6395..f252bb8 100644
 --- a/core/src/session/session.rs
 +++ b/core/src/session/session.rs
-@@ -1939,7 +1939,8 @@ impl Session {
+@@ -1862,7 +1862,8 @@ impl Session {
                  config.features.enabled(Feature::ContentItemKinds),
                  reasoning_effort_override_enabled,
                  config.features.enabled(Feature::EnableRequestCompression),
@@ -264,18 +264,18 @@ index fba4ce1..89e014e 100644
                  /*concurrent_reasoning_summaries_enabled*/
                  config
 diff --git a/core/src/session/turn.rs b/core/src/session/turn.rs
-index d775099..4574608 100644
+index fd555b5..3e24280 100644
 --- a/core/src/session/turn.rs
 +++ b/core/src/session/turn.rs
-@@ -3063,6 +3063,7 @@ async fn try_run_sampling_request(
-         !sess.services.extensions.turn_item_contributors().is_empty();
-     let mut active_item_is_streaming_to_client = false;
-     let receiving_span = trace_span!("receiving_stream");
+@@ -3106,6 +3106,7 @@ async fn try_run_sampling_request(
+     let mut between_items = false;
+     let mut stopping_tools = false;
+     let mut completed_tools = Vec::new();
 +    let mut service_duration_ms = None;
      let outcome: CodexResult<SamplingRequestResult> = loop {
          if response_completed && resampling.accepted_output.is_empty() {
              if resampling.update_usage_boundary {
-@@ -3181,6 +3182,7 @@ async fn try_run_sampling_request(
+@@ -3244,6 +3245,7 @@ async fn try_run_sampling_request(
  
          match event {
              ResponseEvent::Created { response_id } => {
@@ -283,7 +283,7 @@ index d775099..4574608 100644
                  answer_moderation = None;
                  response_id_for_assessment.clone_from(&response_id);
                  if let Some(response_id) = response_id {
-@@ -3518,6 +3520,9 @@ async fn try_run_sampling_request(
+@@ -3584,6 +3586,9 @@ async fn try_run_sampling_request(
                  sess.record_rate_limits_info(snapshot).await;
                  should_emit_token_count = true;
              }
@@ -293,7 +293,7 @@ index d775099..4574608 100644
              ResponseEvent::ModelsEtag(etag) => {
                  // Update internal state with latest models etag
                  sess.services
-@@ -3567,6 +3572,7 @@ async fn try_run_sampling_request(
+@@ -3629,6 +3634,7 @@ async fn try_run_sampling_request(
                      &response_id,
                      token_usage.as_ref(),
                      usage_metadata.as_ref(),
@@ -316,10 +316,10 @@ index f666d7f..7fdd14e 100644
  }
  
 diff --git a/otel/src/events/session_telemetry.rs b/otel/src/events/session_telemetry.rs
-index f6099b8..c2a9899 100644
+index 61d6248..b7bc3d6 100644
 --- a/otel/src/events/session_telemetry.rs
 +++ b/otel/src/events/session_telemetry.rs
-@@ -1435,6 +1435,7 @@ impl SessionTelemetry {
+@@ -1469,6 +1469,7 @@ impl SessionTelemetry {
              ResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
              ResponseEvent::RateLimits(_) => "rate_limits".into(),
              ResponseEvent::ModelsEtag(_) => "models_etag".into(),
@@ -328,10 +328,10 @@ index f6099b8..c2a9899 100644
      }
  
 diff --git a/protocol/src/protocol.rs b/protocol/src/protocol.rs
-index dedf79e..6ffab9c 100644
+index 6218afc..75a57ac 100644
 --- a/protocol/src/protocol.rs
 +++ b/protocol/src/protocol.rs
-@@ -2201,6 +2201,9 @@ pub struct RawResponseCompletedEvent {
+@@ -2214,6 +2214,9 @@ pub struct RawResponseCompletedEvent {
      pub response_id: String,
      pub token_usage: Option<TokenUsage>,
      pub usage_metadata: Option<crate::ResponseUsageMetadata>,
@@ -342,31 +342,31 @@ index dedf79e..6ffab9c 100644
  
  #[derive(Debug, Clone, Deserialize, Serialize, TS, JsonSchema)]
 diff --git a/tui/src/chatwidget.rs b/tui/src/chatwidget.rs
-index e748352..f2b5515 100644
+index 2220514..37bfb84 100644
 --- a/tui/src/chatwidget.rs
 +++ b/tui/src/chatwidget.rs
-@@ -577,6 +577,7 @@ pub(crate) struct ChatWidget {
+@@ -591,6 +591,7 @@ pub(crate) struct ChatWidget {
      pub(crate) windows_sandbox_elevated_setup_complete: bool,
      token_info: Option<TokenUsageInfo>,
      token_usage_pending: bool,
 +    session_generation_rate: crate::token_usage::GenerationRate,
      // Status and polling use account usage reads; response streams may identify meters differently.
      rate_limit_snapshots_by_limit_id: BTreeMap<String, RateLimitSnapshotDisplay>,
-     refreshing_status_outputs: Vec<(u64, StatusHistoryHandle)>,
+     inherited_quota_provider: Option<String>,
 diff --git a/tui/src/chatwidget/constructor.rs b/tui/src/chatwidget/constructor.rs
-index 1ae4323..5a8f3f5 100644
+index f27e7c4..02b6350 100644
 --- a/tui/src/chatwidget/constructor.rs
 +++ b/tui/src/chatwidget/constructor.rs
-@@ -157,6 +157,7 @@ impl ChatWidget {
+@@ -162,6 +162,7 @@ impl ChatWidget {
              windows_sandbox_elevated_setup_complete: false,
              token_info: None,
              token_usage_pending: false,
 +            session_generation_rate: crate::token_usage::GenerationRate::default(),
              rate_limit_snapshots_by_limit_id: BTreeMap::new(),
+             inherited_quota_provider: None,
              refreshing_status_outputs: Vec::new(),
-             next_status_refresh_request_id: 0,
 diff --git a/tui/src/chatwidget/protocol.rs b/tui/src/chatwidget/protocol.rs
-index 3f1ea5a..01b4454 100644
+index 074bdfe..77ae585 100644
 --- a/tui/src/chatwidget/protocol.rs
 +++ b/tui/src/chatwidget/protocol.rs
 @@ -129,6 +129,16 @@ impl ChatWidget {
@@ -395,10 +395,10 @@ index 3f1ea5a..01b4454 100644
              | ServerNotification::ProcessOutputDelta(_)
              | ServerNotification::ProcessExited(_)
 diff --git a/tui/src/chatwidget/status_surfaces.rs b/tui/src/chatwidget/status_surfaces.rs
-index c7109c6..d84f795 100644
+index 881cd0e..3d712ab 100644
 --- a/tui/src/chatwidget/status_surfaces.rs
 +++ b/tui/src/chatwidget/status_surfaces.rs
-@@ -772,9 +772,26 @@ impl ChatWidget {
+@@ -776,9 +776,26 @@ impl ChatWidget {
                      Some(format!("{} used", format_tokens_compact(total)))
                  }
              }
@@ -429,7 +429,7 @@ index c7109c6..d84f795 100644
                  .status_line_context_used_percent()
                  .map(|used| format!("Context {used}% used")),
 diff --git a/tui/src/chatwidget/tests/status_and_layout.rs b/tui/src/chatwidget/tests/status_and_layout.rs
-index 3491d38..bafeb3d 100644
+index 917f1ad..1986ef0 100644
 --- a/tui/src/chatwidget/tests/status_and_layout.rs
 +++ b/tui/src/chatwidget/tests/status_and_layout.rs
 @@ -116,7 +116,7 @@ async fn resumed_session_hides_unknown_token_usage_until_an_update_arrives() {
@@ -441,7 +441,7 @@ index 3491d38..bafeb3d 100644
      );
  }
  
-@@ -3287,6 +3287,89 @@ async fn status_line_context_remaining_renders_labeled_percent() {
+@@ -3328,6 +3328,89 @@ async fn status_line_context_remaining_renders_labeled_percent() {
      );
  }
  
@@ -532,7 +532,7 @@ index 3491d38..bafeb3d 100644
  async fn status_line_legacy_context_usage_renders_context_used_percent() {
      let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 diff --git a/tui/src/token_usage.rs b/tui/src/token_usage.rs
-index ac9a20b..1d88b91 100644
+index 07ae276..3037001 100644
 --- a/tui/src/token_usage.rs
 +++ b/tui/src/token_usage.rs
 @@ -6,6 +6,9 @@ use codex_protocol::num_format::format_with_separators;
