@@ -1,7 +1,24 @@
+import subprocess
 from collections.abc import Sequence
+from pathlib import Path
 
+import pytest
 from nr.cli import main
-from nr.review import ReviewOptions, ReviewRequest
+from nr.review import ReviewOptions, ReviewRequest, prepare_mac_linux_builder
+
+MAC_BUILDERS = "ssh-ng://builder@linux-builder aarch64-linux,x86_64-linux - 4"
+
+
+class RecordingGcRunner:
+    def __init__(self, status: int = 0) -> None:
+        self.status = status
+        self.runs = 0
+
+    def run(
+        self, arguments: Sequence[str], *, cwd: Path | None = None, input: str = ""
+    ) -> subprocess.CompletedProcess[str]:
+        self.runs += 1
+        return subprocess.CompletedProcess(arguments, self.status, "", "authentication failed")
 
 
 class RecordingReviewExecutor:
@@ -90,3 +107,37 @@ def test_local_with_an_empty_pool_disables_configured_builders() -> None:
     _, options = invoke(["-l", "123"])
 
     assert options.builders == ""
+
+
+@pytest.mark.parametrize(
+    ("platform", "arguments", "builders", "build_arguments", "expected_runs"),
+    [
+        ("darwin", ["123"], MAC_BUILDERS, [], 1),
+        ("darwin", ["-s", "all", "123"], MAC_BUILDERS, [], 1),
+        ("darwin", ["-s", "x86_64-linux", "123"], MAC_BUILDERS, [], 0),
+        ("darwin", ["-s", "aarch64-linux", "123"], "ssh-ng://remote aarch64-linux", [], 0),
+        ("darwin", ["123"], MAC_BUILDERS, ["--builders", ""], 0),
+        ("darwin", ["123"], MAC_BUILDERS, ["--option", "builders", ""], 0),
+        ("linux", ["123"], MAC_BUILDERS, [], 0),
+    ],
+)
+def test_guest_cleanup_only_runs_for_reviews_using_the_mac_builder(
+    platform: str,
+    arguments: list[str],
+    builders: str,
+    build_arguments: list[str],
+    expected_runs: int,
+) -> None:
+    _, options = invoke(arguments, builders=builders)
+    runner = RecordingGcRunner()
+
+    prepare_mac_linux_builder(options, build_arguments, runner, platform=platform)
+
+    assert runner.runs == expected_runs
+
+
+def test_guest_cleanup_reports_errors() -> None:
+    _, options = invoke(["-s", "aarch64-linux", "123"], builders=MAC_BUILDERS)
+
+    with pytest.raises(RuntimeError, match="authentication failed"):
+        prepare_mac_linux_builder(options, [], RecordingGcRunner(status=1), platform="darwin")
