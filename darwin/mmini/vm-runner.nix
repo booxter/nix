@@ -9,20 +9,26 @@ let
   user = "_vm-runner";
   home = "/var/lib/${name}";
   tokenSecret = "github/vm_runner/token";
-  keychainSecret = "github/vm_runner/keychain_password";
   prepareKeychain = pkgs.writeShellApplication {
     name = "prepare-vm-keychain.sh";
     text = ''
       umask 077
-      keychain="$HOME/Library/Keychains/login.keychain-db"
-      password=$(<${lib.escapeShellArg config.sops.secrets.${keychainSecret}.path})
+      directory="$HOME/Library/Keychains/tart"
+      # macOS handles the login.keychain name specially, even in a subdirectory.
+      keychain="$directory/tart.keychain-db"
+      password_file="$directory/password"
 
-      /bin/mkdir -p "$HOME/Library/Keychains"
+      /bin/mkdir -p "$directory"
+      if [[ ! -s "$password_file" ]]; then
+        /usr/bin/uuidgen >"$password_file"
+      fi
+      password=$(<"$password_file")
+
       if [[ ! -f "$keychain" ]]; then
         /usr/bin/security create-keychain -p "$password" "$keychain"
       fi
 
-      # Virtualization.framework needs an unlocked login keychain without a GUI.
+      # Virtualization.framework needs an unlocked keychain without a GUI.
       # https://tart.run/faq/#headless-machines
       /usr/bin/security unlock-keychain -p "$password" "$keychain"
       /usr/bin/security default-keychain -s "$keychain"
@@ -75,11 +81,17 @@ in
     };
   };
 
-  sops.secrets = lib.genAttrs [ tokenSecret keychainSecret ] (_: {
+  services.github-runners.mmini-ci = {
+    # The runner's HOME is cleared between jobs, so this keychain is disposable.
+    extraEnvironment.CI_PREPARE_VM_KEYCHAIN = lib.getExe prepareKeychain;
+    serviceOverrides.SessionCreate = true;
+  };
+
+  sops.secrets.${tokenSecret} = {
     mode = "0400";
     owner = user;
     group = user;
-  });
+  };
 
   host.launchd.logging.locations.vm-runner = {
     directory = "/var/log/github-runners/${name}";

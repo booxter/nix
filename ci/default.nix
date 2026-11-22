@@ -61,7 +61,7 @@ in
   buildTargets =
     lib.mapAttrsToList mkNixosTarget nixosBuildHosts
     ++ lib.mapAttrsToList mkDarwinTarget hosts.darwin
-    ++ lib.mapAttrsToList mkDarwinVmTarget hosts.darwin
+    ++ lib.mapAttrsToList mkDarwinVmTarget (removeAttrs hosts.darwin [ "mair" ])
     ++ [
       # Build the Tart runner without downloading the macOS restore image.
       (mkTarget {

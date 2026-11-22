@@ -1,5 +1,6 @@
 {
   config,
+  extendModules,
   lib,
   pkgs,
   sshKeys,
@@ -11,6 +12,14 @@ let
 in
 {
   system.stateVersion = 6;
+
+  system.build.ciVm =
+    let
+      ci = extendModules {
+        modules = [ { virtualisation.vmVariant = import ../../ci/darwin-vm.nix; } ];
+      };
+    in
+    ci.config.system.build.vm;
 
   home-manager.users.${username} = {
     host.hm.pass.yubikey = "laptop";
