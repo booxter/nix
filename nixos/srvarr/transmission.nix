@@ -11,7 +11,7 @@
     torrentPolicy.trackers = {
       # Hostnames live in the encrypted tracker_aliases mapping. Each alias
       # retains 100 completed torrents, with 30 days of age and 3 seed days
-      # required before removing seeds averaging below 10 KiB/s over 14 days.
+      # required before removing seeds averaging below 10 KiB/s over 14 seeding days.
       mam = { };
       pl = { };
       hnet = { };

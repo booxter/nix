@@ -19,6 +19,7 @@ class Sample(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     timestamp: float = Field(allow_inf_nan=False)
+    seconds_seeding: int = Field(ge=0)
     uploaded_bytes: int = Field(ge=0)
 
 
@@ -37,6 +38,7 @@ class TorrentHistory(BaseModel):
         for previous, current in pairwise(observations):
             if (
                 current.timestamp < previous.timestamp
+                or current.seconds_seeding < previous.seconds_seeding
                 or current.uploaded_bytes < previous.uploaded_bytes
             ):
                 raise ValueError("history observations must be monotonic")
@@ -85,11 +87,12 @@ def observe_upload(
     previous: TorrentHistory | None,
     *,
     completed_at: int,
+    seconds_seeding: int,
     uploaded_bytes: int,
     now: float,
     window_seconds: float,
 ) -> tuple[TorrentHistory, float | None]:
-    sample = Sample(timestamp=now, uploaded_bytes=uploaded_bytes)
+    sample = Sample(timestamp=now, seconds_seeding=seconds_seeding, uploaded_bytes=uploaded_bytes)
     samples = [] if previous is None else previous.samples
     if previous is not None:
         latest = previous.last_observation
@@ -97,13 +100,15 @@ def observe_upload(
         # starts a fresh window. Missing observations must not look like inactivity.
         if (
             previous.completed_at != completed_at
+            or seconds_seeding < latest.seconds_seeding
             or uploaded_bytes < latest.uploaded_bytes
             or not 0 <= now - latest.timestamp <= 2 * HOUR_SECONDS
         ):
             samples = []
 
-    cutoff = now - window_seconds
-    older = [entry for entry in samples if entry.timestamp <= cutoff]
+    # Transmission holds the seeding counter steady while a torrent is paused.
+    cutoff = seconds_seeding - window_seconds
+    older = [entry for entry in samples if entry.seconds_seeding <= cutoff]
     baseline = older[-1] if older else None
     rate = None
     if baseline is not None:
@@ -111,12 +116,12 @@ def observe_upload(
         # estimate protects uploaders at the threshold between hourly samples.
         rate = (uploaded_bytes - baseline.uploaded_bytes) / window_seconds
 
-    # Keep hourly samples and the one immediately before the rolling window.
-    # Always compare against the current counter, even between stored samples.
-    retained = [entry for entry in samples if entry.timestamp > cutoff]
+    # Keep samples an hour of seeding apart and the last one before the window.
+    # Track the latest observation even when the torrent stays paused.
+    retained = [entry for entry in samples if entry.seconds_seeding > cutoff]
     if baseline is not None:
         retained.insert(0, baseline)
-    if not retained or now - retained[-1].timestamp >= HOUR_SECONDS:
+    if not retained or seconds_seeding - retained[-1].seconds_seeding >= HOUR_SECONDS:
         retained.append(sample)
     return TorrentHistory(
         completed_at=completed_at, samples=retained, last_observation=sample

@@ -38,6 +38,7 @@ let
       activityWindowDays = lib.mkOption {
         type = lib.types.ints.positive;
         default = 14;
+        description = "Number of observed seeding days used to calculate average upload.";
       };
       minimumUploadKiBPerSecond = lib.mkOption {
         type = lib.types.ints.positive;
