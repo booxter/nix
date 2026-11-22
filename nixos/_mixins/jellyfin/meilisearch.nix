@@ -41,6 +41,7 @@ in
       plugins = [
         {
           name = "Meilisearch";
+          id = "974395db-b31d-46a2-bc86-ef9aa5ac04dd";
           configuration = {
             Url = url;
             MatchingStrategy = "all";
