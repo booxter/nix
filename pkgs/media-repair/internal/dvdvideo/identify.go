@@ -24,13 +24,15 @@ type Track struct {
 }
 
 type Title struct {
-	Number     int
-	DurationMS int64
-	Chapters   int
-	Angles     int
-	TitleSet   int
-	TitleInSet int
-	Tracks     []Track
+	Number       int
+	DurationMS   int64
+	Chapters     int
+	Angles       int
+	TitleSet     int
+	TitleInSet   int
+	Tracks       []Track
+	NextTitle    int `json:",omitempty"`
+	EquivalentTo int `json:",omitempty"`
 }
 
 type Identifier interface {
@@ -85,15 +87,17 @@ type discXML struct {
 }
 
 type titleXML struct {
-	Number     int           `xml:"ix"`
-	Length     string        `xml:"length"`
-	TitleSet   int           `xml:"vts"`
-	TitleInSet int           `xml:"ttn"`
-	Angles     int           `xml:"angles"`
-	Video      string        `xml:"format"`
-	Audio      []audioXML    `xml:"audio"`
-	Subtitles  []subtitleXML `xml:"subp"`
-	Chapters   []chapterXML  `xml:"chapter"`
+	Number         int           `xml:"ix"`
+	Length         string        `xml:"length"`
+	TitleSet       int           `xml:"vts"`
+	TitleInSet     int           `xml:"ttn"`
+	Angles         int           `xml:"angles"`
+	Video          string        `xml:"format"`
+	Audio          []audioXML    `xml:"audio"`
+	Subtitles      []subtitleXML `xml:"subp"`
+	Chapters       []chapterXML  `xml:"chapter"`
+	NextTitleInSet int           `xml:"next_ttn"`
+	EquivalentTo   int           `xml:"equivalent_to"`
 }
 
 type audioXML struct {
@@ -150,9 +154,28 @@ func decodeTitles(data []byte) ([]Title, error) {
 			Number: raw.Number, DurationMS: int64(math.Round(durationSeconds * 1000)),
 			Chapters: len(raw.Chapters), Angles: raw.Angles,
 			TitleSet: raw.TitleSet, TitleInSet: raw.TitleInSet, Tracks: tracks,
+			EquivalentTo: raw.EquivalentTo,
 		})
 	}
+	for index, raw := range disc.Titles {
+		if next := nextDVDTitle(titles, raw.TitleSet, raw.NextTitleInSet); next != raw.Number {
+			titles[index].NextTitle = next
+		}
+	}
 	return titles, nil
+}
+
+func nextDVDTitle(titles []Title, titleSet, titleInSet int) int {
+	number := 0
+	for _, title := range titles {
+		if title.TitleSet == titleSet && title.TitleInSet == titleInSet {
+			if number != 0 {
+				return 0
+			}
+			number = title.Number
+		}
+	}
+	return number
 }
 
 func audioCodec(format string) (string, bool) {

@@ -64,8 +64,10 @@ in playback order make up the complete intended movie. Return the capability
 IDs of the selected titles in ordered_title_ids. Titles may come from the
 same disc or from separate discs in the download. Consider each title's
 disc path, title number, duration, chapters, and tracks alongside the release
-and any operator guidance. A runtime match alone does not establish
-membership or order. Exclude menus, extras, episodes, and alternate cuts.
+and any operator guidance. A continues_to link gives the disc's authored
+playback order. Equivalent_title_numbers are alternate entries represented by
+the same capability. Use that capability once. A runtime match alone does not
+establish membership or order. Exclude menus, extras, episodes, and alternate cuts.
 If the evidence supports several parts, explain their membership and order.
 If the intended titles or order remain uncertain, choose no_repair.
 

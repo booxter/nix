@@ -78,12 +78,21 @@ func (executor *Executor) Execute(
 				Language: language,
 			})
 		}
-		result = append(result, workercontracts.DVDTitleV1{
+		wire := workercontracts.DVDTitleV1{
 			Number: int64(title.Number), DurationMS: title.DurationMS,
 			ChapterCount: int64(title.Chapters), AngleCount: int64(title.Angles),
 			TitleSet: int64(title.TitleSet), TitleInSet: int64(title.TitleInSet),
 			Tracks: tracks,
-		})
+		}
+		if title.NextTitle != 0 {
+			number := int64(title.NextTitle)
+			wire.NextTitle = &number
+		}
+		if title.EquivalentTo != 0 {
+			number := int64(title.EquivalentTo)
+			wire.EquivalentTo = &number
+		}
+		result = append(result, wire)
 	}
 	return workercontracts.DVDIdentifyResponseV1{
 		Kind: workercontracts.ProbeResponseSucceeded,

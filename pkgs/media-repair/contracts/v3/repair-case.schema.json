@@ -248,10 +248,26 @@
           "minimum": 0,
           "type": "integer"
         },
+        "continues_to": {
+          "$ref": "#/$defs/opaqueId",
+          "description": "DVD capability played from chapter 1 after this title."
+        },
         "duration_ms": {
           "maximum": 604800000,
           "minimum": 1,
           "type": "integer"
+        },
+        "equivalent_title_numbers": {
+          "description": "Equivalent title numbers on the same DVD.",
+          "items": {
+            "maximum": 128,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 127,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
         },
         "navigation_file_id": {
           "$ref": "#/$defs/opaqueId"

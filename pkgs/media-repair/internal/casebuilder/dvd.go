@@ -79,7 +79,42 @@ func bindDVDCapabilities(
 			Tracks: tracks,
 		})
 	}
-	return capabilities, nil
+	return withDVDPlayback(titles, capabilities), nil
+}
+
+type dvdTitleKey struct {
+	navigation controller.FileID
+	number     int
+}
+
+func withDVDPlayback(titles []dvdvideo.Candidate, capabilities []contracts.Capability) []contracts.Capability {
+	indices := make(map[dvdTitleKey]int, len(titles))
+	representatives := make([]int, len(titles))
+	for index, title := range titles {
+		indices[dvdTitleKey{title.NavigationFileID, title.Details.Number}] = index
+		representatives[index] = index
+		canonical, found := indices[dvdTitleKey{title.NavigationFileID, title.Details.EquivalentTo}]
+		if found && canonical < index && representatives[canonical] == canonical {
+			representatives[index] = canonical
+			capabilities[canonical].EquivalentTitleNumbers = append(
+				capabilities[canonical].EquivalentTitleNumbers, int64(title.Details.Number),
+			)
+		}
+	}
+
+	offered := make([]contracts.Capability, 0, len(capabilities))
+	for index, title := range titles {
+		if representatives[index] != index {
+			continue
+		}
+		capability := capabilities[index]
+		next, found := indices[dvdTitleKey{title.NavigationFileID, title.Details.NextTitle}]
+		if found && representatives[next] != index {
+			capability.ContinuesTo = ptr(capabilities[representatives[next]].CapabilityID)
+		}
+		offered = append(offered, capability)
+	}
+	return offered
 }
 
 func ptr[T any](value T) *T { return &value }

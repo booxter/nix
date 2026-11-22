@@ -48,6 +48,43 @@ def test_restores_canonical_identifiers_in_model_decision() -> None:
     assert restored_value == json.loads((FIXTURES / "repair-decision-join.json").read_bytes())
 
 
+def test_projects_authored_dvd_playback_links() -> None:
+    value = json.loads((FIXTURES / "repair-case-joinable.json").read_bytes())
+    file_id = value["files"][0]["file_id"]
+    title = {
+        "action": "remux_dvd_v2",
+        "navigation_file_id": file_id,
+        "source_file_ids": [file_id],
+        "title_set": 1,
+        "angle_count": 1,
+        "duration_ms": 1117200,
+        "chapter_count": 1,
+        "tracks": [{"kind": "video", "codec": "mpeg2video", "language": None}],
+    }
+    value["capabilities"] = [
+        {
+            **title,
+            "capability_id": "capability:first",
+            "title_number": 1,
+            "title_in_set": 1,
+            "continues_to": "capability:second",
+        },
+        {
+            **title,
+            "capability_id": "capability:second",
+            "title_number": 2,
+            "title_in_set": 2,
+            "equivalent_title_numbers": [3],
+        },
+    ]
+
+    projection = project_case(decode_case(json.dumps(value).encode()))
+    first, second = json.loads(projection.case_content)["capabilities"]
+
+    assert first["continues_to"] == second["capability_id"] == "capability:2"
+    assert second["equivalent_title_numbers"] == [3]
+
+
 def test_timestamp_units_do_not_change_model_evidence() -> None:
     value = json.loads((FIXTURES / "repair-case-joinable.json").read_bytes())
     original = decode_case(json.dumps(value).encode())

@@ -1,6 +1,7 @@
 package casebuilder
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
@@ -49,5 +50,35 @@ func TestDVDCapabilityBindsTitleAndWholeDiscSnapshot(t *testing.T) {
 	changed, err := bindDVDCapabilities([]dvdvideo.Candidate{title}, files)
 	if err != nil || changed[0].CapabilityID == previousID {
 		t.Fatalf("changed DVD source retained capability identity: %#v, %v", changed, err)
+	}
+}
+
+func TestDVDPlaybackLinksUseTheOfferedEquivalentTitle(t *testing.T) {
+	t.Parallel()
+	navigation := controller.FileID("file:disc")
+	files := map[controller.FileID]controller.InventoryFile{navigation: {ID: navigation}}
+	var titles []dvdvideo.Candidate
+	for number := 1; number <= 3; number++ {
+		titles = append(titles, dvdvideo.Candidate{
+			NavigationFileID: navigation,
+			SourceFileIDs:    []controller.FileID{navigation},
+			Details: dvdvideo.Title{
+				Number: number, TitleInSet: number, TitleSet: 1,
+				DurationMS: 1_117_200, Chapters: 1, Angles: 1,
+				Tracks: []dvdvideo.Track{{Kind: "video", Codec: "mpeg2video"}, {Kind: "audio", Codec: "ac3"}},
+			},
+		})
+	}
+	titles[0].Details.NextTitle = 3
+	titles[2].Details.EquivalentTo = 2
+
+	capabilities, err := bindDVDCapabilities(titles, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(capabilities) != 2 || capabilities[0].ContinuesTo == nil ||
+		*capabilities[0].ContinuesTo != capabilities[1].CapabilityID ||
+		!slices.Equal(capabilities[1].EquivalentTitleNumbers, []int64{3}) {
+		t.Fatalf("offered DVD playback = %#v", capabilities)
 	}
 }
