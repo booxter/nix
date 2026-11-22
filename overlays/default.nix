@@ -110,7 +110,7 @@
         ];
       });
 
-      # Drop once nixpkgs includes the XML output fixes.
+      # Drop the version override once nixpkgs includes the XML output fixes.
       # https://github.com/NixOS/nixpkgs/pull/584774
       lsdvd = prev.lsdvd.overrideAttrs (old: rec {
         version = "0.21";
@@ -119,6 +119,10 @@
           rev = "refs/tags/${version}";
           hash = "sha256-NCMd0gj8jF0xpixMz3Vp77O+vG/Qso98HxFwoB+b3Zc=";
         };
+        patches = (old.patches or [ ]) ++ [
+          ../patches/lsdvd-expose-title-continuations.patch
+          ../patches/lsdvd-expose-equivalent-titles.patch
+        ];
         buildInputs = (old.buildInputs or [ ]) ++ [ prev.libxml2 ];
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.autoreconfHook ];
       });

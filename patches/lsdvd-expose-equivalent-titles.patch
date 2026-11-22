@@ -1,0 +1,62 @@
+diff --git a/oxml.c b/oxml.c
+index 2d49ca9..3fb1a18 100644
+--- a/oxml.c
++++ b/oxml.c
+@@ -151,6 +151,47 @@ static int next_title_in_set(const pgc_t *pgc)
+ 	return 0;
+ }
+ 
++static int same_end_commands(const pgc_t *left, const pgc_t *right)
++{
++	const pgc_command_tbl_t *a = left->command_tbl;
++	const pgc_command_tbl_t *b = right->command_tbl;
++	int a_count = a ? a->nr_of_post : 0;
++	int b_count = b ? b->nr_of_post : 0;
++	return a_count == b_count && (!a_count ||
++		(a->post_cmds && b->post_cmds &&
++		 !memcmp(a->post_cmds, b->post_cmds, a_count * sizeof(vm_cmd_t))));
++}
++
++/* Titles in one set can use different chains for the same cells. Compare
++   playback, chapter boundaries and track selection before treating them alike. */
++static int same_playback(const pgc_t *left, const pgc_t *right)
++{
++	return left && right && left->cell_position && right->cell_position &&
++		left->nr_of_programs == right->nr_of_programs &&
++		left->nr_of_cells == right->nr_of_cells &&
++		left->next_pgc_nr == right->next_pgc_nr &&
++		!memcmp(&left->playback_time, &right->playback_time, sizeof(dvd_time_t)) &&
++		!memcmp(left->program_map, right->program_map, left->nr_of_programs) &&
++		!memcmp(left->cell_playback, right->cell_playback,
++			left->nr_of_cells * sizeof(cell_playback_t)) &&
++		!memcmp(left->cell_position, right->cell_position,
++			left->nr_of_cells * sizeof(cell_position_t)) &&
++		!memcmp(left->audio_control, right->audio_control, sizeof(left->audio_control)) &&
++		!memcmp(left->subp_control, right->subp_control, sizeof(left->subp_control)) &&
++		!memcmp(left->palette, right->palette, sizeof(left->palette)) &&
++		same_end_commands(left, right);
++}
++
++static int equivalent_title(const struct dvd_info *dvd, int title)
++{
++	for (int i = 0; i < title; i++) {
++		if (dvd->titles[i].parameter.vts == dvd->titles[title].parameter.vts &&
++		    same_playback(dvd->titles[i].playback, dvd->titles[title].playback))
++			return i + 1;
++	}
++	return 0;
++}
++
+ void oxml_print(struct dvd_info *dvd_info) {
+ 	int j, i;
+ 
+@@ -175,6 +216,9 @@ void oxml_print(struct dvd_info *dvd_info) {
+ 		int next = next_title_in_set(dvd_info->titles[j].playback);
+ 		if (next)
+ 			XMLDEF("next_ttn", "%d", next);
++		int equivalent = equivalent_title(dvd_info, j);
++		if (equivalent)
++			XMLDEF("equivalent_to", "%d", equivalent);
+ 
+ 		if (dvd_info->titles[j].parameter.format != NULL ) {
+ 			XMLDEF("vts", "%d", dvd_info->titles[j].parameter.vts);
