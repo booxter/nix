@@ -117,6 +117,34 @@ func (runner *Runner) Join(
 	output *os.File,
 	container workercontracts.OutputContainer,
 ) (Result, error) {
+	return runner.join(ctx, parts, output, container, nil)
+}
+
+type Chapter struct {
+	StartMS int64
+	EndMS   int64
+}
+
+type PartMetadata struct {
+	DurationMS int64
+	Chapters   []Chapter
+}
+
+// JoinDVD keeps navigation chapters from every remuxed title. The same part
+// durations establish the media boundaries and the chapter offsets.
+func (runner *Runner) JoinDVD(
+	ctx context.Context, parts []*os.File, output *os.File, metadata []PartMetadata,
+) (Result, error) {
+	if len(parts) != len(metadata) {
+		return Result{}, fmt.Errorf("DVD join needs metadata for every part")
+	}
+	return runner.join(ctx, parts, output, workercontracts.OutputContainerMKV, metadata)
+}
+
+func (runner *Runner) join(
+	ctx context.Context, parts []*os.File, output *os.File,
+	container workercontracts.OutputContainer, metadata []PartMetadata,
+) (Result, error) {
 	format, err := outputFormat(container)
 	if err != nil {
 		return Result{}, err
@@ -147,13 +175,20 @@ func (runner *Runner) Join(
 		}
 	}
 
-	manifest := concatManifest(len(parts))
+	manifest := concatManifest(len(parts), metadata)
 	outputDescriptor := firstInheritedDescriptor + len(parts)
 	arguments := []string{
 		"-hide_banner",
 		"-loglevel", "warning",
 		"-nostdin",
 		"-y",
+	}
+	if metadata != nil {
+		// The concat script already sets chapter times on the full timeline.
+		// Keep FFmpeg from shifting them by the first stream's start time.
+		arguments = append(arguments, "-copyts")
+	}
+	arguments = append(arguments,
 		"-f", "concat",
 		"-safe", "0",
 		"-protocol_whitelist", "fd,pipe",
@@ -166,7 +201,7 @@ func (runner *Runner) Join(
 		"-f", format,
 		"-fd", strconv.Itoa(outputDescriptor),
 		"fd:",
-	}
+	)
 	phase, span := telemetry.StartPhase(joinContext, "concatenate")
 	command := exec.CommandContext(phase, runner.executable, arguments...)
 	command.WaitDelay = commandWaitDelay
@@ -305,7 +340,7 @@ func prepareFiles(parts []*os.File, output *os.File) error {
 	return nil
 }
 
-func concatManifest(partCount int) string {
+func concatManifest(partCount int, metadata []PartMetadata) string {
 	var manifest strings.Builder
 	manifest.WriteString("ffconcat version 1.0\n")
 	for index := range partCount {
@@ -316,6 +351,19 @@ func concatManifest(partCount int) string {
 			"file fd:\noption fd %d\n",
 			firstInheritedDescriptor+index,
 		)
+		if metadata != nil {
+			_, _ = fmt.Fprintf(&manifest, "duration %dms\n", metadata[index].DurationMS)
+		}
+	}
+	var offset int64
+	chapterID := 0
+	for _, part := range metadata {
+		for _, chapter := range part.Chapters {
+			chapterID++
+			_, _ = fmt.Fprintf(&manifest, "chapter %d %dms %dms\n",
+				chapterID, offset+chapter.StartMS, offset+chapter.EndMS)
+		}
+		offset += part.DurationMS
 	}
 	return manifest.String()
 }

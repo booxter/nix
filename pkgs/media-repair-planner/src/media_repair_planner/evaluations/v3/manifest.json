@@ -271,10 +271,15 @@
     {
       "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
       "expected": {
-        "action": "remux_dvd_v1",
-        "capability_id": "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+        "action": "remux_dvd_v2",
+        "ordered_title_ids": [
+          "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+        ]
       },
-      "name": "current_pink_velvet_2_dvd"
+      "name": "current_pink_velvet_2_dvd",
+      "replacements": {
+        "/capabilities/0/action": "remux_dvd_v2"
+      }
     },
     {
       "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
@@ -288,6 +293,7 @@
       },
       "name": "pink_velvet_2_dvd_runtime_mismatch",
       "replacements": {
+        "/capabilities/0/action": "remux_dvd_v2",
         "/case_id": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "/radarr/movie/runtime_minutes": 90
       }
@@ -295,11 +301,14 @@
     {
       "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
       "expected": {
-        "action": "remux_dvd_v1",
-        "capability_id": "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+        "action": "remux_dvd_v2",
+        "ordered_title_ids": [
+          "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+        ]
       },
       "name": "pink_velvet_2_dvd_runtime_within_tolerance",
       "replacements": {
+        "/capabilities/0/action": "remux_dvd_v2",
         "/case_id": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         "/radarr/movie/runtime_minutes": 180
       }

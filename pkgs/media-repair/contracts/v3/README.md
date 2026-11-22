@@ -29,8 +29,9 @@ Schema validation cannot establish reference membership or compare a decision
 with its request; the controller performs those semantic checks independently.
 
 The decision actions are `no_repair`, `join_parts_v1`,
-`manual_import_file_v1`, and `remux_bluray_v1`. The Blu-ray action selects one
-offered playlist capability. Its clip order, duration, chapters, and tracks
-come from MKVToolNix identification and are bound to inventoried files. The
+`manual_import_file_v1`, `remux_bluray_v1`, and `remux_dvd_v2`. The DVD action
+selects one or more offered DVD title IDs in playback order. The Blu-ray
+action selects one offered playlist capability. Its clip order, duration,
+chapters, and tracks come from MKVToolNix and are bound to inventoried files. The
 planner cannot choose a path, output name, executable, command argument, movie
 ID, quality, language, release group, or import mode.

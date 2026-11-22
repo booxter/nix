@@ -24,8 +24,14 @@ type AuthorizedDVD struct {
 	RuntimeToleranceMS int64
 }
 
+type AuthorizedDVDSelection struct {
+	Titles             []AuthorizedDVD
+	MovieRuntimeMS     int64
+	RuntimeToleranceMS int64
+}
+
 type DVDValidation struct {
-	Authorized *AuthorizedDVD
+	Authorized *AuthorizedDVDSelection
 	Rejections []RemuxRejectionReason
 	Runtime    *ManualImportRuntimeAssessment
 }
@@ -57,13 +63,65 @@ func ValidateDVDWithPolicy(
 		assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
 		return rejectDVD(RemuxCaseMismatch)
 	}
-	capability, found := findCapability(assembly.Request.Capabilities, decision.RemuxDVD.CapabilityID)
+	ids := decision.RemuxDVD.OrderedTitleIDS
+	if len(ids) == 0 || len(ids) > 128 {
+		return rejectDVD(RemuxCapabilityMissing)
+	}
+	observation := assembly.LocalSnapshot.Observation
+	if observation.Movie == nil || observation.Movie.RuntimeMinutes == nil ||
+		*observation.Movie.RuntimeMinutes <= 0 {
+		return rejectDVD(RemuxRuntimeMissing)
+	}
+	files := indexFiles(observation.Inventory)
+	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
+	for _, path := range observation.Inventory.Paths {
+		paths[path.FileID] = path.AbsolutePath
+	}
+
+	selected := make([]AuthorizedDVD, 0, len(ids))
+	seen := make(map[string]bool, len(ids))
+	var total int64
+	for _, id := range ids {
+		if seen[id] {
+			return rejectDVD(RemuxPlaylistMismatch)
+		}
+		seen[id] = true
+		title, reason := authorizeDVDTitle(assembly, files, paths, id)
+		if reason != "" {
+			return rejectDVD(reason)
+		}
+		if title.ExpectedDurationMS <= 0 || title.ExpectedDurationMS > math.MaxInt64-total {
+			return rejectDVD(RemuxPlaylistMismatch)
+		}
+		total += title.ExpectedDurationMS
+		selected = append(selected, title)
+	}
+	runtime := assessManualImportRuntime(total, observation.Movie.RuntimeMinutes, policy)
+	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
+		return DVDValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
+	}
+	for index := range selected {
+		selected[index].RuntimeToleranceMS = *runtime.ToleranceMS
+	}
+	return DVDValidation{Authorized: &AuthorizedDVDSelection{
+		Titles: selected, MovieRuntimeMS: *runtime.MovieRuntimeMS,
+		RuntimeToleranceMS: *runtime.ToleranceMS,
+	}, Runtime: runtime}
+}
+
+func authorizeDVDTitle(
+	assembly casebuilder.Assembly,
+	files map[controller.FileID]controller.InventoryFile,
+	paths map[controller.FileID]string,
+	id string,
+) (AuthorizedDVD, RemuxRejectionReason) {
+	capability, found := findCapability(assembly.Request.Capabilities, id)
 	if !found || capability.Action != contracts.CapabilityActionRemuxDVD ||
 		capability.NavigationFileID == nil || capability.TitleNumber == nil ||
 		capability.TitleSet == nil || capability.TitleInSet == nil || capability.AngleCount == nil ||
 		capability.DurationMS == nil || capability.ChapterCount == nil ||
 		len(capability.SourceFileIDS) == 0 || len(capability.Tracks) == 0 {
-		return rejectDVD(RemuxCapabilityMissing)
+		return AuthorizedDVD{}, RemuxCapabilityMissing
 	}
 	var title *dvdvideo.Candidate
 	for index := range assembly.LocalSnapshot.Observation.DVDTitles {
@@ -71,7 +129,7 @@ func ValidateDVDWithPolicy(
 		if string(candidate.NavigationFileID) == *capability.NavigationFileID &&
 			candidate.Details.Number == int(*capability.TitleNumber) {
 			if title != nil {
-				return rejectDVD(RemuxPlaylistMismatch)
+				return AuthorizedDVD{}, RemuxPlaylistMismatch
 			}
 			title = candidate
 		}
@@ -85,55 +143,38 @@ func ValidateDVDWithPolicy(
 		len(title.SourceFileIDs) != len(capability.SourceFileIDS) ||
 		!slices.EqualFunc(title.SourceFileIDs, capability.SourceFileIDS,
 			func(fileID controller.FileID, offered string) bool { return string(fileID) == offered }) {
-		return rejectDVD(RemuxPlaylistMismatch)
+		return AuthorizedDVD{}, RemuxPlaylistMismatch
 	}
 	for index, track := range title.Details.Tracks {
 		offered := capability.Tracks[index]
 		if track.Kind != string(offered.Kind) || track.Codec != offered.Codec ||
 			(track.Language == "" && offered.Language != nil) ||
 			(track.Language != "" && (offered.Language == nil || track.Language != *offered.Language)) {
-			return rejectDVD(RemuxPlaylistMismatch)
+			return AuthorizedDVD{}, RemuxPlaylistMismatch
 		}
-	}
-	observation := assembly.LocalSnapshot.Observation
-	if observation.Movie == nil || observation.Movie.RuntimeMinutes == nil ||
-		*observation.Movie.RuntimeMinutes <= 0 {
-		return rejectDVD(RemuxRuntimeMissing)
-	}
-	runtime := assessManualImportRuntime(
-		title.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
-	)
-	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
-		return DVDValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
-	}
-	files := indexFiles(observation.Inventory)
-	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
-	for _, path := range observation.Inventory.Paths {
-		paths[path.FileID] = path.AbsolutePath
 	}
 	navigation, ok := availableRemuxFile(files, paths, title.NavigationFileID)
 	if !ok {
-		return rejectDVD(RemuxFileUnavailable)
+		return AuthorizedDVD{}, RemuxFileUnavailable
 	}
 	navigationPath := paths[title.NavigationFileID]
 	directory := filepath.Dir(navigationPath)
 	if filepath.Base(navigationPath) != "VIDEO_TS.IFO" {
-		return rejectDVD(RemuxPlaylistMismatch)
+		return AuthorizedDVD{}, RemuxPlaylistMismatch
 	}
-	authorized := &AuthorizedDVD{
+	authorized := AuthorizedDVD{
 		CaseID: assembly.Request.CaseID, CapabilityID: capability.CapabilityID,
 		Navigation: navigation, TitleNumber: title.Details.Number,
 		ExpectedDurationMS: title.Details.DurationMS,
 		ExpectedChapters:   title.Details.Chapters,
 		ExpectedTracks:     append([]dvdvideo.Track(nil), title.Details.Tracks...),
-		RuntimeToleranceMS: *runtime.ToleranceMS,
 		Sources:            make([]AuthorizedRemuxFile, 0, len(title.SourceFileIDs)),
 	}
 	for _, fileID := range title.SourceFileIDs {
 		source, ok := availableRemuxFile(files, paths, fileID)
 		if !ok || filepath.Dir(paths[fileID]) != directory ||
 			source.Fingerprint.SizeBytes > math.MaxInt64-authorized.SourceBytes {
-			return rejectDVD(RemuxFileUnavailable)
+			return AuthorizedDVD{}, RemuxFileUnavailable
 		}
 		authorized.Sources = append(authorized.Sources, source)
 		authorized.SourceBytes += source.Fingerprint.SizeBytes
@@ -141,7 +182,7 @@ func ValidateDVDWithPolicy(
 	if !slices.ContainsFunc(authorized.Sources, func(source AuthorizedRemuxFile) bool {
 		return source.FileID == navigation.FileID
 	}) {
-		return rejectDVD(RemuxFileUnavailable)
+		return AuthorizedDVD{}, RemuxFileUnavailable
 	}
-	return DVDValidation{Authorized: authorized, Runtime: runtime}
+	return authorized, ""
 }

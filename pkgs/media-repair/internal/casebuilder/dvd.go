@@ -46,8 +46,9 @@ func bindDVDCapabilities(
 		if len(tracks) == 0 || len(tracks) > 32 {
 			return nil, fmt.Errorf("DVD title has an invalid track count")
 		}
+		// The title ID identifies the source, independent of the decision version.
 		identity := []string{
-			string(contracts.CapabilityActionRemuxDVD), string(title.NavigationFileID),
+			"remux_dvd_v1", string(title.NavigationFileID),
 			navigation.Fingerprint.StableFingerprint(),
 			strconv.Itoa(details.Number), strconv.Itoa(details.TitleSet),
 			strconv.Itoa(details.TitleInSet), strconv.FormatInt(details.DurationMS, 10),

@@ -15,7 +15,8 @@ func TestValidateDVDRequiresCompleteMatchingTitle(t *testing.T) {
 	assembly, decision := dvdCase()
 	validation := ValidateDVD(assembly, decision)
 	if !validation.Accepted() || validation.Authorized == nil ||
-		validation.Authorized.TitleNumber != 1 || len(validation.Authorized.Sources) != 2 {
+		len(validation.Authorized.Titles) != 1 || validation.Authorized.Titles[0].TitleNumber != 1 ||
+		len(validation.Authorized.Titles[0].Sources) != 2 {
 		t.Fatalf("DVD authorization = %#v", validation)
 	}
 	assembly.LocalSnapshot.Observation.Inventory.Files[1].DownloadFile.BytesCompleted--
@@ -76,6 +77,39 @@ func TestValidateDVDAcceptsAuthorizedRuntimeDifference(t *testing.T) {
 	}
 }
 
+func TestValidateDVDUsesCombinedRuntimeAndKeepsSelectedTitleOrder(t *testing.T) {
+	t.Parallel()
+	assembly, decision := dvdCase()
+	first := &assembly.LocalSnapshot.Observation.DVDTitles[0]
+	first.Details.DurationMS = 4_000_000
+	assembly.Request.Capabilities[0].DurationMS = pointer(first.Details.DurationMS)
+	second := *first
+	second.Details.Number = 2
+	second.Details.DurationMS = 5_779_000
+	assembly.LocalSnapshot.Observation.DVDTitles = append(assembly.LocalSnapshot.Observation.DVDTitles, second)
+	capability := assembly.Request.Capabilities[0]
+	capability.CapabilityID = "capability:dvd-second"
+	capability.TitleNumber = pointer(int64(2))
+	capability.DurationMS = pointer(second.Details.DurationMS)
+	assembly.Request.Capabilities = append(assembly.Request.Capabilities, capability)
+
+	if validation := ValidateDVD(assembly, decision); validation.Accepted() ||
+		validation.Rejections[0] != RemuxRuntimeMismatch {
+		t.Fatalf("accepted an incomplete selection: %#v", validation)
+	}
+	decision.RemuxDVD.OrderedTitleIDS = []string{capability.CapabilityID, "capability:dvd"}
+	validation := ValidateDVD(assembly, decision)
+	if !validation.Accepted() || len(validation.Authorized.Titles) != 2 ||
+		validation.Authorized.Titles[0].TitleNumber != 2 || validation.Authorized.Titles[1].TitleNumber != 1 {
+		t.Fatalf("wrong combined DVD authorization: %#v", validation)
+	}
+
+	decision.RemuxDVD.OrderedTitleIDS = []string{capability.CapabilityID, capability.CapabilityID}
+	if ValidateDVD(assembly, decision).Accepted() {
+		t.Fatal("accepted the same DVD title twice")
+	}
+}
+
 func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV3) {
 	const caseID, capabilityID = "case:dvd", "capability:dvd"
 	navigationPath := filepath.Join("/media/movie", "VIDEO_TS", "VIDEO_TS.IFO")
@@ -123,7 +157,7 @@ func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV3) {
 	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionRemuxDVD,
 		RemuxDVD: &contracts.RemuxDVDDecision{
-			Action: "remux_dvd_v1", CaseID: caseID, CapabilityID: capabilityID,
+			Action: "remux_dvd_v2", CaseID: caseID, OrderedTitleIDS: []string{capabilityID},
 		},
 	}
 	return assembly, decision

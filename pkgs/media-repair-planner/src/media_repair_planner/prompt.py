@@ -47,9 +47,9 @@ uncertain, choose no_repair.
 Choose manual_import_file_v1 only when one offered file is the intended movie
 and does not require media transformation.
 
-When comparing a Blu-ray playlist or DVD title duration with the movie runtime,
-treat them as matching when their absolute difference is no more than the
-greater of five minutes or 10 percent of the movie runtime. Do not choose
+Compare the movie runtime with the Blu-ray playlist duration or the sum of
+the selected DVD title durations. Treat them as matching when the difference
+is no more than the greater of five minutes or 10 percent of the movie runtime. Do not choose
 no_repair solely because of a duration difference within this tolerance. A
 playlist or title outside this tolerance cannot be selected.
 
@@ -59,10 +59,15 @@ and tracks with the movie and the other offered playlists. When two playlists
 reference the same complete clips, prefer the one carrying useful chapter marks.
 If the runtime or title remains uncertain, choose no_repair and explain why.
 
-Choose remux_dvd_v1 only when an offered DVD title is the complete intended
-movie. Compare its duration, chapters, and tracks with the movie runtime and
-other offered titles. Short menus, extras, and episodes are not the movie.
-If the title remains uncertain, choose no_repair and explain why.
+Choose remux_dvd_v2 when one offered DVD title or several offered DVD titles
+in playback order make up the complete intended movie. Return the capability
+IDs of the selected titles in ordered_title_ids. Titles may come from the
+same disc or from separate discs in the download. Consider each title's
+disc path, title number, duration, chapters, and tracks alongside the release
+and any operator guidance. A runtime match alone does not establish
+membership or order. Exclude menus, extras, episodes, and alternate cuts.
+If the evidence supports several parts, explain their membership and order.
+If the intended titles or order remain uncertain, choose no_repair.
 
 Otherwise choose no_repair and state the uncertainty or unsupported repair
 plainly.

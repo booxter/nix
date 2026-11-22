@@ -54,8 +54,10 @@ def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV3:
             capability_id=expected.capability_id,
             file_id=expected.file_id,
         )
-    elif isinstance(expected, (ExpectedRemuxBluray, ExpectedRemuxDVD)):
+    elif isinstance(expected, ExpectedRemuxBluray):
         value.update(capability_id=expected.capability_id)
+    elif isinstance(expected, ExpectedRemuxDVD):
+        value.update(ordered_title_ids=expected.ordered_title_ids)
     return decode_decision(json.dumps(value).encode())
 
 

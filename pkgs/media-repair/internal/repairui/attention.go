@@ -135,7 +135,7 @@ func radarrAttention(raw json.RawMessage, plan decision) *attention {
 			result = guidanceAttention("Clarify how to use the files", "Which files belong together, and how should they be used?")
 		}
 	case "ambiguous_part_order":
-		if !hasCapability(c, contracts.PurpleJoinPartsV1) {
+		if !hasCapability(c, contracts.PurpleJoinPartsV1) && !hasCapability(c, contracts.PurpleRemuxDVDV2) {
 			return nil
 		}
 		result = guidanceAttention("Clarify the part order", "In what order should the parts be joined?")
@@ -148,12 +148,12 @@ func radarrAttention(raw json.RawMessage, plan decision) *attention {
 			switch missing {
 			case "file_selection":
 			case "part_order", "part_membership":
-				if !hasCapability(c, contracts.PurpleJoinPartsV1) {
+				if !hasCapability(c, contracts.PurpleJoinPartsV1) && !hasCapability(c, contracts.PurpleRemuxDVDV2) {
 					return nil
 				}
 				allowRuntime = allowRuntime || missing == "part_membership"
 			case "disc_playlist":
-				if !hasCapability(c, contracts.PurpleRemuxBlurayV1) && !hasCapability(c, contracts.PurpleRemuxDVDV1) {
+				if !hasCapability(c, contracts.PurpleRemuxBlurayV1) && !hasCapability(c, contracts.PurpleRemuxDVDV2) {
 					return nil
 				}
 				allowRuntime = true

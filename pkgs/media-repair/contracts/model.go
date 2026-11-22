@@ -8,13 +8,13 @@ const (
 	CapabilityActionJoinParts        CapabilityAction = "join_parts_v1"
 	CapabilityActionManualImportFile CapabilityAction = "manual_import_file_v1"
 	CapabilityActionRemuxBluray      CapabilityAction = "remux_bluray_v1"
-	CapabilityActionRemuxDVD         CapabilityAction = "remux_dvd_v1"
+	CapabilityActionRemuxDVD         CapabilityAction = "remux_dvd_v2"
 
 	ActionNoRepair         DecisionAction = "no_repair"
 	ActionJoinParts        DecisionAction = "join_parts_v1"
 	ActionManualImportFile DecisionAction = "manual_import_file_v1"
 	ActionRemuxBluray      DecisionAction = "remux_bluray_v1"
-	ActionRemuxDVD         DecisionAction = "remux_dvd_v1"
+	ActionRemuxDVD         DecisionAction = "remux_dvd_v2"
 )
 
 type RepairDecisionV3 struct {

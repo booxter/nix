@@ -233,7 +233,7 @@
       "additionalProperties": false,
       "properties": {
         "action": {
-          "const": "remux_dvd_v1"
+          "const": "remux_dvd_v2"
         },
         "angle_count": {
           "maximum": 9,

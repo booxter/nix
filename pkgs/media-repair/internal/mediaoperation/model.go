@@ -11,9 +11,9 @@ type Transform struct {
 	JobID   int64
 	Attempt int64
 	Paths   map[controller.FileID]string
-	Join    *decisionpolicy.AuthorizedJoin  `json:",omitempty"`
-	Bluray  *decisionpolicy.AuthorizedRemux `json:",omitempty"`
-	DVD     *decisionpolicy.AuthorizedDVD   `json:",omitempty"`
+	Join    *decisionpolicy.AuthorizedJoin         `json:",omitempty"`
+	Bluray  *decisionpolicy.AuthorizedRemux        `json:",omitempty"`
+	DVD     *decisionpolicy.AuthorizedDVDSelection `json:",omitempty"`
 }
 
 func (request Transform) ID() string {

@@ -1,6 +1,7 @@
 {
   buildGoModule,
   cuetools,
+  dvdauthor,
   ffmpeg-full,
   goModels,
   lib,
@@ -45,8 +46,10 @@ in
       subPackages = [ "cmd/repairr" ];
 
       nativeCheckInputs = [
+        dvdauthor
         ffmpeg-full
         cuetools
+        lsdvd
         mkvtoolnixCli
         wavpack
       ];

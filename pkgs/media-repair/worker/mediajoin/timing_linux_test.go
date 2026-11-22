@@ -126,7 +126,7 @@ func TestMixedTimeBasesPreserveEveryScene(t *testing.T) {
 		"-v", "error", "-f", "concat", "-safe", "0", "-protocol_whitelist", "fd,pipe",
 		"-i", "pipe:0", "-map", "0", "-c", "copy", "-f", "mp4", "-fd", "6", "fd:",
 	)
-	command.Stdin = strings.NewReader(concatManifest(len(parts)))
+	command.Stdin = strings.NewReader(concatManifest(len(parts), nil))
 	command.ExtraFiles = append(append([]*os.File(nil), parts...), broken)
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("reproduce corrupt join: %v: %s", err, output)

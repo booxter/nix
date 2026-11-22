@@ -41,7 +41,7 @@ def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolatio
         "join_parts_v1": "joinParts",
         "manual_import_file_v1": "manualImportFile",
         "remux_bluray_v1": "remuxBluray",
-        "remux_dvd_v1": "remuxDVD",
+        "remux_dvd_v2": "remuxDVD",
         "no_repair": "noRepair",
     }
     return validate_object_against_action_schema(value, decision_schema(), branch_names)
@@ -101,9 +101,7 @@ def _evidence_refs(context: ValidationContext) -> tuple[DecisionViolation, ...]:
     )
 
 
-def _selected_capability(context: ValidationContext) -> Capability | None:
-    assert not isinstance(context.decision, NoRepair)
-    selected_id = context.decision.capability_id.root
+def _selected_capability(context: ValidationContext, selected_id: str) -> Capability | None:
     return next(
         (
             capability
@@ -117,7 +115,30 @@ def _selected_capability(context: ValidationContext) -> Capability | None:
 def _capability(context: ValidationContext) -> tuple[DecisionViolation, ...]:
     if isinstance(context.decision, NoRepair):
         return ()
-    selected = _selected_capability(context)
+    if isinstance(context.decision, RemuxDVD):
+        allowed = tuple(
+            sorted(
+                capability.capability_id.root
+                for capability in context.repair_case.capabilities
+                if isinstance(capability, DvdCapability)
+            )
+        )
+        rejected = tuple(
+            title_id.root
+            for title_id in context.decision.ordered_title_ids
+            if title_id.root not in allowed
+        )
+        if not rejected:
+            return ()
+        return (
+            DecisionViolation(
+                code=ViolationCode.UNKNOWN_CAPABILITY,
+                path=("ordered_title_ids",),
+                rejected_values=rejected,
+                allowed_values=allowed,
+            ),
+        )
+    selected = _selected_capability(context, context.decision.capability_id.root)
     if selected is None:
         return (
             DecisionViolation(
@@ -145,12 +166,10 @@ def _capability(context: ValidationContext) -> tuple[DecisionViolation, ...]:
 
 
 def _selected_files(context: ValidationContext) -> tuple[DecisionViolation, ...]:
-    if isinstance(context.decision, NoRepair):
+    if isinstance(context.decision, (NoRepair, RemuxBluray, RemuxDVD)):
         return ()
-    capability = _selected_capability(context)
+    capability = _selected_capability(context, context.decision.capability_id.root)
     if capability is None or capability.action != context.decision.action:
-        return ()
-    if isinstance(context.decision, (RemuxBluray, RemuxDVD)):
         return ()
     if isinstance(context.decision, JoinParts):
         assert isinstance(capability, JoinCapability)

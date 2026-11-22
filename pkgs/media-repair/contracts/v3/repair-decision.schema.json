@@ -194,10 +194,7 @@
       "additionalProperties": false,
       "properties": {
         "action": {
-          "const": "remux_dvd_v1"
-        },
-        "capability_id": {
-          "$ref": "#/$defs/opaqueId"
+          "const": "remux_dvd_v2"
         },
         "case_id": {
           "$ref": "#/$defs/sha256Id"
@@ -208,6 +205,15 @@
         "explanation": {
           "$ref": "#/$defs/safeExplanation"
         },
+        "ordered_title_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
         "schema_version": {
           "const": "radarr-repair/v3"
         }
@@ -216,7 +222,7 @@
         "schema_version",
         "case_id",
         "action",
-        "capability_id",
+        "ordered_title_ids",
         "evidence_refs",
         "explanation"
       ],
