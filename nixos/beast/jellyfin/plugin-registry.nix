@@ -20,11 +20,6 @@
       url = "https://raw.githubusercontent.com/zamhedonia/JellyfinLetterboxdLink/master/manifest.json";
       enabled = true;
     };
-    lastfm = {
-      name = "Last.fm Stable";
-      url = "https://raw.githubusercontent.com/danielfariati/jellyfin-plugin-lastfm/refs/heads/master/manifest.json";
-      enabled = true;
-    };
     language-tags = {
       name = "Language Tags";
       url = "https://raw.githubusercontent.com/TheXaman/jellyfin-plugin-languageTags/main/manifest.json";
@@ -56,10 +51,6 @@
     letterboxd = {
       name = "Letterboxd Link on Movies";
       repository = "letterboxd";
-    };
-    lastfm = {
-      name = "Last.fm";
-      repository = "lastfm";
     };
     lrclib = {
       name = "LrcLib Lyrics";

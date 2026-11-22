@@ -73,7 +73,6 @@ in
       collectionType = "music";
       requiredPlugins = [
         "audiodb"
-        "lastfm"
         "lrclib"
         "musicbrainz"
       ];
