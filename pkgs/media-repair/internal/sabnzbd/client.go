@@ -27,6 +27,8 @@ func (failure *HTTPError) Error() string {
 	return fmt.Sprintf("SABnzbd returned HTTP status %d", failure.StatusCode)
 }
 
+func (failure *HTTPError) HTTPStatus() int { return failure.StatusCode }
+
 type Client struct {
 	endpoint       *url.URL
 	apiKey         string

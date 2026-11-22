@@ -35,6 +35,8 @@ func (err *HTTPError) Error() string {
 	return fmt.Sprintf("Transmission returned HTTP status %d", err.StatusCode)
 }
 
+func (err *HTTPError) HTTPStatus() int { return err.StatusCode }
+
 type RPCError struct {
 	Code int
 }

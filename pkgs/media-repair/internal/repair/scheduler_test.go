@@ -3,6 +3,8 @@ package repair
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -11,6 +13,45 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 )
+
+func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
+	engine, adapter, job := fixture(t)
+	ctx := context.Background()
+	now := engine.Now().UTC()
+	service := &waitingService{fakeAdapter: *adapter}
+	scheduler := Scheduler{
+		Store: engine.Store, Service: service, Name: jobs.Radarr,
+		Now: func() time.Time { return now }, Disabled: func() (bool, error) { return false, nil },
+	}
+	service.repairError = RetryableRead(fmt.Errorf("read download: %w", context.DeadlineExceeded))
+	if err := scheduler.advance(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expected Transmission timeout, got %v", err)
+	}
+	waiting, err := engine.Store.Get(ctx, job.ID)
+	if err != nil || waiting.State != jobs.Ready || !waiting.RetryAt.After(now) {
+		t.Fatalf("repair was not scheduled to retry: %+v, %v", waiting, err)
+	}
+	if service.submissions != 0 {
+		t.Fatal("submitted an import after a failed source check")
+	}
+
+	service.repairError = nil
+	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	if err := scheduler.advance(ctx); err != nil || service.submissions != 0 {
+		t.Fatalf("retried during backoff: %v, submissions: %d", err, service.submissions)
+	}
+
+	now = waiting.RetryAt
+	if err := scheduler.advance(ctx); err != nil {
+		t.Fatal(err)
+	}
+	assertState(t, engine, job.ID, jobs.Imported)
+	attempts, err := engine.Store.Attempts(ctx, job.ID)
+	if err != nil || len(attempts) != 2 || service.submissions != 1 ||
+		attempts[0].State != jobs.Failed || string(attempts[1].Plan) != string(attempts[0].Plan) {
+		t.Fatalf("retry did not import once with its existing plan: %+v, %v", attempts, err)
+	}
+}
 
 func TestRemovalDoesNotWaitForPlanner(t *testing.T) {
 	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))

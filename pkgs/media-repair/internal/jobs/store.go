@@ -208,7 +208,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 		if err := tx.First(&job, id).Error; err != nil {
 			return err
 		}
-		if job.State != Ready || job.PendingAction != "" {
+		if job.State != Ready || job.PendingAction != "" || at.Before(job.RetryAt) {
 			return ErrConflict
 		}
 
@@ -231,6 +231,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 
 		job.State = Running
 		job.Reason = ""
+		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		return tx.Save(&job).Error
 	})
@@ -240,12 +241,21 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 // The attempt and its UI-visible job change together. Persist Importing before
 // contacting Servarr so recovery checks for an import before resubmitting it.
 func (store *Store) UpdateAttempt(ctx context.Context, attempt Attempt) error {
+	return store.updateAttempt(ctx, attempt, time.Time{})
+}
+
+// RetryPreparation closes a failed preparation attempt and keeps its plan ready.
+func (store *Store) RetryPreparation(ctx context.Context, attempt Attempt, retryAt time.Time) error {
+	return store.updateAttempt(ctx, attempt, retryAt)
+}
+
+func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt time.Time) error {
 	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var previous Attempt
 		if err := tx.Where(&Attempt{JobID: attempt.JobID, Number: attempt.Number}).First(&previous).Error; err != nil {
 			return err
 		}
-		if !active(previous.State) {
+		if !active(previous.State) || (!retryAt.IsZero() && previous.State != Running) {
 			return ErrConflict
 		}
 
@@ -270,6 +280,11 @@ func (store *Store) UpdateAttempt(ctx context.Context, attempt Attempt) error {
 		job.State = attempt.State
 		job.Reason = attempt.Reason
 		job.UpdatedAt = attempt.UpdatedAt
+		if !retryAt.IsZero() {
+			job.State = Ready
+			job.Reason = "retry scheduled: " + attempt.Reason
+			job.RetryAt = retryAt
+		}
 		return tx.Save(&job).Error
 	})
 }
