@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -69,6 +70,15 @@ func (worker Transformer) Transform(ctx context.Context, request mediaoperation.
 
 func (worker Transformer) join(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
 	authorized := *request.Join
+	containers := []workercontracts.OutputContainer{workercontracts.OutputContainerMKV}
+	switch authorized.OutputContainer {
+	case controller.OutputContainerMKV:
+	case controller.OutputContainerAVI, controller.OutputContainerMP4:
+		containers = append(containers, workercontracts.OutputContainer(authorized.OutputContainer))
+	default:
+		return mediaoperation.Output{}, fmt.Errorf("unsupported join container %q", authorized.OutputContainer)
+	}
+
 	paths := make([]string, len(authorized.OrderedParts))
 	for i, part := range authorized.OrderedParts {
 		paths[i] = request.Paths[part.FileID]
@@ -81,7 +91,6 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 
 	spec := joinstate.Specification{
 		RootID:              root,
-		OutputContainer:     workercontracts.OutputContainer(authorized.OutputContainer),
 		ExpectedSourceBytes: authorized.SourceBytes,
 	}
 	for i, part := range authorized.OrderedParts {
@@ -101,37 +110,71 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		return mediaoperation.Output{}, err
 	}
 
-	result, err := stager.Stage(ctx, joinstate.Execution{
+	execution := joinstate.Execution{
 		State:         joinstate.Prepared,
 		ArtifactID:    request.ID(),
 		Specification: spec,
-	})
-	if err != nil {
-		return mediaoperation.Output{}, err
 	}
-
-	// An ffmpeg exit status is not sufficient: only validated output may
-	// become visible to Servarr. Sources remain untouched in either case.
-	phase, span := telemetry.StartPhase(ctx, "validate output metadata", attribute.Int64("output_bytes", result.SizeBytes))
-	rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes)
-	if len(rejected) != 0 {
-		telemetry.EndPhase(phase, span, fmt.Errorf("joined output rejected: %v", rejected))
-		if _, err := worker.Files.RemoveCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint); err != nil {
-			return mediaoperation.Output{}, fmt.Errorf("rejected output %v; discard: %w", rejected, err)
+	var failures error
+	for _, container := range containers {
+		execution.Specification.OutputContainer = container
+		authorized.OutputContainer = controller.OutputContainer(container)
+		phase, span := telemetry.StartPhase(ctx, "join output", attribute.String("container", string(container)))
+		result, err := worker.stageJoin(phase, stager, execution, authorized)
+		telemetry.EndPhase(phase, span, err)
+		if err != nil {
+			failures = errors.Join(failures, fmt.Errorf("%s join: %w", container, err))
+			if ctx.Err() != nil || !canTryAnotherJoinContainer(err) {
+				break
+			}
+			continue
 		}
 
-		return mediaoperation.Output{}, fmt.Errorf("joined output rejected: %v", rejected)
+		phase, span = telemetry.StartPhase(ctx, "publish output")
+		published, err := worker.Files.PublishCompleted(root, request.ID(), container, result.Fingerprint, components)
+		telemetry.EndPhase(phase, span, err)
+		if err != nil {
+			return mediaoperation.Output{}, err
+		}
+		return worker.output(root, published, result.Fingerprint, result.Evidence)
 	}
-	telemetry.EndPhase(phase, span, nil)
+	return mediaoperation.Output{}, failures
+}
 
-	phase, span = telemetry.StartPhase(ctx, "publish output")
-	published, err := worker.Files.PublishCompleted(root, request.ID(), spec.OutputContainer, result.Fingerprint, components)
-	telemetry.EndPhase(phase, span, err)
+var errJoinOutputRejected = errors.New("joined output rejected")
+
+func (worker Transformer) stageJoin(
+	ctx context.Context, stager *joinstage.Executor, execution joinstate.Execution, authorized decisionpolicy.AuthorizedJoin,
+) (joinstage.Result, error) {
+	result, err := stager.Stage(ctx, execution)
 	if err != nil {
-		return mediaoperation.Output{}, err
+		return joinstage.Result{}, err
 	}
 
-	return worker.output(root, published, result.Fingerprint, result.Evidence)
+	phase, span := telemetry.StartPhase(ctx, "validate output metadata", attribute.Int64("output_bytes", result.SizeBytes))
+	rejected := joinverification.ValidateOutput(authorized, result.Evidence, result.SizeBytes)
+	if len(rejected) == 0 {
+		telemetry.EndPhase(phase, span, nil)
+		return result, nil
+	}
+
+	rejection := fmt.Errorf("%w: %v", errJoinOutputRejected, rejected)
+	telemetry.EndPhase(phase, span, rejection)
+	spec := execution.Specification
+	if _, err := worker.Files.RemoveCompleted(spec.RootID, execution.ArtifactID, spec.OutputContainer, result.Fingerprint); err != nil {
+		return joinstage.Result{}, fmt.Errorf("%v; discard: %w", rejection, err)
+	}
+	return joinstage.Result{}, rejection
+}
+
+func canTryAnotherJoinContainer(err error) bool {
+	if errors.Is(err, errJoinOutputRejected) {
+		return true
+	}
+	var failure *joinstage.Failure
+	var pathError *os.PathError
+	return errors.As(err, &failure) && !errors.As(err, &pathError) &&
+		(failure.Reason == workercontracts.StageJoinJoinError || failure.Reason == workercontracts.StageJoinInvalidOutput)
 }
 
 func (worker Transformer) bluray(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
