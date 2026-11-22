@@ -9,30 +9,32 @@ let
   user = "_vm-runner";
   home = "/var/lib/${name}";
   tokenSecret = "github/vm_runner/token";
-  keychainSecret = "github/vm_runner/keychain_password";
-  prepareKeychain =
-    passwordFile:
-    pkgs.writeShellApplication {
-      name = "prepare-vm-keychain.sh";
-      text = ''
-        umask 077
-        keychain="$HOME/Library/Keychains/login.keychain-db"
-        password=${
-          if passwordFile == null then "$(/usr/bin/uuidgen)" else "$(<${lib.escapeShellArg passwordFile})"
-        }
+  prepareKeychain = pkgs.writeShellApplication {
+    name = "prepare-vm-keychain.sh";
+    text = ''
+      umask 077
+      # Give the runners their own keychain even if a login keychain already exists.
+      directory="$HOME/Library/Keychains/tart"
+      keychain="$directory/login.keychain-db"
+      password_file="$directory/password"
 
-        /bin/mkdir -p "$HOME/Library/Keychains"
-        if [[ ! -f "$keychain" ]]; then
-          /usr/bin/security create-keychain -p "$password" "$keychain"
-        fi
+      /bin/mkdir -p "$directory"
+      if [[ ! -s "$password_file" ]]; then
+        /usr/bin/uuidgen >"$password_file"
+      fi
+      password=$(<"$password_file")
 
-        # Virtualization.framework needs an unlocked login keychain without a GUI.
-        # https://tart.run/faq/#headless-machines
-        /usr/bin/security unlock-keychain -p "$password" "$keychain"
-        /usr/bin/security default-keychain -s "$keychain"
-        /usr/bin/security set-keychain-settings "$keychain"
-      '';
-    };
+      if [[ ! -f "$keychain" ]]; then
+        /usr/bin/security create-keychain -p "$password" "$keychain"
+      fi
+
+      # Virtualization.framework needs an unlocked keychain without a GUI.
+      # https://tart.run/faq/#headless-machines
+      /usr/bin/security unlock-keychain -p "$password" "$keychain"
+      /usr/bin/security default-keychain -s "$keychain"
+      /usr/bin/security set-keychain-settings "$keychain"
+    '';
+  };
 in
 {
   ids.uids.${user} = 537;
@@ -71,9 +73,7 @@ in
     extraEnvironment = {
       # Registration and work directories are wiped between jobs; the home persists.
       HOME = home;
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = lib.getExe (
-        prepareKeychain config.sops.secrets.${keychainSecret}.path
-      );
+      ACTIONS_RUNNER_HOOK_JOB_STARTED = lib.getExe prepareKeychain;
     };
     serviceOverrides = {
       KeepAlive = lib.mkForce true;
@@ -83,15 +83,15 @@ in
 
   services.github-runners.mmini-ci = {
     # The runner's HOME is cleared between jobs, so this keychain is disposable.
-    extraEnvironment.CI_PREPARE_VM_KEYCHAIN = lib.getExe (prepareKeychain null);
+    extraEnvironment.CI_PREPARE_VM_KEYCHAIN = lib.getExe prepareKeychain;
     serviceOverrides.SessionCreate = true;
   };
 
-  sops.secrets = lib.genAttrs [ tokenSecret keychainSecret ] (_: {
+  sops.secrets.${tokenSecret} = {
     mode = "0400";
     owner = user;
     group = user;
-  });
+  };
 
   host.launchd.logging.locations.vm-runner = {
     directory = "/var/log/github-runners/${name}";
