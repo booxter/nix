@@ -131,26 +131,13 @@ func dvdJoinMetadata(parts []dvdstage.Result) ([]mediajoin.PartMetadata, control
 		if probe.Format.DurationMS == nil || *probe.Format.DurationMS <= 0 {
 			return nil, controller.StreamLayout{}, fmt.Errorf("remuxed DVD title %d is missing duration", index+1)
 		}
-		entry := mediajoin.PartMetadata{DurationMS: *probe.Format.DurationMS}
-		if len(probe.Chapters) == 0 {
-			// Single-chapter DVD titles have no explicit chapter in FFmpeg's
-			// output. Mark their start so each title is seekable after joining.
-			entry.Chapters = []mediajoin.Chapter{{EndMS: entry.DurationMS}}
-		}
-		var previousEnd int64
-		for _, chapter := range probe.Chapters {
-			if chapter.StartTimeMS == nil || chapter.EndTimeMS == nil ||
-				*chapter.StartTimeMS < previousEnd || *chapter.EndTimeMS <= *chapter.StartTimeMS ||
-				*chapter.EndTimeMS > entry.DurationMS {
-				return nil, controller.StreamLayout{}, fmt.Errorf("remuxed DVD title %d has invalid chapter timing", index+1)
-			}
-			entry.Chapters = append(entry.Chapters, mediajoin.Chapter{
-				StartMS: *chapter.StartTimeMS, EndMS: *chapter.EndTimeMS,
-			})
-			previousEnd = *chapter.EndTimeMS
+		duration := *probe.Format.DurationMS
+		chapters, err := dvdPartChapters(probe.Chapters, duration)
+		if err != nil {
+			return nil, controller.StreamLayout{}, fmt.Errorf("remuxed DVD title %d: %w", index+1, err)
 		}
 		probes = append(probes, probe)
-		metadata = append(metadata, entry)
+		metadata = append(metadata, mediajoin.PartMetadata{DurationMS: duration, Chapters: chapters})
 	}
 
 	compatibility := controller.AssessStreamCompatibility(probes)
@@ -163,6 +150,37 @@ func dvdJoinMetadata(parts []dvdstage.Result) ([]mediajoin.PartMetadata, control
 		}
 	}
 	return metadata, *compatibility.Layout, nil
+}
+
+func dvdPartChapters(probed []controller.ProbeChapter, durationMS int64) ([]mediajoin.Chapter, error) {
+	if len(probed) == 0 {
+		// FFmpeg omits the sole chapter. Mark it so the title is seekable after joining.
+		return []mediajoin.Chapter{{EndMS: durationMS}}, nil
+	}
+
+	// The stager already checked the remux duration against the DVD title.
+	// Clip authored intervals to that remux's playback span before shifting
+	// them. Chapters outside the span refer to time with no playable media.
+	chapters := make([]mediajoin.Chapter, 0, len(probed))
+	var previousEnd int64
+	for index, chapter := range probed {
+		if chapter.StartTimeMS == nil || chapter.EndTimeMS == nil {
+			return nil, fmt.Errorf("chapter %d is missing timing", index+1)
+		}
+		start, end := *chapter.StartTimeMS, *chapter.EndTimeMS
+		if end <= start || index > 0 && start < previousEnd {
+			return nil, fmt.Errorf("chapter %d spans %d–%d ms after previous end %d ms", index+1, start, end, previousEnd)
+		}
+		previousEnd = end
+		start, end = max(start, 0), min(end, durationMS)
+		if start < end {
+			chapters = append(chapters, mediajoin.Chapter{StartMS: start, EndMS: end})
+		}
+	}
+	if len(chapters) == 0 {
+		return nil, fmt.Errorf("no DVD chapters overlap the %d ms playback span", durationMS)
+	}
+	return chapters, nil
 }
 
 func sameDVDLanguages(first, second []controller.ProbeStream) bool {

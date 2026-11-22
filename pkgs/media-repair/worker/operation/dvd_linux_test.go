@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -14,7 +15,43 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
+	"github.com/booxter/nix-config/media-repair/worker/mediajoin"
 )
+
+func TestDVDJoinClipsChaptersToMuxedDuration(t *testing.T) {
+	start, lastStart, lastEnd := int64(0), int64(5_711_680), int64(6_733_200)
+	const duration = 6_733_160
+	probed := []controller.ProbeChapter{
+		{StartTimeMS: &start, EndTimeMS: &lastStart},
+		{StartTimeMS: &lastStart, EndTimeMS: &lastEnd},
+	}
+	chapters, err := dvdPartChapters(probed, duration)
+	want := []mediajoin.Chapter{{EndMS: lastStart}, {StartMS: lastStart, EndMS: duration}}
+	if err != nil || !slices.Equal(chapters, want) {
+		t.Fatalf("DVD chapters = %v, error = %v", chapters, err)
+	}
+}
+
+func TestDVDJoinOmitsTerminalChapterWithoutMuxedMedia(t *testing.T) {
+	start, paddingStart, paddingEnd := int64(0), int64(2_965_040), int64(2_965_520)
+	const duration = 2_965_000
+	probed := []controller.ProbeChapter{
+		{StartTimeMS: &start, EndTimeMS: &paddingStart},
+		{StartTimeMS: &paddingStart, EndTimeMS: &paddingEnd},
+	}
+	chapters, err := dvdPartChapters(probed, duration)
+	if err != nil || !slices.Equal(chapters, []mediajoin.Chapter{{EndMS: duration}}) {
+		t.Fatalf("DVD chapters = %v, error = %v", chapters, err)
+	}
+	if _, err := dvdPartChapters(probed[1:], duration); err == nil {
+		t.Fatal("accepted a chapter table with no playable interval")
+	}
+	overlap := paddingStart - 10
+	probed[1].StartTimeMS = &overlap
+	if _, err := dvdPartChapters(probed, duration); err == nil {
+		t.Fatal("accepted overlapping authored chapters")
+	}
+}
 
 func TestDVDPublishesOneMovieWithChaptersInSelectedOrder(t *testing.T) {
 	ctx := context.Background()
