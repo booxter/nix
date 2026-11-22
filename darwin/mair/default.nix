@@ -9,17 +9,16 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
+  ciVmBuild =
+    (extendModules {
+      modules = [ { virtualisation.vmVariant = import ../../ci/darwin-vm.nix; } ];
+    }).config.virtualisation.vmVariant.system.build;
 in
 {
   system.stateVersion = 6;
 
-  system.build.ciVm =
-    let
-      ci = extendModules {
-        modules = [ { virtualisation.vmVariant = import ../../ci/darwin-vm.nix; } ];
-      };
-    in
-    ci.config.system.build.vm;
+  system.build.ciVm = ciVmBuild.vm;
+  system.build.ciVmIpsw = ciVmBuild.ipsw;
 
   home-manager.users.${username} = {
     host.hm.pass.yubikey = "laptop";
