@@ -9,6 +9,7 @@ let
   user = "_vm-runner";
   home = "/var/lib/${name}";
   tokenSecret = "github/vm_runner/token";
+  vmCacheDirectory = "/var/lib/mmini-ci-vm";
   prepareKeychain = pkgs.writeShellApplication {
     name = "prepare-vm-keychain.sh";
     text = ''
@@ -60,6 +61,12 @@ in
     group = user;
   };
 
+  system.tmpfiles.settings.vm-runner.${vmCacheDirectory}.d = {
+    mode = "0700";
+    user = "_github-runner";
+    group = "_github-runner";
+  };
+
   services.github-runners.${name} = {
     enable = true;
     url = "https://github.com/booxter/nix-darwin-vm";
@@ -82,8 +89,11 @@ in
   };
 
   services.github-runners.mmini-ci = {
-    # The runner's HOME is cleared between jobs, so this keychain is disposable.
-    extraEnvironment.CI_PREPARE_VM_KEYCHAIN = lib.getExe prepareKeychain;
+    extraEnvironment = {
+      # The runner's HOME is cleared between jobs, so this keychain is disposable.
+      CI_PREPARE_VM_KEYCHAIN = lib.getExe prepareKeychain;
+      CI_MAIR_VM_IPSW_ROOT = "${vmCacheDirectory}/mair.ipsw";
+    };
     serviceOverrides.SessionCreate = true;
   };
 
