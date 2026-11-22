@@ -1,0 +1,275 @@
+--- a/pkgs/sops-install-secrets/main.go
++++ b/pkgs/sops-install-secrets/main.go
+@@ -21,7 +21,6 @@
+ 	"github.com/Mic92/sops-nix/pkgs/sops-install-secrets/sshkeys"
+ 	agessh "github.com/Mic92/ssh-to-age"
+ 
+-	"github.com/getsops/sops/v3/decrypt"
+ 	"github.com/joho/godotenv"
+ 	"github.com/mozilla-services/yaml"
+ 	"gopkg.in/ini.v1"
+@@ -347,33 +346,25 @@
+ 
+ func decryptSecret(s *secret, sourceFiles map[string]plainData) error {
+ 	sourceFile := sourceFiles[s.SopsFile]
+-	if sourceFile.data == nil || sourceFile.binary == nil {
+-		plain, err := decrypt.File(s.SopsFile, string(s.Format))
++	if sourceFile.binary == nil {
++		plain, err := decryptFile(s.SopsFile, string(s.Format))
+ 		if err != nil {
+ 			return fmt.Errorf("failed to decrypt '%s': %w", s.SopsFile, err)
+ 		}
++		sourceFile.binary = plain
++	}
+ 
++	// Keep both forms so a document's secrets share one hardware approval.
++	if sourceFile.data == nil && s.Key != "" {
+ 		switch s.Format {
+-		case Binary, Dotenv, Ini:
+-			sourceFile.binary = plain
+ 		case Yaml:
+-			if s.Key == "" {
+-				sourceFile.binary = plain
+-			} else {
+-				if err := yaml.Unmarshal(plain, &sourceFile.data); err != nil {
+-					return fmt.Errorf("cannot parse yaml of '%s': %w", s.SopsFile, err)
+-				}
++			if err := yaml.Unmarshal(sourceFile.binary, &sourceFile.data); err != nil {
++				return fmt.Errorf("cannot parse yaml of '%s': %w", s.SopsFile, err)
+ 			}
+ 		case JSON:
+-			if s.Key == "" {
+-				sourceFile.binary = plain
+-			} else {
+-				if err := json.Unmarshal(plain, &sourceFile.data); err != nil {
+-					return fmt.Errorf("cannot parse json of '%s': %w", s.SopsFile, err)
+-				}
++			if err := json.Unmarshal(sourceFile.binary, &sourceFile.data); err != nil {
++				return fmt.Errorf("cannot parse json of '%s': %w", s.SopsFile, err)
+ 			}
+-		default:
+-			return fmt.Errorf("secret of type %s in %s is not supported", s.Format, s.SopsFile)
+ 		}
+ 	}
+ 	switch s.Format {
+@@ -389,6 +380,8 @@
+ 			}
+ 			s.value = []byte(strVal)
+ 		}
++	default:
++		return fmt.Errorf("secret of type %s in %s is not supported", s.Format, s.SopsFile)
+ 	}
+ 	sourceFiles[s.SopsFile] = sourceFile
+ 	return nil
+--- /dev/null
++++ b/pkgs/sops-install-secrets/remote_decrypt.go
+@@ -0,0 +1,65 @@
++package main
++
++import (
++	"context"
++	"fmt"
++	"os"
++	"strings"
++	"time"
++
++	"github.com/getsops/sops/v3"
++	"github.com/getsops/sops/v3/aes"
++	"github.com/getsops/sops/v3/cmd/sops/common"
++	"github.com/getsops/sops/v3/config"
++	"github.com/getsops/sops/v3/decrypt"
++	"github.com/getsops/sops/v3/keyservice"
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/credentials/insecure"
++)
++
++// A configured service is authoritative: never fall back to guest identities.
++func decryptFile(path, format string) ([]byte, error) {
++	endpoint := os.Getenv("SOPS_KEYSERVICE")
++	if endpoint == "" {
++		return decrypt.File(path, format)
++	}
++	if !strings.HasPrefix(endpoint, "unix:///") {
++		return nil, fmt.Errorf("SOPS_KEYSERVICE must be an absolute unix:/// socket URL")
++	}
++
++	// The socket is private; SSH provides authentication and encryption between hosts.
++	connection, err := grpc.NewClient(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
++	if err != nil {
++		return nil, err
++	}
++	defer connection.Close()
++
++	store := common.DefaultStoreForPathOrFormat(config.NewStoresConfig(), path, format)
++	tree, err := common.LoadEncryptedFile(store, path)
++	if err != nil {
++		return nil, err
++	}
++	_, err = common.DecryptTree(common.DecryptTreeOpts{
++		Tree: tree,
++		KeyServices: []keyservice.KeyServiceClient{
++			boundedKeyService{keyservice.NewKeyServiceClient(connection)},
++		},
++		Cipher:          aes.NewCipher(),
++		DecryptionOrder: sops.DefaultDecryptionOrder,
++	})
++	if err != nil {
++		return nil, err
++	}
++	return store.EmitPlainFile(tree.Branches)
++}
++
++type boundedKeyService struct {
++	keyservice.KeyServiceClient
++}
++
++func (client boundedKeyService) Decrypt(ctx context.Context, request *keyservice.DecryptRequest, options ...grpc.CallOption) (*keyservice.DecryptResponse, error) {
++	// Allow time for hardware approval without hanging activation indefinitely.
++	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
++	defer cancel()
++	return client.KeyServiceClient.Decrypt(ctx, request, options...)
++}
+--- /dev/null
++++ b/pkgs/sops-install-secrets/remote_decrypt_test.go
+@@ -0,0 +1,141 @@
++package main
++
++import (
++	"bytes"
++	"context"
++	"io"
++	"net"
++	"os"
++	"path/filepath"
++	"strings"
++	"sync/atomic"
++	"testing"
++
++	"filippo.io/age"
++	"filippo.io/age/armor"
++	"github.com/getsops/sops/v3/keyservice"
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/codes"
++	"google.golang.org/grpc/status"
++)
++
++type fixtureKeyService struct {
++	keyservice.Server
++	identities []age.Identity
++	deny       bool
++	requests   *atomic.Int32
++}
++
++func (service fixtureKeyService) Decrypt(_ context.Context, request *keyservice.DecryptRequest) (*keyservice.DecryptResponse, error) {
++	service.requests.Add(1)
++	if service.deny {
++		return nil, status.Error(codes.PermissionDenied, "hardware approval denied")
++	}
++	reader, err := age.Decrypt(armor.NewReader(bytes.NewReader(request.Ciphertext)), service.identities...)
++	if err != nil {
++		return nil, err
++	}
++	plaintext, err := io.ReadAll(reader)
++	if err != nil {
++		return nil, err
++	}
++	return &keyservice.DecryptResponse{Plaintext: plaintext}, nil
++}
++
++func startFixtureKeyService(t *testing.T, deny bool) (string, *atomic.Int32) {
++	t.Helper()
++	identity, err := os.ReadFile(filepath.Join(testAssetPath(), "age-keys.txt"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	identities, err := age.ParseIdentities(bytes.NewReader(identity))
++	if err != nil {
++		t.Fatal(err)
++	}
++	// Darwin's Unix socket path limit is shorter than many test temp paths.
++	directory, err := os.MkdirTemp("/tmp", "sops-rpc-")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { os.RemoveAll(directory) })
++	socket := filepath.Join(directory, "service.sock")
++	listener, err := net.Listen("unix", socket)
++	if err != nil {
++		t.Fatal(err)
++	}
++	server := grpc.NewServer()
++	requests := new(atomic.Int32)
++	keyservice.RegisterKeyServiceServer(server, fixtureKeyService{identities: identities, deny: deny, requests: requests})
++	go server.Serve(listener)
++	t.Cleanup(server.Stop)
++	return "unix://" + socket, requests
++}
++
++func TestRemoteDecryptionWithoutLocalIdentity(t *testing.T) {
++	endpoint, requests := startFixtureKeyService(t, false)
++	t.Setenv("SOPS_KEYSERVICE", endpoint)
++	t.Setenv("SOPS_AGE_KEY_FILE", filepath.Join(t.TempDir(), "absent"))
++	t.Setenv("SOPS_AGE_KEY", "")
++	filename := filepath.Join(testAssetPath(), "secrets.yaml")
++	secrets := []secret{
++		{SopsFile: filename, Format: Yaml, Key: "test_key"},
++		{SopsFile: filename, Format: Yaml},
++		{SopsFile: filename, Format: Yaml, Key: "test_key"},
++	}
++	if err := decryptSecrets(secrets); err != nil {
++		t.Fatal(err)
++	}
++	if string(secrets[0].value) != "test_value" || string(secrets[2].value) != "test_value" || !bytes.Contains(secrets[1].value, []byte("test_key:")) {
++		t.Fatal("remote decryption produced the wrong secret")
++	}
++	if requests.Load() != 1 {
++		t.Fatalf("one document required %d decryption approvals", requests.Load())
++	}
++}
++
++func TestRemoteDecryptionFailsClosed(t *testing.T) {
++	// Even a valid local identity must not bypass remote failure or denial.
++	t.Setenv("SOPS_AGE_KEY_FILE", filepath.Join(testAssetPath(), "age-keys.txt"))
++	denied, _ := startFixtureKeyService(t, true)
++	for _, endpoint := range []string{
++		denied,
++		"unix:///nonexistent-sops-vm-prototype.sock",
++		"tcp://127.0.0.1:1234",
++	} {
++		t.Run(endpoint, func(t *testing.T) {
++			t.Setenv("SOPS_KEYSERVICE", endpoint)
++			if _, err := decryptFile(filepath.Join(testAssetPath(), "secrets.yaml"), "yaml"); err == nil {
++				t.Fatal("decryption succeeded without an authorized remote service")
++			}
++		})
++	}
++}
++
++func TestRemoteDecryptionUnconfiguredPreservesLocalDecryption(t *testing.T) {
++	t.Setenv("SOPS_KEYSERVICE", "")
++	t.Setenv("SOPS_AGE_KEY_FILE", filepath.Join(testAssetPath(), "age-keys.txt"))
++	secret := secret{SopsFile: filepath.Join(testAssetPath(), "secrets.yaml"), Format: Yaml, Key: "test_key"}
++	if err := decryptSecret(&secret, make(map[string]plainData)); err != nil {
++		t.Fatal(err)
++	}
++	if string(secret.value) != "test_value" {
++		t.Fatal("local decryption produced the wrong secret")
++	}
++}
++
++func TestRemoteDecryptionRejectsTampering(t *testing.T) {
++	endpoint, _ := startFixtureKeyService(t, false)
++	t.Setenv("SOPS_KEYSERVICE", endpoint)
++	data, err := os.ReadFile(filepath.Join(testAssetPath(), "secrets.yaml"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	filename := filepath.Join(t.TempDir(), "tampered.yaml")
++	data = []byte(strings.Replace(string(data), "test_key:", "changed_key:", 1))
++	if err := os.WriteFile(filename, data, 0600); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := decryptFile(filename, "yaml"); err == nil {
++		t.Fatal("accepted a document with a changed authenticated key")
++	}
++}
