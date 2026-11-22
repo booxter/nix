@@ -102,6 +102,7 @@ pkgs.testers.runNixOSTest {
     for machine in (alice, bob):
         machine.wait_for_unit("sshd.service")
         machine.wait_for_unit("user@1000.service")
+        machine.wait_for_unit("home-manager-operator.service")
         operator(machine, "XDG_RUNTIME_DIR=/run/user/1000 systemctl --user start sops-keyservice")
         machine.wait_until_succeeds("test -S /home/operator/.ssh/sops/local.sock")
         assert json.loads(operator(machine, f"sops decrypt {machine.name}.json")) == {"origin": machine.name}

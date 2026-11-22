@@ -48,6 +48,19 @@ def status(path, *, data=None, user=None):
 
 start_all()
 machine.wait_for_unit("fake-lidarr.service")
+machine.wait_until_succeeds(
+    command(
+        [
+            CURL,
+            "--fail",
+            "--silent",
+            "--show-error",
+            "--header",
+            f"X-Api-Key: {LIDARR_API_KEY}",
+            f"{LIDARR_URL}/api/v1/system/status",
+        ]
+    )
+)
 machine.wait_for_unit("aurral.service")
 machine.wait_for_open_port(3001)
 
