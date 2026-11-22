@@ -727,26 +727,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ needs.format.result }}" != "success" ]; then
-            echo "One or more CI jobs failed."
-            echo "format=${{ needs.format.result }}"
-            exit 1
-          fi
+          results=(
+            "format=${{ needs.format.result }}"
+            "check-success=${{ needs.check-success.result }}"
+            "build=${{ needs.build.result }}"
+            "mair-vm=${{ needs.mair-vm.result }}"
+          )
 
-          if [ "${{ needs.check-success.result }}" != "success" ]; then
-            echo "One or more CI jobs failed."
-            echo "check-success=${{ needs.check-success.result }}"
-            exit 1
-          fi
+          for result in "${results[@]}"; do
+            if [[ "$result" != *=success ]]; then
+              echo "One or more CI jobs failed."
+              echo "$result"
+              exit 1
+            fi
+          done
 
-          if [ "${{ needs.build.result }}" != "success" ]; then
-            echo "One or more CI jobs failed."
-            echo "build=${{ needs.build.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.mair-vm.result }}" != "success" ]; then
-            echo "One or more CI jobs failed."
-            echo "mair-vm=${{ needs.mair-vm.result }}"
-            exit 1
-          fi
           echo "All CI jobs passed."
