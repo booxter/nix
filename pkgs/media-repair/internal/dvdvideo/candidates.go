@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	minimumFeatureMS = 20 * 60 * 1000
-	maximumDiscs     = 8
-	maximumFiles     = 1024
+	maximumDiscs = 8
+	maximumFiles = 1024
 )
 
 type Candidate struct {
@@ -22,9 +21,9 @@ type Candidate struct {
 	Details          Title
 }
 
-// ListFeatureTitles requires complete, selected DVD files. Unrelated companion
+// ListRemuxableTitles requires complete, selected DVD files. Unrelated companion
 // files remain in the inventory but are not remux sources.
-func ListFeatureTitles(
+func ListRemuxableTitles(
 	ctx context.Context, inventory controller.FileInventory, identifier Identifier,
 ) ([]Candidate, error) {
 	if identifier == nil {
@@ -79,7 +78,7 @@ func ListFeatureTitles(
 			return nil, fmt.Errorf("identify DVD %q: %w", path, err)
 		}
 		for _, title := range titles {
-			if title.DurationMS < minimumFeatureMS || title.Angles != 1 ||
+			if title.Angles != 1 ||
 				!hasTitleFiles(files, title.TitleSet) || !hasMovieTracks(title.Tracks) {
 				continue
 			}

@@ -15,7 +15,7 @@ func (fixture fixtureIdentifier) IdentifyDVD(_ context.Context, _ Target) ([]Tit
 	return fixture.titles, nil
 }
 
-func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
+func TestRemuxableTitlesRequireCompleteDVDTree(t *testing.T) {
 	t.Parallel()
 	inventory := dvdInventory(
 		"Movie/VIDEO_TS/VIDEO_TS.IFO",
@@ -28,18 +28,15 @@ func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
 		{Number: 1, DurationMS: 9_779_000, Chapters: 12, Angles: 1,
 			TitleSet: 1, TitleInSet: 1,
 			Tracks: []Track{{Kind: "video", Codec: "mpeg2video"}, {Kind: "audio", Codec: "ac3"}}},
-		{Number: 2, DurationMS: 60_000, Chapters: 2, Angles: 1,
-			TitleSet: 1, TitleInSet: 2,
-			Tracks: []Track{{Kind: "video", Codec: "mpeg2video"}, {Kind: "audio", Codec: "ac3"}}},
 	}}
-	candidates, err := ListFeatureTitles(context.Background(), inventory, identifier)
+	candidates, err := ListRemuxableTitles(context.Background(), inventory, identifier)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(candidates) != 1 || candidates[0].Details.Number != 1 ||
 		len(candidates[0].SourceFileIDs) != 4 ||
 		candidates[0].NavigationFileID != controller.FileID("Movie/VIDEO_TS/VIDEO_TS.IFO") {
-		t.Fatalf("DVD feature candidates = %#v", candidates)
+		t.Fatalf("DVD remux candidates = %#v", candidates)
 	}
 	for _, id := range candidates[0].SourceFileIDs {
 		if id == controller.FileID("Movie/VIDEO_TS/VTS_01_1.txt") {
@@ -48,13 +45,13 @@ func TestFeatureTitlesRequireCompleteDVDTree(t *testing.T) {
 	}
 
 	inventory.Files[3].DownloadFile.BytesCompleted--
-	candidates, err = ListFeatureTitles(context.Background(), inventory, identifier)
+	candidates, err = ListRemuxableTitles(context.Background(), inventory, identifier)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("incomplete DVD candidates = %#v, %v", candidates, err)
 	}
 }
 
-func TestFeatureTitlesAcceptFlatDVDDirectory(t *testing.T) {
+func TestRemuxableTitlesIncludeShortMovies(t *testing.T) {
 	t.Parallel()
 	inventory := dvdInventory(
 		"Movie/VIDEO_TS.IFO",
@@ -63,13 +60,13 @@ func TestFeatureTitlesAcceptFlatDVDDirectory(t *testing.T) {
 		"Movie/VTS_01_1.VOB",
 	)
 	identifier := fixtureIdentifier{titles: []Title{{
-		Number: 1, DurationMS: 5_314_000, Chapters: 9, Angles: 1,
+		Number: 1, DurationMS: 1_104_534, Chapters: 4, Angles: 1,
 		TitleSet: 1, TitleInSet: 1,
 		Tracks: []Track{{Kind: "video", Codec: "mpeg2video"}, {Kind: "audio", Codec: "ac3"}},
 	}}}
-	candidates, err := ListFeatureTitles(context.Background(), inventory, identifier)
+	candidates, err := ListRemuxableTitles(context.Background(), inventory, identifier)
 	if err != nil || len(candidates) != 1 || len(candidates[0].SourceFileIDs) != 4 {
-		t.Fatalf("flat DVD candidates = %#v, error = %v", candidates, err)
+		t.Fatalf("short DVD title candidates = %#v, error = %v", candidates, err)
 	}
 }
 

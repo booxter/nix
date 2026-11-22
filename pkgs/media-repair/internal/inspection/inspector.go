@@ -319,7 +319,7 @@ func (inspector *Inspector) inspectRecord(
 	}
 	var dvdTitles []dvdvideo.Candidate
 	if inspector.dependencies.DVDs != nil {
-		dvdTitles, err = dvdvideo.ListFeatureTitles(
+		dvdTitles, err = dvdvideo.ListRemuxableTitles(
 			collectionContext, inventory, inspector.dependencies.DVDs,
 		)
 		if err != nil {
