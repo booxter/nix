@@ -74,7 +74,7 @@ pkgs.testers.runNixOSTest {
         machine.succeed("/run/current-system/specialisation/removed/bin/switch-to-configuration test")
         machine.wait_for_unit("prometheus-node-exporter.service")
         machine.succeed("test -f /var/lib/prometheus-node-exporter-textfile/lifecycle-test/sample.prom")
-        metrics = machine.succeed("curl -sf localhost:9100/metrics")
+        metrics = machine.wait_until_succeeds("curl -sf localhost:9100/metrics")
         assert "test_configured_producer" not in metrics
         assert "test_orphaned_producer" not in metrics
   '';
