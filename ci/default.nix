@@ -48,12 +48,28 @@ let
       name = "${name} (${darwinSystem})";
       system = darwinSystem;
     };
+  mkDarwinVmTarget =
+    name: _spec:
+    mkTarget {
+      attr = "darwinConfigurations.${name}.config.virtualisation.vmVariant.system.build.toplevel";
+      host = name;
+      name = "darwin vm ${name} (${darwinSystem})";
+      system = darwinSystem;
+    };
 in
 {
   buildTargets =
     lib.mapAttrsToList mkNixosTarget nixosBuildHosts
     ++ lib.mapAttrsToList mkDarwinTarget hosts.darwin
+    ++ lib.mapAttrsToList mkDarwinVmTarget hosts.darwin
     ++ [
+      # Build the Tart runner without downloading the macOS restore image.
+      (mkTarget {
+        attr = "darwinConfigurations.mair.config.system.build.vmSsh";
+        host = "mair";
+        name = "darwin vm runner (${darwinSystem})";
+        system = darwinSystem;
+      })
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vm";
         host = "builder1";

@@ -10,11 +10,27 @@ let
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
-  # macOS exposes /dev/bpf* as root:access_bpf 0660. Make this the service
-  # account's primary group instead of running the capture daemon as root.
+  username = config.host.username;
+  wiresharkEnabled = config.home-manager.users.${username}.host.hm.wireshark.enable;
   accessBpfGroup = "access_bpf";
+  # Preserve the GID used by ChmodBPF on existing fleet hosts.
   accessBpfGid = 101;
   serviceUid = 536;
+  prepareBpf = pkgs.writeShellApplication {
+    name = "prepare-bpf";
+    text = ''
+      # BPF devices are created on demand. Prepare them before granting access
+      # so unprivileged captures can open more than the initial device.
+      max_devices=$(/usr/sbin/sysctl -n debug.bpf_maxdevices)
+      for ((index = 0; index < max_devices; index++)); do
+        # An existing capture can hold a device open exclusively.
+        : 2>/dev/null < "/dev/bpf$index" || true
+      done
+
+      /usr/bin/chgrp ${accessBpfGroup} /dev/bpf*
+      /bin/chmod 0660 /dev/bpf*
+    '';
+  };
   lanWanPackage = pkgs.callPackage ./pkgs/darwin-lan-wan-bpf { };
   programArguments = [
     (lib.getExe lanWanPackage)
@@ -54,6 +70,13 @@ in
       ];
 
       ids.uids.${serviceUser} = serviceUid;
+      ids.gids.${accessBpfGroup} = accessBpfGid;
+
+      users.groups.${accessBpfGroup} = {
+        gid = config.ids.gids.${accessBpfGroup};
+        members = lib.optional wiresharkEnabled username;
+      };
+      users.knownGroups = [ accessBpfGroup ];
 
       users.users.${serviceUser} = {
         uid = config.ids.uids.${serviceUser};
@@ -70,21 +93,19 @@ in
         scope = "system";
       };
 
-      # Validate the system group before tmpfiles assigns directory ownership.
-      system.activationScripts.users.text = lib.mkOrder 1400 ''
-        access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
-        if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
-          echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
-          exit 1
-        fi
+      # The group exists now; prepare devices before tmpfiles and services.
+      system.activationScripts.users.text = lib.mkOrder 1400 (lib.getExe prepareBpf);
 
-        bpf_group="$(/usr/bin/stat -f '%Sg' /dev/bpf0)"
-        bpf_mode="$(/usr/bin/stat -f '%OLp' /dev/bpf0)"
-        if [ "$bpf_group" != "${accessBpfGroup}" ] || [ "$bpf_mode" != "660" ]; then
-          echo "Expected /dev/bpf0 to be root:${accessBpfGroup} 660, got group=$bpf_group mode=$bpf_mode" >&2
-          exit 1
-        fi
-      '';
+      # devfs permissions reset at boot. The capture daemon retries until ready.
+      launchd.daemons.bpf-permissions = {
+        command = lib.getExe prepareBpf;
+        serviceConfig = {
+          RunAtLoad = true;
+          ProcessType = "Background";
+          StandardOutPath = "/var/log/nix-darwin/bpf-permissions.log";
+          StandardErrorPath = "/var/log/nix-darwin/bpf-permissions.log";
+        };
+      };
 
       launchd.daemons.observability-lan-wan-accounting = {
         inherit command;

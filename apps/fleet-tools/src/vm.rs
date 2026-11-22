@@ -15,7 +15,7 @@ const TARGETS_JSON: &str = env!("VM_TARGETS_JSON");
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Run a local VM for a NixOS fleet host",
+    about = "Run a local VM for a NixOS or nix-darwin fleet host",
     after_help = env!("VM_HELP")
 )]
 pub struct VmArgs {
@@ -23,7 +23,7 @@ pub struct VmArgs {
     #[arg(long)]
     pub gui: bool,
 
-    /// Inventory host whose NixOS VM variant should run.
+    /// Inventory host whose VM variant should run.
     #[arg(value_name = "TARGET_HOST")]
     pub target_host: String,
 }
@@ -32,6 +32,7 @@ pub struct VmArgs {
 pub struct VmRequest {
     pub target_config: String,
     pub gui: bool,
+    pub interactive: bool,
 }
 
 pub trait VmRunner {
@@ -58,7 +59,8 @@ impl NativeVmRunner {
 
 impl VmRunner for NativeVmRunner {
     fn run(&self, request: &VmRequest) -> Result<i32> {
-        let status = Command::new(&self.nix)
+        let mut command = Command::new(&self.nix);
+        command
             .args([
                 "run",
                 "--impure",
@@ -68,10 +70,18 @@ impl VmRunner for NativeVmRunner {
                     .context("VM runner path is not UTF-8")?,
                 "-L",
                 "--show-trace",
+                // Select the root expression before passing launcher arguments.
+                "",
             ])
             .env("VM_REPO_ROOT", &self.repo_root)
             .env("VM_TARGET_CONFIG", &request.target_config)
-            .env("VM_GUI", if request.gui { "1" } else { "0" })
+            .env("VM_GUI", if request.gui { "1" } else { "0" });
+
+        if request.interactive {
+            command.args(["--", "--interactive"]);
+        }
+
+        let status = command
             .status()
             .with_context(|| format!("failed to start {}", self.nix.display()))?;
         status
@@ -93,9 +103,11 @@ pub fn run(arguments: VmArgs, runner: &impl VmRunner) -> Result<i32> {
             arguments.target_host
         );
     };
+    let inventory = crate::compiled_inventory().context("compiled fleet inventory is invalid")?;
     runner.run(&VmRequest {
         target_config: target_config.clone(),
         gui: arguments.gui,
+        interactive: inventory.darwin.contains_key(target_config),
     })
 }
 
@@ -124,36 +136,43 @@ mod tests {
     fn help_lists_available_inventory_targets() {
         let help = VmArgs::command().render_long_help().to_string();
 
-        for target in ["builder1", "srvarr", "beast", "prx1-lab"] {
+        for target in ["builder1", "srvarr", "beast", "prx1-lab", "mair", "mmini"] {
             assert!(help.lines().any(|line| line.trim() == target));
         }
     }
 
     #[test]
-    fn passes_resolved_target_and_gui_selection_to_runner() {
-        let runner = FakeRunner {
-            exit_code: 7,
-            requests: RefCell::new(Vec::new()),
-        };
+    fn opens_darwin_shells_with_or_without_graphics() {
+        for (target, gui, interactive) in [
+            ("builder1", true, false),
+            ("mair", false, true),
+            ("mmini", true, true),
+        ] {
+            let runner = FakeRunner {
+                exit_code: 7,
+                requests: RefCell::new(Vec::new()),
+            };
 
-        let code = run(
-            VmArgs {
-                gui: true,
-                target_host: "builder1".to_owned(),
-            },
-            &runner,
-        )
-        .expect("known target should run");
+            let code = run(
+                VmArgs {
+                    gui,
+                    target_host: target.to_owned(),
+                },
+                &runner,
+            )
+            .expect("known target should run");
 
-        assert_eq!(code, 7);
-        assert_eq!(
-            *runner.requests.borrow(),
-            [VmRequest {
-                target_config: compiled_targets().expect("targets should parse")["builder1"]
-                    .clone(),
-                gui: true,
-            }]
-        );
+            assert_eq!(code, 7);
+            assert_eq!(
+                *runner.requests.borrow(),
+                [VmRequest {
+                    target_config: compiled_targets().expect("targets should parse")[target]
+                        .clone(),
+                    gui,
+                    interactive,
+                }]
+            );
+        }
     }
 
     #[test]

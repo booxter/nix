@@ -19,6 +19,7 @@ nix run .#vm -- fana
 nix run .#vm -- gw
 nix run .#vm -- org
 nix run .#vm -- beast
+nix run .#vm -- --gui mair
 
 # Config diff between two Git revisions
 nix run .#diff -- frame <old-rev> <new-rev>
@@ -36,6 +37,36 @@ nix run .#deploy -- --disko frame /dev/sdX
 
 Local VM and disk provisioning commands resolve the enclosing Git checkout at
 runtime and must be run from inside one.
+
+Darwin VMs use [nix-darwin-vm](https://github.com/booxter/nix-darwin-vm)
+and require an Apple silicon Mac with macOS 27 or newer. They run headless by
+default; `--gui` opens a display. The first run downloads a macOS restore image
+and installs Nix. Later runs reuse the disk and activate the current configuration.
+The wrapper opens an interactive guest shell after activation, so run it from a
+terminal. This also works with `--gui`. After logout, press Enter to reconnect,
+or Ctrl-C or Ctrl-D at the reconnect prompt to stop the VM.
+Guest settings belong under `virtualisation.vmVariant` in the host configuration.
+The guest inherits the host's services and secret requirements. Socket forwarding
+uses the hypervisor's `~/.ssh/sops/local.sock` service for SOPS
+decryption, with hardware approval on the hypervisor. Operator private keys stay
+on the hypervisor; decrypted secrets are installed in the guest. Keep the runner
+connected for later decryption, and restart it after a guest reboot.
+
+New Darwin VM disks are 100 GiB, rounded up to 108 decimal GB by Tart. Disk size
+changes only apply when creating a VM. For an existing guest that needs a larger
+disk, set a fresh `virtualisation.vmVariant.virtualisation.stateDirectory`.
+
+For an additional connection from another terminal:
+
+```sh
+nix run .#darwinConfigurations.mair.config.system.build.vmSsh
+
+# Forward the caller's SSH agent into the guest.
+nix run .#darwinConfigurations.mair.config.system.build.vmSsh -- --forward-agent
+```
+
+Run both commands from the same directory. VM disks and credentials are stored in
+`./<hostname>-vm` and preserved when the VM stops.
 
 ## Fleet updates
 

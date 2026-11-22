@@ -2,15 +2,58 @@
   config,
   inputs,
   lib,
+  pkgs,
   ...
 }:
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username}.host.hm;
   env = hmConfig.env;
+
+  # Follow Homebrew's headless CLT installation approach.
+  # https://github.com/Homebrew/install/blob/8c82c081753d4263da0cfe615ef8d9433425f22b/install.sh#L828-L849
+  ensureCommandLineTools = pkgs.writeShellApplication {
+    name = "ensure-command-line-tools";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      developer_dir="$(/usr/bin/xcode-select --print-path 2>/dev/null || true)"
+      if [[ -n "$developer_dir" && -x "$developer_dir/usr/bin/clang" ]]; then
+        exit 0
+      fi
+
+      echo "Searching for Apple Command Line Tools..."
+      export LC_ALL=C
+
+      # This marker makes CLT available in Apple's software update catalog.
+      marker=/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+      /usr/bin/touch "$marker"
+      trap '/bin/rm -f "$marker"' EXIT
+
+      updates="$(/usr/sbin/softwareupdate --list)"
+      label="$(printf '%s\n' "$updates" | /usr/bin/awk '
+        /^[[:space:]]*[*] (Label: )?Command Line Tools/ {
+          sub(/^[[:space:]]*[*] (Label: )?/, "")
+          print
+        }
+      ' | sort -V | tail -n 1)"
+
+      if [[ -z "$label" ]]; then
+        echo "No Apple Command Line Tools package is available for this macOS." >&2
+        printf '%s\n' "$updates" >&2
+        exit 1
+      fi
+
+      echo "Installing $label..."
+      /usr/sbin/softwareupdate --install "$label" --agree-to-license
+      /usr/bin/xcode-select --switch /Library/Developer/CommandLineTools
+      /usr/bin/xcrun --find clang
+    '';
+  };
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
+    ${lib.getExe ensureCommandLineTools}
+
     if [ -x /usr/bin/xcodebuild ] && [ -x /usr/bin/xcode-select ]; then
       dev_dir="$(/usr/bin/xcode-select -p 2>/dev/null || true)"
       case "$dev_dir" in
@@ -42,9 +85,6 @@ in
     ]
     ++ lib.optionals hmConfig.protonvpn.enable [
       "protonvpn"
-    ]
-    ++ lib.optionals hmConfig.wireshark.enable [
-      "wireshark-chmodbpf"
     ]
     ++ lib.optionals env.homerow.enable [
       "homerow"

@@ -6,5 +6,5 @@
 }:
 {
   package = (import ../fleet.nix { inherit fleetInventory outputs pkgs; }).packages.vm;
-  description = "Run a local NixOS VM for a nixosConfigurations host.";
+  description = "Run a local VM for a NixOS or nix-darwin host.";
 }
