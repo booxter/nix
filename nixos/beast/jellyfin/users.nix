@@ -5,6 +5,7 @@ let
   definitions = [
     {
       name = "Ihar";
+      audioLanguagePreference = "eng";
       subtitleMode = "Always";
       isAdmin = true;
       isAdult = true;
