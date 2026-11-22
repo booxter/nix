@@ -145,14 +145,14 @@ func (rootSet *RootSet) CreateStaged(
 		if errors.Is(err, unix.EEXIST) {
 			return nil, &Failure{Kind: FailureArtifactExists, cause: err}
 		}
-		return nil, &Failure{Kind: FailureInternal, cause: err}
+		return nil, stagingFailure("create partial artifact", err)
 	}
 	file := os.NewFile(uintptr(fd), "staged-media")
 	if err := unix.Fsync(int(stagedDirectory.Fd())); err != nil {
 		_ = file.Close()
 		_ = unix.Unlinkat(int(stagedDirectory.Fd()), name, 0)
 		_ = stagedDirectory.Close()
-		return nil, &Failure{Kind: FailureInternal, cause: err}
+		return nil, stagingFailure("sync directory after creating partial artifact", err)
 	}
 	return &stagedArtifact{
 		file:          file,
@@ -707,7 +707,7 @@ func ensureWorkspaceDirectory(root *os.File) (*os.File, error) {
 	created := false
 	if err := unix.Mkdirat(int(root.Fd()), workspaceDirectoryName, 0o750); err != nil {
 		if !errors.Is(err, unix.EEXIST) {
-			return nil, &Failure{Kind: FailureInternal, cause: err}
+			return nil, stagingFailure("create staging workspace", err)
 		}
 	} else {
 		created = true
@@ -717,7 +717,7 @@ func ensureWorkspaceDirectory(root *os.File) (*os.File, error) {
 		return nil, err
 	}
 	if !found {
-		return nil, &Failure{Kind: FailureInternal}
+		return nil, stagingFailure("open staging workspace after creation", unix.ENOENT)
 	}
 	if created {
 		if err := syncDirectory(root); err != nil {
@@ -747,34 +747,26 @@ func openWorkspaceDirectoryChecked(root *os.File, initializeMode bool) (*os.File
 		return nil, false, nil
 	}
 	if err != nil {
-		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+		return nil, false, stagingFailure("open staging workspace", err)
 	}
 	directory := os.NewFile(uintptr(fd), "media-repair-workspace-directory")
 	if initializeMode {
 		if err := unix.Fchmod(fd, 0o750); err != nil {
 			_ = directory.Close()
-			return nil, false, &Failure{Kind: FailureInternal, cause: err}
+			return nil, false, stagingFailure("set staging workspace permissions", err)
 		}
 	}
 	var stat unix.Stat_t
 	if err := unix.Fstat(fd, &stat); err != nil {
 		_ = directory.Close()
-		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+		return nil, false, stagingFailure("stat staging workspace", err)
 	}
 	mode := stat.Mode & 0o7777
 	if stat.Mode&unix.S_IFMT != unix.S_IFDIR ||
 		stat.Uid != uint32(os.Geteuid()) ||
 		(mode != 0o750 && mode != 0o2750) {
 		_ = directory.Close()
-		return nil, false, &Failure{
-			Kind: FailureInternal,
-			cause: fmt.Errorf(
-				"workspace directory has type %o, owner %d, and mode %o",
-				stat.Mode&unix.S_IFMT,
-				stat.Uid,
-				mode,
-			),
-		}
+		return nil, false, stagingFailure("validate staging workspace", invalidStagingMetadata(stat))
 	}
 	return directory, true, nil
 }
@@ -794,7 +786,7 @@ func openPrivateDirectory(parent *os.File, name string) (*os.File, bool, error) 
 		return nil, false, nil
 	}
 	if err != nil {
-		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+		return nil, false, stagingFailure("open private staging directory", err)
 	}
 	directory := os.NewFile(uintptr(fd), "private-media-directory")
 	if err := validatePrivateDirectory(directory); err != nil {
@@ -819,16 +811,19 @@ func openArtifact(directory *os.File, name string) (*os.File, bool, error) {
 		return nil, false, nil
 	}
 	if err != nil {
-		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+		return nil, false, stagingFailure("open staged artifact", err)
 	}
 	file := os.NewFile(uintptr(fd), "staged-media")
 	var stat unix.Stat_t
-	if err := unix.Fstat(fd, &stat); err != nil ||
-		stat.Mode&unix.S_IFMT != unix.S_IFREG ||
+	if err := unix.Fstat(fd, &stat); err != nil {
+		_ = file.Close()
+		return nil, false, stagingFailure("stat staged artifact", err)
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFREG ||
 		stat.Uid != uint32(os.Geteuid()) ||
 		stat.Mode&0o777 != 0o600 && stat.Mode&0o777 != 0o640 {
 		_ = file.Close()
-		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+		return nil, false, stagingFailure("validate staged artifact", invalidStagingMetadata(stat))
 	}
 	return file, true, nil
 }
@@ -837,7 +832,7 @@ func ensurePrivateDirectory(parent *os.File, name string) (*os.File, error) {
 	created := false
 	if err := unix.Mkdirat(int(parent.Fd()), name, 0o700); err != nil {
 		if !errors.Is(err, unix.EEXIST) {
-			return nil, &Failure{Kind: FailureInternal, cause: err}
+			return nil, stagingFailure("create private staging directory", err)
 		}
 	} else {
 		created = true
@@ -847,7 +842,7 @@ func ensurePrivateDirectory(parent *os.File, name string) (*os.File, error) {
 		return nil, err
 	}
 	if !found {
-		return nil, &Failure{Kind: FailureInternal}
+		return nil, stagingFailure("open private staging directory after creation", unix.ENOENT)
 	}
 	if created {
 		if err := syncDirectory(parent); err != nil {
@@ -860,11 +855,13 @@ func ensurePrivateDirectory(parent *os.File, name string) (*os.File, error) {
 
 func validatePrivateDirectory(directory *os.File) error {
 	var stat unix.Stat_t
-	if err := unix.Fstat(int(directory.Fd()), &stat); err != nil ||
-		stat.Mode&unix.S_IFMT != unix.S_IFDIR ||
+	if err := unix.Fstat(int(directory.Fd()), &stat); err != nil {
+		return stagingFailure("stat private staging directory", err)
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFDIR ||
 		stat.Uid != uint32(os.Geteuid()) ||
 		stat.Mode&0o077 != 0 {
-		return &Failure{Kind: FailureInternal, cause: err}
+		return stagingFailure("validate private staging directory", invalidStagingMetadata(stat))
 	}
 	return nil
 }
@@ -877,11 +874,11 @@ func syncDirectory(directory *os.File) error {
 		0,
 	)
 	if err != nil {
-		return &Failure{Kind: FailureInternal, cause: err}
+		return stagingFailure("open directory for sync", err)
 	}
 	defer unix.Close(fd)
 	if err := unix.Fsync(fd); err != nil {
-		return &Failure{Kind: FailureInternal, cause: err}
+		return stagingFailure("sync directory", err)
 	}
 	return nil
 }
@@ -889,10 +886,12 @@ func syncDirectory(directory *os.File) error {
 func requireAvailableSpace(directory *os.File, requiredBytes int64) error {
 	var filesystem unix.Statfs_t
 	if err := unix.Fstatfs(int(directory.Fd()), &filesystem); err != nil {
-		return &Failure{Kind: FailureInternal, cause: err}
+		return stagingFailure("check staging space", err)
 	}
 	if filesystem.Bsize <= 0 || filesystem.Bavail < 0 {
-		return &Failure{Kind: FailureInternal}
+		return stagingFailure("check staging space", fmt.Errorf(
+			"invalid block size %d or available block count %d", filesystem.Bsize, filesystem.Bavail,
+		))
 	}
 	blockSize := uint64(filesystem.Bsize)
 	requiredBlocks := uint64(requiredBytes) / blockSize
@@ -903,6 +902,15 @@ func requireAvailableSpace(directory *os.File, requiredBytes int64) error {
 		return &Failure{Kind: FailureInsufficientSpace}
 	}
 	return nil
+}
+
+func stagingFailure(operation string, cause error) *Failure {
+	return &Failure{Kind: FailureInternal, cause: fmt.Errorf("%s: %w", operation, cause)}
+}
+
+func invalidStagingMetadata(stat unix.Stat_t) error {
+	return fmt.Errorf("unexpected type %o, owner %d, and mode %o",
+		stat.Mode&unix.S_IFMT, stat.Uid, stat.Mode&0o7777)
 }
 
 // NFS may reject renameat2 with RENAME_NOREPLACE. A hard link reserves the

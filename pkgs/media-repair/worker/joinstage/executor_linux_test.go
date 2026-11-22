@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -109,6 +110,30 @@ func TestExecutorPassesPartsInAuthorizedOrder(t *testing.T) {
 	}
 	if result.SizeBytes != int64(len("secondfirst")) {
 		t.Fatalf("joined size = %d", result.SizeBytes)
+	}
+}
+
+func TestExecutorReportsStagingFilesystemFailure(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	for _, name := range []string{"first.mkv", "second.mkv", ".media-repair"} {
+		if err := os.WriteFile(filepath.Join(rootPath, name), []byte("media"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
+	rootSet := newRootSet(t, rootPath)
+	executor, err := NewExecutor(rootSet, rootSet, &concatenatingJoiner{}, fixedProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = executor.Stage(context.Background(), execution)
+	assertFailureReason(t, err, workercontracts.StageJoinInternalError)
+	if !strings.Contains(err.Error(), "open staging workspace: "+unix.ENOTDIR.Error()) ||
+		strings.Contains(err.Error(), rootPath) {
+		t.Fatalf("expected a path-free staging error with its filesystem cause, got %v", err)
 	}
 }
 
