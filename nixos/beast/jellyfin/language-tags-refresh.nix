@@ -5,7 +5,8 @@
   ...
 }:
 let
-  refreshWeek = pkgs.writeShellScript "jellyfin-language-tags-refresh-week" ''
+  name = "jellyfin-language-tags-refresh";
+  refreshWeek = pkgs.writeShellScript "${name}-week" ''
     date=${lib.getExe' pkgs.coreutils "date"}
 
     # Anchor the cadence two weeks after the last full refresh. UTC week
@@ -15,18 +16,33 @@ let
 
     (( now >= anchor && (now - anchor) / (7 * 24 * 60 * 60) % 2 == 0 ))
   '';
+  waitForRefresh = pkgs.writeShellScript "wait-for-${name}" ''
+    while true; do
+      state="$(${config.systemd.package}/bin/systemctl show --property=ActiveState --value ${name}.service)" || exit 1
+
+      # A oneshot stays activating while its request is running.
+      case "$state" in
+        activating|active|deactivating)
+          ${lib.getExe' pkgs.coreutils "sleep"} 30
+          ;;
+        *)
+          exit 0
+          ;;
+      esac
+    done
+  '';
   dependencies = [
     "jellyfin.service"
     "sops-install-secrets.service"
   ];
 in
 {
-  systemd.services.jellyfin-language-tags-refresh = {
+  host.maintenance.guards.${name} = "${waitForRefresh}";
+
+  systemd.services.${name} = {
     description = "Force a full refresh of Jellyfin language tags";
     requires = dependencies;
     after = dependencies;
-    # The Sunday system switch can restart Jellyfin before the scan completes.
-    before = [ "nixos-upgrade.service" ];
     restartIfChanged = false;
     stopIfChanged = false;
     serviceConfig = {
@@ -55,7 +71,7 @@ in
     };
   };
 
-  systemd.timers.jellyfin-language-tags-refresh = {
+  systemd.timers.${name} = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "Sun 04:00";
