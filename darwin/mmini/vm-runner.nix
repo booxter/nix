@@ -10,25 +10,29 @@ let
   home = "/var/lib/${name}";
   tokenSecret = "github/vm_runner/token";
   keychainSecret = "github/vm_runner/keychain_password";
-  prepareKeychain = pkgs.writeShellApplication {
-    name = "prepare-vm-keychain.sh";
-    text = ''
-      umask 077
-      keychain="$HOME/Library/Keychains/login.keychain-db"
-      password=$(<${lib.escapeShellArg config.sops.secrets.${keychainSecret}.path})
+  prepareKeychain =
+    passwordFile:
+    pkgs.writeShellApplication {
+      name = "prepare-vm-keychain.sh";
+      text = ''
+        umask 077
+        keychain="$HOME/Library/Keychains/login.keychain-db"
+        password=${
+          if passwordFile == null then "$(/usr/bin/uuidgen)" else "$(<${lib.escapeShellArg passwordFile})"
+        }
 
-      /bin/mkdir -p "$HOME/Library/Keychains"
-      if [[ ! -f "$keychain" ]]; then
-        /usr/bin/security create-keychain -p "$password" "$keychain"
-      fi
+        /bin/mkdir -p "$HOME/Library/Keychains"
+        if [[ ! -f "$keychain" ]]; then
+          /usr/bin/security create-keychain -p "$password" "$keychain"
+        fi
 
-      # Virtualization.framework needs an unlocked login keychain without a GUI.
-      # https://tart.run/faq/#headless-machines
-      /usr/bin/security unlock-keychain -p "$password" "$keychain"
-      /usr/bin/security default-keychain -s "$keychain"
-      /usr/bin/security set-keychain-settings "$keychain"
-    '';
-  };
+        # Virtualization.framework needs an unlocked login keychain without a GUI.
+        # https://tart.run/faq/#headless-machines
+        /usr/bin/security unlock-keychain -p "$password" "$keychain"
+        /usr/bin/security default-keychain -s "$keychain"
+        /usr/bin/security set-keychain-settings "$keychain"
+      '';
+    };
 in
 {
   ids.uids.${user} = 537;
@@ -67,12 +71,20 @@ in
     extraEnvironment = {
       # Registration and work directories are wiped between jobs; the home persists.
       HOME = home;
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = lib.getExe prepareKeychain;
+      ACTIONS_RUNNER_HOOK_JOB_STARTED = lib.getExe (
+        prepareKeychain config.sops.secrets.${keychainSecret}.path
+      );
     };
     serviceOverrides = {
       KeepAlive = lib.mkForce true;
       SessionCreate = true;
     };
+  };
+
+  services.github-runners.mmini-ci = {
+    # The runner's HOME is cleared between jobs, so this keychain is disposable.
+    extraEnvironment.CI_PREPARE_VM_KEYCHAIN = lib.getExe (prepareKeychain null);
+    serviceOverrides.SessionCreate = true;
   };
 
   sops.secrets = lib.genAttrs [ tokenSecret keychainSecret ] (_: {
