@@ -238,6 +238,52 @@ jobs:
           path: diff-output/*
           if-no-files-found: warn
 
+  mair-vm:
+    needs:
+      - format
+    name: darwin vm mair (aarch64-darwin)
+    runs-on: nix-ci-darwin
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Boot and activate mair
+        shell: bash
+        run: |
+          "${CI_PREPARE_VM_KEYCHAIN:?Deploy the updated mmini runner configuration first}"
+
+          state="$(mktemp -d "$RUNNER_TEMP/mair-vm.XXXXXX")"
+
+          trap '
+            if [[ -n "${launcher:-}" ]]; then
+              kill -TERM "$launcher" 2>/dev/null || true
+              wait "$launcher" || true
+            fi
+            rm -rf -- "$state"
+          ' EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+
+          cd "$state"
+          mkfifo launcher-output
+          nix run --print-build-logs "$GITHUB_WORKSPACE#darwinConfigurations.mair.config.system.build.ciVm" >launcher-output &
+          launcher=$!
+
+          while IFS= read -r line; do
+            printf '%s\n' "$line"
+            # The launcher checks /run/current-system in the guest before reporting readiness.
+            if [[ "$line" == "Ready: guest configuration activated" ]]; then
+              exit 0
+            fi
+          done <launcher-output
+
+          wait "$launcher"
+          echo "VM exited before verifying activation." >&2
+          exit 1
+
   post-config-diffs:
     name: post config diffs
     needs:
@@ -702,6 +748,7 @@ jobs:
       - format
       - check-success
       - build
+      - mair-vm
       - post-config-diffs
     runs-on: nix-ci
     steps:
@@ -724,6 +771,11 @@ jobs:
           if [ "${{ needs.build.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
             echo "build=${{ needs.build.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.mair-vm.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            echo "mair-vm=${{ needs.mair-vm.result }}"
             exit 1
           fi
           echo "All CI jobs passed."
