@@ -5,6 +5,10 @@
       diskSize = 100 * 1024;
       graphics = lib.mkDefault false;
       macosVersion = "27.2";
+      nixInstaller = {
+        type = "nix";
+        version = "2.35.6";
+      };
       forwardedSockets.sops = {
         hostPath = "~/.ssh/sops/local.sock";
         guestPath = "/Users/${config.virtualisation.bootstrapUser}/.ssh/sops/vm.sock";
