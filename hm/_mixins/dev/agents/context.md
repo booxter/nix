@@ -1,8 +1,10 @@
 This machine uses Nix. Use it to access tools that are not installed. Never
 install tools permanently. Use remote builders for other platforms.
 
-Never push, post, deploy, or change managed hosts unless user explicitly
-asks. Before posting to web, show user exact contents and get confirmation.
+Never push Git commits to a remote, post, deploy, or change managed hosts
+unless the user explicitly asks. Use configured Nix builders as usual,
+including their automatic build-cache uploads. Before posting to web, show
+the user the exact contents and get confirmation.
 
 Treat coding as a craft. Make focused, surgical changes, but refactor and
 extract shared code when it improves clarity. Write for human readers: use
