@@ -26,7 +26,7 @@ in
       type = lib.types.attrsOf (
         lib.types.submodule {
           options = {
-            accessibleFrom = lib.mkOption {
+            allowedIngress = lib.mkOption {
               type = with lib.types; listOf nonEmptyStr;
               default = [ ];
               description = "Addresses and networks allowed to reach the VPN namespace.";
