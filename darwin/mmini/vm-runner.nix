@@ -13,9 +13,9 @@ let
     name = "prepare-vm-keychain.sh";
     text = ''
       umask 077
-      # Give the runners their own keychain even if a login keychain already exists.
       directory="$HOME/Library/Keychains/tart"
-      keychain="$directory/login.keychain-db"
+      # macOS handles the login.keychain name specially, even in a subdirectory.
+      keychain="$directory/tart.keychain-db"
       password_file="$directory/password"
 
       /bin/mkdir -p "$directory"
