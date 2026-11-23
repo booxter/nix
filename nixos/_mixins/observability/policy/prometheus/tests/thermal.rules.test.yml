@@ -36,31 +36,47 @@ tests:
   - interval: 30s
     input_series:
       - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node"}'
-        values: "90x22"
+        values: "90x120"
       - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini",scrape_profile="node"}'
-        values: "0+30x22"
+        values: "0+30x120"
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mair",scrape_profile="node"}'
+        values: "90x120"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mair",scrape_profile="node"}'
+        values: "0+30x120"
     alert_rule_test:
-      - eval_time: 10m30s
+      - eval_time: 59m30s
+        alertname: MacCPUTemperatureHigh
+      - eval_time: 1h
         alertname: CPUTemperatureHigh
+      - eval_time: 1h
+        alertname: MacCPUTemperatureHigh
         exp_alerts:
           - exp_labels:
-              alertname: CPUTemperatureHigh
+              alertname: MacCPUTemperatureHigh
+              category: thermal
+              instance: mair
+              severity: warning
+            exp_annotations:
+              summary: "CPU temperature high on mair"
+              description: "mair has sustained CPU/package temperature above 85C for 1 hour."
+          - exp_labels:
+              alertname: MacCPUTemperatureHigh
               category: thermal
               instance: mmini
               severity: warning
             exp_annotations:
               summary: "CPU temperature high on mmini"
-              description: "mmini has sustained CPU/package temperature above 85C for 10 minutes."
+              description: "mmini has sustained CPU/package temperature above 85C for 1 hour."
 
   - interval: 30s
     input_series:
       - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node"}'
-        values: "90x22"
+        values: "90x120"
       - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini",scrape_profile="node"}'
-        values: "0x22"
+        values: "0x120"
     alert_rule_test:
-      - eval_time: 10m30s
-        alertname: CPUTemperatureHigh
+      - eval_time: 1h
+        alertname: MacCPUTemperatureHigh
 
   - interval: 30s
     input_series:
