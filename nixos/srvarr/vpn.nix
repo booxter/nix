@@ -4,7 +4,7 @@ let
 in
 {
   host.vpn.namespaces.${namespace} = {
-    accessibleFrom = [
+    allowedIngress = [
       "127.0.0.1"
       config.host.site.lan.cidr
       "10.0.0.0/8"

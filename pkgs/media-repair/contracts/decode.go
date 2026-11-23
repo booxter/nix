@@ -18,6 +18,45 @@ func DecodeCase(data []byte) (RepairCaseV3, error) {
 	return repairCase, nil
 }
 
+// UpgradeStoredDecision preserves single-title DVD plans written before the
+// ordered selection was introduced. Planner responses use the current schema.
+func UpgradeStoredDecision(data json.RawMessage) (json.RawMessage, error) {
+	if len(data) == 0 {
+		return data, nil
+	}
+	var envelope struct {
+		Action string `json:"action"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return nil, err
+	}
+	if envelope.Action != "remux_dvd_v1" {
+		return data, nil
+	}
+
+	var old struct {
+		Action        string   `json:"action"`
+		CapabilityID  string   `json:"capability_id"`
+		CaseID        string   `json:"case_id"`
+		EvidenceRefs  []string `json:"evidence_refs"`
+		Explanation   string   `json:"explanation"`
+		SchemaVersion string   `json:"schema_version"`
+	}
+	if err := decodeStrict(data, &old); err != nil {
+		return nil, err
+	}
+	if old.SchemaVersion != "radarr-repair/v3" {
+		return nil, fmt.Errorf("invalid stored DVD decision version %q", old.SchemaVersion)
+	}
+	return EncodeDecision(RepairDecisionV3{
+		Kind: ActionRemuxDVD,
+		RemuxDVD: &RemuxDVDDecision{
+			Action: "remux_dvd_v2", CaseID: old.CaseID, OrderedTitleIDS: []string{old.CapabilityID},
+			EvidenceRefs: old.EvidenceRefs, Explanation: old.Explanation, SchemaVersion: RadarrRepairV3,
+		},
+	})
+}
+
 func DecodeDecision(data []byte) (RepairDecisionV3, error) {
 	schema, err := decisionSchemaV3()
 	if err != nil {

@@ -56,8 +56,8 @@ class ExpectedRemuxBluray(StrictModel):
 
 
 class ExpectedRemuxDVD(StrictModel):
-    action: Literal["remux_dvd_v1"]
-    capability_id: str
+    action: Literal["remux_dvd_v2"]
+    ordered_title_ids: list[str]
 
 
 ExpectedDecision = Annotated[
@@ -103,6 +103,17 @@ def _validate_expected_capability(
     capabilities = {
         capability["capability_id"]: capability for capability in case_value["capabilities"]
     }
+    if isinstance(expected, ExpectedRemuxDVD):
+        allowed = {
+            key
+            for key, capability in capabilities.items()
+            if capability["action"] == expected.action
+        }
+        ids = set(expected.ordered_title_ids)
+        if not ids or len(ids) != len(expected.ordered_title_ids) or not ids <= allowed:
+            raise EvaluationDataError(f"evaluation case {spec.name} expects unavailable DVD titles")
+        return
+
     capability = capabilities.get(expected.capability_id)
     if capability is None:
         raise EvaluationDataError(f"evaluation case {spec.name} expects an unavailable capability")
@@ -118,7 +129,7 @@ def _validate_expected_capability(
             )
         return
 
-    if isinstance(expected, (ExpectedRemuxBluray, ExpectedRemuxDVD)):
+    if isinstance(expected, ExpectedRemuxBluray):
         return
 
     candidate_ids = set(capability["candidate_file_ids"])
@@ -219,9 +230,9 @@ def _expectation_violations(
     ):
         violations.append("Blu-ray remux selected the wrong playlist")
     elif isinstance(expected, ExpectedRemuxDVD) and (
-        decision_value["capability_id"] != expected.capability_id
+        decision_value["ordered_title_ids"] != expected.ordered_title_ids
     ):
-        violations.append("DVD remux selected the wrong title")
+        violations.append("DVD remux selected the wrong titles or order")
     return violations
 
 

@@ -57,12 +57,19 @@ func (client *Client) IdentifyDVD(
 				Kind: string(track.Kind), Codec: track.Codec, Language: language,
 			})
 		}
-		titles = append(titles, dvdvideo.Title{
+		title := dvdvideo.Title{
 			Number: int(wire.Number), DurationMS: wire.DurationMS,
 			Chapters: int(wire.ChapterCount), Angles: int(wire.AngleCount),
 			TitleSet: int(wire.TitleSet), TitleInSet: int(wire.TitleInSet),
 			Tracks: tracks,
-		})
+		}
+		if wire.NextTitle != nil {
+			title.NextTitle = int(*wire.NextTitle)
+		}
+		if wire.EquivalentTo != nil {
+			title.EquivalentTo = int(*wire.EquivalentTo)
+		}
+		titles = append(titles, title)
 	}
 	return titles, nil
 }

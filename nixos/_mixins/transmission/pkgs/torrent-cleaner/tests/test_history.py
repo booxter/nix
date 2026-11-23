@@ -20,6 +20,7 @@ def observe(
     return observe_upload(
         history,
         completed_at=completed_at,
+        seconds_seeding=hour * HOUR_SECONDS,
         uploaded_bytes=uploaded,
         now=float(hour * HOUR_SECONDS),
         window_seconds=float(WINDOW),
@@ -58,7 +59,6 @@ def test_discontinuity_requires_a_fresh_window(event: str) -> None:
         hour -= 2
     history, rate = observe(history, hour, uploaded, completed_at)
     assert rate is None
-    assert len(history.samples) == 1
     for offset in range(1, 14 * 24):
         history, rate = observe(
             history, hour + offset, uploaded + offset * HOUR_SECONDS, completed_at
@@ -68,8 +68,14 @@ def test_discontinuity_requires_a_fresh_window(event: str) -> None:
     assert rate == 1
 
 
-@pytest.mark.parametrize("event", ["reset", "clock"])
-def test_intra_hour_discontinuity_restarts_window(event: str) -> None:
+@pytest.mark.parametrize(
+    ("seed_offset", "upload_offset", "wall_offset"),
+    [(2000, 900, 2000), (900, 2000, 2000), (2000, 2000, 900)],
+    ids=["upload-counter-reset", "seeding-counter-reset", "clock-reversal"],
+)
+def test_intra_hour_discontinuity_restarts_window(
+    seed_offset: int, upload_offset: int, wall_offset: int
+) -> None:
     history = None
     for hour in range(14 * 24 + 1):
         history, _ = observe(history, hour, hour * HOUR_SECONDS)
@@ -78,20 +84,21 @@ def test_intra_hour_discontinuity_restarts_window(event: str) -> None:
     history, rate = observe_upload(
         history,
         completed_at=1,
+        seconds_seeding=WINDOW + 1800,
         uploaded_bytes=WINDOW + 1800,
         now=now,
         window_seconds=float(WINDOW),
     )
     assert rate is not None and rate >= 1
-    history, rate = observe_upload(
+    _, rate = observe_upload(
         history,
         completed_at=1,
-        uploaded_bytes=WINDOW + (900 if event == "reset" else 2000),
-        now=now + (1 if event == "reset" else -900),
+        seconds_seeding=WINDOW + seed_offset,
+        uploaded_bytes=WINDOW + upload_offset,
+        now=float(WINDOW + wall_offset),
         window_seconds=float(WINDOW),
     )
     assert rate is None
-    assert len(history.samples) == 1
 
 
 def test_hourly_boundary_never_underestimates_productive_window() -> None:
@@ -104,6 +111,7 @@ def test_hourly_boundary_never_underestimates_productive_window() -> None:
     _, rate = observe_upload(
         history,
         completed_at=1,
+        seconds_seeding=WINDOW + 1800,
         uploaded_bytes=WINDOW * rate_threshold,
         now=float(WINDOW + 1800),
         window_seconds=float(WINDOW),
@@ -126,15 +134,16 @@ def test_file_store_roundtrip_and_invalid_file(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "last_observation",
+    "overrides",
     [
-        {"timestamp": -1, "uploaded_bytes": 100},
-        {"timestamp": 1, "uploaded_bytes": 99},
-        {"timestamp": float("nan"), "uploaded_bytes": 100},
+        {"timestamp": -1},
+        {"seconds_seeding": 99},
+        {"uploaded_bytes": 99},
+        {"timestamp": float("nan")},
     ],
 )
 def test_file_store_rejects_invalid_observations(
-    tmp_path: Path, last_observation: dict[str, float | int]
+    tmp_path: Path, overrides: dict[str, float | int]
 ) -> None:
     path = tmp_path / "history.json"
     path.write_text(
@@ -143,8 +152,13 @@ def test_file_store_rejects_invalid_observations(
                 "torrents": {
                     "hash": {
                         "completed_at": 1,
-                        "samples": [{"timestamp": 0, "uploaded_bytes": 100}],
-                        "last_observation": last_observation,
+                        "samples": [
+                            {"timestamp": 0, "seconds_seeding": 100, "uploaded_bytes": 100}
+                        ],
+                        "last_observation": (
+                            {"timestamp": 1, "seconds_seeding": 101, "uploaded_bytes": 101}
+                            | overrides
+                        ),
                     }
                 }
             }

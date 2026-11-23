@@ -70,7 +70,8 @@ func (store *Store) PrepareDVD(
 	validation := decisionpolicy.ValidateDVDWithPolicy(
 		planned.Assembly, planned.Decision, planned.RuntimePolicy(),
 	)
-	if !validation.Accepted() || !reflect.DeepEqual(*validation.Authorized, authorized) {
+	if !validation.Accepted() || len(validation.Authorized.Titles) != 1 ||
+		!reflect.DeepEqual(validation.Authorized.Titles[0], authorized) {
 		return RemuxExecution{}, false, fmt.Errorf("DVD remux does not match stored case and decision")
 	}
 	previous, found, err := readRemuxExecution(path)

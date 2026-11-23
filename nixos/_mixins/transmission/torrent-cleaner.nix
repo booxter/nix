@@ -22,7 +22,8 @@ let
       "--policy-file"
       transmissionPolicyFile
       "--history-file"
-      "/var/lib/transmission-torrent-cleaner/uploads.json"
+      # Old samples have no seeding counter and cannot be converted.
+      "/var/lib/transmission-torrent-cleaner/seeding-uploads.json"
       "--request-timeout-seconds"
       (toString policy.requestTimeoutSeconds)
     ]

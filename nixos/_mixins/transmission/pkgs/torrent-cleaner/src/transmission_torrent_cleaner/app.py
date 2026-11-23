@@ -264,11 +264,13 @@ def collect_upload_history(
             not torrent.hash_string
             or not torrent_is_complete(torrent)
             or torrent.uploaded_ever is None
+            or torrent.seconds_seeding is None
         ):
             continue
         observations, rate = observe_upload(
             history.torrents.get(torrent.hash_string),
             completed_at=torrent.done_date,
+            seconds_seeding=torrent.seconds_seeding,
             uploaded_bytes=torrent.uploaded_ever,
             now=now,
             window_seconds=policy.activity.window_days * DAY_SECONDS,

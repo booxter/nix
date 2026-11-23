@@ -33,7 +33,7 @@
     };
     model = lib.mkOption {
       type = lib.types.nonEmptyStr;
-      default = "openai/gpt-6.1-sol";
+      default = "openai/gpt-6.2-sol";
       description = "OpenRouter model identifier.";
     };
     provider = lib.mkOption {

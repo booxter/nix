@@ -50,6 +50,9 @@ func (failure *Failure) Error() string {
 	case FailureDestinationExists:
 		return "published media destination already exists"
 	default:
+		if failure.cause != nil {
+			return "media file access failed: " + failure.cause.Error()
+		}
 		return "media file access failed"
 	}
 }

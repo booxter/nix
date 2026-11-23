@@ -16,11 +16,13 @@ func ValidateDVDOutput(
 	expectedTracks []dvdvideo.Track,
 	evidence controller.ProbeEvidence,
 ) error {
-	if !slices.Contains(evidence.Format.Names, "matroska") ||
-		evidence.Format.DurationMS == nil ||
-		len(evidence.Chapters) != expectedChapterCount ||
-		expectedChapterCount <= 0 {
-		return fmt.Errorf("DVD remux output format or chapters differ from title")
+	if !slices.Contains(evidence.Format.Names, "matroska") || evidence.Format.DurationMS == nil {
+		return fmt.Errorf("DVD remux output is missing Matroska format or duration")
+	}
+	// FFmpeg omits a chapter table when the sole chapter spans the title.
+	count := len(evidence.Chapters)
+	if expectedChapterCount <= 0 || count != expectedChapterCount && (count != 0 || expectedChapterCount != 1) {
+		return fmt.Errorf("DVD remux output has %d chapters, expected %d", count, expectedChapterCount)
 	}
 	difference := *evidence.Format.DurationMS - expectedDurationMS
 	if difference < 0 {

@@ -57,7 +57,13 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 		return repair.Decision{}, err
 	}
 
-	decision, err := adapter.Planner.Plan(ctx, evidence.Case, repair.Guidance(job))
+	options := repair.Guidance(job)
+	prior, err := contracts.UpgradeStoredDecision(options.PriorDecision)
+	if err != nil {
+		return repair.Decision{}, err
+	}
+	options.PriorDecision = prior
+	decision, err := adapter.Planner.Plan(ctx, evidence.Case, options)
 	if err != nil {
 		return repair.Decision{}, err
 	}

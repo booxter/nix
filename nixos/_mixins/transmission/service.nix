@@ -38,6 +38,7 @@ in
         rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
         rpc-whitelist = "127.0.0.1,192.168.*,10.*";
         sort-mode = "progress";
+        torrent_complete_verify_enabled = true;
         umask = "002";
         watch-dir = model.watchDir;
         watch-dir-enabled = true;

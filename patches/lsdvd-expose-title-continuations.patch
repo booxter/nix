@@ -1,0 +1,114 @@
+diff --git a/lsdvd.c b/lsdvd.c
+index 9be5ac2..d26e417 100644
+--- a/lsdvd.c
++++ b/lsdvd.c
+@@ -367,6 +367,29 @@ static char output_option(char *arg)
+ }
+ 
+ 
++/* Only a straight, single-chain title establishes a playback relationship. */
++static int sequential_playback(const pgc_t *pgc, const ttu_t *parts)
++{
++	if (!pgc->cell_playback || !pgc->program_map || !pgc->nr_of_programs ||
++	    !pgc->nr_of_cells || pgc->pg_playback_mode || pgc->still_time ||
++	    parts->nr_of_ptts != pgc->nr_of_programs || pgc->program_map[0] != 1)
++		return 0;
++
++	for (int i = 0; i < parts->nr_of_ptts; i++) {
++		if (parts->ptt[i].pgcn != parts->ptt[0].pgcn || parts->ptt[i].pgn != i + 1 ||
++		    pgc->program_map[i] > pgc->nr_of_cells ||
++		    (i && pgc->program_map[i] <= pgc->program_map[i - 1]))
++			return 0;
++	}
++	for (int i = 0; i < pgc->nr_of_cells; i++) {
++		const cell_playback_t *cell = &pgc->cell_playback[i];
++		if (cell->block_type != BLOCK_TYPE_NONE || cell->cell_cmd_nr ||
++		    cell->first_sector > cell->last_sector)
++			return 0;
++	}
++	return 1;
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	char title[DVD_TITLE_MAX+1];
+@@ -506,7 +529,11 @@ int main(int argc, char *argv[])
+ 				vts_ttn = ifo_zero->tt_srpt->title[j].vts_ttn;
+ 				vmgi_mat = ifo_zero->vmgi_mat;
+ 				title_set_nr = ifo_zero->tt_srpt->title[j].title_set_nr;
+-				pgc = vts_pgcit->pgci_srp[ifo[title_set_nr]->vts_ptt_srpt->title[vts_ttn - 1].ptt[0].pgcn - 1].pgc;
++				const ttu_t *parts = &ifo[title_set_nr]->vts_ptt_srpt->title[vts_ttn - 1];
++				pgc = vts_pgcit->pgci_srp[parts->ptt[0].pgcn - 1].pgc;
++				if (opt_x && opt_O == 'x' && ifo_zero->tt_srpt->title[j].nr_of_angles == 1 &&
++				    sequential_playback(pgc, parts))
++					dvd_info.titles[j].playback = pgc;
+ 				dvd_info.titles[j].general.vts_id = vtsi_mat->vts_identifier;
+ 				dvd_info.titles[j].chapter_count_reported = ifo_zero->tt_srpt->title[j].nr_of_ptts;
+ 				if(pgc->cell_playback == NULL || pgc->program_map == NULL) {
+diff --git a/lsdvd.h b/lsdvd.h
+index 66f8dea..05960da 100644
+--- a/lsdvd.h
++++ b/lsdvd.h
+@@ -1,6 +1,8 @@
+ #ifndef _LSDVD_H_
+ #define _LSDVD_H_
+ 
++#include <dvdread/ifo_types.h>
++
+ #ifdef __linux__
+ #define DEFAULT_DVD_DEVICE "/dev/sr0"
+ #elif __FreeBSD__ || __DragonFly__
+@@ -51,6 +53,7 @@ struct dvd_info {
+ 	int title_count;
+ 	struct {
+ 		int enabled;
++		const pgc_t *playback;
+ 		struct {
+ 			float length;
+ 			playback_time_t playback_time;
+diff --git a/oxml.c b/oxml.c
+index ff87412..2d49ca9 100644
+--- a/oxml.c
++++ b/oxml.c
+@@ -127,6 +127,30 @@ static void XMLSTOP(void) {
+ 	xmlFreeDoc(doc);
+ }
+ 
++/* Read direct, unconditional title jumps. Earlier commands may only be
++   no-ops or standalone assignments to a general-purpose register. */
++static int next_title_in_set(const pgc_t *pgc)
++{
++	if (!pgc || !pgc->command_tbl || !pgc->command_tbl->nr_of_post ||
++	    !pgc->command_tbl->post_cmds)
++		return 0;
++
++	const vm_cmd_t *commands = pgc->command_tbl->post_cmds;
++	int last = pgc->command_tbl->nr_of_post - 1;
++	static const uint8_t noop[8] = {0};
++	for (int i = 0; i < last; i++) {
++		const uint8_t *cmd = commands[i].bytes;
++		if (memcmp(cmd, noop, sizeof(noop)) && ((cmd[0] & 0xef) != 0x61 || cmd[1]))
++			return 0;
++	}
++
++	const uint8_t *cmd = commands[last].bytes;
++	int chapter = ((cmd[2] & 3) << 8) | cmd[3];
++	if (cmd[0] == 0x30 && (cmd[1] == 3 || (cmd[1] == 5 && chapter == 1)))
++		return cmd[5] & 0x7f;
++	return 0;
++}
++
+ void oxml_print(struct dvd_info *dvd_info) {
+ 	int j, i;
+ 
+@@ -148,6 +172,10 @@ void oxml_print(struct dvd_info *dvd_info) {
+ 		XMLDEF("length", "%.3f", dvd_info->titles[j].general.length);
+ 		XMLDEF("vts_id", "%.12s", dvd_info->titles[j].general.vts_id);
+ 
++		int next = next_title_in_set(dvd_info->titles[j].playback);
++		if (next)
++			XMLDEF("next_ttn", "%d", next);
++
+ 		if (dvd_info->titles[j].parameter.format != NULL ) {
+ 			XMLDEF("vts", "%d", dvd_info->titles[j].parameter.vts);
+ 			XMLDEF("ttn", "%d", dvd_info->titles[j].parameter.ttn);

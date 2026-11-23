@@ -33,7 +33,7 @@ def torrent(name: str = "public", **overrides: object) -> app.Torrent:
         "tracker_stats": [{"host": "public.example"}],
         "upload_ratio": 3.0,
         "uploaded_ever": 1000,
-        "seconds_seeding": 3 * DAY,
+        "seconds_seeding": 14 * DAY,
     }
     values.update(overrides)
     return app.Torrent.model_validate(values)
@@ -109,14 +109,13 @@ def test_generic_ratio_and_maximum_age_rules(
     ("rate", "expected"),
     [(None, []), (10240.0, []), (10239.0, ["public"]), (0.0, ["public"])],
 )
-def test_generic_low_upload_is_independent_of_ratio_seed_time_and_floor(
+def test_generic_low_upload_is_independent_of_ratio_and_floor(
     rate: float | None, expected: list[str]
 ) -> None:
     item = torrent(
         added_date=int(NOW) - 40 * DAY,
         done_date=int(NOW) - 30 * DAY,
         upload_ratio=0.0,
-        seconds_seeding=None,
     )
     rates = {} if rate is None else {"public": rate}
     assert candidates([item], rates) == expected
@@ -174,7 +173,9 @@ def test_all_matching_tracker_floors_are_preserved() -> None:
 
 def test_all_matching_tracker_seeding_requirements_are_preserved() -> None:
     shared = special(
-        "shared", tracker_stats=[{"host": "preferred.example"}, {"host": "second.example"}]
+        "shared",
+        tracker_stats=[{"host": "preferred.example"}, {"host": "second.example"}],
+        seconds_seeding=3 * DAY,
     )
     configured = policy(0)
     configured.trackers["tracker2"] = RetentionPolicy(minimum_retained=0, minimum_seed_days=4.0)
@@ -218,8 +219,10 @@ class MemoryHistory:
 
 @dataclass(frozen=True)
 class FrozenClock:
+    timestamp: float = NOW
+
     def now(self) -> float:
-        return NOW
+        return self.timestamp
 
 
 def settings(tmp_path: Path, *, delete: bool = True) -> app.Settings:
@@ -235,16 +238,15 @@ def settings(tmp_path: Path, *, delete: bool = True) -> app.Settings:
 
 
 def mature_history(items: list[app.Torrent]) -> MemoryHistory:
+    baseline = Sample(timestamp=NOW - 14 * DAY, seconds_seeding=0, uploaded_bytes=1000)
+    latest = Sample(timestamp=NOW - 3600, seconds_seeding=14 * DAY - 3600, uploaded_bytes=1000)
     return MemoryHistory(
         UploadHistory(
             torrents={
                 item.hash_string: TorrentHistory(
                     completed_at=item.done_date,
-                    last_observation=Sample(timestamp=NOW - 3600, uploaded_bytes=1000),
-                    samples=[
-                        Sample(timestamp=NOW - hour * 3600, uploaded_bytes=1000)
-                        for hour in range(14 * 24, 0, -1)
-                    ],
+                    last_observation=latest,
+                    samples=[baseline, latest],
                 )
                 for item in items
             }
@@ -274,6 +276,34 @@ def test_generic_low_upload_requires_full_history(tmp_path: Path, has_history: b
     client = FakeClient(items)
     assert app.run_cleanup(settings(tmp_path), client, FrozenClock(), store) == 0
     assert client.removed == (["public"] if has_history else [])
+
+
+def test_paused_time_does_not_count_toward_low_upload_cleanup(tmp_path: Path) -> None:
+    config = settings(tmp_path)
+    store = MemoryHistory()
+    items = [
+        torrent(name, added_date=int(NOW) - 90 * DAY, upload_ratio=0.0)
+        for name in ("idle", "productive")
+    ]
+    week = 7 * 24
+    for hour in range(3 * week + 1):
+        paused_hours = min(max(hour - week, 0), week)
+        seconds_seeding = (hour - paused_hours) * 3600
+        client = FakeClient(
+            [
+                item.model_copy(
+                    update={
+                        "seconds_seeding": 14 * DAY + seconds_seeding,
+                        "uploaded_ever": (
+                            seconds_seeding * 10240 if item.name == "productive" else 0
+                        ),
+                    }
+                )
+                for item in items
+            ]
+        )
+        assert app.run_cleanup(config, client, FrozenClock(NOW + hour * 3600), store) == 0
+        assert client.removed == (["idle"] if hour == 3 * week else [])
 
 
 def test_cleanup_rechecks_recent_downloads_before_deletion(tmp_path: Path) -> None:
@@ -332,7 +362,11 @@ def test_rpc_failure_stops_cleanup(tmp_path: Path) -> None:
 
 
 def test_missing_counters_and_incomplete_torrents_drop_history() -> None:
-    items = [special("missing", uploaded_ever=None), special("incomplete", left_until_done=1)]
+    items = [
+        special("missing-upload", uploaded_ever=None),
+        special("missing-seeding", seconds_seeding=None),
+        special("incomplete", left_until_done=1),
+    ]
     history, rates = app.collect_upload_history(items, mature_history(items).history, policy(), NOW)
     assert history.torrents == {}
     assert rates == {}

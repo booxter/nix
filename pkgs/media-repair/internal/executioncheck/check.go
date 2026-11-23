@@ -47,7 +47,7 @@ type Authorization struct {
 	Join         *decisionpolicy.AuthorizedJoin
 	ManualImport *decisionpolicy.AuthorizedManualImport
 	Remux        *decisionpolicy.AuthorizedRemux
-	DVD          *decisionpolicy.AuthorizedDVD
+	DVD          *decisionpolicy.AuthorizedDVDSelection
 }
 
 type Result struct {

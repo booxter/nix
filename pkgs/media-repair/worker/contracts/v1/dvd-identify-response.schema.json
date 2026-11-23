@@ -72,6 +72,16 @@
                 "minimum": 1,
                 "type": "integer"
               },
+              "equivalent_to": {
+                "maximum": 128,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "next_title": {
+                "maximum": 128,
+                "minimum": 1,
+                "type": "integer"
+              },
               "number": {
                 "maximum": 128,
                 "minimum": 1,

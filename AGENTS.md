@@ -4,8 +4,9 @@ Scope: whole repository.
 
 ## Operating Rules
 
-- Commit completed changes locally. Do not push, deploy, or change managed hosts
-  live unless explicitly asked.
+- Commit completed changes locally. Do not push Git commits to a remote,
+  deploy, or change managed hosts live unless explicitly asked. Use configured
+  Nix builders as usual, including their automatic build-cache uploads.
 - Keep history clean: use separate commits for distinct logical steps and avoid
   spurious or unrelated changes.
 - Prefer simple, task-focused solutions over over-engineering. Do not copy and

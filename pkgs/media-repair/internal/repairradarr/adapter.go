@@ -90,14 +90,18 @@ func (adapter *Adapter) authorize(
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
 
-	decision, err := contracts.DecodeDecision(plan)
+	currentPlan, err := contracts.UpgradeStoredDecision(plan)
+	if err != nil {
+		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
+	}
+	decision, err := contracts.DecodeDecision(currentPlan)
 	if err != nil {
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
 
 	entries, err := adapter.Client.ReadQueue(ctx)
 	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
+		return casebuilder.Assembly{}, executioncheck.Authorization{}, repair.RetryableRead(err)
 	}
 	keys := make([]jobs.QueueKey, len(entries))
 	for index, entry := range entries {
@@ -112,7 +116,7 @@ func (adapter *Adapter) authorize(
 	}
 	fresh, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entries[index].ID})
 	if err != nil {
-		return fresh, executioncheck.Authorization{}, err
+		return fresh, executioncheck.Authorization{}, repair.RetryableRead(err)
 	}
 
 	// Planning can be slow; authorize against fresh source and queue evidence.

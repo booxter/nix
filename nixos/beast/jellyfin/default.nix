@@ -1,5 +1,6 @@
 {
   imports = [
+    ./language-tags-refresh.nix
     ./libraries.nix
     ./localization.nix
     ./plugins.nix

@@ -11,6 +11,7 @@ in
     host.jellyfinDeclarativeConfig.plugins = [
       {
         name = "Webhook";
+        id = "71552a5a-5c5c-4350-a2ae-ebe451a30173";
         configuration.GenericOptions = [
           {
             WebhookName = "WatchState Global Webhook";

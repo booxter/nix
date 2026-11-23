@@ -24,6 +24,8 @@ func (err *HTTPError) Error() string {
 	return fmt.Sprintf("%s returned HTTP status %d", err.Service, err.StatusCode)
 }
 
+func (err *HTTPError) HTTPStatus() int { return err.StatusCode }
+
 func NewConfig(service, baseURL, apiKey string, httpClient *http.Client) (*starr.Config, error) {
 	if service == "" {
 		return nil, fmt.Errorf("Servarr service name is required")
