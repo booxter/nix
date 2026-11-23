@@ -2,7 +2,7 @@ groups:
   - name: thermal-health
     interval: 30s
     rules:
-      - alert: CPUTemperatureHigh
+      - record: instance:cpu_temperature_celsius:max
         expr: |
           max by(instance) (
             (
@@ -14,7 +14,9 @@ groups:
                 and on(instance)
               (time() - host_observability_darwin_thermal_sample_timestamp_seconds{scrape_profile="node",host_class="hardware"} < 120)
             )
-          ) > 85
+          )
+      - alert: CPUTemperatureHigh
+        expr: instance:cpu_temperature_celsius:max{instance!~"mmini|mair"} > 85
         for: 10m
         labels:
           severity: warning
@@ -22,6 +24,15 @@ groups:
         annotations:
           summary: "CPU temperature high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes."
+      - alert: MacCPUTemperatureHigh
+        expr: instance:cpu_temperature_celsius:max{instance=~"mmini|mair"} > 85
+        for: 1h
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "CPU temperature high on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 1 hour."
       - alert: StorageTemperatureHigh
         expr: |
           max by(instance) (
