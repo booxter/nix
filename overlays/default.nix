@@ -20,7 +20,15 @@
           lib.versionAtLeast releaseTransmissionVersion "4.1.0"
           && lib.versionOlder releaseTransmissionVersion "4.2.0"
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
-        releaseTransmission
+        releaseTransmission.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ../patches/transmission-open-file-limit.patch ];
+          doCheck = true;
+          checkPhase = ''
+            runHook preCheck
+            ctest --output-on-failure --no-tests=error -R '^LT\.(Configured)?OpenFilesTest\.'
+            runHook postCheck
+          '';
+        })
       );
     in
     {
