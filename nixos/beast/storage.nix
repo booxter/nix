@@ -1,5 +1,8 @@
 { config, ... }:
 {
+  # Torrent writes can occupy several NFS workers waiting on the same inode.
+  services.nfs.server.nproc = 16;
+
   host.storage.volumes.bulk = {
     # Keep /volume2 as the durable path published to existing NFS clients.
     mountPoint = "/volume2";

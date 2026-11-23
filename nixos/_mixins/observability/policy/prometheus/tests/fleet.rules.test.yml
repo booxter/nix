@@ -400,6 +400,18 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_filesystem_avail_bytes{instance="mair",job="node-mtls",mountpoint="/",fstype="apfs"}'
+        values: "4x60"
+      - series: 'node_filesystem_size_bytes{instance="mair",job="node-mtls",mountpoint="/",fstype="apfs"}'
+        values: "100x60"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RootFilesystemUsageHigh
+      - eval_time: 30m
+        alertname: RootFilesystemUsageCritical
+
+  - interval: 30s
+    input_series:
       - series: 'node_nixos_upgrade_last_success_time_seconds{instance="beast",job="node-mtls"}'
         values: "86400x4322"
     alert_rule_test:
