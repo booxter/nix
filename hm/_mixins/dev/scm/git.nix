@@ -85,8 +85,11 @@ lib.mkIf config.host.hm.env.roles.developer {
       syntax-theme = "gruvbox-dark";
       dark = true;
       keep-plus-minus-markers = true;
-      minus-style = "syntax auto";
-      plus-style = "syntax auto";
+      # Match Codex's dark diff backgrounds, including word-level changes.
+      minus-style = "syntax #4a221d";
+      minus-emph-style = "syntax #4a221d";
+      plus-style = "syntax #213a2b";
+      plus-emph-style = "syntax #213a2b";
       pager = "${pkgs.less}/bin/less '--tabs=4' -RFX";
     };
   };
