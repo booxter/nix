@@ -17,9 +17,9 @@ let
   };
   shared = import ../shared.nix { inherit config lib osConfig; };
   models = {
-    default = "gpt-6.2-sol";
+    default = "gpt-6.1-sol";
     implementer = "gpt-6.1-terra";
-    specialist = "gpt-6.2-astra";
+    specialist = "gpt-6-astra";
   };
   codexContext = shared.context models + mcps.instructions;
   # Follow the configured Codex version and preserve its voice prompt. Overrides
