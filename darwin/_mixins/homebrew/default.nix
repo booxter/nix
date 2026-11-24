@@ -9,6 +9,7 @@ let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username}.host.hm;
   env = hmConfig.env;
+  brewVersion = "7.0.15";
 
   # Follow Homebrew's headless CLT installation approach.
   # https://github.com/Homebrew/install/blob/8c82c081753d4263da0cfe615ef8d9433425f22b/install.sh#L828-L849
@@ -93,6 +94,11 @@ in
 
   nix-homebrew = {
     enable = true;
+    # nix-homebrew derives the default version from its own lock file.
+    package = inputs.nix-homebrew.inputs.brew-src // {
+      name = "brew-${brewVersion}";
+      version = brewVersion;
+    };
     mutableTaps = false;
     user = username;
     taps = {

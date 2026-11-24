@@ -23,6 +23,8 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # Remove this override once nix-homebrew supports manifest_sha256.
+    nix-homebrew.inputs.brew-src.url = "github:Homebrew/brew/7.0.15";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
