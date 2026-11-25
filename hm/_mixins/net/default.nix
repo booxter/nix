@@ -6,8 +6,6 @@
 {
   imports = [ ./wireshark.nix ];
 
-  options.host.hm.protonvpn.enable = lib.mkEnableOption "Proton VPN";
-
   config.programs.zsh.initContent = lib.mkAfter ''
     iftop() {
       local primary_iface
