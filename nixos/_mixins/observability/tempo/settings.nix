@@ -7,12 +7,14 @@
     grpc_listen_port = 9096;
   };
   distributor.receivers.otlp.protocols.http.endpoint = "127.0.0.1:4319";
-  ingester.lifecycler = {
-    address = "127.0.0.1";
+  live_store = {
     ring = {
       kvstore.store = "inmemory";
-      replication_factor = 1;
+      instance_addr = "127.0.0.1";
     };
+    partition_ring.kvstore.store = "inmemory";
+    wal.path = "/var/lib/tempo/live-store/traces";
+    shutdown_marker_dir = "/var/lib/tempo/live-store/shutdown-marker";
   };
   # This is a disposable diagnostic store, not an archive or an HA backend.
   storage.trace = {
@@ -20,6 +22,10 @@
     wal.path = "/var/lib/tempo/wal";
     local.path = "/var/lib/tempo/blocks";
   };
-  compactor.compaction.block_retention = "336h";
+  backend_scheduler = {
+    local_work_path = "/var/lib/tempo/work";
+    provider.compaction.compaction.block_retention = "336h";
+  };
+  backend_worker.compaction.block_retention = "336h";
   usage_report.reporting_enabled = false;
 }
