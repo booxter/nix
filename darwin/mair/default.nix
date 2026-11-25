@@ -29,6 +29,8 @@ in
     serviceConfig = {
       RunAtLoad = true;
       StartInterval = 3600;
+      StandardOutPath = "/var/log/nix-darwin/icon-cache-prune.log";
+      StandardErrorPath = "/var/log/nix-darwin/icon-cache-prune.log";
     };
   };
 
