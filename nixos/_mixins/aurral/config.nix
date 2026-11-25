@@ -99,15 +99,16 @@ in
       };
     };
 
-    services.aurral = {
+    services.aurral = lib.optionalAttrs (cfg != null) {
       enable = true;
+      plugins = [ pkgs.aurralPlugins.lidarr ];
       dataDir = cfg.stateDir;
       port = model.port;
       user = model.user;
       group = model.user;
       directories = [ model.flowDir ];
       environment = {
-        DOWNLOAD_FOLDER = model.flowDir;
+        LIBRARY_FOLDER = model.flowDir;
         TRUST_PROXY = "2";
         AUTH_PROXY_HEADER = "x-forwarded-user";
         AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;

@@ -23,6 +23,8 @@ class Handler(BaseHTTPRequestHandler):
             payload = [{"id": 1, "name": "Lossless"}]
         elif path == "/api/v1/metadataprofile":
             payload = [{"id": 1, "name": "Standard"}]
+        elif path == "/api/v1/rootfolder":
+            payload = [{"id": 1, "path": "/srv/media/library/music"}]
         elif path.startswith("/api/v1/"):
             payload = []
         else:
