@@ -97,13 +97,22 @@
       # https://github.com/maralorn/nix-output-monitor/pull/321
       inherit (pkgsNixpkgsUnstable) nix-output-monitor;
 
-      nix-update = prev.nix-update.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # Remove when upstream materializes local flake sources before evaluation.
-          # https://github.com/Mic92/nix-update/issues/687
-          ./nix-update-prefetch-flake.patch
-        ];
-      });
+      # Drop once stable includes nix-update 1.17.0.
+      nix-update =
+        (pkgsNixpkgsUnstable.nix-update.override {
+          # Keep nix-update-script on the patched executable.
+          nix-update = final.nix-update;
+        }).overrideAttrs
+          (old: {
+            patches = (old.patches or [ ]) ++ [
+              # Materialize local flake sources before evaluation.
+              # https://github.com/Mic92/nix-update/pull/698
+              (prev.fetchpatch {
+                url = "https://github.com/Mic92/nix-update/commit/dcef4fdd7edbd9ef83c701e5d92a3df81fbd0e33.patch";
+                hash = "sha256-uNOfiYbLAm/0Ret2nUQ3Wxd1IoOsclRbF11z2gGx0vM=";
+              })
+            ];
+          });
 
       jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
         nativeInstallCheckInputs = (old.nativeInstallCheckInputs or [ ]) ++ [
