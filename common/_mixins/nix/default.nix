@@ -25,7 +25,10 @@ in
     optimise.automatic = true;
     package = lib.mkForce pkgs.nix;
     settings = {
-      experimental-features = "nix-command flakes";
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       warn-dirty = false;
       nix-path = [ "nixpkgs=flake:nixpkgs" ];
       trusted-users = [
