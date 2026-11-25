@@ -32,8 +32,6 @@
       hyprland.enable = pkgs.stdenv.hostPlatform.isLinux;
       kitty.enable = true;
       matrix.enable = true;
-      obsidian.enable = true;
-      protonvpn.enable = pkgs.stdenv.hostPlatform.isDarwin;
       podman = {
         enable = true;
         desktop.enable = true;

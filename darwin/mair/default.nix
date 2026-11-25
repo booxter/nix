@@ -20,6 +20,20 @@ in
   system.build.ciVm = ciVmBuild.vm;
   system.build.ciVmIpsw = ciVmBuild.ipsw;
 
+  # TODO: Revisit on macOS 27+. Tahoe repeatedly cached identical app icons on mair.
+  # Other reports of the shared icon store filling the disk:
+  # https://github.com/manaflow-ai/cmux/issues/22627
+  # https://github.com/block/buzz/issues/8266
+  launchd.daemons.icon-cache-prune = {
+    command = "/usr/bin/find /Library/Caches/com.apple.iconservices.store -maxdepth 1 -type f -name '*.isdata' -Btime +7d -delete";
+    serviceConfig = {
+      RunAtLoad = true;
+      StartInterval = 3600;
+      StandardOutPath = "/var/log/nix-darwin/icon-cache-prune.log";
+      StandardErrorPath = "/var/log/nix-darwin/icon-cache-prune.log";
+    };
+  };
+
   home-manager.users.${username} = {
     host.hm.pass.yubikey = "laptop";
 

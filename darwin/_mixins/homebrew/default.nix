@@ -84,9 +84,6 @@ in
     casks = [
       "sf-symbols"
     ]
-    ++ lib.optionals hmConfig.protonvpn.enable [
-      "protonvpn"
-    ]
     ++ lib.optionals env.homerow.enable [
       "homerow"
     ];
