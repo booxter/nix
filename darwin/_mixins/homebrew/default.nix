@@ -7,8 +7,6 @@
 }:
 let
   username = config.host.username;
-  hmConfig = config.home-manager.users.${username}.host.hm;
-  env = hmConfig.env;
   brewVersion = "7.0.15";
 
   # Follow Homebrew's headless CLT installation approach.
@@ -83,9 +81,6 @@ in
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
       "sf-symbols"
-    ]
-    ++ lib.optionals env.homerow.enable [
-      "homerow"
     ];
   };
 
