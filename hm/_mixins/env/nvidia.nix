@@ -46,7 +46,6 @@
 
   workstation = {
     host.hm = {
-      env.homerow.enable = false;
       kitty.enable = true;
       matrix.enable = true;
       sketchybar.attentionInbox.enable = true;

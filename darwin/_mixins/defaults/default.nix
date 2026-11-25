@@ -1,7 +1,4 @@
-{ config, lib, ... }:
-let
-  env = config.home-manager.users.${config.host.username}.host.hm.env;
-in
+{ ... }:
 {
   imports = [
     ./terminal.nix
@@ -116,13 +113,4 @@ in
       _HIHideMenuBar = true;
     };
   };
-
-  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf env.homerow.enable {
-    SUEnableAutomaticChecks = 1;
-    SUHasLaunchedBefore = 1;
-    "check-for-updates-automatically" = 1;
-    "include-beta-updates" = false;
-    "launch-at-login" = 1;
-  };
-
 }

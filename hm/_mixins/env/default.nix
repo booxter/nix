@@ -66,17 +66,12 @@ in
         description = "Whether the workstation environment layer is active.";
       };
     };
-
-    homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
   };
 
   config = lib.mkMerge (
     [
       {
         stylix.enable = cfg.roles.workstation;
-        host.hm.env.homerow.enable = lib.mkDefault (
-          cfg.roles.workstation && pkgs.stdenv.hostPlatform.isDarwin
-        );
       }
     ]
     ++ lib.mapAttrsToList (name: profile: lib.mkIf (cfg.flavor == name) (applyProfile profile)) profiles
