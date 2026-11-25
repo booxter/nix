@@ -32,7 +32,6 @@
       hyprland.enable = pkgs.stdenv.hostPlatform.isLinux;
       kitty.enable = true;
       matrix.enable = true;
-      obsidian.enable = true;
       podman = {
         enable = true;
         desktop.enable = true;

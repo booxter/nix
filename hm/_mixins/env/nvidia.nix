@@ -49,7 +49,6 @@
       env.homerow.enable = false;
       kitty.enable = true;
       matrix.enable = true;
-      obsidian.enable = true;
       sketchybar.attentionInbox.enable = true;
       slack.enable = true;
       teams.enable = true;
