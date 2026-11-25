@@ -154,6 +154,10 @@
         ];
       });
 
+      sonarr = prev.sonarr.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ../patches/sonarr-serialize-episode-refreshes.patch ];
+      });
+
       romm = prev.romm.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/romm-zip-cache-permissions.patch
