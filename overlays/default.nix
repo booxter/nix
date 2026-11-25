@@ -110,6 +110,8 @@
 
       lidarr = prev.lidarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
+          # Artist and album refreshes reconcile the same releases and tracks.
+          ../patches/lidarr-serialize-refresh-children.patch
           # Restore queue associations from grab titles, not import-failure folder names.
           ../patches/lidarr-use-grab-history-for-ambiguous-title.patch
           # Reject unidentified queue removal without crashing or reporting success.
