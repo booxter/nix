@@ -13,7 +13,7 @@ from srvarr_ebook_converter.app import (
     EbookConverterService,
     ShelfmarkHookConfig,
     StateStore,
-    convert_path,
+    convert_book,
     discover_sources,
     process_hook_payload,
     shelfmark_hook_main,
@@ -25,29 +25,33 @@ from srvarr_ebook_converter.models import FileFingerprint, JobState
 
 
 class FakeRunner:
-    def __init__(self, *, fail: bool = False):
+    def __init__(self, *, fail: bool = False, invalid_format: str | None = None):
         self.fail = fail
+        self.invalid_format = invalid_format
         self.calls: list[tuple[Path, Path]] = []
 
     def convert(self, source: Path, destination: Path) -> None:
         self.calls.append((source, destination))
         if self.fail:
             raise EbookConverterError("injected conversion failure")
-        write_epub(destination)
+        mimetype = "application/epub+zip"
+        if source.suffix.lower() == self.invalid_format:
+            mimetype += "\r\n"
+        write_epub(destination, mimetype=mimetype, body=source.read_text())
 
 
-def write_epub(path: Path) -> None:
+def write_epub(path: Path, *, mimetype: str = "application/epub+zip", body: str = "book") -> None:
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
             "mimetype",
-            "application/epub+zip",
+            mimetype,
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr("META-INF/container.xml", "<container/>")
-        archive.writestr("book.xhtml", "<html><body>book</body></html>")
+        archive.writestr("book.xhtml", f"<html><body>{body}</body></html>")
 
 
-class ConvertPathTests(unittest.TestCase):
+class ConvertBookTests(unittest.TestCase):
     def test_converts_library_hardlink_without_changing_torrent_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -63,8 +67,9 @@ class ConvertPathTests(unittest.TestCase):
             source_inode = torrent_source.stat().st_ino
             runner = FakeRunner()
 
-            destination = convert_path(
-                library_source,
+            destination = convert_book(
+                library / "book.epub",
+                [library_source],
                 library_root=library,
                 lock_root=locks,
                 runner=runner,
@@ -91,8 +96,9 @@ class ConvertPathTests(unittest.TestCase):
             os.link(torrent_source, library_source)
 
             with self.assertRaisesRegex(EbookConverterError, "injected conversion failure"):
-                convert_path(
-                    library_source,
+                convert_book(
+                    library / "book.epub",
+                    [library_source],
                     library_root=library,
                     lock_root=root / "locks",
                     runner=FakeRunner(fail=True),
@@ -119,8 +125,9 @@ class ConvertPathTests(unittest.TestCase):
             existing_epub = destination.read_bytes()
             runner = FakeRunner()
 
-            result = convert_path(
-                source,
+            result = convert_book(
+                destination,
+                [source],
                 library_root=library,
                 lock_root=root / "locks",
                 runner=runner,
@@ -133,7 +140,7 @@ class ConvertPathTests(unittest.TestCase):
             self.assertEqual(destination.read_bytes(), existing_epub)
             self.assertEqual(runner.calls, [])
 
-    def test_invalid_existing_epub_is_kept_with_source_for_attention(self) -> None:
+    def test_keeps_originals_when_no_candidate_produces_a_valid_epub(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             library = Path(tmp_dir) / "library"
             library.mkdir()
@@ -141,11 +148,12 @@ class ConvertPathTests(unittest.TestCase):
             source.write_bytes(b"source")
             destination = library / "book.epub"
             destination.write_bytes(b"invalid")
-            runner = FakeRunner()
+            runner = FakeRunner(invalid_format=".mobi")
 
-            with self.assertRaisesRegex(EbookConverterError, "invalid EPUB"):
-                convert_path(
-                    source,
+            with self.assertRaisesRegex(EbookConverterError, "no usable ebook"):
+                convert_book(
+                    destination,
+                    [source],
                     library_root=library,
                     lock_root=Path(tmp_dir) / "locks",
                     runner=runner,
@@ -153,7 +161,35 @@ class ConvertPathTests(unittest.TestCase):
 
             self.assertEqual(source.read_bytes(), b"source")
             self.assertEqual(destination.read_bytes(), b"invalid")
-            self.assertEqual(runner.calls, [])
+            self.assertEqual(set(library.iterdir()), {source, destination})
+
+    def test_preserves_an_epub_that_changes_during_conversion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            library = Path(tmp_dir) / "library"
+            library.mkdir()
+            source = library / "book.mobi"
+            source.write_bytes(b"source")
+            destination = library / "book.epub"
+            destination.write_bytes(b"invalid")
+
+            class ConcurrentPublisher:
+                def convert(self, source: Path, temporary: Path) -> None:
+                    write_epub(temporary, body="from conversion")
+                    write_epub(destination, body="from concurrent import")
+
+            with self.assertRaisesRegex(EbookConverterError, "EPUB changed during conversion"):
+                convert_book(
+                    destination,
+                    [source],
+                    library_root=library,
+                    lock_root=Path(tmp_dir) / "locks",
+                    runner=ConcurrentPublisher(),
+                )
+
+            with zipfile.ZipFile(destination) as archive:
+                self.assertIn(b"from concurrent import", archive.read("book.xhtml"))
+            self.assertEqual(source.read_bytes(), b"source")
+            self.assertEqual(set(library.iterdir()), {source, destination})
 
     def test_source_outside_library_root_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -164,8 +200,9 @@ class ConvertPathTests(unittest.TestCase):
             source.write_bytes(b"source")
 
             with self.assertRaisesRegex(EbookConverterError, "outside"):
-                convert_path(
-                    source,
+                convert_book(
+                    source.with_suffix(".epub"),
+                    [source],
                     library_root=library,
                     lock_root=root / "locks",
                     runner=FakeRunner(),
@@ -173,6 +210,31 @@ class ConvertPathTests(unittest.TestCase):
 
 
 class HookPayloadTests(unittest.TestCase):
+    def test_tries_source_formats_in_priority_order_until_the_epub_is_valid(self) -> None:
+        for invalid_format, expected_text in ((None, b"from AZW3"), (".azw3", b"from MOBI")):
+            with self.subTest(invalid_format=invalid_format), tempfile.TemporaryDirectory() as tmp:
+                library = Path(tmp) / "library"
+                library.mkdir()
+                mobi = library / "book.MOBI"
+                mobi.write_text("from MOBI")
+                azw3 = library / "book.azw3"
+                azw3.write_text("from AZW3")
+                epub = library / "book.epub"
+                write_epub(epub, mimetype="application/epub+zip\r\n")
+
+                converted = process_hook_payload(
+                    self.payload([mobi, azw3, epub]),
+                    library_root=library,
+                    lock_root=Path(tmp) / "locks",
+                    runner=FakeRunner(invalid_format=invalid_format),
+                )
+
+                self.assertEqual(converted, [epub.resolve()])
+                validate_epub(epub)
+                with zipfile.ZipFile(epub) as archive:
+                    self.assertIn(expected_text, archive.read("book.xhtml"))
+                self.assertEqual(list(library.iterdir()), [epub])
+
     def test_converts_supported_final_paths_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -372,7 +434,7 @@ class WatchServiceTests(unittest.TestCase):
             self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
             self.assertEqual(torrent_source.stat().st_nlink, 1)
 
-    def test_old_attention_job_cleans_up_valid_existing_epub(self) -> None:
+    def test_retries_old_attention_job_and_replaces_invalid_epub(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             library = root / "library"
@@ -383,8 +445,10 @@ class WatchServiceTests(unittest.TestCase):
             torrent_source.write_bytes(b"torrent payload")
             library_source = library / "book.mobi"
             os.link(torrent_source, library_source)
+            azw3 = library / "book.azw3"
+            azw3.write_bytes(b"higher priority but unusable")
             destination = library / "book.epub"
-            write_epub(destination)
+            write_epub(destination, mimetype="application/epub+zip\r\n")
             store = StateStore(root / "state.json")
             key = str(library_source.resolve())
             store.data.files[key] = JobState(
@@ -395,12 +459,13 @@ class WatchServiceTests(unittest.TestCase):
                     size=library_source.stat().st_size,
                     mtime_ns=library_source.stat().st_mtime_ns,
                 ),
+                policy_version=2,
                 observed_at=900.0,
                 updated_at=900.0,
                 attempts=3,
-                error="refusing to replace existing EPUB",
+                error="EPUB has an invalid mimetype",
             )
-            runner = FakeRunner()
+            runner = FakeRunner(invalid_format=".azw3")
             clock = MutableClock(1000.0)
             service = EbookConverterService(
                 library_root=library,
@@ -422,10 +487,12 @@ class WatchServiceTests(unittest.TestCase):
             job = store.data.files[key]
             self.assertEqual(job.status, "complete")
             self.assertEqual(job.destination, str(destination.resolve()))
+            self.assertEqual(store.data.files[str(azw3.resolve())].status, "complete")
             self.assertFalse(library_source.exists())
+            self.assertFalse(azw3.exists())
             self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
             self.assertEqual(torrent_source.stat().st_nlink, 1)
-            self.assertEqual(runner.calls, [])
+            validate_epub(destination)
 
     def test_failed_file_stops_retrying_at_max_attempts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

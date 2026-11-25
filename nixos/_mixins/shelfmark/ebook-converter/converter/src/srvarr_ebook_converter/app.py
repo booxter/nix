@@ -12,7 +12,8 @@ import sys
 import time
 import uuid
 import zipfile
-from collections.abc import Callable, Iterator, Mapping
+import zlib
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,11 +26,15 @@ from .metrics import prometheus_metrics
 from .models import FileFingerprint, JobState, ServiceState, ShelfmarkPayload
 
 LOG = logging.getLogger("ebook-converter")
-SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
-JOB_POLICY_VERSION = 2
+SOURCE_PRIORITY = {".azw3": 0, ".mobi": 1}
+JOB_POLICY_VERSION = 3
 
 
 class EbookConverterError(RuntimeError):
+    pass
+
+
+class InvalidEpub(EbookConverterError):
     pass
 
 
@@ -100,101 +105,127 @@ def is_within(path: Path, root: Path) -> bool:
 
 
 def validate_epub(path: Path) -> None:
-    if not path.is_file() or path.stat().st_size == 0:
-        raise EbookConverterError(f"converter produced an empty EPUB: {path}")
+    try:
+        file_stat = path.stat()
+    except FileNotFoundError as exc:
+        raise InvalidEpub(f"missing EPUB: {path}") from exc
+
+    if not stat.S_ISREG(file_stat.st_mode) or file_stat.st_size == 0:
+        raise InvalidEpub(f"empty EPUB: {path}")
 
     try:
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
-                raise EbookConverterError(f"converter produced a corrupt EPUB: {path}")
+                raise InvalidEpub(f"corrupt EPUB: {path}")
             names = set(archive.namelist())
             if "mimetype" not in names:
-                raise EbookConverterError(f"EPUB has no mimetype entry: {path}")
+                raise InvalidEpub(f"EPUB has no mimetype entry: {path}")
             if archive.read("mimetype") != b"application/epub+zip":
-                raise EbookConverterError(f"EPUB has an invalid mimetype: {path}")
+                raise InvalidEpub(f"EPUB has an invalid mimetype: {path}")
             if "META-INF/container.xml" not in names:
-                raise EbookConverterError(f"EPUB has no container metadata: {path}")
-    except zipfile.BadZipFile as exc:
-        raise EbookConverterError(f"converter produced an invalid EPUB: {path}") from exc
+                raise InvalidEpub(f"EPUB has no container metadata: {path}")
+    except (zipfile.BadZipFile, zlib.error) as exc:
+        raise InvalidEpub(f"invalid EPUB: {path}") from exc
 
 
-def safe_source_path(source: Path, library_root: Path) -> Path:
-    if source.is_symlink():
-        raise EbookConverterError(f"refusing to convert symlink: {source}")
+def regular_file_fingerprint(path: Path) -> FileFingerprint | None:
     try:
-        resolved = source.resolve(strict=True)
-    except FileNotFoundError as exc:
-        raise EbookConverterError(f"source does not exist: {source}") from exc
-    if not is_within(resolved, library_root):
-        raise EbookConverterError(f"source is outside the configured library root: {resolved}")
-    if not resolved.is_file():
-        raise EbookConverterError(f"source is not a regular file: {resolved}")
-    if resolved.suffix.lower() not in SUPPORTED_SOURCE_SUFFIXES:
-        raise EbookConverterError(f"unsupported source format: {resolved}")
-    return resolved
+        file_stat = path.lstat()
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(file_stat.st_mode):
+        raise EbookConverterError(f"refusing non-regular ebook file: {path}")
+    return FileFingerprint(
+        device=file_stat.st_dev,
+        inode=file_stat.st_ino,
+        size=file_stat.st_size,
+        mtime_ns=file_stat.st_mtime_ns,
+    )
 
 
 @contextmanager
-def source_lock(source: Path, lock_root: Path) -> Iterator[None]:
+def conversion_lock(destination: Path, lock_root: Path) -> Iterator[None]:
     lock_root.mkdir(parents=True, exist_ok=True)
-    lock_name = hashlib.sha256(os.fsencode(source)).hexdigest() + ".lock"
+    lock_name = hashlib.sha256(os.fsencode(destination)).hexdigest() + ".lock"
     lock_path = lock_root / lock_name
     fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o660)
     try:
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
-            raise ConversionBusy(f"conversion is already active for {source}") from exc
+            raise ConversionBusy(f"conversion is already active for {destination}") from exc
         yield
     finally:
         os.close(fd)
 
 
-def convert_path(
-    source: Path,
+def group_sources(paths: Iterable[Path]) -> dict[Path, list[Path]]:
+    groups: dict[Path, list[Path]] = {}
+    for path in dict.fromkeys(paths):
+        if path.suffix.lower() in SOURCE_PRIORITY:
+            groups.setdefault(path.with_suffix(".epub"), []).append(path)
+    return groups
+
+
+def ensure_epub(destination: Path, sources: Sequence[Path], runner: Converter) -> None:
+    existing = regular_file_fingerprint(destination)
+    errors: list[str] = []
+    if existing is not None:
+        try:
+            validate_epub(destination)
+        except InvalidEpub as exc:
+            errors.append(str(exc))
+        else:
+            return
+
+    for source in sorted(sources, key=lambda path: (SOURCE_PRIORITY[path.suffix.lower()], path)):
+        temporary_epub = destination.with_name(
+            f".{destination.stem}.{uuid.uuid4().hex}.ebook-converter-partial.epub"
+        )
+        source_mode = stat.S_IMODE(source.stat().st_mode)
+        try:
+            runner.convert(source, temporary_epub)
+            validate_epub(temporary_epub)
+        except EbookConverterError as exc:
+            errors.append(str(exc))
+        else:
+            temporary_epub.chmod(source_mode)
+            with temporary_epub.open("rb") as output_file:
+                os.fsync(output_file.fileno())
+            if regular_file_fingerprint(destination) != existing:
+                raise EbookConverterError(
+                    f"refusing to replace EPUB changed during conversion: {destination}"
+                )
+            temporary_epub.replace(destination)
+            LOG.info("converted ebook: source=%s destination=%s", source, destination)
+            return
+        finally:
+            temporary_epub.unlink(missing_ok=True)
+
+    details = "; ".join(errors) or "no source files remain"
+    raise EbookConverterError(f"no usable ebook for {destination}: {details}")
+
+
+def convert_book(
+    destination: Path,
+    sources: Sequence[Path],
     *,
     library_root: Path,
     lock_root: Path,
     runner: Converter,
 ) -> Path:
     library_root = library_root.resolve(strict=True)
-    source = safe_source_path(source, library_root)
-    destination = source.with_suffix(".epub")
+    destination = destination.parent.resolve(strict=True) / destination.name
+    if not is_within(destination, library_root):
+        raise EbookConverterError(f"ebook is outside the configured library root: {destination}")
 
-    with source_lock(source, lock_root):
-        if destination.exists():
-            if destination.is_symlink():
-                raise EbookConverterError(f"refusing EPUB symlink beside source: {destination}")
-            validate_epub(destination)
-            source.unlink()
-            LOG.info(
-                "removed redundant ebook source: source=%s destination=%s",
-                source,
-                destination,
-            )
-            return destination
-
-        temporary_epub = source.with_name(
-            f".{source.stem}.{uuid.uuid4().hex}.ebook-converter-partial.epub"
-        )
-        source_mode = stat.S_IMODE(source.stat().st_mode)
-        try:
-            runner.convert(source, temporary_epub)
-            validate_epub(temporary_epub)
-            temporary_epub.chmod(source_mode)
-            with temporary_epub.open("rb") as output_file:
-                os.fsync(output_file.fileno())
-            if destination.exists():
-                raise EbookConverterError(
-                    f"refusing to replace EPUB created during conversion: {destination}"
-                )
-            temporary_epub.replace(destination)
-            source.unlink()
-        except Exception:
-            temporary_epub.unlink(missing_ok=True)
-            raise
-
-    LOG.info("converted ebook: source=%s destination=%s", source, destination)
+    # All formats for a book share an output, so the hook and watcher lock that path.
+    with conversion_lock(destination, lock_root):
+        local_sources = [destination.with_name(source.name) for source in sources]
+        available = [source for source in local_sources if regular_file_fingerprint(source)]
+        ensure_epub(destination, available, runner)
+        for source in available:
+            source.unlink(missing_ok=True)
     return destination
 
 
@@ -220,30 +251,17 @@ def process_hook_payload(
     if hook.paths is None:
         raise EbookConverterError("Shelfmark hook payload has invalid final paths")
 
-    converted: list[Path] = []
-    for path_string in hook.paths.final_paths:
-        path = Path(path_string)
-        if path.suffix.lower() not in SUPPORTED_SOURCE_SUFFIXES:
-            continue
-        converted.append(
-            convert_path(
-                path,
-                library_root=library_root,
-                lock_root=lock_root,
-                runner=runner,
-            )
+    groups = group_sources(map(Path, hook.paths.final_paths))
+    return [
+        convert_book(
+            destination,
+            sources,
+            library_root=library_root,
+            lock_root=lock_root,
+            runner=runner,
         )
-    return converted
-
-
-def source_fingerprint(path: Path) -> FileFingerprint:
-    file_stat = path.stat()
-    return FileFingerprint(
-        device=file_stat.st_dev,
-        inode=file_stat.st_ino,
-        size=file_stat.st_size,
-        mtime_ns=file_stat.st_mtime_ns,
-    )
+        for destination, sources in groups.items()
+    ]
 
 
 def discover_sources(library_root: Path) -> list[Path]:
@@ -252,11 +270,7 @@ def discover_sources(library_root: Path) -> list[Path]:
         relative = path.relative_to(library_root)
         if any(part.startswith(".") for part in relative.parts):
             continue
-        if (
-            path.is_file()
-            and not path.is_symlink()
-            and path.suffix.lower() in SUPPORTED_SOURCE_SUFFIXES
-        ):
+        if path.is_file() and not path.is_symlink() and path.suffix.lower() in SOURCE_PRIORITY:
             candidates.append(path)
     return sorted(candidates, key=lambda path: str(path).casefold())
 
@@ -307,86 +321,104 @@ class EbookConverterService:
         self.max_attempts = max_attempts
         self.now = now
 
-    def iteration(self) -> None:
-        now = self.now()
+    def settled_job(self, source: Path, now: float) -> JobState | None:
+        fingerprint = regular_file_fingerprint(source)
+        if fingerprint is None:
+            return None
+
         files = self.store.data.files
+        key = str(source)
+        job = files.get(key)
+        if (
+            job is None
+            or job.fingerprint != fingerprint
+            or job.policy_version != JOB_POLICY_VERSION
+        ):
+            files[key] = JobState(
+                status="settling",
+                fingerprint=fingerprint,
+                policy_version=JOB_POLICY_VERSION,
+                observed_at=now,
+                updated_at=now,
+            )
+            return None
 
-        for source in discover_sources(self.library_root):
-            key = str(source.resolve())
-            try:
-                fingerprint = source_fingerprint(source)
-            except FileNotFoundError:
-                continue
-            job = files.get(key)
-            if (
-                job is None
-                or job.fingerprint != fingerprint
-                or job.policy_version != JOB_POLICY_VERSION
-            ):
-                files[key] = JobState(
-                    status="settling",
-                    fingerprint=fingerprint,
-                    policy_version=JOB_POLICY_VERSION,
-                    observed_at=now,
-                    updated_at=now,
-                )
-                continue
-            if job.status == "needs_attention" and job.attempts >= self.max_attempts:
-                continue
-            if now - job.observed_at < self.settle_seconds:
-                continue
+        if now - job.observed_at < self.settle_seconds:
+            return None
+        return job
 
+    def convert_group(self, destination: Path, jobs: Mapping[Path, JobState], now: float) -> None:
+        for job in jobs.values():
             job.status = "converting"
             job.updated_at = now
             job.error = ""
-            self.store.save()
-            try:
-                destination = convert_path(
-                    source,
-                    library_root=self.library_root,
-                    lock_root=self.lock_root,
-                    runner=self.runner,
-                )
-            except ConversionBusy:
+        self.store.save()
+
+        try:
+            destination = convert_book(
+                destination,
+                list(jobs),
+                library_root=self.library_root,
+                lock_root=self.lock_root,
+                runner=self.runner,
+            )
+        except ConversionBusy:
+            for job in jobs.values():
                 job.status = "settling"
-                job.updated_at = self.now()
-                continue
-            except (EbookConverterError, OSError) as exc:
-                expected_destination = source.with_suffix(".epub")
-                if not source.exists() and expected_destination.exists():
-                    try:
-                        validate_epub(expected_destination)
-                    except EbookConverterError:
-                        pass
-                    else:
-                        job.status = "complete"
-                        job.destination = str(expected_destination)
-                        job.updated_at = self.now()
-                        job.error = ""
-                        continue
-                attempts = job.attempts + 1
-                status_name = "needs_attention" if attempts >= self.max_attempts else "failed"
-                job.status = status_name
+        except (EbookConverterError, OSError) as exc:
+            # A new or changed source gives the group a fresh set of attempts.
+            attempts = min(job.attempts for job in jobs.values()) + 1
+            status = "needs_attention" if attempts >= self.max_attempts else "failed"
+            removed = [source for source in jobs if not source.exists()]
+            if removed:
+                try:
+                    validate_epub(destination)
+                except (InvalidEpub, OSError):
+                    removed = []
+
+            for source, job in jobs.items():
+                if source in removed:
+                    job.status = "complete"
+                    job.destination = str(destination)
+                    continue
+                job.status = status
                 job.attempts = attempts
-                job.updated_at = self.now()
                 job.error = str(exc)
-                self.store.data.totals.failed += 1
-                LOG.error(
-                    "ebook conversion failed: source=%s attempts=%d error=%s",
-                    source,
-                    attempts,
-                    exc,
-                )
-            else:
-                finished = self.now()
+            self.store.data.totals.failed += 1
+            LOG.error(
+                "ebook conversion failed: destination=%s attempts=%d error=%s",
+                destination,
+                attempts,
+                exc,
+            )
+        else:
+            for job in jobs.values():
                 job.status = "complete"
                 job.destination = str(destination)
-                job.updated_at = finished
-                job.error = ""
-                self.store.data.totals.success += 1
-                self.store.data.last_success = finished
-            finally:
-                self.store.save()
+            self.store.data.totals.success += 1
+            self.store.data.last_success = self.now()
+        finally:
+            updated_at = self.now()
+            for job in jobs.values():
+                job.updated_at = updated_at
+            self.store.save()
+
+    def iteration(self) -> None:
+        now = self.now()
+        for destination, sources in group_sources(discover_sources(self.library_root)).items():
+            jobs = {
+                source: job
+                for source in sources
+                if (job := self.settled_job(source, now)) is not None
+            }
+            if len(jobs) != len(sources):
+                continue
+            if all(
+                job.status == "needs_attention" and job.attempts >= self.max_attempts
+                for job in jobs.values()
+            ):
+                continue
+            self.convert_group(destination, jobs, now)
 
         self.store.save()
 
