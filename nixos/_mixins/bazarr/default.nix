@@ -47,7 +47,7 @@ in
     };
 
     host.web.services.bazarr = {
-      upstream = "http://127.0.0.1:${toString config.services.bazarr.listenPort}";
+      upstream = "http://127.0.0.1:${toString serviceCfg.settings.general.port}";
       auth = {
         policy = "media-admin";
         sessionClearPaths = [ "/api/system/account" ];
