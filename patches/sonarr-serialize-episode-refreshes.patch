@@ -1,0 +1,29 @@
+diff --git a/src/NzbDrone.Core/Tv/RefreshEpisodeService.cs b/src/NzbDrone.Core/Tv/RefreshEpisodeService.cs
+index 18b2428..53aacb8 100644
+--- a/src/NzbDrone.Core/Tv/RefreshEpisodeService.cs
++++ b/src/NzbDrone.Core/Tv/RefreshEpisodeService.cs
+@@ -15,6 +15,8 @@ public interface IRefreshEpisodeService
+
+     public class RefreshEpisodeService : IRefreshEpisodeService
+     {
++        private static readonly object RefreshLock = new object();
++
+         private readonly IEpisodeService _episodeService;
+         private readonly IEventAggregator _eventAggregator;
+         private readonly Logger _logger;
+@@ -27,6 +29,15 @@ public RefreshEpisodeService(IEpisodeService episodeService, IEventAggregator ev
+         }
+
+         public void RefreshEpisodeInfo(Series series, IEnumerable<Episode> remoteEpisodes)
++        {
++            // Keep the read and writes together so two refreshes cannot both see an episode as missing.
++            lock (RefreshLock)
++            {
++                ReconcileEpisodes(series, remoteEpisodes);
++            }
++        }
++
++        private void ReconcileEpisodes(Series series, IEnumerable<Episode> remoteEpisodes)
+         {
+             _logger.Info("Starting episode info refresh for: {0}", series);
+             var successCount = 0;

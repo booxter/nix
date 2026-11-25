@@ -1,0 +1,29 @@
+diff --git a/src/NzbDrone.Core/Music/Services/RefreshEntityServiceBase.cs b/src/NzbDrone.Core/Music/Services/RefreshEntityServiceBase.cs
+index 27d2d0f..9dc4bc1 100644
+--- a/src/NzbDrone.Core/Music/Services/RefreshEntityServiceBase.cs
++++ b/src/NzbDrone.Core/Music/Services/RefreshEntityServiceBase.cs
+@@ -7,6 +7,8 @@ namespace NzbDrone.Core.Music
+ {
+     public abstract class RefreshEntityServiceBase<TEntity, TChild>
+     {
++        private static readonly object RefreshLock = new object();
++
+         private readonly Logger _logger;
+         private readonly IArtistMetadataService _artistMetadataService;
+
+@@ -218,6 +220,15 @@ public UpdateResult UpdateArtistMetadata(List<ArtistMetadata> data)
+         }
+
+         protected bool SortChildren(TEntity entity, List<TChild> remoteChildren, bool forceChildRefresh, bool forceUpdateFileTags, DateTime? lastUpdate)
++        {
++            // Keep the child snapshot and writes together across artist and album refresh commands.
++            lock (RefreshLock)
++            {
++                return ReconcileChildren(entity, remoteChildren, forceChildRefresh, forceUpdateFileTags, lastUpdate);
++            }
++        }
++
++        private bool ReconcileChildren(TEntity entity, List<TChild> remoteChildren, bool forceChildRefresh, bool forceUpdateFileTags, DateTime? lastUpdate)
+         {
+             // Get existing children (and children to be) from the database
+             var localChildren = GetLocalChildren(entity, remoteChildren);
