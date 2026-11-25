@@ -1,0 +1,49 @@
+diff --git a/src/NzbDrone.Core.Test/Messaging/Commands/CommandQueueFixture.cs b/src/NzbDrone.Core.Test/Messaging/Commands/CommandQueueFixture.cs
+index c8988fd32..0b8519088 100644
+--- a/src/NzbDrone.Core.Test/Messaging/Commands/CommandQueueFixture.cs
++++ b/src/NzbDrone.Core.Test/Messaging/Commands/CommandQueueFixture.cs
+@@ -116,6 +116,31 @@ namespace NzbDrone.Core.Test.Messaging.Commands
+             command.Status.Should().Be(CommandStatus.Started);
+         }
+ 
++        [Test]
++        public void should_not_return_refresh_movie_command_if_another_running()
++        {
++            var startedCommand = Builder<CommandModel>
++                .CreateNew()
++                .With(c => c.Name = "RefreshMovie")
++                .With(c => c.Body = new RefreshMovieCommand())
++                .With(c => c.Status = CommandStatus.Started)
++                .Build();
++
++            Subject.Add(startedCommand);
++
++            var queuedCommand = Builder<CommandModel>
++                .CreateNew()
++                .With(c => c.Name = "RefreshMovie")
++                .With(c => c.Body = new RefreshMovieCommand())
++                .Build();
++
++            Subject.Add(queuedCommand);
++
++            Subject.TryGet(out var command);
++
++            command.Should().BeNull();
++        }
++
+         [Test]
+         public void should_return_regular_command_if_type_exclusive_command_running()
+         {
+diff --git a/src/NzbDrone.Core/Movies/Commands/RefreshMovieCommand.cs b/src/NzbDrone.Core/Movies/Commands/RefreshMovieCommand.cs
+index 9714a6ac8..2099cfd76 100644
+--- a/src/NzbDrone.Core/Movies/Commands/RefreshMovieCommand.cs
++++ b/src/NzbDrone.Core/Movies/Commands/RefreshMovieCommand.cs
+@@ -24,6 +24,8 @@ namespace NzbDrone.Core.Movies.Commands
+ 
+         public override bool UpdateScheduledTask => MovieIds.Empty();
+ 
++        public override bool IsTypeExclusive => true;
++
+         public override bool IsLongRunning => true;
+ 
+         public override string CompletionMessage => "Completed";

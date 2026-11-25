@@ -148,6 +148,8 @@
       radarr = prev.radarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/radarr-expose-import-rejection-reason.patch
+          # Refresh rewrites related rows through non-atomic read/diff/write steps.
+          ../patches/radarr-serialize-movie-refreshes.patch
           ../patches/radarr-use-grab-history-for-ambiguous-title.patch
         ];
       });
