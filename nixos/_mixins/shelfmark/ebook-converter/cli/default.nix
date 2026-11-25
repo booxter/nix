@@ -1,15 +1,16 @@
 {
   fetchFromGitHub,
   lib,
+  nix-update-script,
   python313Packages,
 }:
 
 python313Packages.buildPythonApplication {
   pname = "ebook-converter";
-  version = "4.12.0-unstable-2026-05-13";
+  version = "0-unstable-2026-05-13";
   pyproject = true;
 
-  # Upstream publishes neither tags nor releases. The update script follows
+  # Upstream publishes neither tags nor releases. The updater follows
   # master while this source remains pinned for reproducible builds.
   src = fetchFromGitHub {
     owner = "gryf";
@@ -36,7 +37,12 @@ python313Packages.buildPythonApplication {
 
   pythonImportsCheck = [ "ebook_converter" ];
 
-  passthru.updateScript = [ ./update.sh ];
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version=branch"
+    ];
+  };
 
   meta = {
     description = "Command-line converter for common ebook formats";

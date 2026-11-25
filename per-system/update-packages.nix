@@ -13,7 +13,9 @@ lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
 }
 // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
   inherit (sharedPackages) aiosqlitepool firefox-devtools-mcp oomd;
-  ebook-converter-cli = plainPkgs.callPackage ../nixos/_mixins/shelfmark/ebook-converter/cli { };
+  ebook-converter-cli = plainPkgs.callPackage ../nixos/_mixins/shelfmark/ebook-converter/cli {
+    inherit (pkgs) nix-update-script;
+  };
   houndarr = pkgs.houndarr;
   nico-cli = (import ../hm/_mixins/dev/nvidia/pkgs { pkgs = plainPkgs; }).nico-cli;
   prometheus-paperless-exporter =
