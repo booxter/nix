@@ -1,18 +1,12 @@
 {
   config,
-  inputs,
   lib,
   outputs,
   pkgs,
   ...
 }:
 {
-  # The v3 package needs the matching secret-key and search-index lifecycle.
-  # Return to the release module with NixOS 26.11.
-  disabledModules = [ "services/misc/paperless.nix" ];
-
   imports = [
-    (inputs.nixpkgs-unstable + "/nixos/modules/services/misc/paperless.nix")
     ./assertions.nix
     ./bootstrap.nix
     ./gpt.nix
