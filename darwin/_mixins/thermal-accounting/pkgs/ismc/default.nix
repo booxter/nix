@@ -1,10 +1,10 @@
 {
-  buildGoModule,
+  buildGo127Module,
   fetchFromGitHub,
   lib,
   versionCheckHook,
 }:
-buildGoModule rec {
+buildGo127Module rec {
   pname = "ismc";
   version = "0.17.2";
 
