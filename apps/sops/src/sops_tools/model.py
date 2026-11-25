@@ -6,7 +6,7 @@ from typing import TypeGuard, cast
 
 from .errors import ToolError
 
-type JsonScalar = None | bool | int | float | str
+type JsonScalar = bool | int | float | str | None
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type PathSegment = str | int
 
