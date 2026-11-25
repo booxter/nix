@@ -18,9 +18,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 permissions:
-  contents: write
-  pull-requests: write
-  actions: read
+  contents: read
 
 jobs:
   plan:
@@ -137,10 +135,20 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: Create update token
+        id: app-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Create package update pull request
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8
         with:
-          token: ${{ secrets.CI_PR_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
+          sign-commits: true
           commit-message: "packages: update ${{ matrix.target }}"
           title: "packages: update ${{ matrix.target }}"
           body: ${{ steps.update_packages.outputs.body }}
@@ -181,10 +189,20 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: Create update token
+        id: app-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Create OCI image update pull request
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8
         with:
-          token: ${{ secrets.CI_PR_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
+          sign-commits: true
           commit-message: "${{ matrix.target }}: update container image"
           title: "${{ matrix.target }}: update container image"
           body: ${{ steps.update_oci_images.outputs.body }}
