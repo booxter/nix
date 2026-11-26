@@ -27,7 +27,7 @@ var testConfig = Config{
 			Builder: true, BackupServer: true,
 			DiskBays: &DiskBayLayout{Rows: 5, Columns: 3},
 			Services: []string{
-				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
+				"home", "jellyfin", "lidarr", "ollama", "paperless",
 				"sabnzbd", "transmission",
 			},
 		},

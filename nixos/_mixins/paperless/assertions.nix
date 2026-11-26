@@ -7,14 +7,14 @@
 let
   inherit (paperlessModel)
     cfg
-    gptModels
-    gptProvider
+    aiModels
+    aiProvider
     ssoApplication
     users
     ;
-  textModel = if cfg == null || cfg.gpt == null then null else gptModels.${cfg.gpt.textModel} or null;
+  textModel = if cfg == null || cfg.ai == null then null else aiModels.${cfg.ai.textModel} or null;
   visionModel =
-    if cfg == null || cfg.gpt == null then null else gptModels.${cfg.gpt.visionModel} or null;
+    if cfg == null || cfg.ai == null then null else aiModels.${cfg.ai.visionModel} or null;
 in
 {
   assertions = lib.optionals (cfg != null) [
@@ -43,29 +43,29 @@ in
       message = "The Paperless SSO application has no authorized users.";
     }
     {
-      assertion = cfg.gpt == null || gptProvider != null;
-      message = "host.paperless.gpt.providerHost must name a known NixOS host.";
+      assertion = cfg.ai == null || aiProvider != null;
+      message = "host.paperless.ai.providerHost must name a known NixOS host.";
     }
     {
-      assertion = cfg.gpt == null || (gptProvider != null && gptProvider.host.realm == config.host.realm);
-      message = "Paperless GPT and its Ollama provider must be in the same realm.";
+      assertion = cfg.ai == null || (aiProvider != null && aiProvider.host.realm == config.host.realm);
+      message = "Paperless AI and its Ollama provider must be in the same realm.";
     }
     {
-      assertion = cfg.gpt == null || (gptProvider != null && gptProvider.host.ollama != null);
-      message = "The selected Paperless GPT provider must enable Ollama.";
+      assertion = cfg.ai == null || (aiProvider != null && aiProvider.host.ollama != null);
+      message = "The selected Paperless AI provider must enable Ollama.";
     }
     {
-      assertion = cfg.gpt == null || textModel != null;
-      message = "host.paperless.gpt.textModel must select a model advertised by the Ollama provider.";
+      assertion = cfg.ai == null || textModel != null;
+      message = "host.paperless.ai.textModel must select a model advertised by the Ollama provider.";
     }
     {
-      assertion = cfg.gpt == null || visionModel != null;
-      message = "host.paperless.gpt.visionModel must select a model advertised by the Ollama provider.";
+      assertion = cfg.ai == null || visionModel != null;
+      message = "host.paperless.ai.visionModel must select a model advertised by the Ollama provider.";
     }
     {
       assertion =
-        cfg.gpt == null || (visionModel != null && builtins.elem "vision" visionModel.capabilities);
-      message = "host.paperless.gpt.visionModel must advertise the vision capability.";
+        cfg.ai == null || (visionModel != null && builtins.elem "vision" visionModel.capabilities);
+      message = "host.paperless.ai.visionModel must advertise the vision capability.";
     }
   ];
 }

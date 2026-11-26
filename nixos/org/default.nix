@@ -23,7 +23,7 @@ in
 
   host.paperless = {
     storageProvider = "beast";
-    gpt = {
+    ai = {
       providerHost = "frame";
       textModel = "granite4:32b-a9b-h";
       visionModel = "qwen3-vl:8b-instruct";

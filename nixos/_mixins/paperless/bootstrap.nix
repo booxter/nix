@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  options,
   paperlessModel,
   paperlessPackages,
   pkgs,
@@ -18,6 +19,7 @@ let
     ;
   bootstrapConfig = (pkgs.formats.json { }).generate "paperless-bootstrap.json" {
     groups = accessGroups;
+    ai = cfg.ai != null;
     token = {
       owner = bootstrapOwner;
       file = config.sops.secrets."paperless/api/token".path;
@@ -39,8 +41,22 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
+    # Proxmox nodes share this mixin but use an older Paperless module.
+    assertions = [
+      {
+        assertion = options.services.paperless ? extraPythonPackages;
+        message = "Paperless requires a NixOS module with Python plugin support.";
+      }
+    ];
+    services.paperless = lib.optionalAttrs (options.services.paperless ? extraPythonPackages) {
+      extraPythonPackages =
+        ps:
+        [ paperlessPackages.bootstrap ]
+        ++ lib.optional (cfg.ai != null) (ps.callPackage ./pkgs/paperless-llm-ocr { });
+    };
+
     systemd.services.paperless-bootstrap = {
-      description = "Apply declarative Paperless users and API token";
+      description = "Apply declarative Paperless users, API token and workflows";
       wantedBy = [ "multi-user.target" ];
       wants = [
         "paperless-scheduler.service"
@@ -50,23 +66,22 @@ in
         "paperless-scheduler.service"
         "sops-install-secrets.service"
       ];
-      before = lib.optionals (cfg.gpt != null) [
-        "paperless-gpt-configure.service"
-        "podman-paperless-gpt.service"
+      before = [
+        "paperless-task-queue.service"
+        "paperless-consumer.service"
       ];
       unitConfig.RequiresMountsFor = [ config.services.paperless.dataDir ];
       serviceConfig = {
         Type = "oneshot";
         User = "paperless";
         Group = "paperless";
-        Environment = [
-          "PAPERLESS_BOOTSTRAP_CONFIG=${bootstrapConfig}"
-          "PYTHONPATH=${paperlessPackages.bootstrap}/${paperlessPackages.bootstrap.python.sitePackages}"
-        ];
+        Environment = [ "PAPERLESS_BOOTSTRAP_CONFIG=${bootstrapConfig}" ];
         # The upstream NixOS module exposes administration through Django's
         # `shell -c` subcommand; this argument is Python, not a POSIX shell.
         ExecStart = bootstrapCommand;
       };
     };
+    systemd.services.paperless-task-queue.requires = [ "paperless-bootstrap.service" ];
+    systemd.services.paperless-consumer.requires = [ "paperless-bootstrap.service" ];
   };
 }

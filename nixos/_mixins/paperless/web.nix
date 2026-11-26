@@ -7,11 +7,8 @@
 let
   inherit (paperlessModel)
     cfg
-    gptOauth2ProxyPort
-    gptPort
     metricsInternalPort
     paperlessService
-    ssoApplication
     ;
 in
 {
@@ -37,17 +34,5 @@ in
       };
     };
 
-    host.web.services.paperless-gpt = lib.mkIf (cfg.gpt != null) {
-      upstream = "http://127.0.0.1:${toString gptPort}";
-      auth = lib.mkIf (ssoApplication != null) {
-        oauth2ProxyGate = {
-          displayName = "Paperless GPT";
-          port = gptOauth2ProxyPort;
-          allowedGroups = [ ssoApplication.roles.admin ];
-          groupClaim = "paperless_groups";
-          internalHttpsServiceNames = [ "paperless-gpt" ];
-        };
-      };
-    };
   };
 }

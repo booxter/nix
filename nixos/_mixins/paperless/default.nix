@@ -9,7 +9,7 @@
   imports = [
     ./assertions.nix
     ./bootstrap.nix
-    ./gpt.nix
+    ./ai.nix
     ./observability.nix
     ./secrets.nix
     ./service.nix
@@ -27,13 +27,13 @@
             description = "Host providing durable Paperless storage.";
           };
 
-          gpt = lib.mkOption {
+          ai = lib.mkOption {
             type = lib.types.nullOr (
               lib.types.submodule {
                 options = {
                   providerHost = lib.mkOption {
                     type = lib.types.nonEmptyStr;
-                    description = "NixOS host providing Ollama models to Paperless GPT.";
+                    description = "NixOS host providing Ollama models to Paperless.";
                   };
                   textModel = lib.mkOption {
                     type = lib.types.nonEmptyStr;
@@ -47,7 +47,7 @@
               }
             );
             default = null;
-            description = "Paperless GPT enrichment configuration.";
+            description = "Local OCR and metadata suggestions for Paperless.";
           };
         };
       }
@@ -62,7 +62,6 @@
       bootstrap = pkgs.callPackage ./pkgs/paperless-bootstrap {
         paperless-ngx = config.services.paperless.package;
       };
-      gptConfigure = pkgs.callPackage ./pkgs/paperless-gpt-configure { };
       prometheusExporter = pkgs.callPackage ./pkgs/prometheus-paperless-exporter { };
     };
   };

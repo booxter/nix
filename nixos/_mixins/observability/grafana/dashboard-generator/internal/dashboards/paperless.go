@@ -12,18 +12,11 @@ func PaperlessOverview(config Config) (dashboard.Dashboard, error) {
 	if err != nil {
 		return dashboard.Dashboard{}, err
 	}
-	gptHost, err := config.serviceHost("paperless-gpt")
-	if err != nil {
-		return dashboard.Dashboard{}, err
-	}
 
 	datasource := config.DataSources.Prometheus.reference()
 	layout := newPanelLayout()
 	paperless := func(name string, matchers ...string) string {
 		return applicationMetric(name, "paperless", matchers...)
-	}
-	gptNode := func(name string, matchers ...string) string {
-		return nodeMetric(name, append([]string{fmt.Sprintf("instance=%q", gptHost)}, matchers...)...)
 	}
 
 	builder := newDashboard(DashboardOptions{
@@ -111,20 +104,6 @@ func PaperlessOverview(config Config) (dashboard.Dashboard, error) {
 			ID: tables[1].ID, Grid: tables[1].Grid, Title: "Inventory Counts",
 			Expression: inventoryCountExpression(paperless), Unit: units.Short,
 			DataSource: datasource,
-		}))
-
-	gpt := layout.row(4, 12, 12)
-	builder.
-		WithPanel(availabilityStat(AvailabilityStatOptions{
-			ID: gpt[0].ID, Grid: gpt[0].Grid, Title: "Paperless GPT Probe",
-			Expression: `max(probe_success{probe_family="service",probe_role="frontdoor",service="paperless-gpt"})`,
-			Legend:     "probe", DataSource: datasource,
-		})).
-		WithPanel(availabilityStat(AvailabilityStatOptions{
-			ID: gpt[1].ID, Grid: gpt[1].Grid, Title: "Paperless GPT Units",
-			Expression: "sum(" + gptNode("node_systemd_unit_state",
-				`name=~"podman-paperless-gpt\\.service|oauth2-proxy-paperless-gpt\\.service"`, `state="active"`) + ") / 2",
-			Legend: "units", DataSource: datasource,
 		}))
 
 	return builder.Build()

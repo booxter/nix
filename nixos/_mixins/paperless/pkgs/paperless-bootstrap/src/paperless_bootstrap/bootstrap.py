@@ -33,6 +33,7 @@ class BootstrapSpec:
     groups: tuple[str, ...]
     users: tuple[UserSpec, ...]
     token: TokenSpec
+    ai: bool
 
 
 class Repository(Protocol):
@@ -43,6 +44,8 @@ class Repository(Protocol):
     def reconcile_primary_email(self, username: str, email: str) -> None: ...
 
     def reconcile_token(self, username: str, token: str) -> None: ...
+
+    def reconcile_ai_workflow(self, enabled: bool) -> None: ...
 
 
 def read_secret(path: Path) -> str:
@@ -123,7 +126,9 @@ def load_spec(path: Path) -> BootstrapSpec:
     )
     if token_spec.owner not in {user.username for user in users}:
         raise Error("Paperless bootstrap token owner must name a declared user")
-    return BootstrapSpec(groups=groups, users=users, token=token_spec)
+    return BootstrapSpec(
+        groups=groups, users=users, token=token_spec, ai=required_bool(root, "ai", "configuration")
+    )
 
 
 def reconcile(repository: Repository, spec: BootstrapSpec) -> None:
@@ -139,3 +144,4 @@ def reconcile(repository: Repository, spec: BootstrapSpec) -> None:
         if user.email:
             repository.reconcile_primary_email(user.username, user.email)
     repository.reconcile_token(spec.token.owner, token)
+    repository.reconcile_ai_workflow(spec.ai)
