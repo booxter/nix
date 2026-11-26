@@ -39,6 +39,15 @@ type Dependencies struct {
 	CollectionTimeout time.Duration
 }
 
+type IneligibleError struct {
+	QueueID int64
+	Reasons []controller.CandidateRejectionReason
+}
+
+func (failure *IneligibleError) Error() string {
+	return fmt.Sprintf("Radarr queue record %d is ineligible: %v", failure.QueueID, failure.Reasons)
+}
+
 type assembleFunc func(casebuilder.Observation) (casebuilder.Assembly, error)
 
 type Inspector struct {
@@ -86,9 +95,7 @@ func (inspector *Inspector) Inspect(
 
 	assessment := controller.ClassifyRepairCandidate(record, inspector.dependencies.Downloads)
 	if !assessment.Eligible() {
-		return casebuilder.Assembly{}, fmt.Errorf(
-			"Radarr queue record %d is ineligible: %v", record.ID, assessment.RejectionReasons,
-		)
+		return casebuilder.Assembly{}, &IneligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
 	}
 	return inspector.inspectRecord(ctx, collectionContext, record)
 }

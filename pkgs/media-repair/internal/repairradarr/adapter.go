@@ -125,7 +125,11 @@ func (adapter *Adapter) authorize(
 	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}
 	authorized, reason := executioncheck.Authorize(fresh, decision, policy)
 	if reason != "" {
-		return fresh, authorized, &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
+		blocked := &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
+		if reason == executioncheck.RuntimeMismatch {
+			blocked.Code = jobs.OutcomeRuntimeMismatch
+		}
+		return fresh, authorized, blocked
 	}
 	if reason, unsafe := executioncheck.ReplacementRejection(fresh, authorized); unsafe {
 		return fresh, authorized, &repair.BlockedError{Reason: string(reason)}

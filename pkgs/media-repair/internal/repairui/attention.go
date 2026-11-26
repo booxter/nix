@@ -22,13 +22,12 @@ type attentionChoice struct {
 	Value, Label string
 }
 
-func attentionFor(job jobs.Job, plan decision) *attention {
+func attentionFor(job jobs.Job, plan decision, result jobs.Outcome) *attention {
 	if !job.InQueue || job.PendingAction != "" || job.CollectionError != "" ||
 		(job.State != jobs.Blocked && job.State != jobs.Failed) {
 		return nil
 	}
-	if strings.Contains(job.Reason, "current Lidarr evidence does not match") ||
-		strings.Contains(job.Reason, "Lidarr import bindings changed") {
+	if result == jobs.OutcomeEvidenceChanged {
 		return nil
 	}
 	var evidence struct {
@@ -37,14 +36,13 @@ func attentionFor(job jobs.Job, plan decision) *attention {
 	if json.Unmarshal(job.Evidence, &evidence) != nil || len(evidence.Case) == 0 || string(evidence.Case) == "null" || string(evidence.Case) == "{}" {
 		return nil
 	}
-	if plan.Explanation == plannerFallback {
+	if result == jobs.OutcomePlannerFailed {
 		return &attention{Kind: "retry", Title: "Retry planning", Question: "Try planning again?", Button: "Retry planning"}
 	}
-	if strings.Contains(job.Reason, "repair interrupted before import") ||
-		strings.Contains(job.Reason, "terminated signal received") || strings.Contains(job.Reason, "context canceled") {
+	if result == jobs.OutcomeInterrupted {
 		return &attention{Kind: "retry", Title: "Resume interrupted repair", Question: "Resume this interrupted repair?", Button: "Resume repair"}
 	}
-	if job.Reason == "decision rejected: runtime_mismatch" && job.Service == jobs.Radarr {
+	if result == jobs.OutcomeRuntimeMismatch && job.Service == jobs.Radarr {
 		return radarrAttention(evidence.Case, decision{Reason: "runtime_mismatch"})
 	}
 	if plan.Action != "no_repair" {

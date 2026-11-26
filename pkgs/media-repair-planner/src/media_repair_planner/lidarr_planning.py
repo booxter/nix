@@ -26,7 +26,7 @@ def _fallback(repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
             explanation=Explanation(
                 root="The planner could not produce a valid decision within its attempt limit."
             ),
-            reason=Reason.unsafe_to_repair,
+            reason=Reason.planner_failed,
             schema_version="lidarr-repair/v3",
         )
     )

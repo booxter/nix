@@ -17,6 +17,8 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
+var ErrQueueNotReady = errors.New("Lidarr queue item is not eligible for repair")
+
 type Lidarr interface {
 	ReadQueue(context.Context) ([]lidarr.QueueRecord, error)
 	RecoverAlbumIdentity(context.Context, string) (lidarr.AlbumIdentity, bool, error)
@@ -94,7 +96,7 @@ func (collector *EvidenceCollector) Inspect(
 		return Evidence{}, err
 	}
 	if !eligibleQueue(queue) {
-		return Evidence{}, fmt.Errorf("Lidarr queue item is not eligible for repair")
+		return Evidence{}, ErrQueueNotReady
 	}
 	archivePath, snapshot, kind, err := findArchive(queue.OutputPath)
 	if err == nil {

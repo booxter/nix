@@ -26,6 +26,20 @@ const (
 
 type State string
 
+type Outcome string
+
+const (
+	OutcomeEvidenceChanged    Outcome = "evidence_changed"
+	OutcomePlannerFailed      Outcome = "planner_failed"
+	OutcomeOther              Outcome = "other"
+	OutcomeInterrupted        Outcome = "interrupted"
+	OutcomeRuntimeMismatch    Outcome = "runtime_mismatch"
+	OutcomeAlreadyReviewed    Outcome = "already_reviewed"
+	OutcomeIncompleteDownload Outcome = "incomplete_download"
+	OutcomeQueueNotReady      Outcome = "queue_not_ready"
+	OutcomeInvalidCueSheet    Outcome = "invalid_cue_sheet"
+)
+
 const (
 	Observed  State = "observed"
 	Ready     State = "ready"
@@ -52,6 +66,7 @@ type Job struct {
 	StableSince         time.Time
 	Evidence            json.RawMessage `gorm:"serializer:json"`
 	CollectionError     string
+	CollectionOutcome   Outcome
 	Plan                json.RawMessage `gorm:"serializer:json"`
 	Guidance            string
 	RuntimeToleranceMS  int64
@@ -62,6 +77,7 @@ type Job struct {
 	InQueue             bool
 	State               State
 	Reason              string
+	Outcome             Outcome
 	UpdatedAt           time.Time `gorm:"autoUpdateTime:false"`
 }
 
@@ -78,6 +94,7 @@ type Attempt struct {
 	ImportTerminalAt time.Time
 	ImportReceipt    json.RawMessage `gorm:"serializer:json"`
 	Reason           string
+	Outcome          Outcome
 	StartedAt        time.Time
 	UpdatedAt        time.Time `gorm:"autoUpdateTime:false"`
 }
@@ -157,6 +174,7 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
 		job.CollectionError = observed.CollectionError
+		job.CollectionOutcome = observed.CollectionOutcome
 		if !active(job.State) && observed.Evidence != nil {
 			changed, changes, err := store.observePlanning(tx, &job, observed)
 			if err != nil {
@@ -166,6 +184,7 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 				job.Plan = nil
 				job.State = Observed
 				job.Reason = strings.Join(changes, ", ")
+				job.Outcome = ""
 				job.StableSince = observed.UpdatedAt
 				job.RetryAt = time.Time{}
 				job.PlanningAttempts = 0
@@ -230,6 +249,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 
 		job.State = Running
 		job.Reason = ""
+		job.Outcome = ""
 		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		return tx.Save(&job).Error
@@ -260,6 +280,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 
 		previous.State = attempt.State
 		previous.Reason = attempt.Reason
+		previous.Outcome = attempt.Outcome
 		previous.UpdatedAt = attempt.UpdatedAt
 		previous.OutputPath = attempt.OutputPath
 		previous.ImportReceipt = attempt.ImportReceipt
@@ -278,6 +299,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		}
 		job.State = attempt.State
 		job.Reason = attempt.Reason
+		job.Outcome = attempt.Outcome
 		job.UpdatedAt = attempt.UpdatedAt
 		if !retryAt.IsZero() {
 			job.State = Ready

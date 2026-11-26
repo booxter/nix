@@ -101,6 +101,7 @@ func restorePlanning(tx *gorm.DB, job *Job) error {
 	job.Reason = result.Reason
 	if result.Complete {
 		job.State = Blocked
+		job.Outcome = OutcomeAlreadyReviewed
 		job.Reason = "these inputs were already planned; request reconsideration to try again"
 		// This is context for an operator answer, never an executable ready plan.
 		job.Plan = result.Plan

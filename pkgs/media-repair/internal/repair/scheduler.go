@@ -238,6 +238,7 @@ func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
 	}
 	decision, err := scheduler.Service.Plan(ctx, job)
 	job.PlanningAttempts++
+	job.Outcome = jobs.OutcomeOther
 	job.UpdatedAt = scheduler.Now().UTC()
 	if err != nil {
 		job.Reason = fmt.Sprintf("planning: %v", err)

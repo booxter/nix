@@ -3,8 +3,12 @@ package repairradarr
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"slices"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
@@ -36,6 +40,11 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 		assembly, err := adapter.Inspector.Inspect(ctx, entry)
 		if err != nil {
 			job.CollectionError = err.Error()
+			job.CollectionOutcome = jobs.OutcomeOther
+			var ineligible *inspection.IneligibleError
+			if errors.As(err, &ineligible) && slices.Contains(ineligible.Reasons, controller.CandidateIncompleteDownload) {
+				job.CollectionOutcome = jobs.OutcomeIncompleteDownload
+			}
 		} else {
 			job.SourceFingerprint = assembly.Request.CaseID
 			job.Evidence, err = json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})

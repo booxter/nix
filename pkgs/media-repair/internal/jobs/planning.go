@@ -41,6 +41,7 @@ func (store *Store) requestAction(ctx context.Context, id int64, action, guidanc
 		job.Revision++
 		job.PendingAction = action
 		job.Reason = ""
+		job.Outcome = ""
 		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		if action == Reconsider {
@@ -70,6 +71,7 @@ func (store *Store) FinishPlanning(ctx context.Context, planned Job) error {
 		job.Plan = planned.Plan
 		job.State = planned.State
 		job.Reason = planned.Reason
+		job.Outcome = planned.Outcome
 		job.RetryAt = planned.RetryAt
 		job.PlanningAttempts = planned.PlanningAttempts
 		job.UpdatedAt = planned.UpdatedAt
@@ -95,6 +97,7 @@ func (store *Store) FinishRemoval(ctx context.Context, requested Job, failure er
 		}
 
 		job.UpdatedAt = at
+		job.Outcome = OutcomeOther
 		if failure == nil {
 			job.State = Removed
 			job.InQueue = false
@@ -161,6 +164,7 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 				if job.State == Removed {
 					job.State = Blocked
 					job.Reason = "queue entry is present again"
+					job.Outcome = ""
 				}
 				if err := tx.Save(&job).Error; err != nil {
 					return err
@@ -179,6 +183,7 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 				if job.State != Blocked && job.State != Failed {
 					job.State = Removed
 					job.Reason = "no longer in the queue"
+					job.Outcome = OutcomeOther
 				}
 				job.PendingAction = ""
 			}

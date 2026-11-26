@@ -3,6 +3,7 @@ package repairlidarr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 	"sort"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repair.Observation, error) {
@@ -61,6 +63,14 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 		evidence, err := adapter.Inspector.Inspect(ctx, entry, record)
 		if err != nil {
 			job.CollectionError = err.Error()
+			job.CollectionOutcome = jobs.OutcomeOther
+			var rejection *materialize.Rejection
+			switch {
+			case errors.Is(err, lidarrrepair.ErrQueueNotReady):
+				job.CollectionOutcome = jobs.OutcomeQueueNotReady
+			case errors.As(err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet:
+				job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
+			}
 		} else {
 			job.SourceFingerprint = evidence.Case.CaseID
 			job.Evidence, err = encodeEvidence(evidence)

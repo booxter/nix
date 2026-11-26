@@ -121,7 +121,7 @@ async def test_planner_falls_back_after_attempt_limit(caplog: pytest.LogCaptureF
     assert len(model.calls) == 2
     assert value["action"] == "no_repair"
     assert value["case_id"] == case.case_id.root
-    assert value["reason"] == "unsafe_to_repair"
+    assert value["reason"] == "planner_failed"
     assert value["evidence_refs"] == []
     assert f"planner used fallback case_id={case.case_id.root} attempts=2" in caplog.text
     assert "attempt 1: first failure; attempt 2: second failure" in caplog.text

@@ -37,6 +37,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatalf("duplicate start: %v", err)
 	}
 	attempt.State, attempt.Reason = Blocked, "incompatible source time bases"
+	attempt.Outcome = OutcomeRuntimeMismatch
 	if err := store.UpdateAttempt(ctx, attempt); err != nil {
 		t.Fatal(err)
 	}
@@ -49,11 +50,15 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	}
 	defer store.Close()
 	job, err = store.Get(ctx, job.ID)
-	if err != nil || job.State != Blocked || job.Reason != attempt.Reason {
+	if err != nil || job.State != Blocked || job.Reason != attempt.Reason || job.Outcome != attempt.Outcome {
 		t.Fatalf("job=%+v error=%v", job, err)
 	}
 	if err := store.RequestAction(ctx, job.ID, Reconsider, "retry", 0, at); err != nil {
 		t.Fatal(err)
+	}
+	job, err = store.Get(ctx, job.ID)
+	if err != nil || job.Outcome != "" {
+		t.Fatalf("outcome after reconsideration = %q, error = %v", job.Outcome, err)
 	}
 	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, plan, at); err != nil {
 		t.Fatal(err)

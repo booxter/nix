@@ -34,7 +34,10 @@ type ImportStatus struct {
 	Failure string
 }
 
-type BlockedError struct{ Reason string }
+type BlockedError struct {
+	Reason string
+	Code   jobs.Outcome
+}
 
 func (failure *BlockedError) Error() string { return failure.Reason }
 
@@ -71,6 +74,7 @@ func (engine *Engine) Run(ctx context.Context, id int64) error {
 		return err
 	}
 	if attempt.State == jobs.Running {
+		attempt.Outcome = jobs.OutcomeInterrupted
 		return engine.finish(ctx, attempt, jobs.Failed, "repair interrupted before import; reconsider to retry")
 	}
 
@@ -124,6 +128,9 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 		var blocked *BlockedError
 		if errors.As(err, &blocked) {
 			state = jobs.Blocked
+			attempt.Outcome = blocked.Code
+		} else if errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled {
+			attempt.Outcome = jobs.OutcomeInterrupted
 		}
 
 		return errors.Join(err, engine.finish(context.WithoutCancel(ctx), attempt, state, err.Error()))
@@ -186,6 +193,9 @@ func (engine *Engine) reconcile(ctx context.Context, attempt jobs.Attempt) error
 func (engine *Engine) finish(ctx context.Context, attempt jobs.Attempt, state jobs.State, reason string) error {
 	attempt.State = state
 	attempt.Reason = reason
+	if attempt.Outcome == "" {
+		attempt.Outcome = jobs.OutcomeOther
+	}
 	attempt.UpdatedAt = engine.Now().UTC()
 	return engine.Store.UpdateAttempt(ctx, attempt)
 }

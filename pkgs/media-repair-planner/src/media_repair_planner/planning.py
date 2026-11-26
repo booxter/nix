@@ -30,7 +30,7 @@ def _fallback(repair_case: RepairCaseV3) -> RepairDecisionV3:
                 root="The planner could not produce a valid decision within its attempt limit."
             ),
             missing_evidence=[],
-            reason=Reason.unsafe_to_repair,
+            reason=Reason.planner_failed,
             schema_version="radarr-repair/v3",
         )
     )
