@@ -1,9 +1,11 @@
 {
+  aws-lc,
   clippy,
   lib,
   makeWrapper,
   nix,
   openssh,
+  pkg-config,
   providerInventory ? { },
   rustfmt,
   rustPlatform,
@@ -29,7 +31,11 @@ rustPlatform.buildRustPackage {
     clippy
     rustfmt
   ];
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    makeWrapper
+    pkg-config
+  ];
+  buildInputs = [ aws-lc ];
 
   cargoBuildFlags = [ "--ignore-rust-version" ];
 
