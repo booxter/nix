@@ -35,6 +35,13 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "paperless-llm-ocr",
+      "nixUpdateArgs": [
+        "--version=branch=main"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "prometheus-paperless-exporter",
       "nixUpdateArgs": [
         "--use-github-releases"
