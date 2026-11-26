@@ -352,31 +352,6 @@ func (artifacts failingArtifacts) CreateStaged(
 	return nil, artifacts.err
 }
 
-func (artifacts failingArtifacts) InspectStaged(
-	string,
-	string,
-	workercontracts.OutputContainer,
-) (mediafile.StagedStatus, mediafile.CompletedArtifact, error) {
-	return mediafile.StagedMissing, nil, nil
-}
-
-func (artifacts failingArtifacts) RemovePartial(
-	string,
-	string,
-	workercontracts.OutputContainer,
-) (bool, error) {
-	return false, artifacts.err
-}
-
-func (artifacts failingArtifacts) RemoveCompleted(
-	string,
-	string,
-	workercontracts.OutputContainer,
-	string,
-) (bool, error) {
-	return false, artifacts.err
-}
-
 func preparedExecution(
 	t *testing.T,
 	rootPath string,

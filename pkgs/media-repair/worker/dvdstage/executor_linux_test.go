@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
@@ -53,7 +52,7 @@ func (testProber) ProbeFile(
 	}, nil
 }
 
-func TestStageOrRecoverBindsCompleteDVDDirectory(t *testing.T) {
+func TestStageBindsCompleteDVDDirectory(t *testing.T) {
 	t.Parallel()
 	root, spec, title, vobPath := stagedDVD(t)
 	defer root.Close()
@@ -67,14 +66,13 @@ func TestStageOrRecoverBindsCompleteDVDDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first, err := executor.StageOrRecover(context.Background(), spec)
+	first, err := executor.Stage(context.Background(), spec)
 	if err != nil || first.SizeBytes != int64(len("staged-matroska")) ||
 		first.ArtifactID == "" || first.Fingerprint == "" || remuxer.calls != 1 {
 		t.Fatalf("DVD stage = %#v, calls = %d, error = %v", first, remuxer.calls, err)
 	}
-	second, err := executor.StageOrRecover(context.Background(), spec)
-	if err != nil || !reflect.DeepEqual(second, first) || remuxer.calls != 1 {
-		t.Fatalf("DVD recovery = %#v, calls = %d, error = %v", second, remuxer.calls, err)
+	if _, err := executor.Stage(context.Background(), spec); err == nil || remuxer.calls != 1 {
+		t.Fatalf("DVD artifact collision accepted: calls = %d, error = %v", remuxer.calls, err)
 	}
 	if contents, err := os.ReadFile(companionPath); err != nil || string(contents) != string(companion) {
 		t.Fatalf("companion file changed: %q, %v", contents, err)
@@ -82,8 +80,8 @@ func TestStageOrRecoverBindsCompleteDVDDirectory(t *testing.T) {
 	if err := os.WriteFile(vobPath, []byte("changed media"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := executor.StageOrRecover(context.Background(), spec); err == nil {
-		t.Fatal("recovered DVD output after a VOB changed")
+	if _, err := executor.Stage(context.Background(), spec); err == nil {
+		t.Fatal("accepted DVD after a VOB changed")
 	}
 }
 
@@ -100,7 +98,7 @@ func TestStageRejectsUnboundDVDFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := executor.StageOrRecover(context.Background(), spec); err == nil || remuxer.calls != 0 {
+	if _, err := executor.Stage(context.Background(), spec); err == nil || remuxer.calls != 0 {
 		t.Fatalf("unbound DVD file was remuxed: calls = %d, error = %v", remuxer.calls, err)
 	}
 	artifactID, err := ArtifactID(spec)
@@ -125,7 +123,7 @@ func TestStageAcceptsFlatDVDDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result, err := executor.StageOrRecover(context.Background(), spec); err != nil || result.SizeBytes == 0 {
+	if result, err := executor.Stage(context.Background(), spec); err != nil || result.SizeBytes == 0 {
 		t.Fatalf("flat DVD stage = %#v, error = %v", result, err)
 	}
 }

@@ -199,21 +199,8 @@ func TestInterruptedStagedArtifactCanBeDetectedAndRemoved(t *testing.T) {
 	if err != nil || status != StagedPartial || completed != nil {
 		t.Fatalf("interrupted inspection = %v, %#v, %v", status, completed, err)
 	}
-	removed, err := rootSet.RemovePartial(
-		"downloads",
-		"artifact:interrupted",
-		workercontracts.OutputContainerMKV,
-	)
-	if err != nil || !removed {
-		t.Fatalf("remove partial = %t, %v", removed, err)
-	}
-	status, completed, err = rootSet.InspectStaged(
-		"downloads",
-		"artifact:interrupted",
-		workercontracts.OutputContainerMKV,
-	)
-	if err != nil || status != StagedMissing || completed != nil {
-		t.Fatalf("final inspection = %v, %#v, %v", status, completed, err)
+	if _, err := rootSet.CreateStaged("downloads", "artifact:interrupted", workercontracts.OutputContainerMKV, 1); err == nil {
+		t.Fatal("accepted a partial artifact collision")
 	}
 }
 

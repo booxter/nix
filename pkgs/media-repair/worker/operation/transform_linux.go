@@ -130,7 +130,7 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		if err != nil {
 			return mediaoperation.Output{}, err
 		}
-		return worker.output(root, published, result.Fingerprint, result.Evidence)
+		return worker.output(root, published)
 	}
 	return mediaoperation.Output{}, failures
 }
@@ -211,7 +211,7 @@ func (worker Transformer) bluray(ctx context.Context, request mediaoperation.Tra
 		return mediaoperation.Output{}, err
 	}
 
-	result, err := stager.StageOrRecover(ctx, spec)
+	result, err := stager.Stage(ctx, spec)
 	if err != nil {
 		return mediaoperation.Output{}, err
 	}
@@ -222,7 +222,7 @@ func (worker Transformer) bluray(ctx context.Context, request mediaoperation.Tra
 		return mediaoperation.Output{}, err
 	}
 
-	return worker.output(root, published, result.Fingerprint, result.Evidence)
+	return worker.output(root, published)
 }
 
 func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
@@ -258,7 +258,7 @@ func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transf
 	root := specs[0].RootID
 	var result dvdstage.Result
 	if len(specs) == 1 {
-		result, err = stager.StageOrRecover(ctx, specs[0])
+		result, err = stager.Stage(ctx, specs[0])
 	} else {
 		result, err = worker.joinDVD(ctx, request, stager, specs)
 	}
@@ -281,7 +281,7 @@ func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transf
 		return mediaoperation.Output{}, err
 	}
 
-	return worker.output(root, published, result.Fingerprint, result.Evidence)
+	return worker.output(root, published)
 }
 
 func (worker Transformer) dvdSpecification(
@@ -352,7 +352,7 @@ func (worker Transformer) resolve(paths []string) (string, [][]string, error) {
 	return "", nil, fmt.Errorf("media inputs must share a configured root")
 }
 
-func (worker Transformer) output(root string, components []string, fingerprint string, evidence controller.ProbeEvidence) (mediaoperation.Output, error) {
+func (worker Transformer) output(root string, components []string) (mediaoperation.Output, error) {
 	path, err := worker.Files.AbsolutePath(root, components)
-	return mediaoperation.Output{Path: path, Fingerprint: fingerprint, Evidence: evidence}, err
+	return mediaoperation.Output{Path: path}, err
 }

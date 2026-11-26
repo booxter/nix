@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
@@ -47,7 +46,7 @@ func (prober evidenceProber) ProbeFile(
 	return prober.evidence, nil
 }
 
-func TestStageOrRecoverRemuxesOnceAndRevalidatesSources(t *testing.T) {
+func TestStageRejectsCollisionAndChangedSources(t *testing.T) {
 	t.Parallel()
 	root, spec, details := stagedDisc(t)
 	defer root.Close()
@@ -59,14 +58,13 @@ func TestStageOrRecoverRemuxesOnceAndRevalidatesSources(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first, err := executor.StageOrRecover(context.Background(), spec)
+	first, err := executor.Stage(context.Background(), spec)
 	if err != nil || first.SizeBytes != int64(len("staged-matroska")) ||
 		first.ArtifactID == "" || first.Fingerprint == "" || remuxer.calls != 1 {
 		t.Fatalf("stage result = %#v, calls = %d, error = %v", first, remuxer.calls, err)
 	}
-	second, err := executor.StageOrRecover(context.Background(), spec)
-	if err != nil || !reflect.DeepEqual(second, first) || remuxer.calls != 1 {
-		t.Fatalf("recovery result = %#v, calls = %d, error = %v", second, remuxer.calls, err)
+	if _, err := executor.Stage(context.Background(), spec); err == nil || remuxer.calls != 1 {
+		t.Fatalf("artifact collision accepted: calls = %d, error = %v", remuxer.calls, err)
 	}
 	clipPath, err := root.AbsolutePath(spec.RootID, spec.Clips[0].PathComponents)
 	if err != nil {
@@ -75,8 +73,8 @@ func TestStageOrRecoverRemuxesOnceAndRevalidatesSources(t *testing.T) {
 	if err := os.WriteFile(clipPath, []byte("different media"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := executor.StageOrRecover(context.Background(), spec); err == nil {
-		t.Fatal("recovered output after the source clip changed")
+	if _, err := executor.Stage(context.Background(), spec); err == nil {
+		t.Fatal("accepted output after the source clip changed")
 	}
 }
 
@@ -94,7 +92,7 @@ func TestStageRejectsInvalidOutputBeforeRetaining(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := executor.StageOrRecover(context.Background(), spec); err == nil {
+	if _, err := executor.Stage(context.Background(), spec); err == nil {
 		t.Fatal("accepted remux output with incorrect duration")
 	}
 	artifactID, err := ArtifactID(spec)
@@ -132,7 +130,7 @@ func TestStageRejectsClipChangedDuringRemux(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := executor.StageOrRecover(context.Background(), spec); err == nil {
+	if _, err := executor.Stage(context.Background(), spec); err == nil {
 		t.Fatal("accepted remux after source clip changed")
 	}
 	artifactID, err := ArtifactID(spec)
