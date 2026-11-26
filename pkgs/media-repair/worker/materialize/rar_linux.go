@@ -259,6 +259,24 @@ func (executor *Executor) collectExtractedMedia(
 	return artifacts, nil
 }
 
+func (executor *Executor) extractRAR(ctx context.Context, archive *os.File, w workspace, extensions map[string]struct{}, mediaName string) ([]Artifact, error) {
+	quarantine := filepath.Join(w.partial, ".rar-extract")
+	if err := os.Mkdir(quarantine, 0o700); err != nil {
+		return nil, fmt.Errorf("%w: %v", errWorkspace, err)
+	}
+	if err := executor.rar.Extract(ctx, archive, quarantine); err != nil {
+		return nil, err
+	}
+	artifacts, err := executor.collectExtractedMedia(ctx, quarantine, w.partial, w.components, w.group, extensions, mediaName)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.RemoveAll(quarantine); err != nil {
+		return nil, fmt.Errorf("%w: %v", errWorkspace, err)
+	}
+	return artifacts, nil
+}
+
 func copyExtractedFile(
 	sourcePath string,
 	workspacePath string,
@@ -281,21 +299,4 @@ func copyExtractedFile(
 
 func fileSnapshot(size int64) fileidentity.Snapshot {
 	return fileidentity.Snapshot{SizeBytes: size}
-}
-
-func reasonForRARError(err error) string {
-	switch {
-	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-		return "timeout"
-	case errors.Is(err, errRAREncrypted):
-		return FailureEncryptedArchive
-	case errors.Is(err, errRARListing):
-		return FailureInvalidArchive
-	case errors.Is(err, errRARExtract):
-		return "extract_failed"
-	case errors.Is(err, errRARContent):
-		return FailureInvalidArchive
-	default:
-		return FailureInvalidArchive
-	}
 }
