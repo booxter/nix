@@ -60,7 +60,12 @@
       attic-client = prev.attic-client.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Drop when the packaged client honors NIX_SSL_CERT_FILE.
-          ../patches/attic-client-honor-nix-ssl-cert-file.patch
+          (
+            if lib.versionAtLeast old.version "0-unstable-2026-07-06" then
+              ../patches/attic-client-honor-nix-ssl-cert-file-reqwest-0.13.patch
+            else
+              ../patches/attic-client-honor-nix-ssl-cert-file.patch
+          )
         ];
       });
 
