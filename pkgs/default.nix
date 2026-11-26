@@ -34,6 +34,7 @@ in
 
   auth-request = pkgs.callPackage ./auth-request { };
 
+  ssh-device = pkgs.callPackage ./ssh-device { };
   ssh-ticket = pkgs.callPackage ./ssh-ticket { inherit atomicFileWrites; };
   ssh-ticket-yubikey = pkgs.ssh-ticket.override { openssh = pkgs.openssh-yubikey; };
 

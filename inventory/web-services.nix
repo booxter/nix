@@ -148,19 +148,6 @@
         };
       };
     };
-    paperless-gpt = {
-      declaration = {
-        displayName = "Paperless GPT";
-        health = {
-          frontend.path = "/oauth2/sign_in";
-          backend.path = "/api/version";
-        };
-        dashboard = {
-          icon = "sh:paperless-ngx";
-          section = "infrastructure";
-        };
-      };
-    };
     vikunja = {
       declaration = {
         displayName = "Vikunja";

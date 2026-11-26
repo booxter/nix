@@ -19,7 +19,7 @@ from paperless_bootstrap.django import DjangoRepository, main
 
 
 @pytest.fixture(scope="module")
-def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
+def paperless_database(tmp_path_factory: pytest.TempPathFactory) -> None:
     root = tmp_path_factory.mktemp("paperless")
     data = root / "data"
     media = root / "media"
@@ -47,7 +47,15 @@ def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
 
     django.setup()
     call_command("migrate", interactive=False, verbosity=0)
-    yield
+
+
+@pytest.fixture
+def paperless(paperless_database: None) -> Iterator[None]:
+    from django.db import transaction
+
+    with transaction.atomic():
+        yield
+        transaction.set_rollback(True)
 
 
 def write_config(
@@ -184,6 +192,49 @@ class UntouchedRepository(Repository):
 
     def reconcile_token(self, username: str, token: str) -> None:
         raise AssertionError("invalid secrets must fail before reconciliation")
+
+    def reconcile_ai_workflow(self) -> None:
+        raise AssertionError("invalid secrets must fail before reconciliation")
+
+
+def test_ai_workflow_migration_is_idempotent_and_preserves_other_workflows(paperless: None) -> None:
+    from documents.models import Workflow, WorkflowAction, WorkflowTrigger
+    from paperless_bootstrap.django import AI_WORKFLOW, LEGACY_WORKFLOWS
+
+    for name in LEGACY_WORKFLOWS:
+        Workflow.objects.create(name=name)
+    unrelated = Workflow.objects.create(name="Unrelated")
+    shared = WorkflowTrigger.objects.create(type=WorkflowTrigger.WorkflowTriggerType.MANUAL)
+    unrelated.triggers.add(shared)
+    managed = Workflow.objects.create(name=AI_WORKFLOW, enabled=False)
+    managed.triggers.add(shared)
+    managed.actions.add(WorkflowAction.objects.create())
+
+    repository = DjangoRepository()
+    repository.reconcile_ai_workflow()
+    action_ids = list(managed.actions.order_by("order").values_list("pk", flat=True))
+    trigger_id = managed.triggers.get().pk
+    repository.reconcile_ai_workflow()
+
+    managed.refresh_from_db()
+    assert managed.enabled
+    assert managed.triggers.count() == 1
+    assert managed.triggers.get().type == WorkflowTrigger.WorkflowTriggerType.DOCUMENT_ADDED
+    actions = list(managed.actions.order_by("order"))
+    assert [action.pk for action in actions] == action_ids
+    assert managed.triggers.get().pk == trigger_id
+    assert all(
+        action.type == WorkflowAction.WorkflowActionType.APPLY_AI_SUGGESTIONS for action in actions
+    )
+    assert actions[0].ai_suggestion_fields == ["title", "created", "correspondent"]
+    assert actions[0].ai_create_missing and actions[0].ai_overwrite_existing
+    assert actions[1].ai_suggestion_fields == ["document_type"]
+    assert not actions[1].ai_create_missing and actions[1].ai_overwrite_existing
+    assert not Workflow.objects.filter(name__in=LEGACY_WORKFLOWS, enabled=True).exists()
+    assert unrelated.triggers.get() == shared
+    assert unrelated.enabled
+    assert WorkflowTrigger.objects.count() == 2
+    assert WorkflowAction.objects.count() == 2
 
 
 def test_invalid_token_fails_before_mutating_paperless(tmp_path: Path) -> None:

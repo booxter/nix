@@ -6,6 +6,8 @@ let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
 {
+  imports = [ ../_mixins/paperless ];
+
   system.stateVersion = "25.11";
 
   host.proxmox.guest = {
@@ -23,7 +25,7 @@ in
 
   host.paperless = {
     storageProvider = "beast";
-    gpt = {
+    ai = {
       providerHost = "frame";
       textModel = "granite4:32b-a9b-h";
       visionModel = "qwen3-vl:8b-instruct";

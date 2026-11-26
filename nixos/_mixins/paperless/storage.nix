@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (paperlessModel) cfg gptStateDir storagePath;
+  inherit (paperlessModel) cfg storagePath;
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -33,9 +33,6 @@ in
           requiresMountsFor = [ config.services.paperless.dataDir ];
         };
       };
-    }
-    // lib.optionalAttrs (cfg.gpt != null) {
-      paperless-gpt.paths = [ gptStateDir ];
     };
 
     systemd.services = {

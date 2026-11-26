@@ -10,32 +10,21 @@ let
   users = lib.filterAttrs (
     _: user: lib.any (group: builtins.elem group user.groups) accessGroups
   ) config.host.sso.users;
-  gptProviderHost = if cfg == null || cfg.gpt == null then null else cfg.gpt.providerHost;
-  gptProvider =
-    if gptProviderHost == null then
-      null
-    else
-      outputs.nixosConfigurations.${gptProviderHost}.config or null;
-  gptModels =
-    if gptProvider == null || gptProvider.host.ollama == null then
-      { }
-    else
-      gptProvider.host.ollama.models;
+  aiProvider = outputs.nixosConfigurations.${cfg.ai.providerHost}.config or null;
+  aiModels =
+    if aiProvider == null || aiProvider.host.ollama == null then { } else aiProvider.host.ollama.models;
 in
 {
   inherit
     accessGroups
     cfg
-    gptModels
-    gptProvider
+    aiModels
+    aiProvider
     ssoApplication
     users
     ;
   bootstrapOwner = if ssoApplication == null then null else ssoApplication.bootstrapOwner;
   paperlessService = config.host.web.services.paperless;
-  gptStateDir = "/var/lib/paperless-gpt";
-  gptPort = 8080;
-  gptOauth2ProxyPort = 4181;
   metricsInternalPort = 19289;
   metricsMtlsPort = 9348;
   ollamaTunnelPort = 11435;

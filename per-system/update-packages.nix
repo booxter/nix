@@ -18,6 +18,9 @@ lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
   };
   houndarr = pkgs.houndarr;
   nico-cli = (import ../hm/_mixins/dev/nvidia/pkgs { pkgs = plainPkgs; }).nico-cli;
+  paperless-llm-ocr =
+    plainPkgs.paperless-ngx.python.pkgs.callPackage ../nixos/_mixins/paperless/pkgs/paperless-llm-ocr
+      { };
   prometheus-paperless-exporter =
     plainPkgs.callPackage ../nixos/_mixins/paperless/pkgs/prometheus-paperless-exporter
       { };

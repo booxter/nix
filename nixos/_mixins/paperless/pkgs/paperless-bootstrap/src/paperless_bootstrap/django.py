@@ -7,6 +7,9 @@ from typing import Any
 
 from paperless_bootstrap.bootstrap import Error, Repository, UserSpec, load_spec, reconcile
 
+AI_WORKFLOW = "Fleet managed: Apply AI suggestions"
+LEGACY_WORKFLOWS = ("Auto OCR with paperless-gpt", "Auto classify after paperless-gpt OCR")
+
 
 class DjangoRepository(Repository):
     def __init__(self) -> None:
@@ -66,6 +69,79 @@ class DjangoRepository(Repository):
         elif existing.key != token:
             existing.delete()
             self.token_model.objects.create(user=user, key=token)
+
+    def reconcile_ai_workflow(self) -> None:
+        models = import_module("documents.models")
+        transaction = import_module("django.db.transaction")
+        with transaction.atomic():
+            models.Workflow.objects.filter(name__in=LEGACY_WORKFLOWS).update(enabled=False)
+            workflow, _ = models.Workflow.objects.get_or_create(name=AI_WORKFLOW)
+            trigger = models.WorkflowTrigger(
+                type=models.WorkflowTrigger.WorkflowTriggerType.DOCUMENT_ADDED
+            )
+            action_type = models.WorkflowAction.WorkflowActionType.APPLY_AI_SUGGESTIONS
+            actions = [
+                models.WorkflowAction(
+                    type=action_type,
+                    order=0,
+                    ai_suggestion_fields=["title", "created", "correspondent"],
+                    ai_create_missing=True,
+                    ai_overwrite_existing=True,
+                ),
+                models.WorkflowAction(
+                    type=action_type,
+                    order=1,
+                    ai_suggestion_fields=["document_type"],
+                    ai_create_missing=False,
+                    ai_overwrite_existing=True,
+                ),
+            ]
+            reconcile_components(workflow.triggers, [trigger], retain_removed=False)
+            # Queued tasks refer to action IDs even after a workflow is edited.
+            reconcile_components(workflow.actions, actions, retain_removed=True)
+            if not workflow.enabled or workflow.order != 0:
+                workflow.enabled = True
+                workflow.order = 0
+                workflow.save(update_fields=["enabled", "order"])
+
+
+def reconcile_component(component: Any, desired: Any) -> Any:
+    fields = [field for field in desired._meta.concrete_fields if not field.primary_key]
+    changed = component is None or any(
+        getattr(component, field.attname) != getattr(desired, field.attname) for field in fields
+    )
+    if component is not None:
+        changed = changed or any(
+            getattr(component, field.name).exists() for field in desired._meta.many_to_many
+        )
+    if not changed:
+        return component
+
+    # Components may be shared with other workflows. Never change a shared one.
+    if component is None or component.workflows.count() > 1:
+        component = desired
+        component.save()
+    else:
+        for field in fields:
+            setattr(component, field.attname, getattr(desired, field.attname))
+        component.save()
+        for field in desired._meta.many_to_many:
+            getattr(component, field.name).clear()
+    return component
+
+
+def reconcile_components(relation: Any, desired: list[Any], *, retain_removed: bool) -> None:
+    existing = list(relation.order_by("pk"))
+    components = [
+        reconcile_component(existing[index] if index < len(existing) else None, component)
+        for index, component in enumerate(desired)
+    ]
+    relation.set(components)
+    if not retain_removed:
+        desired[0].__class__.objects.filter(
+            pk__in=[item.pk for item in existing if item.pk not in {c.pk for c in components}],
+            workflows__isnull=True,
+        ).delete()
 
 
 def main() -> None:

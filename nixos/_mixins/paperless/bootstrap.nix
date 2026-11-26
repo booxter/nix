@@ -39,8 +39,13 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
+    services.paperless.extraPythonPackages = ps: [
+      paperlessPackages.bootstrap
+      (ps.callPackage ./pkgs/paperless-llm-ocr { })
+    ];
+
     systemd.services.paperless-bootstrap = {
-      description = "Apply declarative Paperless users and API token";
+      description = "Apply declarative Paperless users, API token and workflows";
       wantedBy = [ "multi-user.target" ];
       wants = [
         "paperless-scheduler.service"
@@ -50,23 +55,22 @@ in
         "paperless-scheduler.service"
         "sops-install-secrets.service"
       ];
-      before = lib.optionals (cfg.gpt != null) [
-        "paperless-gpt-configure.service"
-        "podman-paperless-gpt.service"
+      before = [
+        "paperless-task-queue.service"
+        "paperless-consumer.service"
       ];
       unitConfig.RequiresMountsFor = [ config.services.paperless.dataDir ];
       serviceConfig = {
         Type = "oneshot";
         User = "paperless";
         Group = "paperless";
-        Environment = [
-          "PAPERLESS_BOOTSTRAP_CONFIG=${bootstrapConfig}"
-          "PYTHONPATH=${paperlessPackages.bootstrap}/${paperlessPackages.bootstrap.python.sitePackages}"
-        ];
+        Environment = [ "PAPERLESS_BOOTSTRAP_CONFIG=${bootstrapConfig}" ];
         # The upstream NixOS module exposes administration through Django's
         # `shell -c` subcommand; this argument is Python, not a POSIX shell.
         ExecStart = bootstrapCommand;
       };
     };
+    systemd.services.paperless-task-queue.requires = [ "paperless-bootstrap.service" ];
+    systemd.services.paperless-consumer.requires = [ "paperless-bootstrap.service" ];
   };
 }

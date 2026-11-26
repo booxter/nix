@@ -44,6 +44,8 @@ class Repository(Protocol):
 
     def reconcile_token(self, username: str, token: str) -> None: ...
 
+    def reconcile_ai_workflow(self) -> None: ...
+
 
 def read_secret(path: Path) -> str:
     try:
@@ -139,3 +141,4 @@ def reconcile(repository: Repository, spec: BootstrapSpec) -> None:
         if user.email:
             repository.reconcile_primary_email(user.username, user.email)
     repository.reconcile_token(spec.token.owner, token)
+    repository.reconcile_ai_workflow()

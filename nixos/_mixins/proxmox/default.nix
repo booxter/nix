@@ -1,24 +1,30 @@
 {
   config,
   fleetInventory,
+  hostName,
   inputs,
+  lib,
   ...
 }:
 let
   topology = import ./topology.nix {
-    inherit config fleetInventory;
+    inherit fleetInventory hostName;
   };
 in
 {
   imports = [
-    ./api-certificate.nix
+    ./options.nix
+  ]
+  ++ lib.optionals topology.isGuest [
     ./guest.nix
+    inputs.proxmox-nixos.nixosModules.declarative-vms
+  ]
+  ++ lib.optionals topology.isNode [
+    ./api-certificate.nix
     ./memory-reclaim.nix
     ./node.nix
     ./oidc.nix
-    ./options.nix
     ./prometheus-exporter.nix
-    inputs.proxmox-nixos.nixosModules.declarative-vms
     inputs.proxmox-nixos.nixosModules.proxmox-ve
   ];
 

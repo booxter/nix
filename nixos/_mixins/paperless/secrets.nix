@@ -53,10 +53,6 @@ in
         restartUnits = [
           "paperless-bootstrap.service"
           "prometheus-paperless-exporter.service"
-        ]
-        ++ lib.optionals (cfg.gpt != null) [
-          "paperless-gpt-configure.service"
-          "podman-paperless-gpt.service"
         ];
       };
     };
@@ -75,14 +71,5 @@ in
       ];
     };
 
-    sops.templates."paperless-gpt.env" = lib.mkIf (cfg.gpt != null) {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      content = ''
-        PAPERLESS_API_TOKEN=${config.sops.placeholder."paperless/api/token"}
-      '';
-      restartUnits = [ "podman-paperless-gpt.service" ];
-    };
   };
 }
