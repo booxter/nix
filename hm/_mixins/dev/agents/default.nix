@@ -16,6 +16,7 @@ in
     ./mcp-options.nix
     ./claude
     ./codex
+    ./opencode
   ];
 
   options.host.hm.dev = {
@@ -28,5 +29,7 @@ in
       enable = lib.mkEnableOption "Codex coding agent";
       usage.account = usageAccountOption "Codex";
     };
+
+    opencode.enable = lib.mkEnableOption "OpenCode coding agent";
   };
 }

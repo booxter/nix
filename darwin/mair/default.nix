@@ -15,6 +15,8 @@ let
     }).config.virtualisation.vmVariant.system.build;
 in
 {
+  imports = [ ./opencode.nix ];
+
   system.stateVersion = 6;
 
   system.build.ciVm = ciVmBuild.vm;
