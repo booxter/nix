@@ -7,7 +7,6 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-      gpclientBrowserPatch = ../patches/gpclient-3-browser-listen.patch;
       # Use the same Nix toolchain on hosts with a separate Proxmox base.
       releasePkgs = inputs.nixpkgs.legacyPackages.${system};
       pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
@@ -89,11 +88,11 @@
       });
 
       gpauth = prev.gpauth.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-3-browser-listen.patch ];
       });
 
       gpclient = (prev.gpclient.override { gpauth = final.gpauth; }).overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-3-browser-listen.patch ];
       });
 
       nix = releasePkgs.nixVersions.latest.appendPatches [
