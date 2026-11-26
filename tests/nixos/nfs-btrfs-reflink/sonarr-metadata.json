@@ -8,14 +8,27 @@
       "runtime": 1,
       "seasonNumber": 1,
       "title": "Reflink Episode",
-      "tvdbId": 2
+      "tvdbId": 2,
+      "tvdbShowId": 1
     }
   ],
   "firstAired": "2020-01-01",
+  "language": "eng",
   "malIds": [],
-  "originalLanguage": "en",
+  "metadataSource": "tvdb",
+  "originalLanguage": "eng",
   "overview": "A generated series for the filesystem import test.",
   "runtime": 1,
+  "seasonTypes": [
+    {
+      "episodeCount": 1,
+      "name": "Aired Order",
+      "seasonNumbers": [
+        1
+      ],
+      "type": "official"
+    }
+  ],
   "seasons": [
     {
       "images": [],

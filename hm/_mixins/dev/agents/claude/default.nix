@@ -14,7 +14,6 @@ let
   };
   mcps = import ../mcp.nix { inherit config lib osConfig; };
   hasMcpSecrets = mcps.requiredSecrets != [ ];
-  nativeSettings = lib.versionAtLeast lib.trivial.release "26.11";
 
   statusLine = pkgs.callPackage ./statusline { };
   worktree = lib.getExe (pkgs.callPackage ./worktree { });
@@ -30,11 +29,10 @@ let
   ];
 in
 {
-  # TODO(26.11): Remove the backport once all Home Manager hosts have migrated.
-  imports = lib.optional (!nativeSettings) ./mutable-settings.nix;
-
+  # Secret-backed plugins exist only on the managed host. Link the whole plugin
+  # at activation rather than asking Home Manager to inspect it during a build.
   home.file."${config.programs.claude-code.configDir}/skills/fleet-mcp" =
-    lib.mkIf (nativeSettings && config.programs.claude-code.enable && hasMcpSecrets)
+    lib.mkIf (config.programs.claude-code.enable && hasMcpSecrets)
       {
         source = config.lib.file.mkOutOfStoreSymlink "/etc/claude-code";
       };
@@ -55,9 +53,6 @@ in
           worktree = ./skills/worktree;
         };
 
-        # Home Manager wraps Claude with --plugin-dir. Secret-backed servers use
-        # a SOPS-rendered runtime plugin instead of embedding values in the store.
-        plugins = lib.mkIf (!nativeSettings) (lib.optional hasMcpSecrets "/etc/claude-code");
         mcpServers = lib.mkIf (!hasMcpSecrets) (import ./mcp.nix { inherit lib mcps; });
 
         settings = {

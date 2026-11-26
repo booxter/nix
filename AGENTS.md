@@ -54,6 +54,8 @@ Scope: whole repository.
   `darwin/<host>/default.nix`.
 - Shared packages: `pkgs/`; checkout-run apps/scripts: `apps/`.
 - Keep patches for external software in `patches/<package>-<change>.patch`.
+- Give patches needed by specific consumers a separate package attribute so
+  other dependents can keep using the stock package without a rebuild.
 - Secrets: `secrets/`; checks: `tests/`, `checks.nix`.
 
 ## Application Development

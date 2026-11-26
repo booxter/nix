@@ -7,16 +7,17 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-      # TODO(26.11): Retire the 2.x patch when the work Linux hosts migrate.
-      gpclientBrowserPatch =
-        if lib.versionAtLeast prev.gpclient.version "3" then
-          ../patches/gpclient-3-browser-listen.patch
-        else
-          ../patches/gpclient-browser-listen.patch;
+      # Use the same Nix toolchain on hosts with a separate Proxmox base.
+      releasePkgs = inputs.nixpkgs.legacyPackages.${system};
       pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
       };
+      sshKeys = lib.concatLists (
+        lib.mapAttrsToList (
+          _: keys: builtins.attrValues (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
+        ) fleetInventory.yubikeys
+      );
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # The 4.1.x release branch can ship stale generated Web UI assets.
@@ -55,8 +56,8 @@
       );
     in
     {
+      # Keep the interactive clients, including Codex, on the latest packaged releases.
       inherit (pkgsNixpkgsUnstable)
-        aerospace
         chatgpt
         claude-code
         mcp-nixos
@@ -75,13 +76,89 @@
         ];
       });
 
-      codex = pkgsNixpkgsUnstable.callPackage ./codex.nix { };
+      codex = pkgsNixpkgsUnstable.codex.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # https://github.com/openai/codex/issues/47390
+          ../patches/codex-show-full-patches.patch
+          # Include context tokens and session throughput using server response timings.
+          ../patches/codex-context-tokens.patch
+          # Show current-turn tokens and completion throughput.
+          ../patches/codex-turn-tokens.patch
+          # Retry capacity errors without server advice within the existing retry budget.
+          ../patches/codex-capacity-retry.patch
+          # Allow ten stream retries by default.
+          ../patches/codex-stream-retry-limit.patch
+          # Name checkout directories with /worktree <name>; keep managed hash buckets.
+          # https://github.com/openai/codex/issues/38326
+          ../patches/codex-named-worktrees.patch
+          # F10 mutes spoken replies while keeping the microphone live.
+          # Adapted from https://github.com/FrostBy/agent-kit/releases/tag/v0.6.2
+          ../patches/codex-mute-agent-speaker.patch
+        ];
+      });
 
-      openssh-yubikey = prev.callPackage ./openssh {
-        inherit fleetInventory;
+      sops-with-age-askpass = prev.sops.overrideAttrs (old: {
+        # User services need a graphical PIN prompt. Drop when SOPS supports it.
+        patches = (old.patches or [ ]) ++ [ ../patches/sops-use-askpass-for-age-pins.patch ];
+        preCheck = (old.preCheck or "") + ''
+          go test ./age ./keyservice
+        '';
+      });
+
+      sops-install-secrets-with-keyservice =
+        let
+          inherit (import inputs.sops-nix { pkgs = final; }) sops-install-secrets;
+        in
+        sops-install-secrets.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            ../patches/sops-install-secrets-decrypt-with-remote-keyservice.patch
+          ];
+          # The full installer suite needs root. The remote decryption tests run as a user.
+          doCheck = true;
+          __darwinAllowLocalNetworking = true;
+          checkPhase = ''
+            runHook preCheck
+            export TEST_ASSETS="$PWD/pkgs/sops-install-secrets/test-assets"
+            go test ./pkgs/sops-install-secrets -run '^TestRemoteDecryption' -count=1
+            runHook postCheck
+          '';
+        });
+
+      ssh-device = prev.callPackage ../pkgs/ssh-device {
+        identities = map (key: {
+          inherit (key) serial;
+          public_key = builtins.readFile key.sshPublicKey;
+        }) sshKeys;
         openssh = prev.openssh;
       };
-      ssh-device = final.openssh-yubikey.resolver;
+
+      openssh-yubikey =
+        let
+          # These models require a PIN for verification; biometric keys may need touch first.
+          pinFirstKeys = builtins.filter (
+            key:
+            builtins.elem key.model [
+              "YubiKey 5C Nano"
+              "YubiKey 5C NFC"
+            ]
+          ) sshKeys;
+          # Substitution must preserve the patch's line counts.
+          pinFirstBlobs = lib.concatMapStrings (
+            key:
+            builtins.toJSON (builtins.elemAt (lib.splitString " " (builtins.readFile key.sshPublicKey)) 1)
+            + ", "
+          ) pinFirstKeys;
+        in
+        prev.openssh.overrideAttrs (old: {
+          pname = "openssh-yubikey";
+          patches = (old.patches or [ ]) ++ [
+            ../patches/openssh-restore-touch-prompt-after-pin.patch
+            (prev.replaceVars ../patches/openssh-resolve-signing-device.patch { resolver = final.ssh-device; })
+            (prev.replaceVars ../patches/openssh-prompt-for-pin-before-touch.patch {
+              public_keys = pinFirstBlobs;
+            })
+          ];
+        });
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -92,52 +169,28 @@
       });
 
       gpauth = prev.gpauth.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-3-browser-listen.patch ];
       });
 
       gpclient = (prev.gpclient.override { gpauth = final.gpauth; }).overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
+        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-3-browser-listen.patch ];
       });
 
-      nix = pkgsNixpkgsUnstable.nixVersions.latest.appendPatches [
+      nix = releasePkgs.nixVersions.latest.appendPatches [
         # Avoid inheriting a locked signal callback registry in daemon workers.
         ../patches/nix-reset-signal-callbacks-after-fork.patch
       ];
 
-      # Drop once stable's monitor accepts the activity types emitted by Nix 2.36.
-      # https://github.com/maralorn/nix-output-monitor/pull/321
-      inherit (pkgsNixpkgsUnstable) nix-output-monitor;
+      inherit (releasePkgs) nix-output-monitor;
 
-      # Drop once stable includes nix-update 1.17.0.
-      nix-update =
-        (pkgsNixpkgsUnstable.nix-update.override {
-          # Keep nix-update-script on the patched executable.
-          nix-update = final.nix-update;
-        }).overrideAttrs
-          (old: {
-            patches = (old.patches or [ ]) ++ [
-              # Materialize local flake sources before evaluation.
-              # https://github.com/Mic92/nix-update/pull/698
-              (prev.fetchpatch {
-                url = "https://github.com/Mic92/nix-update/commit/dcef4fdd7edbd9ef83c701e5d92a3df81fbd0e33.patch";
-                hash = "sha256-uNOfiYbLAm/0Ret2nUQ3Wxd1IoOsclRbF11z2gGx0vM=";
-              })
-            ];
-          });
-
-      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
-        nativeInstallCheckInputs = (old.nativeInstallCheckInputs or [ ]) ++ [
-          pkgsNixpkgsUnstable.writableTmpDirAsHomeHook
-        ];
-        versionCheckKeepEnvironment = "HOME";
+      jiratui = prev.jiratui.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/jiratui-fetch-all-projects.patch
           ../patches/jiratui-normalize-jql-expression-ids.patch
         ];
       });
 
-      # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
-      paperless-ngx = pkgsNixpkgsUnstable.paperless-ngx.overrideAttrs (old: {
+      paperless-ngx = prev.paperless-ngx.overrideAttrs (old: {
         disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
           # TODO: report upstream. Real sleeps can exceed the 100 ms stability
           # delay for both files, returning two stable files when one is expected.
@@ -157,21 +210,11 @@
         ];
       });
 
-      # Drop the version override once nixpkgs includes the XML output fixes.
-      # https://github.com/NixOS/nixpkgs/pull/584774
-      lsdvd = prev.lsdvd.overrideAttrs (old: rec {
-        version = "0.21";
-        src = prev.fetchgit {
-          url = "https://git.code.sf.net/p/lsdvd/git";
-          rev = "refs/tags/${version}";
-          hash = "sha256-NCMd0gj8jF0xpixMz3Vp77O+vG/Qso98HxFwoB+b3Zc=";
-        };
+      lsdvd = prev.lsdvd.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/lsdvd-expose-title-continuations.patch
           ../patches/lsdvd-expose-equivalent-titles.patch
         ];
-        buildInputs = (old.buildInputs or [ ]) ++ [ prev.libxml2 ];
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.autoreconfHook ];
       });
 
       # Avoid the HTTP idle timeout race that drops Prometheus alert deliveries.
@@ -210,13 +253,6 @@
         ];
       });
 
-      # The config diff helper uses dix 3's CLI and inline size summaries.
-      # Keep unstable until the stable branch provides that interface.
-      inherit (pkgsNixpkgsUnstable) dix;
-
-      # Stable still has 1.12.0, without the 1.12.1 security fix.
-      inherit (pkgsNixpkgsUnstable) kanidmWithSecretProvisioning_1_12;
-
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
           # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
@@ -229,37 +265,10 @@
         })
       ];
 
-      # TODO(26.11): Drop the 3.x backports once all hosts use the new release.
-      nixpkgs-review =
-        if lib.versionAtLeast prev.nixpkgs-review.version "4" then
-          prev.nixpkgs-review
-        else
-          prev.nixpkgs-review.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (prev.fetchpatch {
-                # Backport --tests (Mic92/nixpkgs-review#397).
-                # Commit 47f4647, rebased after its first two prerequisite commits
-                # landed on main.
-                url = "https://github.com/user-attachments/files/29713758/rebased.patch";
-                hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
-              })
-              # Merge dependent PRs into the reviewed worktree with --include-pr.
-              # https://github.com/Mic92/nixpkgs-review/pull/562
-              (prev.fetchpatch {
-                url = "https://github.com/Mic92/nixpkgs-review/commit/1bf8762fcc5c3a3d8b5219ab340f4a3a83608f13.patch";
-                hash = "sha256-RQJvXwRLZ47vHi4VhuvKLk8UHYQJfo3SmzUsV9dpNR0=";
-              })
-            ];
-          });
-
-      # Support Kubernetes 1.36 and fix apiserver connection loss after an
-      # envoy load balancer container restart.
-      inherit (pkgsNixpkgsUnstable) kind;
-
       lolek =
         let
           lolekPackage = inputs.lolek.packages.${system}.lolek;
-          lolekYtDlp = pkgsNixpkgsUnstable.yt-dlp.overrideAttrs (old: {
+          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
               ../patches/yt-dlp-twitter-only-own-status-media.patch
             ];
@@ -267,8 +276,7 @@
         in
         lolekPackage.override { yt-dlp = lolekYtDlp; };
 
-      # Stable's 1.16 lacks keyboard wakeup and VNC updates for unchanged frames.
-      reframe = pkgsNixpkgsUnstable.reframe.overrideAttrs (old: {
+      reframe = prev.reframe.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Drop once upstream retries connector discovery after waking displays.
           # https://github.com/AlynxZhou/reframe/issues/42
@@ -358,10 +366,10 @@
         }
       );
 
-      shelfmark = pkgsNixpkgsUnstable.shelfmark.overrideAttrs (old: {
+      shelfmark = prev.shelfmark.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           PYTHONPYCACHEPREFIX="$TMPDIR/shelfmark-pycache" \
-            ${pkgsNixpkgsUnstable.python314}/bin/python -m compileall -q shelfmark
+            ${prev.python314}/bin/python -m compileall -q shelfmark
         '';
         patchFlags = [
           "-p1"

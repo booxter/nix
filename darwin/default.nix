@@ -19,6 +19,7 @@ in
     inputs.nix-index-database.darwinModules.nix-index
     inputs.sops-nix.darwinModules.sops
     inputs.stylix.darwinModules.stylix
+    ../common/_mixins/stylix
     ../common
     inputs.home-manager.darwinModules.home-manager
   ]

@@ -1,5 +1,7 @@
 {
   config,
+  fleetInventory,
+  hostName,
   inputs,
   lib,
   pkgs,
@@ -8,10 +10,13 @@
 (
   {
     imports = [
-      inputs.stylix.nixosModules.stylix
       ../common
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
+    ]
+    ++ lib.optionals (fleetInventory.hosts.${hostName}.userEnvironmentTier == "workstation") [
+      inputs.stylix.nixosModules.stylix
+      ../common/_mixins/stylix
     ]
     ++ [
       ./_mixins/adaptive-upload-policy

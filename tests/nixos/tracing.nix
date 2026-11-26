@@ -1,7 +1,5 @@
-{ inputs, ... }:
+{ pkgs, ... }:
 let
-  # TODO(26.11): Use the test suite's pkgs again once it follows fana's release.
-  pkgs = inputs.self.nixosConfigurations.fana.pkgs;
   pki = import ./lib/tls-pki.nix {
     inherit pkgs;
     serverName = "tempo.test";

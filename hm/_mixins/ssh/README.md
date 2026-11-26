@@ -19,8 +19,8 @@ Device names, serials, and public keys belong in the
 [YubiKey inventory](../../../inventory/yubikeys.nix) and
 [SSH inventory](../../../inventory/ssh/default.nix).
 Configure handle paths with `host.ssh.credentials.yubikey.identityFiles`.
-Keep the corresponding `.pub` files beside the handles. OpenSSH patches and
-the device resolver live in [overlays/openssh](../../../overlays/openssh).
+Keep the corresponding `.pub` files beside the handles. The OpenSSH
+[patches](../../../patches) use the [device resolver](../../../pkgs/ssh-device).
 
 PIN and touch prompts identify known keys by inventory name. macOS uses native
 dialogs and a SketchyBar indicator; Linux graphical sessions use Zenity.

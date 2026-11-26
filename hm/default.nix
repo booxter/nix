@@ -5,7 +5,7 @@
   ...
 }:
 {
-  imports = lib.optional (!osConfig.stylix.enable) inputs.stylix.homeModules.stylix ++ [
+  imports = lib.optional (!(osConfig.stylix.enable or false)) inputs.stylix.homeModules.stylix ++ [
     ./_mixins/apps
     ./_mixins/containers
     ./_mixins/dev

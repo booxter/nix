@@ -27,7 +27,7 @@ in
         forceSSL = true;
         sslCertificate = "${sonarrPki}/server.crt";
         sslCertificateKey = "${sonarrPki}/server.key";
-        locations."= /v1/tvdb/shows/en/1".alias = ./sonarr-metadata.json;
+        locations."= /v2/tvdb/shows/eng/1/official".alias = ./sonarr-metadata.json;
         locations."= /v1/dailyseries".return = "200 '${builtins.toJSON [ ]}'";
       };
       virtualHosts."api.lidarr.audio" = {

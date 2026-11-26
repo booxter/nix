@@ -1,4 +1,4 @@
-{ inputs, lib, ... }:
+{ lib, ... }:
 {
   virtualisation.vmVariant = { config, pkgs, ... }: {
     virtualisation = {
@@ -19,9 +19,7 @@
     # A fresh headless guest cannot approve changes to System keychain trust.
     host.pki.requireSystemKeychainTrust = false;
 
-    sops.package = import ../../overlays/sops-keyservice {
-      sopsPackage = (import inputs.sops-nix { inherit pkgs; }).sops-install-secrets;
-    };
+    sops.package = pkgs.sops-install-secrets-with-keyservice;
     sops.environment.SOPS_KEYSERVICE = lib.optionalString (
       config.virtualisation.forwardedSockets ? sops
     ) "unix://${config.virtualisation.forwardedSockets.sops.guestPath}";

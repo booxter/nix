@@ -16,7 +16,6 @@
     ./_mixins/security
     ./_mixins/site
     ./_mixins/ssh
-    ./_mixins/stylix
     ./_mixins/terminfo
     ./_mixins/ups
     ./_mixins/wireguard
