@@ -38,7 +38,7 @@ in
 
     services.jellarr = {
       enable = true;
-      package = pkgs.callPackage ./packages/jellarr { src = inputs.jellarr; };
+      package = lib.mkDefault (pkgs.callPackage ./packages/jellarr { src = inputs.jellarr; });
       environmentFile = config.sops.templates."jellarr.env".path;
       config = declarativeConfig // {
         version = 1;

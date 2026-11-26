@@ -27,10 +27,7 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    services.jellyfin = {
-      enable = true;
-      package = pkgs.jellyfin;
-    };
+    services.jellyfin.enable = true;
 
     sops.secrets."jellyfin/apiKey" = {
       owner = "root";

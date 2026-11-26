@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
     nixpkgs-2611.url = "github:NixOS/nixpkgs/release-26.11";
+    # TODO(26.11): Drop when beast's required plugins support Jellyfin 12.
+    nixpkgs-jellyfin.url = "https://releases.nixos.org/nixos/26.05/nixos-26.05.15079.0dc498bfe49b/nixexprs.tar.zst";
     home-manager-2611.url = "github:nix-community/home-manager/master";
     home-manager-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
     stylix-2611.url = "github:nix-community/stylix/master";
