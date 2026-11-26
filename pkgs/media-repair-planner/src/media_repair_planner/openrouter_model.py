@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol, cast
+from typing import Any, Literal, Protocol
 
-from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from openai import APIStatusError, AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
@@ -15,6 +16,7 @@ from .openai_structured_output import (
     decision_envelope_model,
     unwrap_openai_decision,
 )
+from .openrouter_usage import response_metadata
 from .planning_core import DecisionModelError, DecisionModelUnavailable
 from .structured_decision import diagnostic, structured_prompt
 from .structured_model import StructuredModelResponse
@@ -87,6 +89,13 @@ class OpenRouterResponse:
     metadata: dict[str, MetadataValue]
 
 
+class OpenRouterResponseError(Exception):
+    def __init__(self, cause: Exception, metadata: dict[str, MetadataValue]) -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+        self.metadata = metadata
+
+
 class OpenRouterTransport(Protocol):
     async def complete(self, request: OpenRouterRequest) -> OpenRouterResponse: ...
 
@@ -126,7 +135,7 @@ class OpenRouterChatTransport:
             {"role": "system", "content": request.system_content},
             {"role": "user", "content": request.case_content},
         ]
-        completion = await self._client.chat.completions.parse(
+        response = await self._client.chat.completions.with_raw_response.parse(
             messages=messages,
             model=request.model,
             max_tokens=request.output_tokens,
@@ -145,30 +154,17 @@ class OpenRouterChatTransport:
                 },
             },
         )
-        if len(completion.choices) != 1:
-            raise ValueError("OpenRouter returned an unexpected number of choices")
+        # Capture billing before the SDK validates structured output. Truncated
+        # or malformed decisions can still consume paid tokens.
+        metadata = response_metadata(response.content, response.request_id)
+        try:
+            completion = response.parse()
+            if len(completion.choices) != 1:
+                raise ValueError("OpenRouter returned an unexpected number of choices")
+        except Exception as error:
+            metadata["error_type"] = type(error).__name__
+            raise OpenRouterResponseError(error, metadata) from error
         choice = completion.choices[0]
-        metadata: dict[str, MetadataValue] = {
-            "model": completion.model,
-            "finish_reason": choice.finish_reason,
-        }
-        provider = cast(object, getattr(completion, "provider", None))
-        if isinstance(provider, str):
-            metadata["provider"] = provider
-        if completion.system_fingerprint is not None:
-            metadata["system_fingerprint"] = completion.system_fingerprint
-        usage = completion.usage
-        if usage is not None:
-            metadata.update(
-                {
-                    "prompt_tokens": usage.prompt_tokens,
-                    "completion_tokens": usage.completion_tokens,
-                    "total_tokens": usage.total_tokens,
-                }
-            )
-            details = usage.completion_tokens_details
-            if details is not None and details.reasoning_tokens is not None:
-                metadata["reasoning_tokens"] = details.reasoning_tokens
         return OpenRouterResponse(
             content=choice.message.content,
             refused=choice.message.refusal is not None,
@@ -247,9 +243,27 @@ class OpenRouterDecisionModel:
         )
         try:
             response = await self._transport.complete(request)
+        except asyncio.CancelledError:
+            self._trace(case_id, None, "request cancelled")
+            raise
+        except OpenRouterResponseError as error:
+            detail = diagnostic(error.cause)
+            self._trace(
+                case_id,
+                OpenRouterResponse(None, False, error.metadata),
+                "request failed: " + detail,
+            )
+            raise DecisionModelUnavailable("OpenRouter request failed: " + detail) from error
         except Exception as error:
             detail = diagnostic(error)
-            self._trace(case_id, None, "request failed: " + detail)
+            metadata: dict[str, MetadataValue] = {"error_type": type(error).__name__}
+            if isinstance(error, APIStatusError):
+                metadata.update(request_id=error.request_id, http_status=error.status_code)
+            self._trace(
+                case_id,
+                OpenRouterResponse(None, False, metadata),
+                "request failed: " + detail,
+            )
             raise DecisionModelUnavailable("OpenRouter request failed: " + detail) from error
         if response.content is None:
             detail = (

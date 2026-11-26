@@ -12,6 +12,7 @@ class PlanningRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     repair_case: JsonValue
+    job_id: int | None = Field(default=None, gt=0)
     prior_decision: JsonValue | None = None
     operator_guidance: str = Field(default="", max_length=2_000)
     maximum_runtime_difference_ms: int = Field(default=0, ge=0, le=3_600_000)

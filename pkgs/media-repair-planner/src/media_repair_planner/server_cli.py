@@ -25,6 +25,7 @@ from .model_runtime import (
 )
 from .planning import Planner
 from .structured_model import StructuredDecisionModel
+from .usage import JsonlUsageWriter
 
 
 class Arguments(ModelArguments):
@@ -104,7 +105,10 @@ async def _serve(
     limits = ApiLimits(planning_timeout_seconds=arguments.planning_timeout_seconds)
     model: StructuredDecisionModel | None = None
     try:
-        model = model_factory(settings, None)
+        model = model_factory(
+            settings,
+            JsonlUsageWriter(sys.stderr, settings.model, settings.provider),
+        )
         radarr_planner = Planner(model)
         lidarr_planner = LidarrPlanner(model)
         app = create_app(

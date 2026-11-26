@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 from collections.abc import AsyncIterator
+from io import StringIO
 from pathlib import Path
 
 import httpx
@@ -13,6 +14,8 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.planning_core import PlanningContext
+from media_repair_planner.tracing import ModelTrace
+from media_repair_planner.usage import JsonlUsageWriter
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
@@ -82,6 +85,34 @@ async def test_plans_a_valid_case() -> None:
     assert response.headers["content-type"] == "application/json"
     assert decode_decision(response.content) == DECISION
     assert len(planner.cases) == 1
+
+
+async def test_usage_is_attributed_to_the_current_job() -> None:
+    stream = StringIO()
+    writer = JsonlUsageWriter(stream, "model", "provider")
+
+    class ReportingPlanner(StaticPlanner):
+        async def plan(
+            self, repair_case: RepairCaseV3, context: PlanningContext | None = None
+        ) -> RepairDecisionV3:
+            writer.record(ModelTrace(repair_case.case_id.root, None, None, {}, None))
+            return await super().plan(repair_case, context)
+
+    async with client_for(ReportingPlanner()) as client:
+        response = await client.post(
+            "/radarr/plan", json={"repair_case": json.loads(CASE_BYTES), "job_id": 42}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            "/radarr/plan", content=REQUEST_BYTES, headers={"Content-Type": "application/json"}
+        )
+        assert response.status_code == 200
+
+    first, second = [json.loads(line) for line in stream.getvalue().splitlines()]
+    assert first["service"] == second["service"] == "radarr"
+    assert first["job_id"] == 42
+    assert second["job_id"] is None
+    assert first["attempt_id"] != second["attempt_id"]
 
 
 @pytest.mark.parametrize("include_prior", [False, True])

@@ -91,7 +91,7 @@ def test_server_builds_app_from_typed_settings_and_closes_model(tmp_path: Path) 
         settings: OpenRouterSettings,
         trace_sink: TraceSink | None,
     ) -> CloseableModel:
-        assert trace_sink is None
+        del trace_sink
         settings_seen.append(settings)
         return model
 

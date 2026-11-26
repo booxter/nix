@@ -21,6 +21,7 @@ from .contracts import (
 from .decision_models import RepairDecisionV3
 from .operator_guidance import PlanningRequest
 from .planning_core import PlanningContext
+from .usage import attribute_requests
 
 # Keep the API bound aligned with the controller's maximum JSON document size.
 MAX_REQUEST_BYTES = 8 << 20
@@ -40,7 +41,7 @@ class TypedPlanner[CaseT, DecisionT](Protocol):
 
 
 class PreparedPlan(Protocol):
-    async def execute(self) -> bytes: ...
+    async def execute(self, service: str) -> bytes: ...
 
 
 class PlanningEndpoint(Protocol):
@@ -53,9 +54,11 @@ class ContractPlan[CaseT, DecisionT]:
     context: PlanningContext | None
     planner: TypedPlanner[CaseT, DecisionT]
     encode_decision: Callable[[DecisionT], bytes]
+    job_id: int | None
 
-    async def execute(self) -> bytes:
-        decision = await self.planner.plan(self.repair_case, self.context)
+    async def execute(self, service: str) -> bytes:
+        with attribute_requests(service, self.job_id):
+            decision = await self.planner.plan(self.repair_case, self.context)
         return self.encode_decision(decision)
 
 
@@ -85,6 +88,7 @@ class ContractEndpoint[CaseT, DecisionT]:
             context=request.context(),
             planner=self.planner,
             encode_decision=self.encode_decision,
+            job_id=request.job_id,
         )
 
 
@@ -222,7 +226,8 @@ def create_app(
         try:
             async with generation_lock:
                 async with asyncio.timeout(limits.planning_timeout_seconds):
-                    encoded = await prepared.execute()
+                    service = request.url.path.strip("/").partition("/")[0]
+                    encoded = await prepared.execute(service)
         except TimeoutError:
             return _error(504, ErrorCode.PLANNING_TIMEOUT, "Plan generation timed out.")
         # This service boundary must not expose provider failures or model output.
