@@ -129,6 +129,7 @@
             "ci"
             "gw"
             "org"
+            "pki"
           ];
           hostInputs =
             inputs
