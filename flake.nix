@@ -3,6 +3,12 @@
 
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
+    nixpkgs-2611.url = "github:NixOS/nixpkgs/release-26.11";
+    home-manager-2611.url = "github:nix-community/home-manager/master";
+    home-manager-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
+    stylix-2611.url = "github:nix-community/stylix/master";
+    stylix-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
+    stylix-2611.inputs.nur.follows = "nur";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
     nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -94,32 +100,50 @@
         {
           hostName,
           system,
+          hostInputs ? inputs,
         }:
         {
           backupConfigurations = outputs.nixosConfigurations;
           storageConfigurations = outputs.nixosConfigurations;
+          inputs = hostInputs;
+          outputs = outputs // {
+            overlays = import ./overlays {
+              inputs = hostInputs;
+              inherit fleetInventory;
+            };
+          };
           inherit
             hostName
             fleetInventory
             sshKeys
-            inputs
-            outputs
             system
             ;
         };
       mkNixos =
         hostName: hostModule:
         let
+          on2611 = builtins.elem hostName [
+            "builder1"
+            "builder2"
+            "builder3"
+          ];
+          hostInputs =
+            inputs
+            // lib.optionalAttrs on2611 {
+              nixpkgs = inputs.nixpkgs-2611;
+              home-manager = inputs.home-manager-2611;
+              stylix = inputs.stylix-2611;
+            };
           # Keep node modules and base packages on Proxmox's tested nixpkgs pin.
           nixpkgsInput =
             if builtins.hasAttr hostName fleetInventory.proxmox.nodes then
               inputs.proxmox-nixos.inputs.nixpkgs-stable
             else
-              inputs.nixpkgs;
+              hostInputs.nixpkgs;
         in
         nixpkgsInput.lib.nixosSystem {
           specialArgs = specialArgsForHost {
-            inherit hostName;
+            inherit hostName hostInputs;
             system = "x86_64-linux";
           };
           modules = [
