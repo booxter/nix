@@ -15,6 +15,7 @@
     package = pkgs.darwin.linux-builder-vz;
     # Both backends name their incompatible data disks nixos.qcow2.
     workingDirectory = "/var/lib/linux-builder-vz";
+    # Keep the cached Rosetta-enabled guest and schedule x86 jobs on native builders.
     systems = [ "aarch64-linux" ];
     supportedFeatures = [
       "benchmark"
@@ -26,7 +27,6 @@
     config.virtualisation.diskSize = lib.mkForce (40 * 1024);
     config.virtualisation.memorySize = lib.mkForce (16 * 1024);
     config.virtualisation.vz.nestedVirtualization = true;
-    config.virtualisation.vz.rosetta.enable = false;
     config.virtualisation.vz.idleTimeout = 10 * 60;
   };
 
@@ -71,4 +71,9 @@
     cleanup_old_builder_state
   '';
 
+  system.activationScripts.preActivation.text = lib.mkIf config.nix.linux-builder.enable (
+    lib.mkBefore ''
+      /usr/sbin/pkgutil --pkg-info com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1 || /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+    ''
+  );
 }
