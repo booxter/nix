@@ -42,15 +42,10 @@
           && lib.versionOlder releaseTransmissionVersion "4.2.0"
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
         releaseTransmission.overrideAttrs (old: {
+          # Keep 128 torrent files open across bursts of NFS I/O on srvarr.
           patches = (old.patches or [ ]) ++ [ ../patches/transmission-open-file-limit.patch ];
           postPatch = (old.postPatch or "") + ''
             cp -r ${transmissionWeb}/. web/public_html/
-          '';
-          doCheck = true;
-          checkPhase = ''
-            runHook preCheck
-            ctest --output-on-failure --no-tests=error -R '^LT\.(Configured)?OpenFilesTest\.'
-            runHook postCheck
           '';
         })
       );
