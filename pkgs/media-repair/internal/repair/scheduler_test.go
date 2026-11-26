@@ -24,7 +24,7 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 		Store: engine.Store, Service: service, Name: jobs.Radarr,
 		Now: func() time.Time { return now }, Disabled: func() (bool, error) { return false, nil },
 	}
-	service.repairError = RetryableRead(fmt.Errorf("read download: %w", context.DeadlineExceeded))
+	service.authorizeError = RetryableRead(fmt.Errorf("read download: %w", context.DeadlineExceeded))
 	if err := scheduler.advance(ctx); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("expected Transmission timeout, got %v", err)
 	}
@@ -36,7 +36,7 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 		t.Fatal("submitted an import after a failed source check")
 	}
 
-	service.repairError = nil
+	service.authorizeError = nil
 	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
 	if err := scheduler.advance(ctx); err != nil || service.submissions != 0 {
 		t.Fatalf("retried during backoff: %v, submissions: %d", err, service.submissions)

@@ -95,6 +95,7 @@ pkgs.testers.runNixOSTest {
     missingMovie = movieNode;
     lostResponse = movieNode;
     albumImport = albumNode;
+    unfinishedAlbum = albumNode;
   };
   testScript = builtins.readFile ./repairr-pipeline/test.py;
 }

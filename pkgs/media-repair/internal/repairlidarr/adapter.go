@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -29,39 +28,59 @@ type Adapter struct {
 	Planner   lidarrrepair.Planner
 }
 
-func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.Attempt) (repair.PreparedImport, error) {
+func (adapter *Adapter) ImportSteps() repair.ImportFlow {
+	return repair.ImportSteps[lidarrrepair.AuthorizedImport]{
+		Authorize:     adapter.authorize,
+		PrepareImport: adapter.prepareImport,
+	}
+}
+
+// Recheck the saved track selections against the files and library state
+// Lidarr sees now. Only matching tracks may go into the import request.
+func (adapter *Adapter) authorize(
+	ctx context.Context,
+	job jobs.Job,
+	plan json.RawMessage,
+) (lidarrrepair.AuthorizedImport, error) {
 	var planned lidarrrepair.Record
 	if err := json.Unmarshal(job.Evidence, &planned); err != nil {
-		return repair.PreparedImport{}, err
+		return lidarrrepair.AuthorizedImport{}, err
 	}
-	planned.Decision = attempt.Plan
+	planned.Decision = plan
 
 	queue, err := adapter.findQueue(ctx, job)
 	if err != nil {
-		return repair.PreparedImport{}, err
+		return lidarrrepair.AuthorizedImport{}, err
 	}
 
 	result := adapter.Inspector.Inspect(ctx, queue, &planned)
 	if result.Err != nil {
-		return repair.PreparedImport{}, result.Err
+		return lidarrrepair.AuthorizedImport{}, result.Err
 	}
-	if len(result.Findings) > 0 {
-		return repair.PreparedImport{}, errors.New(strings.Join(result.Findings, ", "))
+	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeQueueNotReady); err != nil {
+		return lidarrrepair.AuthorizedImport{}, err
 	}
-	current := result.Case
-	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, *current)
+
+	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, *result.Case)
 	if err != nil {
 		blocked := &repair.BlockedError{Reason: err.Error()}
 		var changed *lidarrrepair.EvidenceChangedError
 		if errors.As(err, &changed) {
 			blocked.Code = jobs.OutcomeEvidenceChanged
 		}
-		return repair.PreparedImport{}, blocked
+		return lidarrrepair.AuthorizedImport{}, blocked
 	}
 	if !accepted {
-		return repair.PreparedImport{}, &repair.BlockedError{Reason: "no missing-track import authorized"}
+		return lidarrrepair.AuthorizedImport{}, &repair.BlockedError{Reason: "no missing-track import authorized"}
 	}
+	return authorized, nil
+}
 
+func (adapter *Adapter) prepareImport(
+	ctx context.Context,
+	_ jobs.Attempt,
+	authorized lidarrrepair.AuthorizedImport,
+) (repair.PreparedImport, error) {
 	history, err := adapter.Client.ReadImportedTracks(ctx, authorized.AlbumID, "")
 	if err != nil {
 		return repair.PreparedImport{}, err
@@ -69,7 +88,7 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 
 	request, err := json.Marshal(importCommand(authorized))
 	return repair.PreparedImport{
-		OutputPath:      current.WorkspaceRoot,
+		OutputPath:      authorized.WorkspaceRoot,
 		Request:         request,
 		HistoryIDBefore: lidarr.HighestImportedTrackHistoryID(history),
 	}, err

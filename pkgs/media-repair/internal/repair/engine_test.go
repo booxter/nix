@@ -20,7 +20,7 @@ func TestFailedAttemptRecordsItsErrorInTrace(t *testing.T) {
 	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 	defer provider.Shutdown(context.Background())
 	engine.Tracer = provider.Tracer("test")
-	adapter.repairError = context.DeadlineExceeded
+	adapter.prepareError = context.DeadlineExceeded
 	if err := engine.Run(context.Background(), job.ID); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error: %v", err)
 	}
@@ -114,20 +114,25 @@ func TestInterruptedRepairDoesNotImportPartialOutput(t *testing.T) {
 
 func TestRepairRejectionAndFailureNeverSubmitImports(t *testing.T) {
 	for _, test := range []struct {
-		name    string
-		failure error
-		state   jobs.State
+		name           string
+		authorizeError error
+		prepareError   error
+		state          jobs.State
 	}{
-		{"incompatible sources", &BlockedError{Reason: "mixed time bases"}, jobs.Blocked},
-		{"media command failed", errors.New("ffmpeg failed"), jobs.Failed},
+		{name: "incompatible sources", authorizeError: &BlockedError{Reason: "mixed time bases"}, state: jobs.Blocked},
+		{name: "media command failed", prepareError: errors.New("ffmpeg failed"), state: jobs.Failed},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			engine, adapter, job := fixture(t)
-			adapter.repairError = test.failure
-			if err := engine.Run(context.Background(), job.ID); !errors.Is(err, test.failure) {
-				t.Fatalf("error: %v", err)
+			adapter.authorizeError = test.authorizeError
+			adapter.prepareError = test.prepareError
+			if err := engine.Run(context.Background(), job.ID); err == nil {
+				t.Fatal("expected the attempt to stop")
 			}
 			assertState(t, engine, job.ID, test.state)
+			if test.authorizeError != nil && adapter.repairs != 0 {
+				t.Fatal("prepared media for a rejected plan")
+			}
 			if adapter.submissions != 0 {
 				t.Fatal("imported rejected output")
 			}
@@ -168,16 +173,29 @@ func TestHistoryOutageDoesNotMakeImportRetryable(t *testing.T) {
 }
 
 type fakeAdapter struct {
-	store                                *jobs.Store
-	jobID                                int64
-	repairs, submissions                 int
-	repairError, submitError, checkError error
-	status                               ImportStatus
+	store       *jobs.Store
+	jobID       int64
+	repairs     int
+	submissions int
+	status      ImportStatus
+
+	authorizeError error
+	prepareError   error
+	submitError    error
+	checkError     error
 }
 
-func (adapter *fakeAdapter) Repair(_ context.Context, _ jobs.Job, _ jobs.Attempt) (PreparedImport, error) {
+func (adapter *fakeAdapter) ImportSteps() ImportFlow {
+	return ImportSteps[string]{Authorize: adapter.authorize, PrepareImport: adapter.prepareImport}
+}
+
+func (adapter *fakeAdapter) authorize(context.Context, jobs.Job, json.RawMessage) (string, error) {
+	return "/repaired/movie.mkv", adapter.authorizeError
+}
+
+func (adapter *fakeAdapter) prepareImport(_ context.Context, _ jobs.Attempt, path string) (PreparedImport, error) {
 	adapter.repairs++
-	return PreparedImport{OutputPath: "/repaired/movie.mkv", Request: json.RawMessage(`{"path":"/repaired/movie.mkv"}`), HistoryIDBefore: 7}, adapter.repairError
+	return PreparedImport{OutputPath: path, Request: json.RawMessage(`{"path":"/repaired/movie.mkv"}`), HistoryIDBefore: 7}, adapter.prepareError
 }
 
 func (adapter *fakeAdapter) Submit(ctx context.Context, request json.RawMessage) (int64, error) {

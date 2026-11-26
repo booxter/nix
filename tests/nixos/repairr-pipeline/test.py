@@ -199,3 +199,13 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
     assert (
         len(receipt) == 2 and {r["track_id"]: r["dropped_path"] for r in receipt} == selected_paths
     ), receipt
+    albumImport.shutdown()
+
+with subtest("an album that resumes downloading blocks the saved plan before import"):
+    unfinishedAlbum.start()
+    job = plan_with_repairs_paused(unfinishedAlbum, "lidarr", "Example Album")
+    unfinishedAlbum.succeed("touch /run/lidarr-fixture/downloading", "rm /run/pause-lidarr-repairs")
+
+    wait_for_text(unfinishedAlbum, job, "Attempt 1 · blocked")
+    wait_for_text(unfinishedAlbum, job, "Lidarr queue item is not eligible for repair")
+    assert submitted_imports(unfinishedAlbum) == []

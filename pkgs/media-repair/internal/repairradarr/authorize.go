@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
@@ -94,8 +93,8 @@ func (adapter *Adapter) readQueuedCase(ctx context.Context, key jobs.QueueKey) (
 	if result.Err != nil {
 		return casebuilder.Assembly{}, repair.RetryableRead(result.Err)
 	}
-	if len(result.Findings) > 0 {
-		return casebuilder.Assembly{}, &repair.BlockedError{Reason: strings.Join(result.Findings, ", ")}
+	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeOther); err != nil {
+		return casebuilder.Assembly{}, err
 	}
 	return *result.Case, nil
 }

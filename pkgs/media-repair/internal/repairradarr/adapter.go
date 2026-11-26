@@ -48,13 +48,19 @@ type Adapter struct {
 	Now           func() time.Time
 }
 
-func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.Attempt) (repair.PreparedImport, error) {
-	authorized, err := adapter.authorize(ctx, job, attempt.Plan)
-	if err != nil {
-		return repair.PreparedImport{}, err
+func (adapter *Adapter) ImportSteps() repair.ImportFlow {
+	return repair.ImportSteps[authorizedRepair]{
+		Authorize:     adapter.authorize,
+		PrepareImport: adapter.prepareImport,
 	}
+}
 
-	command, err := adapter.importCommand(ctx, job, attempt, authorized)
+func (adapter *Adapter) prepareImport(
+	ctx context.Context,
+	attempt jobs.Attempt,
+	authorized authorizedRepair,
+) (repair.PreparedImport, error) {
+	command, err := adapter.importCommand(ctx, attempt, authorized)
 	if err != nil {
 		return repair.PreparedImport{}, err
 	}
@@ -74,7 +80,6 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 
 func (adapter *Adapter) importCommand(
 	ctx context.Context,
-	job jobs.Job,
 	attempt jobs.Attempt,
 	repair authorizedRepair,
 ) (controller.RadarrManualImportCommand, error) {
@@ -89,7 +94,7 @@ func (adapter *Adapter) importCommand(
 	}
 
 	output, err := adapter.Media.Transform(ctx, mediaoperation.Transform{
-		JobID: job.ID, Attempt: attempt.Number, Paths: paths,
+		JobID: attempt.JobID, Attempt: attempt.Number, Paths: paths,
 		Join: authorized.Join, Bluray: authorized.Remux, DVD: authorized.DVD,
 	})
 	if err != nil {

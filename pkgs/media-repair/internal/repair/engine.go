@@ -18,7 +18,7 @@ import (
 // Adapter owns media validation and the service-specific import command. The
 // engine owns persistence and never repeats an uncertain external submission.
 type Adapter interface {
-	Repair(context.Context, jobs.Job, jobs.Attempt) (PreparedImport, error)
+	ImportSteps() ImportFlow
 	Submit(context.Context, json.RawMessage) (int64, error)
 	CheckImport(context.Context, jobs.Attempt) (ImportStatus, error)
 }
@@ -113,7 +113,7 @@ func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.At
 }
 
 func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
-	prepared, err := engine.Adapter.Repair(ctx, job, attempt)
+	prepared, err := engine.Adapter.ImportSteps().prepare(ctx, job, attempt)
 	if err != nil {
 		var retryable *retryableReadError
 		if errors.As(err, &retryable) {

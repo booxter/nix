@@ -66,6 +66,13 @@ class AlbumImport:
         self.workspace = None
         self.imported_at = None
 
+    def queue(self):
+        if self.commands:
+            return page([])
+        if Path("/run/lidarr-fixture/downloading").exists():
+            return page([{**QUEUE_ENTRY, "status": "downloading"}])
+        return page([QUEUE_ENTRY])
+
     def manual_imports(self, folder):
         self.workspace = Path(folder)
         files = []
@@ -126,7 +133,7 @@ class Lidarr(BaseHTTPRequestHandler):
             case "/api/v3/queue":
                 payload = page([])  # Radarr has no jobs in this VM.
             case "/api/v1/queue":
-                payload = page([] if album.commands else [QUEUE_ENTRY])
+                payload = album.queue()
             case "/api/v1/album/3":
                 payload = ALBUM
             case "/api/v1/track" if query.get("albumReleaseId") == ["81"]:
