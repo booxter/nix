@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="home",backup_job="home-assistant-native-backup",backup_title="Home Assistant Native Backup",phase="prep",unit="home-assistant-native-backup.service"}'
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "1x4322"
     alert_rule_test:
       - eval_time: 35h59m30s
@@ -16,23 +16,23 @@ tests:
         exp_alerts:
           - exp_labels:
               alertname: BackupJobNeverRan
-              backup_job: home-assistant-native-backup
-              backup_title: Home Assistant Native Backup
+              backup_job: seerr-backup
+              backup_title: Create a consistent Seerr SQLite backup artifact
               category: backup
-              instance: home
+              instance: srvarr
               job: node-mtls
               phase: prep
               severity: warning
-              unit: home-assistant-native-backup.service
+              unit: seerr-backup.service
             exp_annotations:
-              summary: "Backup job has never run on home: Home Assistant Native Backup"
-              description: "The configured prep backup job Home Assistant Native Backup on home has not emitted a completed run within 36 hours."
+              summary: "Backup job has never run on srvarr: Create a consistent Seerr SQLite backup artifact"
+              description: "The configured prep backup job Create a consistent Seerr SQLite backup artifact on srvarr has not emitted a completed run within 36 hours."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="home",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="srvarr",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
         values: "1x4322"
-      - series: 'host_observability_backup_last_run_timestamp_seconds{job="node-mtls",instance="home",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+      - series: 'host_observability_backup_last_run_timestamp_seconds{job="node-mtls",instance="srvarr",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
         values: "3600x4322"
     alert_rule_test:
       - eval_time: 36h

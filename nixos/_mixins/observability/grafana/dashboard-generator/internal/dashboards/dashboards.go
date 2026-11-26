@@ -60,7 +60,6 @@ func All(config Config) ([]Definition, error) {
 		{path: "Infrastructure/thermals.json", build: ThermalsOverview},
 		{path: "Infrastructure/unifi.json", build: UnifiOverview},
 		{path: "Infrastructure/wireguard.json", build: WireGuardOverview},
-		{path: "Services/home-assistant.json", build: HomeAssistantOverview},
 		{path: "Services/llm.json", build: LLMOverview},
 		{path: "Services/lolek.json", build: LolekOverview},
 		{path: "Services/media-pipeline.json", build: MediaOverview},
