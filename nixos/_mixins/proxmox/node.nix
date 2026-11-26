@@ -69,9 +69,6 @@ in
       bridges = [ bridgeName ];
     };
 
-    # Use the main pin for nginx until Proxmox's pin includes the 1.30.7 security update.
-    services.nginx.package = inputs.nixpkgs.legacyPackages.${system}.nginxStable;
-
     # Match upstream Proxmox: let stopall enforce guest shutdown timeouts.
     # Remove once the pinned input includes https://github.com/SaumonNet/proxmox-nixos/pull/274.
     systemd.services.pve-guests.serviceConfig.TimeoutSec = "infinity";
