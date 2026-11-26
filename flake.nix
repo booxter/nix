@@ -122,7 +122,11 @@
       mkNixos =
         hostName: hostModule:
         let
-          on2611 = builtins.elem hostName [ "builder1" ];
+          on2611 = builtins.elem hostName [
+            "builder1"
+            "builder2"
+            "builder3"
+          ];
           hostInputs =
             inputs
             // lib.optionalAttrs on2611 {
