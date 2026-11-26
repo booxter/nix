@@ -12,9 +12,16 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 const releaseEvidence = `{"case":{"releases":[{"release_id":12,"title":"Album","format":"CD","labels":["Label"]}],"capabilities":[{"action":"import_missing_tracks_v1","capability_id":"cap","release_id":12}]}}`
+
+func testInputs(_ jobs.Service, evidence json.RawMessage) (planning.Inputs, error) {
+	return planning.NewInputs(struct {
+		Evidence json.RawMessage `json:"evidence"`
+	}{Evidence: evidence})
+}
 
 func addInboxJob(t *testing.T, fixture *fixture, id int64, title string, state jobs.State, reason, collectionError string) jobs.Job {
 	t.Helper()
@@ -140,7 +147,7 @@ func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 	ctx := context.Background()
 	job, err := fixture.store.Observe(ctx, jobs.Job{
 		Service: jobs.Lidarr, QueueID: 100, Title: "Edition question", SourceFingerprint: "case-a",
-		PlanningFingerprint: "files-a", Evidence: json.RawMessage(releaseEvidence),
+		Evidence: json.RawMessage(releaseEvidence),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -150,11 +157,13 @@ func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	job.PlanningFingerprint, job.SourceFingerprint = "files-b", "case-b"
+	job.SourceFingerprint = "case-b"
+	job.Evidence = json.RawMessage(`{"case":{"releases":[]}}`)
 	if _, err := fixture.store.Observe(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	job.PlanningFingerprint, job.SourceFingerprint = "files-a", "case-a-again"
+	job.SourceFingerprint = "case-a-again"
+	job.Evidence = json.RawMessage(releaseEvidence)
 	if _, err := fixture.store.Observe(ctx, job); err != nil {
 		t.Fatal(err)
 	}

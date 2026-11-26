@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/internal/repairui"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
@@ -51,12 +54,6 @@ func run(ctx context.Context, configuration config) error {
 		}
 	}
 
-	store, err := jobs.Open(configuration.Database)
-	if err != nil {
-		return err
-	}
-	defer store.Close()
-
 	transport, err := servarr.DirectHTTPTransport()
 	if err != nil {
 		return err
@@ -90,10 +87,27 @@ func run(ctx context.Context, configuration config) error {
 	if err != nil {
 		return err
 	}
-	return serve(ctx, configuration, store, map[jobs.Service]repair.Service{
+	services := repairServices{
 		jobs.Radarr: radarr,
 		jobs.Lidarr: lidarr,
-	})
+	}
+	store, err := jobs.Open(configuration.Database, services.planningInputs)
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+
+	return serve(ctx, configuration, store, services)
+}
+
+type repairServices map[jobs.Service]repair.Service
+
+func (services repairServices) planningInputs(service jobs.Service, evidence json.RawMessage) (planning.Inputs, error) {
+	adapter, found := services[service]
+	if !found {
+		return planning.Inputs{}, fmt.Errorf("repair service %q is not configured", service)
+	}
+	return adapter.PlanningInputs(evidence)
 }
 
 func serve(ctx context.Context, configuration config, store *jobs.Store, services map[jobs.Service]repair.Service) error {

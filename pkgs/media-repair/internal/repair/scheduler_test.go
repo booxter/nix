@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
@@ -54,7 +55,7 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 }
 
 func TestRemovalDoesNotWaitForPlanner(t *testing.T) {
-	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,6 +140,20 @@ func (service *waitingService) Observe(context.Context, []jobs.Job) (Observation
 	return service.observed, nil
 }
 
+func (service *waitingService) PlanningInputs(evidence json.RawMessage) (planning.Inputs, error) {
+	return testInputs("", evidence)
+}
+
+func testInputs(_ jobs.Service, evidence json.RawMessage) (planning.Inputs, error) {
+	var inputs struct {
+		Files string `json:"files"`
+	}
+	if err := json.Unmarshal(evidence, &inputs); err != nil {
+		return planning.Inputs{}, err
+	}
+	return planning.NewInputs(inputs)
+}
+
 func (service *waitingService) Plan(ctx context.Context, _ jobs.Job) (Decision, error) {
 	close(service.planning)
 	<-ctx.Done()
@@ -156,14 +171,14 @@ func (service *waitingService) Remove(_ context.Context, job jobs.Job) error {
 
 func TestRepeatedInputsDoNotBuyAnotherPlan(t *testing.T) {
 	ctx := context.Background()
-	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
 	service := &countingPlanner{}
 	service.observed = Observation{
-		Jobs:  []jobs.Job{{QueueID: 1, SourceFingerprint: "case-a", PlanningFingerprint: "files-a", Evidence: json.RawMessage(`{}`)}},
+		Jobs:  []jobs.Job{{QueueID: 1, SourceFingerprint: "case-a", Evidence: json.RawMessage(`{"files":"a"}`)}},
 		Queue: []jobs.QueueKey{{QueueID: 1}},
 	}
 	scheduler := Scheduler{
@@ -175,14 +190,20 @@ func TestRepeatedInputsDoNotBuyAnotherPlan(t *testing.T) {
 		name, caseID, inputs string
 		calls                int
 	}{
-		{"first observation", "case-a", "files-a", 1},
-		{"assessment changed", "case-a-new-score", "files-a", 1},
-		{"files changed", "case-b", "files-b", 2},
-		{"old inputs returned", "case-a-again", "files-a", 2},
+		{"first observation", "case-a", "a", 1},
+		{"assessment changed", "case-a-new-score", "a", 1},
+		{"files changed", "case-b", "b", 2},
+		{"old inputs returned", "case-a-again", "a", 2},
 	} {
 		t.Run(step.name, func(t *testing.T) {
 			service.observed.Jobs[0].SourceFingerprint = step.caseID
-			service.observed.Jobs[0].PlanningFingerprint = step.inputs
+			evidence, err := json.Marshal(struct {
+				Files string `json:"files"`
+			}{Files: step.inputs})
+			if err != nil {
+				t.Fatal(err)
+			}
+			service.observed.Jobs[0].Evidence = evidence
 			if err := scheduler.observe(ctx); err != nil {
 				t.Fatal(err)
 			}

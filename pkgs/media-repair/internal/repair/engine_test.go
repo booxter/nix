@@ -189,7 +189,7 @@ func (adapter *fakeAdapter) CheckImport(_ context.Context, _ jobs.Attempt) (Impo
 
 func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	t.Helper()
-	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 		}
 	})
 	ctx := context.Background()
-	job, err := store.Observe(ctx, jobs.Job{Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source"})
+	job, err := store.Observe(ctx, jobs.Job{Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source", Evidence: json.RawMessage(`{"files":"source"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}

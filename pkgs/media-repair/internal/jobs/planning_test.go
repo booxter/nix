@@ -35,7 +35,7 @@ func TestNewGuidanceInvalidatesAnInflightPlan(t *testing.T) {
 func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album"})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album", Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 func TestMissingQueueItemKeepsImportRecoveryEvidence(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}

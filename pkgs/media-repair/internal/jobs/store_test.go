@@ -8,12 +8,14 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "jobs.db")
-	store, err := Open(path)
+	store, err := Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +43,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	store, err = Open(path)
+	store, err = Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,13 +84,13 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 
 func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 	ctx := context.Background()
-	store, err := Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
 	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album", Title: "Album",
-		SourceFingerprint: "first", Evidence: json.RawMessage(`{}`), UpdatedAt: time.Now().UTC()})
+		SourceFingerprint: "first", Evidence: json.RawMessage(`{"source":"first"}`), UpdatedAt: time.Now().UTC()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,6 +98,7 @@ func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 		t.Fatal(err)
 	}
 	job.SourceFingerprint = "second"
+	job.Evidence = json.RawMessage(`{"source":"second"}`)
 	job, err = store.Observe(ctx, job)
 	if err != nil || job.State != Observed || len(job.Plan) != 0 {
 		t.Fatalf("changed job=%+v error=%v", job, err)
@@ -179,7 +182,7 @@ func TestConcurrentStartCreatesOneAttempt(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "jobs.db")
 	first, second := openStore(t, path), openStore(t, path)
-	job, err := first.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := first.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +225,7 @@ func TestConcurrentStartCreatesOneAttempt(t *testing.T) {
 func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +252,7 @@ func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 
 func openStore(t *testing.T, path string) *Store {
 	t.Helper()
-	store, err := Open(path)
+	store, err := Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,4 +262,15 @@ func openStore(t *testing.T, path string) *Store {
 		}
 	})
 	return store
+}
+
+func testInputs(_ Service, evidence json.RawMessage) (planning.Inputs, error) {
+	var inputs struct {
+		Files  json.RawMessage `json:"files"`
+		Source string          `json:"source"`
+	}
+	if err := json.Unmarshal(evidence, &inputs); err != nil {
+		return planning.Inputs{}, err
+	}
+	return planning.NewInputs(inputs)
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 type Observation struct {
@@ -27,6 +28,7 @@ type Decision struct {
 type Service interface {
 	Adapter
 	Observe(context.Context, []jobs.Job) (Observation, error)
+	PlanningInputs(json.RawMessage) (planning.Inputs, error)
 	Plan(context.Context, jobs.Job) (Decision, error)
 	Ready(jobs.Job) bool
 	Remove(context.Context, jobs.Job) error
@@ -100,13 +102,9 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 	for _, job := range observed.Jobs {
 		job.Service = scheduler.Name
 		job.UpdatedAt = scheduler.Now().UTC()
-		current, err := scheduler.Store.Observe(ctx, job)
+		_, err := scheduler.Store.Observe(ctx, job)
 		if err != nil {
 			return err
-		}
-		if current.State == jobs.Observed && job.PlanningChange != "" {
-			scheduler.Log.Info("planning inputs changed", "service", scheduler.Name,
-				"job", current.ID, "changes", job.PlanningChange)
 		}
 	}
 	if err := scheduler.requestCompletedRemovals(ctx, observed.Complete); err != nil {
@@ -249,6 +247,9 @@ func (scheduler *Scheduler) removeRequested(ctx context.Context) error {
 }
 
 func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
+	if job.PlanningFingerprint == "" {
+		return fmt.Errorf("job has no planning input identity")
+	}
 	decision, err := scheduler.Service.Plan(ctx, job)
 	job.PlanningAttempts++
 	job.UpdatedAt = scheduler.Now().UTC()

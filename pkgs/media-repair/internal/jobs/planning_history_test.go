@@ -11,12 +11,12 @@ import (
 func TestPlanningHistorySurvivesRestartAndInputCycles(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "jobs.db")
-	store, err := Open(path)
+	store, err := Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	observation := Job{Service: Lidarr, QueueID: 1, SourceFingerprint: "case-a",
-		PlanningFingerprint: "files-a", Evidence: json.RawMessage(`{"score":28.5}`)}
+		Evidence: json.RawMessage(`{"files":"a","score":28.5}`)}
 	job, err := store.Observe(ctx, observation)
 	if err != nil {
 		t.Fatal(err)
@@ -31,17 +31,19 @@ func TestPlanningHistorySurvivesRestartAndInputCycles(t *testing.T) {
 	store = openStore(t, path)
 
 	observation.SourceFingerprint = "case-a-new-score"
-	observation.Evidence = json.RawMessage(`{"score":39.5}`)
+	observation.Evidence = json.RawMessage(`{"files":"a","score":39.5}`)
 	job, err = store.Observe(ctx, observation)
 	if err != nil || job.State != Blocked || job.PlanningAttempts != 1 || job.Reason != "no repair" {
 		t.Fatalf("assessment noise reopened decision: %+v, %v", job, err)
 	}
-	observation.PlanningFingerprint, observation.SourceFingerprint = "files-b", "case-b"
+	observation.SourceFingerprint = "case-b"
+	observation.Evidence = json.RawMessage(`{"files":"b"}`)
 	job, err = store.Observe(ctx, observation)
 	if err != nil || job.State != Observed || job.PlanningAttempts != 0 {
 		t.Fatalf("new inputs did not allow planning: %+v, %v", job, err)
 	}
-	observation.PlanningFingerprint, observation.SourceFingerprint = "files-a", "case-a-again"
+	observation.SourceFingerprint = "case-a-again"
+	observation.Evidence = json.RawMessage(`{"files":"a"}`)
 	job, err = store.Observe(ctx, observation)
 	if err != nil || job.State != Blocked || job.PlanningAttempts != 1 {
 		t.Fatalf("returning inputs reopened decision: %+v, %v", job, err)
@@ -60,7 +62,7 @@ func TestLegacyDecisionGetsPlanningBaseline(t *testing.T) {
 		t.Run(map[bool]string{false: "assessment only", true: "new files"}[changed], func(t *testing.T) {
 			ctx := context.Background()
 			store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-			observation := Job{Service: Lidarr, QueueID: 1, SourceFingerprint: "old-case", Evidence: json.RawMessage(`{}`)}
+			observation := Job{Service: Lidarr, QueueID: 1, SourceFingerprint: "old-case", Evidence: json.RawMessage(`{"files":"old"}`)}
 			job, err := store.Observe(ctx, observation)
 			if err != nil {
 				t.Fatal(err)
@@ -69,19 +71,24 @@ func TestLegacyDecisionGetsPlanningBaseline(t *testing.T) {
 			if err := store.FinishPlanning(ctx, job); err != nil {
 				t.Fatal(err)
 			}
-			observation.PreviousPlanningFingerprint = "old-files"
-			observation.PlanningFingerprint = "old-files"
+			// Reproduce a database written before planning identities existed.
+			if err := store.db.Exec("UPDATE jobs SET planning_fingerprint = '' WHERE id = ?", job.ID).Error; err != nil {
+				t.Fatal(err)
+			}
+			if err := store.db.Exec("DELETE FROM planning_results WHERE job_id = ?", job.ID).Error; err != nil {
+				t.Fatal(err)
+			}
 			observation.SourceFingerprint = "new-case"
 			want := Blocked
 			if changed {
-				observation.PlanningFingerprint = "new-files"
+				observation.Evidence = json.RawMessage(`{"files":"new"}`)
 				want = Observed
 			}
 			job, err = store.Observe(ctx, observation)
 			if err != nil || job.State != want {
 				t.Fatalf("legacy baseline: %+v, %v", job, err)
 			}
-			observation.PlanningFingerprint = "old-files"
+			observation.Evidence = json.RawMessage(`{"files":"old"}`)
 			job, err = store.Observe(ctx, observation)
 			if err != nil || job.State != Blocked || job.PlanningAttempts != 1 {
 				t.Fatalf("legacy decision forgotten: %+v, %v", job, err)
@@ -94,7 +101,7 @@ func TestPlanningHistoryPreservesProviderBackoff(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
 	observation := Job{Service: Lidarr, QueueID: 1, SourceFingerprint: "case-a",
-		PlanningFingerprint: "files-a", Evidence: json.RawMessage(`{}`)}
+		Evidence: json.RawMessage(`{"files":"a"}`)}
 	job, err := store.Observe(ctx, observation)
 	if err != nil {
 		t.Fatal(err)
@@ -104,11 +111,11 @@ func TestPlanningHistoryPreservesProviderBackoff(t *testing.T) {
 	if err := store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	observation.PlanningFingerprint = "files-b"
+	observation.Evidence = json.RawMessage(`{"files":"b"}`)
 	if _, err := store.Observe(ctx, observation); err != nil {
 		t.Fatal(err)
 	}
-	observation.PlanningFingerprint = "files-a"
+	observation.Evidence = json.RawMessage(`{"files":"a"}`)
 	job, err = store.Observe(ctx, observation)
 	if err != nil || job.State != Observed || job.PlanningAttempts != 4 || !job.RetryAt.Equal(retryAt) {
 		t.Fatalf("input cycle bypassed provider backoff: %+v, %v", job, err)
@@ -119,7 +126,7 @@ func TestAssessmentChangesPreserveReadyPlanEvidence(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
 	observation := Job{Service: Lidarr, QueueID: 1, SourceFingerprint: "planned-case",
-		PlanningFingerprint: "files-a", Evidence: json.RawMessage(`{"score":28.5}`)}
+		Evidence: json.RawMessage(`{"files":"a","score":28.5}`)}
 	job, err := store.Observe(ctx, observation)
 	if err != nil {
 		t.Fatal(err)
@@ -127,9 +134,9 @@ func TestAssessmentChangesPreserveReadyPlanEvidence(t *testing.T) {
 	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, json.RawMessage(`{}`), "", time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	observation.SourceFingerprint, observation.Evidence = "new-case", json.RawMessage(`{"score":39.5}`)
+	observation.SourceFingerprint, observation.Evidence = "new-case", json.RawMessage(`{"files":"a","score":39.5}`)
 	job, err = store.Observe(ctx, observation)
-	if err != nil || job.State != Ready || job.SourceFingerprint != "planned-case" || string(job.Evidence) != `{"score":28.5}` {
+	if err != nil || job.State != Ready || job.SourceFingerprint != "planned-case" || string(job.Evidence) != `{"files":"a","score":28.5}` {
 		t.Fatalf("ready plan evidence replaced: %+v, %v", job, err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())
