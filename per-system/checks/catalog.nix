@@ -39,7 +39,6 @@ let
       agent-mcp = import ./agent-mcp.nix { inherit lib pkgs; };
       auth-request = pkgs.auth-request;
       check-commit-message = pkgs.callPackage ../../hm/_mixins/dev/scm/pkgs/check-commit-message { };
-      claude-settings = import ./claude-settings.nix { inherit inputs pkgs; };
       hardware-signing = import ./hardware-signing.nix { inherit pkgs; };
       claude-statusline = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/statusline { };
       claude-worktree = pkgs.callPackage ../../hm/_mixins/dev/agents/claude/worktree { };
