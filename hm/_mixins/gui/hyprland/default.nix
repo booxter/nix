@@ -8,16 +8,28 @@
 }:
 let
   cfg = config.host.hm.hyprland;
-  super = "MOD1";
-  cmdButton = "MOD4";
+  super = "ALT";
+  cmdButton = "SUPER";
+  lua = lib.generators.mkLuaInline;
+  toLua = lib.generators.toLua { };
+  bind = key: dispatcher: {
+    _args = [
+      key
+      (lua dispatcher)
+    ];
+  };
+  exec = key: command: bind key "hl.dsp.exec_cmd(${toLua command})";
   inherit (osConfig.host.hardware) displayMode displays scale;
   displaysByName = lib.listToAttrs (
     map (display: lib.nameValuePair display.position display) displays
   );
   inherit (displaysByName) left right;
-  renderMonitor =
-    display:
-    "${display.connector}, ${toString displayMode.width}x${toString displayMode.height}@${toString displayMode.refreshRate}, ${toString display.x}x0, ${toString scale}";
+  renderMonitor = display: {
+    output = display.connector;
+    mode = "${toString displayMode.width}x${toString displayMode.height}@${toString displayMode.refreshRate}";
+    position = "${toString display.x}x0";
+    inherit scale;
+  };
   workspaceNames = map toString (lib.range 1 cfg.numberedWorkspaces);
   leftWorkspaceNames = map toString (lib.range 1 cfg.leftMonitorWorkspaces);
   rightWorkspaceNames =
@@ -40,11 +52,17 @@ let
     "${right.connector}" = rightWorkspaceNames;
   };
   workspaceMonitorRules =
-    map (workspace: "${workspace}, monitor:${left.connector}") leftWorkspaceNames
-    ++ map (workspace: "${workspace}, monitor:${right.connector}") rightWorkspaceNames;
+    map (workspace: {
+      inherit workspace;
+      monitor = left.connector;
+    }) leftWorkspaceNames
+    ++ map (workspace: {
+      inherit workspace;
+      monitor = right.connector;
+    }) rightWorkspaceNames;
   workspaceBindings = lib.concatMap (workspace: [
-    "${super}, ${workspace}, workspace, ${workspace}"
-    "${super}_SHIFT, ${workspace}, movetoworkspacesilent, ${workspace}"
+    (bind "${super} + ${workspace}" "hl.dsp.focus({ workspace = ${toLua workspace} })")
+    (bind "${super} + SHIFT + ${workspace}" "hl.dsp.window.move({ workspace = ${toLua workspace}, follow = false })")
   ]) workspaceNames;
 in
 {
@@ -93,7 +111,7 @@ in
         in
         {
           general = {
-            after_sleep_cmd = "${hyprctl} dispatch dpms on";
+            after_sleep_cmd = "${hyprctl} dispatch \"hl.dsp.dpms({ action = 'enable' })\"";
             before_sleep_cmd = "${loginctl} lock-session";
             ignore_dbus_inhibit = false;
             lock_cmd = "${systemctl} --user start hyprlock.service";
@@ -106,8 +124,8 @@ in
             }
             {
               timeout = 600;
-              on-timeout = "${hyprctl} dispatch dpms off";
-              on-resume = "${hyprctl} dispatch dpms on";
+              on-timeout = "${hyprctl} dispatch \"hl.dsp.dpms({ action = 'disable' })\"";
+              on-resume = "${hyprctl} dispatch \"hl.dsp.dpms({ action = 'enable' })\"";
             }
           ];
         };
@@ -188,7 +206,7 @@ in
 
     wayland.windowManager.hyprland = {
       enable = true;
-      configType = "hyprlang";
+      configType = "lua";
       # NixOS owns portal packages/config for the desktop session. Keep Home
       # Manager from exposing a second per-user portal view while still letting it
       # manage Hyprland config and reload hooks.
@@ -196,99 +214,113 @@ in
       xwayland.enable = true;
       systemd.enable = true;
       settings = {
-        # Let a replacement lockscreen recover a locked session after failure.
-        misc.allow_session_lock_restore = true;
+        config = {
+          # Let a replacement lockscreen recover a locked session after failure.
+          misc.allow_session_lock_restore = true;
 
-        # Wake even if hypridle restarted while DPMS was off and lost its idle state.
-        misc.key_press_enables_dpms = true;
+          # Wake even if hypridle restarted while DPMS was off and lost its idle state.
+          misc.key_press_enables_dpms = true;
 
-        general = {
-          gaps_in = 5;
-          gaps_out = 2;
-        };
-
-        exec-once = [
-          "waybar"
-        ];
-
-        # Keep XWayland scaling local to the Hyprland session so SSH-forwarded
-        # X11 apps do not inherit it under XQuartz.
-        # https://wiki.hypr.land/Configuring/XWayland/
-        env = [
-          "GDK_SCALE,2"
-          "XCURSOR_SIZE,64"
-        ];
-
-        ecosystem = {
-          no_donation_nag = true;
-          no_update_news = true;
-        };
-
-        animations = {
-          enabled = 0;
-        };
-
-        windowrule = [
-          "match:title ^OpenSSH authentication$, stay_focused on"
-        ];
-
-        monitor = map renderMonitor displays;
-
-        xwayland = {
-          # https://wiki.hypr.land/Configuring/XWayland/
-          force_zero_scaling = true;
-        };
-
-        workspace = workspaceMonitorRules;
-
-        input =
-          let
-            natural_scroll = true;
-          in
-          {
-            inherit natural_scroll;
-            kb_layout = "us";
-
-            repeat_delay = 210;
-            repeat_rate = 33;
-
-            touchpad = {
-              inherit natural_scroll;
-              disable_while_typing = true;
-              tap-to-click = true;
-            };
+          general = {
+            gaps_in = 5;
+            gaps_out = 2;
           };
 
+          ecosystem = {
+            no_donation_nag = true;
+            no_update_news = true;
+          };
+
+          animations = {
+            enabled = false;
+          };
+
+          xwayland = {
+            # https://wiki.hypr.land/Configuring/XWayland/
+            force_zero_scaling = true;
+          };
+
+          input =
+            let
+              natural_scroll = true;
+            in
+            {
+              inherit natural_scroll;
+              kb_layout = "us";
+
+              repeat_delay = 210;
+              repeat_rate = 33;
+
+              touchpad = {
+                inherit natural_scroll;
+                disable_while_typing = true;
+                tap_to_click = true;
+              };
+            };
+        };
+
+        on._args = [
+          "hyprland.start"
+          (lua ''function() hl.exec_cmd("waybar") end'')
+        ];
+
+        # Keep XWayland scaling local to this session so SSH-forwarded X11 apps
+        # do not inherit it under XQuartz.
+        env = [
+          {
+            _args = [
+              "GDK_SCALE"
+              "2"
+            ];
+          }
+          {
+            _args = [
+              "XCURSOR_SIZE"
+              "64"
+            ];
+          }
+        ];
+
+        window_rule = {
+          name = "openssh-authentication";
+          match.title = "^OpenSSH authentication$";
+          stay_focused = true;
+        };
+
+        monitor = map renderMonitor displays;
+        workspace_rule = workspaceMonitorRules;
+
         bind = [
-          "${super}, H, movefocus, l"
-          "${super}, J, movefocus, d"
-          "${super}, K, movefocus, u"
-          "${super}, L, movefocus, r"
-          "${super}_SHIFT, H, swapwindow, l"
-          "${super}_SHIFT, J, swapwindow, d"
-          "${super}_SHIFT, K, swapwindow, u"
-          "${super}_SHIFT, L, swapwindow, r"
+          (bind "${super} + H" ''hl.dsp.focus({ direction = "left" })'')
+          (bind "${super} + J" ''hl.dsp.focus({ direction = "down" })'')
+          (bind "${super} + K" ''hl.dsp.focus({ direction = "up" })'')
+          (bind "${super} + L" ''hl.dsp.focus({ direction = "right" })'')
+          (bind "${super} + SHIFT + H" ''hl.dsp.window.swap({ direction = "left" })'')
+          (bind "${super} + SHIFT + J" ''hl.dsp.window.swap({ direction = "down" })'')
+          (bind "${super} + SHIFT + K" ''hl.dsp.window.swap({ direction = "up" })'')
+          (bind "${super} + SHIFT + L" ''hl.dsp.window.swap({ direction = "right" })'')
 
-          "${super}_SHIFT, Right, resizeactive, 50 0"
-          "${super}_SHIFT, Left, resizeactive, -50 0"
-          "${super}_SHIFT, Up, resizeactive, 0 -50"
-          "${super}_SHIFT, Down, resizeactive, 0 50"
+          (bind "${super} + SHIFT + Right" "hl.dsp.window.resize({ x = 50, y = 0, relative = true })")
+          (bind "${super} + SHIFT + Left" "hl.dsp.window.resize({ x = -50, y = 0, relative = true })")
+          (bind "${super} + SHIFT + Up" "hl.dsp.window.resize({ x = 0, y = -50, relative = true })")
+          (bind "${super} + SHIFT + Down" "hl.dsp.window.resize({ x = 0, y = 50, relative = true })")
 
-          "${super}, TAB, workspace, previous"
+          (bind "${super} + TAB" ''hl.dsp.focus({ workspace = "previous" })'')
 
-          "${super}_SHIFT, F, fullscreen, toggle"
+          (bind "${super} + SHIFT + F" "hl.dsp.window.fullscreen()")
 
-          "${super}, Q, killactive"
-          "${super}_SHIFT, Q, exit"
+          (bind "${super} + Q" "hl.dsp.window.close()")
+          (bind "${super} + SHIFT + Q" "hl.dsp.exit()")
 
-          "${super}, Return, exec, ${lib.getExe pkgs.kitty}"
-          "${super}, grave, exec, ${pkgs.kitty}/bin/kitten quick-access-terminal"
-          "${super}, SPACE, exec, ${lib.getExe pkgs.wofi} --show drun"
+          (exec "${super} + Return" (lib.getExe pkgs.kitty))
+          (exec "${super} + grave" "${pkgs.kitty}/bin/kitten quick-access-terminal")
+          (exec "${super} + SPACE" "${lib.getExe pkgs.wofi} --show drun")
 
-          "${cmdButton}, C, exec, ${pkgs.wl-clipboard}/bin/wl-paste --primary | ${pkgs.wl-clipboard}/bin/wl-copy --trim-newline"
+          (exec "${cmdButton} + C" "${pkgs.wl-clipboard}/bin/wl-paste --primary | ${pkgs.wl-clipboard}/bin/wl-copy --trim-newline")
 
-          "${cmdButton}, V, sendshortcut, CTRL, v, class:^([^k]|k($|[^i]|i($|[^t]|t($|[^t]|t($|[^y])))))*$" # holly shit... re2 doesn't support negatives like (?!...)
-          "${cmdButton}, V, sendshortcut, CTRL SHIFT, v, class:^kitty$"
+          # RE2 has no negative lookahead; exclude kitty from the regular paste.
+          (bind "${cmdButton} + V" ''hl.dsp.send_shortcut({ mods = "CTRL", key = "v", window = "class:^([^k]|k($|[^i]|i($|[^t]|t($|[^t]|t($|[^y])))))*$" })'')
+          (bind "${cmdButton} + V" ''hl.dsp.send_shortcut({ mods = "CTRL SHIFT", key = "v", window = "class:^kitty$" })'')
 
         ]
         ++ workspaceBindings;
