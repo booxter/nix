@@ -13,6 +13,7 @@ let
 in
 {
   imports = [
+    ./catalogue.nix
     ./language-tags-refresh.nix
     ./libraries.nix
     ./localization.nix
