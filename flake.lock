@@ -715,22 +715,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-aurral": {
-      "locked": {
-        "lastModified": 1795627684,
-        "narHash": "sha256-rS1x0ahbMkt/J28YvlKcBZn7z3ZeaUIHfrJ40+FlA1g=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "3476822c30aa890f665f7a718f75590b76e86f37",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "3476822c30aa890f665f7a718f75590b76e86f37",
-        "type": "github"
-      }
-    },
     "nixpkgs-jellyfin": {
       "locked": {
         "lastModified": 1795370043,
@@ -912,7 +896,6 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-2611": "nixpkgs-2611",
-        "nixpkgs-aurral": "nixpkgs-aurral",
         "nixpkgs-jellyfin": "nixpkgs-jellyfin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
