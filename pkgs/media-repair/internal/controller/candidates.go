@@ -15,14 +15,6 @@ const (
 	CandidateInvalidOutputPath     CandidateRejectionReason = "invalid_output_path"
 )
 
-type CandidateAssessment struct {
-	RejectionReasons []CandidateRejectionReason
-}
-
-func (assessment CandidateAssessment) Eligible() bool {
-	return len(assessment.RejectionReasons) == 0
-}
-
 // Radarr names the download client in its queue. Repairr's configuration
 // determines whether that client is supported.
 type queueCandidate struct {
@@ -41,23 +33,16 @@ var queueChecks = [...]struct {
 	{queueCandidate.hasUsableOutputPath, CandidateInvalidOutputPath},
 }
 
-func ClassifyRepairCandidate(
-	record RadarrQueueRecord,
-	downloads DownloadSupport,
-) CandidateAssessment {
-	return record.Assess(downloads != nil && downloads.Supports(record.Protocol, record.DownloadClient))
-}
-
-// Assess lists every reason to skip this queue entry so the operator can see them together.
-func (record RadarrQueueRecord) Assess(sourceSupported bool) CandidateAssessment {
+// RejectionReasons lists every reason to skip this queue entry so the operator can see them together.
+func (record RadarrQueueRecord) RejectionReasons(sourceSupported bool) []CandidateRejectionReason {
 	candidate := queueCandidate{RadarrQueueRecord: record, sourceSupported: sourceSupported}
-	var assessment CandidateAssessment
+	var reasons []CandidateRejectionReason
 	for _, check := range queueChecks {
 		if !check.passes(candidate) {
-			assessment.RejectionReasons = append(assessment.RejectionReasons, check.reason)
+			reasons = append(reasons, check.reason)
 		}
 	}
-	return assessment
+	return reasons
 }
 
 func (candidate queueCandidate) hasSupportedSource() bool {

@@ -78,6 +78,7 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = node;
     replaced = node;
+    missingMovie = node;
     lostResponse = node;
   };
   testScript = builtins.readFile ./repairr-pipeline/test.py;

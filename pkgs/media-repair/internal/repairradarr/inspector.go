@@ -62,76 +62,38 @@ func NewInspector(dependencies InspectorConfig) (*Inspector, error) {
 	}
 }
 
-// Inspect rechecks a planned entry before execution. If the queue is no
-// longer eligible, there is no need to open the download again.
-func (inspector *Inspector) Inspect(
-	ctx context.Context,
-	record controller.RadarrQueueRecord,
-) (casebuilder.Assembly, error) {
+// Inspect resolves the queue entry and returns all eligibility findings before
+// reading any files. Only an eligible entry can produce a case.
+func (inspector *Inspector) Inspect(ctx context.Context, record controller.RadarrQueueRecord) CollectionResult {
 	if inspector == nil || inspector.dependencies.Clock == nil {
-		return casebuilder.Assembly{}, fmt.Errorf("inspector is not configured")
+		return CollectionResult{Err: fmt.Errorf("inspector is not configured")}
 	}
 	if err := ctx.Err(); err != nil {
-		return casebuilder.Assembly{}, err
+		return CollectionResult{Err: err}
 	}
-	collectionContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
-	defer cancel()
-
-	assessment := controller.ClassifyRepairCandidate(record, inspector.dependencies.Downloads)
-	if !assessment.Eligible() {
-		return casebuilder.Assembly{}, fmt.Errorf("Radarr queue record %d is ineligible: %v", record.ID, assessment.RejectionReasons)
-	}
-	entry := resolvedEntry{record: record, sourceSupported: true}
-	entry, err := inspector.lookUpMovieAndDownload(collectionContext, entry)
-	if err != nil {
-		return casebuilder.Assembly{}, err
-	}
-	if entry.source == nil {
-		return casebuilder.Assembly{}, fmt.Errorf("download for queue record %d was not found", record.ID)
-	}
-	if !entry.source.Eligible() {
-		return casebuilder.Assembly{}, fmt.Errorf(
-			"queue record %d has an ineligible download correlation: %v",
-			record.ID, entry.source.RejectionReasons,
-		)
-	}
-	return inspector.buildCase(ctx, collectionContext, *entry.source)
+	return collection.Inspect(ctx, inspector, record)
 }
 
 // collect builds a planner case for an entry that passed the pipeline's checks.
 // Its time limit starts after the movie and download lookup.
 func (inspector *Inspector) collect(ctx context.Context, entry resolvedEntry) (casebuilder.Assembly, error) {
-	if entry.source == nil {
-		return casebuilder.Assembly{}, fmt.Errorf("queue record %d has no resolved download", entry.record.ID)
-	}
-	collectionContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
+	collectionContext, cancel := controller.WithCollectionTimeout(ctx, inspector.dependencies.CollectionTimeout)
 	defer cancel()
-	return inspector.buildCase(ctx, collectionContext, *entry.source)
-}
 
-// buildCase combines Radarr's records with the files on disk so each option
-// offered to the planner refers to files Repairr actually inspected.
-func (inspector *Inspector) buildCase(
-	callerContext context.Context,
-	collectionContext context.Context,
-	correlation controller.DownloadCorrelation,
-) (casebuilder.Assembly, error) {
+	correlation := *entry.source
 	source, err := inspector.prepareSource(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
 
 	input := collectionInput{
-		scanCtx:    callerContext,
+		movieID:    *entry.record.MovieID,
 		downloadID: correlation.Radarr.DownloadID,
 		source:     source,
 		radarr:     inspector.dependencies.Radarr,
 		probes:     inspector.dependencies.Probes,
 		playlists:  inspector.dependencies.Playlists,
 		dvds:       inspector.dependencies.DVDs,
-	}
-	if id := correlation.Radarr.MovieID; id != nil {
-		input.movieID = *id
 	}
 
 	facts := casebuilder.Observation{Correlation: correlation, Inventory: source.Inventory}

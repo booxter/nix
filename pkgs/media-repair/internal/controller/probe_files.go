@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type FileProbe struct {
@@ -11,11 +12,18 @@ type FileProbe struct {
 	Outcome MediaProbeOutcome
 }
 
+var errCollectionTimeout = errors.New("collection time limit reached")
+
+// WithCollectionTimeout lets probes distinguish their time budget from a
+// deadline or cancellation imposed by the caller.
+func WithCollectionTimeout(ctx context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeoutCause(ctx, limit, errCollectionTimeout)
+}
+
 // ProbeFiles reuses results from extraction when available. Otherwise it probes
 // the candidate files and records which ones the collection deadline cut short.
 func (source VideoSource) ProbeFiles(
-	callerContext context.Context,
-	collectionContext context.Context,
+	ctx context.Context,
 	reader MediaProbeReader,
 ) ([]FileProbe, error) {
 	if source.ExistingProbes != nil {
@@ -33,7 +41,7 @@ func (source VideoSource) ProbeFiles(
 
 	probes := make([]FileProbe, 0, len(inventory.Files))
 	for _, assessment := range ClassifyMediaFiles(inventory) {
-		outcome, err := probeFile(callerContext, collectionContext, assessment, paths, reader)
+		outcome, err := probeFile(ctx, assessment, paths, reader)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +53,7 @@ func (source VideoSource) ProbeFiles(
 // probeFile records why a file was skipped. A probe can run out of time
 // before the helper starts or while the helper is reading the file.
 func probeFile(
-	scanCtx, probeCtx context.Context,
+	ctx context.Context,
 	assessment MediaFileAssessment,
 	paths map[FileID]string,
 	reader MediaProbeReader,
@@ -54,25 +62,25 @@ func probeFile(
 		return UncollectedMediaProbe(MediaProbeNotCandidate), nil
 	}
 
-	err := probeCtx.Err()
+	err := ctx.Err()
 	if err == nil {
 		path, ok := paths[assessment.File.ID]
 		if !ok {
 			return MediaProbeOutcome{}, fmt.Errorf("candidate file %q has no local path", assessment.File.ID)
 		}
 		target := MediaProbeTarget{AbsolutePath: path, Fingerprint: assessment.File.Fingerprint}
-		outcome, probeErr := reader.Probe(probeCtx, target)
+		outcome, probeErr := reader.Probe(ctx, target)
 		if probeErr == nil {
 			return outcome, nil
 		}
 		err = fmt.Errorf("probe candidate file %q: %w", assessment.File.ID, probeErr)
 	}
 
-	if scanErr := scanCtx.Err(); scanErr != nil {
-		return MediaProbeOutcome{}, scanErr
-	}
-	if errors.Is(probeCtx.Err(), context.DeadlineExceeded) {
+	if errors.Is(context.Cause(ctx), errCollectionTimeout) {
 		return UncollectedMediaProbe(MediaProbeCollectionLimit), nil
+	}
+	if ctx.Err() != nil {
+		return MediaProbeOutcome{}, ctx.Err()
 	}
 	return MediaProbeOutcome{}, err
 }

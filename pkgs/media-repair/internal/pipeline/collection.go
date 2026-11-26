@@ -9,7 +9,6 @@ import (
 // CollectionFlow defines how to turn a queue entry into a case for the planner.
 // Validators share the result of one lookup per entry.
 type CollectionFlow[Clients, Entry, Resolved, Case any] struct {
-	Discover   func(Clients, context.Context) ([]Entry, error)
 	Resolve    func(Clients, context.Context, Entry) (Resolved, error)
 	Validators Validators[Resolved]
 	Collect    func(Clients, context.Context, Resolved) (Case, error)
@@ -39,14 +38,15 @@ type Result[Case any] struct {
 	Err      error
 }
 
-// Run continues after an error on one entry. A queue read error, cancellation,
+// ScanQueue continues after an error on one entry. A queue read error, cancellation,
 // or failure to report a result stops the whole scan.
-func (flow CollectionFlow[Clients, Entry, Resolved, Case]) Run(
+func ScanQueue[Entry, Case any](
 	ctx context.Context,
-	clients Clients,
+	discover func(context.Context) ([]Entry, error),
+	inspect func(context.Context, Entry) Result[Case],
 	report func(Entry, Result[Case]) error,
 ) error {
-	entries, err := flow.Discover(clients, ctx)
+	entries, err := discover(ctx)
 	if err != nil {
 		return fmt.Errorf("read queue: %w", err)
 	}
@@ -54,7 +54,7 @@ func (flow CollectionFlow[Clients, Entry, Resolved, Case]) Run(
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		result := flow.Inspect(ctx, clients, entry)
+		result := inspect(ctx, entry)
 		// If shutdown interrupted this entry, stop before reporting it as a failure.
 		if err := ctx.Err(); err != nil {
 			return err

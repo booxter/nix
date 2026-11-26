@@ -3,11 +3,13 @@ package repairradarr
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
@@ -19,10 +21,7 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	fixture := inspectionFixture()
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	result := assembly.Request
 	if !result.ObservedAt.Equal(fixture.clock.now) || result.Radarr.Movie == nil ||
 		result.Radarr.Movie.Title != fixture.radarr.movie.Title || result.Radarr.Failure.Title != fixture.record.Title ||
@@ -92,10 +91,7 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 	)
 
 	inspector := newTestInspector(t, fixture.dependencies())
-	assembly, err := inspector.Inspect(context.Background(), record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), record))
 	if assembly.Request.Download.Client != contracts.Sabnzbd ||
 		assembly.Request.Download.SourceType != contracts.Usenet ||
 		assembly.Request.Download.ContentOwnership != contracts.OutputTree {
@@ -146,10 +142,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	if len(assembly.Request.Files) != 1 || assembly.Request.Files[0].FileID != string(materializedFile.ID) ||
 		assembly.Request.Files[0].Probe.Status != contracts.Ok {
 		t.Fatalf("archive source was not used: %#v", assembly.Request.Files)
@@ -170,10 +163,7 @@ func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	fixture.radarr.recoveredMovieFound = true
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	radarr := assembly.Request.Radarr
 	if radarr.Movie == nil || radarr.Movie.Title != fixture.radarr.movie.Title ||
 		len(radarr.History) != 1 || len(radarr.ManualImports) != 1 {
@@ -190,9 +180,9 @@ func TestInspectRejectsIneligibleRecord(t *testing.T) {
 	fixture := inspectionFixture()
 	fixture.record.Protocol = "usenet"
 	inspector := newTestInspector(t, fixture.dependencies())
-	_, err := inspector.Inspect(context.Background(), fixture.record)
-	if err == nil || !strings.Contains(err.Error(), "record 71 is ineligible") {
-		t.Fatalf("error = %v", err)
+	result := inspector.Inspect(context.Background(), fixture.record)
+	if result.Err != nil || result.Case != nil || !slices.Equal(result.Findings, []string{"unsupported_download_source"}) {
+		t.Fatalf("inspection = %+v", result)
 	}
 }
 
@@ -200,37 +190,38 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		mutate func(*inspectionTestFixture)
-		want   string
+		name    string
+		mutate  func(*inspectionTestFixture)
+		finding string
+		wantErr string
 	}{
 		{
 			name: "missing torrent",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.transmission.found = false
 			},
-			want: "was not found",
+			finding: "download_not_found",
 		},
 		{
 			name: "ineligible correlation",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.transmission.torrent.ID = "abcdef0123456789abcdef0123456789abcdef02"
 			},
-			want: "ineligible download correlation",
+			finding: "download_id_mismatch",
 		},
 		{
 			name: "missing candidate path",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.files.inventory.Paths = fixture.files.inventory.Paths[:1]
 			},
-			want: "has no local path",
+			wantErr: "has no local path",
 		},
 		{
 			name: "probe failure",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.probes.err = errors.New("worker unavailable")
 			},
-			want: "probe candidate file",
+			wantErr: "probe candidate file",
 		},
 	}
 
@@ -240,9 +231,16 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 			fixture := inspectionFixture()
 			test.mutate(&fixture)
 			inspector := newTestInspector(t, fixture.dependencies())
-			_, err := inspector.Inspect(context.Background(), fixture.record)
-			if err == nil || !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("error = %v, want substring %q", err, test.want)
+			result := inspector.Inspect(context.Background(), fixture.record)
+			if result.Case != nil {
+				t.Fatal("unexpected case")
+			}
+			if test.finding != "" {
+				if result.Err != nil || !slices.Contains(result.Findings, test.finding) {
+					t.Fatalf("inspection = %+v, want finding %q", result, test.finding)
+				}
+			} else if result.Err == nil || !strings.Contains(result.Err.Error(), test.wantErr) {
+				t.Fatalf("error = %v, want substring %q", result.Err, test.wantErr)
 			}
 		})
 	}
@@ -255,7 +253,7 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	inspector := newTestInspector(t, fixture.dependencies())
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := inspector.Inspect(ctx, fixture.record); !errors.Is(err, context.Canceled) {
+	if err := inspector.Inspect(ctx, fixture.record).Err; !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
 	}
 }
@@ -276,7 +274,7 @@ func TestZeroValueInspectorIsUnconfigured(t *testing.T) {
 	t.Parallel()
 
 	var inspector Inspector
-	if _, err := inspector.Inspect(context.Background(), controller.RadarrQueueRecord{}); err == nil ||
+	if err := inspector.Inspect(context.Background(), controller.RadarrQueueRecord{}).Err; err == nil ||
 		!strings.Contains(err.Error(), "inspector is not configured") {
 		t.Fatalf("error = %v", err)
 	}
@@ -295,10 +293,7 @@ func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
 		controller.MediaProbeUnsupportedFormat,
 	)
 	inspector := newTestInspector(t, fixture.dependencies())
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	files := assembly.Request.Files
 	if len(files) != 3 || files[0].Probe.Status != contracts.Failed ||
 		files[1].Probe.Status != contracts.Failed || files[2].Probe.Status != contracts.NotProbed ||
@@ -315,10 +310,7 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 20 * time.Millisecond
 	inspector := newTestInspector(t, dependencies)
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	if len(assembly.Request.Files) != 2 {
 		t.Fatalf("files = %#v", assembly.Request.Files)
 	}
@@ -328,6 +320,29 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 			t.Fatalf("probe outcome = %#v", file.Probe)
 		}
 	}
+}
+
+func TestInspectStopsWhenCallerDeadlineExpires(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.probes.waitForCancellation = true
+	inspector := newTestInspector(t, fixture.dependencies())
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	result := inspector.Inspect(ctx, fixture.record)
+	if result.Case != nil || !errors.Is(result.Err, context.DeadlineExceeded) {
+		t.Fatalf("expected the caller's deadline to stop inspection, got %+v", result)
+	}
+}
+
+func requireCase(t *testing.T, result CollectionResult) *casebuilder.Assembly {
+	t.Helper()
+	if result.Err != nil || result.Case == nil {
+		t.Fatalf("expected a case, got findings %v and error %v", result.Findings, result.Err)
+	}
+	return result.Case
 }
 
 type inspectionTestFixture struct {

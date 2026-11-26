@@ -34,6 +34,8 @@ def radarr_queue() -> dict[str, object]:
         "trackedDownloadStatus": "warning",
         "trackedDownloadState": "importBlocked",
     }
+    if (FIXTURE / "missing-movie").exists():
+        del blocked_import["movieId"]
     active_download = {
         **usenet,
         "id": 102,
@@ -119,6 +121,13 @@ def response_for(path: str, query: dict[str, list[str]]) -> object | None:
         return radarr_queue()
     if path == "/api/v3/movie/42":
         return MOVIE
+    # When a queue entry loses its movie ID, Repairr searches by download ID alone.
+    if (
+        path == "/api/v3/history"
+        and query.get("downloadId") == [COMPLETED_ID]
+        and "movieIds" not in query
+    ):
+        return page() if (FIXTURE / "missing-movie").exists() else import_history()
     if (
         path == "/api/v3/history"
         and query.get("movieIds") == ["42"]

@@ -3,9 +3,12 @@ package repairradarr
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -77,11 +80,24 @@ func (adapter *Adapter) readQueuedCase(ctx context.Context, key jobs.QueueKey) (
 	if index < 0 {
 		return casebuilder.Assembly{}, &repair.BlockedError{Reason: "download is no longer queued"}
 	}
-	fresh, err := adapter.Inspector.Inspect(ctx, entries[index])
-	if err != nil {
+
+	// Limit the entire recheck, including the download lookup and file reads.
+	if adapter.Inspector == nil {
+		return casebuilder.Assembly{}, fmt.Errorf("inspector is not configured")
+	}
+	recheckCtx, cancel := controller.WithCollectionTimeout(ctx, adapter.Inspector.dependencies.CollectionTimeout)
+	defer cancel()
+	result := adapter.Inspector.Inspect(recheckCtx, entries[index])
+	if err := ctx.Err(); err != nil {
 		return casebuilder.Assembly{}, repair.RetryableRead(err)
 	}
-	return fresh, nil
+	if result.Err != nil {
+		return casebuilder.Assembly{}, repair.RetryableRead(result.Err)
+	}
+	if len(result.Findings) > 0 {
+		return casebuilder.Assembly{}, &repair.BlockedError{Reason: strings.Join(result.Findings, ", ")}
+	}
+	return *result.Case, nil
 }
 
 // A file ID follows its path. Compare the file at that path with the one

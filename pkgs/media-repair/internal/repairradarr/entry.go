@@ -30,12 +30,7 @@ func (inspector *Inspector) resolve(ctx context.Context, record controller.Radar
 	}
 	ctx, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
 	defer cancel()
-	return inspector.lookUpMovieAndDownload(ctx, entry)
-}
 
-// lookUpMovieAndDownload identifies the movie and checks whether the download
-// client has a matching entry. A successful lookup can return an empty result.
-func (inspector *Inspector) lookUpMovieAndDownload(ctx context.Context, entry resolvedEntry) (resolvedEntry, error) {
 	if entry.record.MovieID == nil {
 		// Radarr's history can name the movie even when the queue entry does not.
 		movieID, found, err := inspector.dependencies.Radarr.RecoverMovieID(ctx, entry.record.DownloadID)
@@ -61,7 +56,7 @@ func (inspector *Inspector) lookUpMovieAndDownload(ctx context.Context, entry re
 // queueFindings reports why the queue entry should be skipped, even if its download was found.
 func (entry resolvedEntry) queueFindings() []string {
 	var findings []string
-	for _, reason := range entry.record.Assess(entry.sourceSupported).RejectionReasons {
+	for _, reason := range entry.record.RejectionReasons(entry.sourceSupported) {
 		findings = append(findings, string(reason))
 	}
 	return findings

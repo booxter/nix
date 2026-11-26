@@ -13,8 +13,8 @@ FIXTURE = "/run/radarr-fixture"
 REPAIRR = "http://127.0.0.1:8790"
 
 
-def collect_queue():
-    output = machine.succeed("repairr --collect-radarr --config /etc/repairr.json")
+def collect_queue(vm):
+    output = vm.succeed("repairr --collect-radarr --config /etc/repairr.json")
     reports = [json.loads(line) for line in output.splitlines()]
     ids = sorted(report["queue_id"] for report in reports)
     assert ids == [COMPLETED_QUEUE_ID, UNFINISHED_QUEUE_ID], reports
@@ -68,7 +68,7 @@ def confirm_from_history(vm, job_url):
 
 machine.start()
 machine.wait_for_open_port(7878)
-reports = collect_queue()
+reports = collect_queue(machine)
 
 with subtest("the planner can select the completed movie for manual import"):
     case = reports[COMPLETED_QUEUE_ID]["case"]
@@ -134,6 +134,18 @@ with subtest("a same-size replacement blocks the saved plan before Radarr receiv
     assert submitted_imports(replaced) == []
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
     replaced.shutdown()
+
+with subtest("the scan and pre-import recheck both report a missing movie"):
+    missingMovie.start()
+    plan_with_repairs_paused(missingMovie)
+    missingMovie.succeed(f"touch {FIXTURE}/missing-movie")
+    report = collect_queue(missingMovie)[COMPLETED_QUEUE_ID]
+    assert report["findings"] == ["missing_movie_id"] and "case" not in report, report
+
+    missingMovie.succeed(f"rm {PAUSE}")
+    wait_for_movie(missingMovie, "blocked", "missing_movie_id")
+    assert submitted_imports(missingMovie) == []
+    missingMovie.shutdown()
 
 with subtest("a lost command response is recovered from history after restart"):
     lostResponse.start()

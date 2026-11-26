@@ -30,16 +30,9 @@ type collectionInput struct {
 	probes     controller.MediaProbeReader
 	playlists  mkvmerge.Identifier
 	dvds       dvdvideo.Identifier
-
-	// Probing records missing results when collection times out. Canceling
-	// the whole scan stops probing with an error instead.
-	scanCtx context.Context
 }
 
 func collectMovie(ctx context.Context, in collectionInput) (addFact, error) {
-	if in.movieID <= 0 {
-		return nil, nil
-	}
 	movie, err := in.radarr.ReadMovie(ctx, in.movieID)
 	if err != nil {
 		return nil, fmt.Errorf("read Radarr movie: %w", err)
@@ -48,9 +41,6 @@ func collectMovie(ctx context.Context, in collectionInput) (addFact, error) {
 }
 
 func collectHistory(ctx context.Context, in collectionInput) (addFact, error) {
-	if in.movieID <= 0 {
-		return nil, nil
-	}
 	history, err := in.radarr.ReadHistory(ctx, in.movieID, in.downloadID)
 	if err != nil {
 		return nil, fmt.Errorf("read Radarr history: %w", err)
@@ -59,7 +49,7 @@ func collectHistory(ctx context.Context, in collectionInput) (addFact, error) {
 }
 
 func collectFileProbes(ctx context.Context, in collectionInput) (addFact, error) {
-	probes, err := in.source.ProbeFiles(in.scanCtx, ctx, in.probes)
+	probes, err := in.source.ProbeFiles(ctx, in.probes)
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +58,6 @@ func collectFileProbes(ctx context.Context, in collectionInput) (addFact, error)
 
 // Ask Radarr about the folder we inspected, which may contain files extracted from an archive.
 func collectImportOptions(ctx context.Context, in collectionInput) (addFact, error) {
-	if in.movieID <= 0 {
-		return nil, nil
-	}
 	imports, err := in.radarr.ReadManualImports(ctx, controller.RadarrManualImportQuery{
 		MovieID: in.movieID, DownloadID: in.downloadID, Folder: in.source.Root,
 	})

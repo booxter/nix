@@ -33,10 +33,9 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 		observed.Complete = append(observed.Complete, jobs.QueueKey{QueueID: entry.QueueID, DownloadID: entry.DownloadID})
 	}
 	// Cleanup and case collection share the same queue snapshot for this poll.
-	clients := collectionClients{adapter.Client, adapter.Inspector}
 	for _, entry := range queue {
 		observed.Queue = append(observed.Queue, jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID})
-		result := collection.Inspect(ctx, clients, entry)
+		result := adapter.Inspector.Inspect(ctx, entry)
 		if err := ctx.Err(); err != nil {
 			return repair.Observation{}, err
 		}

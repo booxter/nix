@@ -8,25 +8,19 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/pipeline"
 )
 
-type collectionClients struct {
-	controller.RadarrQueueReader
-	*Inspector
-}
-
-// Every scan follows these steps. CollectQueue supplies its clients when the scan starts.
+// Queue scans and pre-import rechecks use the same steps for each entry.
 var collection = pipeline.CollectionFlow[
-	collectionClients,
+	*Inspector,
 	controller.RadarrQueueRecord,
 	resolvedEntry,
 	casebuilder.Assembly,
 ]{
-	Discover: collectionClients.ReadQueue,
-	Resolve:  collectionClients.resolve,
+	Resolve: (*Inspector).resolve,
 	Validators: pipeline.Validators[resolvedEntry]{
 		resolvedEntry.queueFindings,
 		resolvedEntry.sourceFindings,
 	},
-	Collect: collectionClients.collect,
+	Collect: (*Inspector).collect,
 }
 
 type CollectionResult = pipeline.Result[casebuilder.Assembly]
@@ -39,5 +33,5 @@ func CollectQueue(
 	inspector *Inspector,
 	report func(controller.RadarrQueueRecord, CollectionResult) error,
 ) error {
-	return collection.Run(ctx, collectionClients{queue, inspector}, report)
+	return pipeline.ScanQueue(ctx, queue.ReadQueue, inspector.Inspect, report)
 }
