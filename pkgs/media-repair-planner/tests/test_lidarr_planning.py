@@ -193,11 +193,10 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
     model = ScriptedModel([json.dumps(model_decision_value())])
     case = repair_case()
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(case)
+    decision = await LidarrPlanner(model).plan(case)
 
-    assert outcome.decision == expected
-    assert outcome.attempts == 1
-    assert not outcome.used_fallback
+    assert decision == expected
+    assert len(model.calls) == 1
     assert model.calls[0][3] == CASE_ID
 
 
@@ -217,11 +216,10 @@ async def test_lidarr_planner_returns_partial_mapping() -> None:
         ]
     )
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert outcome.decision == expected
-    assert outcome.attempts == 1
-    assert not outcome.used_fallback
+    assert decision == expected
+    assert len(model.calls) == 1
 
 
 async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None:
@@ -235,11 +233,11 @@ async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None
     )
     model = ScriptedModel([invalid, invalid])
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert outcome.used_fallback
-    assert outcome.decision.root.action == "no_repair"
-    assert outcome.decision.root.case_id.root == CASE_ID
+    assert decision.root.action == "no_repair"
+    assert decision.root.case_id.root == CASE_ID
+    assert len(model.calls) == 2
     assert len(model.calls[1][4]) == 2
     assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][4])
 
@@ -276,9 +274,10 @@ async def test_lidarr_planner_logs_bounded_fallback_evidence(
 async def test_lidarr_planner_corrects_malformed_output() -> None:
     model = ScriptedModel(["not JSON", json.dumps(model_decision_value())])
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert not outcome.used_fallback
+    assert decision == repair_decision()
+    assert len(model.calls) == 2
     assert model.calls[1][4][0].code == ViolationCode.INVALID_JSON
 
 

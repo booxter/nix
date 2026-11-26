@@ -44,14 +44,6 @@ class PlanningContext:
     user_content: str
 
 
-@dataclass(frozen=True)
-class PlanningOutcome[DecisionT]:
-    decision: DecisionT
-    attempts: int
-    used_fallback: bool
-    attempt_errors: tuple[str, ...] = ()
-
-
 def _attempt_error(attempt: int, detail: str) -> str:
     normalized = " ".join(detail.split())
     return f"attempt {attempt}: {normalized}"[:ATTEMPT_ERROR_LIMIT]
@@ -80,7 +72,7 @@ class ContractPlanner[CaseT, DecisionT]:
         context: PlanningContext | None = None,
     ) -> DecisionT:
         try:
-            outcome = await self.plan_with_outcome(repair_case, context)
+            return await self._plan(repair_case, context)
         except DecisionModelUnavailable as error:
             LOGGER.warning(
                 "planner unavailable case_id=%s error=%s",
@@ -88,42 +80,31 @@ class ContractPlanner[CaseT, DecisionT]:
                 error,
             )
             raise
-        if outcome.used_fallback:
-            LOGGER.warning(
-                "planner used fallback case_id=%s attempts=%d errors=%s",
-                self._case_id(repair_case),
-                outcome.attempts,
-                "; ".join(outcome.attempt_errors),
-            )
-        return outcome.decision
 
-    async def plan_with_outcome(
+    async def _plan(
         self,
         repair_case: CaseT,
-        context: PlanningContext | None = None,
-    ) -> PlanningOutcome[DecisionT]:
+        context: PlanningContext | None,
+    ) -> DecisionT:
         validated_case = self._roundtrip_case(repair_case)
         correction: tuple[DecisionViolation, ...] = ()
         attempt_errors: list[str] = []
         for attempt in range(1, ATTEMPT_LIMIT + 1):
             decision, correction, error = await self._attempt(validated_case, correction, context)
             if decision is not None:
-                return PlanningOutcome(
-                    decision=decision,
-                    attempts=attempt,
-                    used_fallback=False,
-                    attempt_errors=tuple(attempt_errors),
-                )
+                return decision
             if error is None:
                 raise RuntimeError("planning attempt failed without an error")
             attempt_errors.append(_attempt_error(attempt, error))
 
-        return PlanningOutcome(
-            decision=self._fallback(validated_case),
-            attempts=ATTEMPT_LIMIT,
-            used_fallback=True,
-            attempt_errors=tuple(attempt_errors),
+        decision = self._fallback(validated_case)
+        LOGGER.warning(
+            "planner used fallback case_id=%s attempts=%d errors=%s",
+            self._case_id(repair_case),
+            ATTEMPT_LIMIT,
+            "; ".join(attempt_errors),
         )
+        return decision
 
     async def _attempt(
         self,
