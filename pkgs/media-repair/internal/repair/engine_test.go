@@ -74,18 +74,25 @@ func TestUncertainSubmissionIsReconciledAfterRestartWithoutResubmission(t *testi
 		t.Fatal("lost submission error")
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	// A new engine has no in-memory knowledge of whether POST reached Servarr.
-	restarted := &Engine{Store: engine.Store, Adapter: adapter, Now: engine.Now}
-	if err := restarted.Run(ctx, job.ID); err != nil {
+	// Servarr can remove the queue entry before Repairr sees import history.
+	if err := engine.Store.ReconcileQueue(ctx, job.Service, nil, engine.Now()); err != nil {
+		t.Fatal(err)
+	}
+	service := &waitingService{fakeAdapter: *adapter}
+	restarted := Scheduler{
+		Store: engine.Store, Name: job.Service, Service: service, Now: engine.Now,
+		Disabled: func() (bool, error) { return true, nil },
+	}
+	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	adapter.status.Receipt = json.RawMessage(`{"file_id":42}`)
-	if err := restarted.Run(ctx, job.ID); err != nil {
+	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Imported)
-	if adapter.submissions != 1 {
+	if service.submissions != 1 {
 		t.Fatal("repeated uncertain POST")
 	}
 }

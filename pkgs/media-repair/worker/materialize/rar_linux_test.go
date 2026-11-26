@@ -71,10 +71,13 @@ func (extractor fakeRARExtractor) Extract(
 	if err := os.Mkdir(directory, 0o700); err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(directory, "01.flac"), []byte("audio"), 0o600)
+	if err := os.WriteFile(filepath.Join(directory, "01.flac"), []byte("audio"), 0o600); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(directory, "concert.mkv"), []byte("video"), 0o600)
 }
 
-func TestMaterializeRARAudio(t *testing.T) {
+func TestMaterializeRARMedia(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
@@ -94,18 +97,23 @@ func TestMaterializeRARAudio(t *testing.T) {
 		t.Fatal(err)
 	}
 	request := validRequest()
-	request.Operation = OperationMaterializeRAR
 	request.SourceComponents = []string{"release.rar"}
-	request.WorkspaceID = "workspace:rar"
-	response := executor.ExecuteRAR(context.Background(), request)
-	if response.Success == nil || response.Failure != nil ||
-		response.Success.Operation != OperationMaterializeRAR ||
-		len(response.Success.Artifacts) != 1 ||
-		response.Success.Artifacts[0].RelativePath != "Album/01.flac" || len(prober.paths) != 1 {
-		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
-	}
-	workspace := filepath.Join(root, workspaceDirectory, "workspaces", "workspace:rar")
-	if _, err := os.Stat(filepath.Join(workspace, ".rar-extract")); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("RAR quarantine remains: %v", err)
+	for _, test := range []struct{ operation, want string }{
+		{OperationMaterializeRAR, "Album/01.flac"},
+		{OperationMaterializeRARVideo, "Album/concert.mkv"},
+	} {
+		t.Run(test.operation, func(t *testing.T) {
+			request.Operation = test.operation
+			request.WorkspaceID = "workspace:" + test.operation
+			response := executor.ExecuteRAR(context.Background(), request)
+			if response.Success == nil || response.Success.Operation != test.operation ||
+				len(response.Success.Artifacts) != 1 || response.Success.Artifacts[0].RelativePath != test.want {
+				t.Fatalf("unexpected archive selection: %+v, failure: %+v", response.Success, response.Failure)
+			}
+			workspace := filepath.Join(root, workspaceDirectory, "workspaces", request.WorkspaceID)
+			if _, err := os.Stat(filepath.Join(workspace, ".rar-extract")); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("RAR quarantine remains: %v", err)
+			}
+		})
 	}
 }

@@ -97,7 +97,11 @@ func TestDVDPublishesOneMovieWithChaptersInSelectedOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	chapters := output.Evidence.Chapters
+	evidence, err := prober.Probe(ctx, output.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chapters := evidence.Chapters
 	if filepath.Dir(output.Path) != release || len(chapters) != 2 || chapters[1].StartTimeMS == nil ||
 		*chapters[1].StartTimeMS < 3_800 || *chapters[1].StartTimeMS > 4_200 {
 		t.Fatalf("wrong output directory or playback order: %s, %+v", output.Path, chapters)
@@ -111,7 +115,11 @@ func TestDVDPublishesOneMovieWithChaptersInSelectedOrder(t *testing.T) {
 	request.DVD.Titles = []decisionpolicy.AuthorizedDVD{first}
 	request.DVD.MovieRuntimeMS = first.ExpectedDurationMS
 	output, err = worker.Transform(ctx, request)
-	if err != nil || filepath.Dir(output.Path) != filepath.Join(release, "Disc 1") || len(output.Evidence.Chapters) > 1 {
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence, err = prober.Probe(ctx, output.Path)
+	if err != nil || filepath.Dir(output.Path) != filepath.Join(release, "Disc 1") || len(evidence.Chapters) > 1 {
 		t.Fatalf("single-title output: %+v, %v", output, err)
 	}
 	for _, title := range []decisionpolicy.AuthorizedDVD{first, second} {
