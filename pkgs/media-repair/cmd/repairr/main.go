@@ -81,7 +81,6 @@ func run(ctx context.Context, configuration config) error {
 	if err != nil {
 		return err
 	}
-	defer media.Close()
 
 	radarr, lidarr, err := configuration.services(httpClient, planner, media)
 	if err != nil {

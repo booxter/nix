@@ -9,72 +9,31 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-// MaxProbeRequestBytes accommodates the schema's maximum 32 path components
-// of 255 bytes each plus the fixed request fields and JSON encoding overhead.
+// MaxProbeRequestBytes accommodates 32 path components and JSON overhead.
 const MaxProbeRequestBytes = 16 << 10
-
-// MaxProbeResponseBytes matches the maximum metadata document accepted from
-// ffprobe; responses never contain media payloads.
 const MaxProbeResponseBytes = 4 << 20
-
 const MaxBlurayIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxBlurayIdentifyResponseBytes = 256 << 10
 const MaxDVDIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxDVDIdentifyResponseBytes = 256 << 10
-const MaxDVDRemuxRequestBytes = 16 << 20
-const MaxDVDRemuxResponseBytes = MaxProbeResponseBytes
-const MaxDVDPublishRequestBytes = MaxDVDRemuxRequestBytes + MaxProbeRequestBytes
-const MaxDVDPublishResponseBytes = MaxProbeRequestBytes
-const MaxBlurayRemuxRequestBytes = 16 << 20
-const MaxBlurayRemuxResponseBytes = MaxProbeResponseBytes
-const MaxBlurayPublishRequestBytes = MaxBlurayRemuxRequestBytes + MaxProbeRequestBytes
-const MaxBlurayPublishResponseBytes = MaxProbeRequestBytes
-
-// MaxJoinRequestBytes bounds the worst-case 128-part request with 32 full-size
-// path components per part.
-const MaxJoinRequestBytes = 2 << 20
-
-// MaxJoinResponseBytes accommodates the same bounded media evidence returned
-// by a probe response.
-const MaxJoinResponseBytes = 4 << 20
 
 const (
 	wireTypesSchemaFile                  = "v1/wire-types.schema.json"
 	wireTypesSchemaLocation              = "file:///radarr-repair-worker/contracts/v1/wire-types.schema.json"
+	mediaEvidenceSchemaFile              = "v1/media-evidence.schema.json"
+	mediaEvidenceSchemaLocation          = "file:///radarr-repair-worker/contracts/v1/media-evidence.schema.json"
+	probeRequestSchemaFile               = "v1/probe-request.schema.json"
+	probeRequestSchemaLocation           = "file:///radarr-repair-worker/contracts/v1/probe-request.schema.json"
+	probeResponseSchemaFile              = "v1/probe-response.schema.json"
+	probeResponseSchemaLocation          = "file:///radarr-repair-worker/contracts/v1/probe-response.schema.json"
 	dvdIdentifyRequestSchemaFile         = "v1/dvd-identify-request.schema.json"
 	dvdIdentifyRequestSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/dvd-identify-request.schema.json"
 	dvdIdentifyResponseSchemaFile        = "v1/dvd-identify-response.schema.json"
 	dvdIdentifyResponseSchemaLocation    = "file:///radarr-repair-worker/contracts/v1/dvd-identify-response.schema.json"
-	dvdRemuxRequestSchemaFile            = "v1/dvd-remux-request.schema.json"
-	dvdRemuxRequestSchemaLocation        = "file:///radarr-repair-worker/contracts/v1/dvd-remux-request.schema.json"
-	dvdRemuxResponseSchemaFile           = "v1/dvd-remux-response.schema.json"
-	dvdRemuxResponseSchemaLocation       = "file:///radarr-repair-worker/contracts/v1/dvd-remux-response.schema.json"
-	dvdPublishRequestSchemaFile          = "v1/dvd-publish-request.schema.json"
-	dvdPublishRequestSchemaLocation      = "file:///radarr-repair-worker/contracts/v1/dvd-publish-request.schema.json"
-	dvdPublishResponseSchemaFile         = "v1/dvd-publish-response.schema.json"
-	dvdPublishResponseSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/dvd-publish-response.schema.json"
 	blurayIdentifyRequestSchemaFile      = "v1/bluray-identify-request.schema.json"
 	blurayIdentifyRequestSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/bluray-identify-request.schema.json"
 	blurayIdentifyResponseSchemaFile     = "v1/bluray-identify-response.schema.json"
 	blurayIdentifyResponseSchemaLocation = "file:///radarr-repair-worker/contracts/v1/bluray-identify-response.schema.json"
-	blurayRemuxRequestSchemaFile         = "v1/bluray-remux-request.schema.json"
-	blurayRemuxRequestSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/bluray-remux-request.schema.json"
-	blurayRemuxResponseSchemaFile        = "v1/bluray-remux-response.schema.json"
-	blurayRemuxResponseSchemaLocation    = "file:///radarr-repair-worker/contracts/v1/bluray-remux-response.schema.json"
-	blurayPublishRequestSchemaFile       = "v1/bluray-publish-request.schema.json"
-	blurayPublishRequestSchemaLocation   = "file:///radarr-repair-worker/contracts/v1/bluray-publish-request.schema.json"
-	blurayPublishResponseSchemaFile      = "v1/bluray-publish-response.schema.json"
-	blurayPublishResponseSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/bluray-publish-response.schema.json"
-	probeRequestSchemaFile               = "v1/probe-request.schema.json"
-	probeRequestSchemaLocation           = "file:///radarr-repair-worker/contracts/v1/probe-request.schema.json"
-	mediaEvidenceSchemaFile              = "v1/media-evidence.schema.json"
-	mediaEvidenceSchemaLocation          = "file:///radarr-repair-worker/contracts/v1/media-evidence.schema.json"
-	probeResponseSchemaFile              = "v1/probe-response.schema.json"
-	probeResponseSchemaLocation          = "file:///radarr-repair-worker/contracts/v1/probe-response.schema.json"
-	joinRequestSchemaFile                = "v1/join-request.schema.json"
-	joinRequestSchemaLocation            = "file:///radarr-repair-worker/contracts/v1/join-request.schema.json"
-	joinResponseSchemaFile               = "v1/join-response.schema.json"
-	joinResponseSchemaLocation           = "file:///radarr-repair-worker/contracts/v1/join-response.schema.json"
 )
 
 //go:embed v1/*.schema.json
@@ -85,145 +44,29 @@ type schemaResource struct {
 	location string
 }
 
-var (
-	wireTypesSchemaResource = schemaResource{
-		fileName: wireTypesSchemaFile,
-		location: wireTypesSchemaLocation,
-	}
-	mediaEvidenceSchemaResource = schemaResource{
-		fileName: mediaEvidenceSchemaFile,
-		location: mediaEvidenceSchemaLocation,
-	}
-	blurayRemuxRequestSchemaResource = schemaResource{
-		fileName: blurayRemuxRequestSchemaFile,
-		location: blurayRemuxRequestSchemaLocation,
-	}
-	dvdRemuxRequestSchemaResource = schemaResource{
-		fileName: dvdRemuxRequestSchemaFile,
-		location: dvdRemuxRequestSchemaLocation,
-	}
-)
+var wireTypesSchemaResource = schemaResource{wireTypesSchemaFile, wireTypesSchemaLocation}
+var mediaEvidenceSchemaResource = schemaResource{mediaEvidenceSchemaFile, mediaEvidenceSchemaLocation}
 
 var probeRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		probeRequestSchemaFile,
-		probeRequestSchemaLocation,
-		wireTypesSchemaResource,
-	)
+	return compileSchema(probeRequestSchemaFile, probeRequestSchemaLocation, wireTypesSchemaResource)
 })
-
-var dvdIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		dvdIdentifyRequestSchemaFile, dvdIdentifyRequestSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var dvdIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		dvdIdentifyResponseSchemaFile, dvdIdentifyResponseSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var dvdRemuxRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(dvdRemuxRequestSchemaFile, dvdRemuxRequestSchemaLocation,
-		wireTypesSchemaResource)
-})
-
-var dvdRemuxResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(dvdRemuxResponseSchemaFile, dvdRemuxResponseSchemaLocation,
-		wireTypesSchemaResource, mediaEvidenceSchemaResource)
-})
-
-var dvdPublishRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(dvdPublishRequestSchemaFile, dvdPublishRequestSchemaLocation,
-		wireTypesSchemaResource, dvdRemuxRequestSchemaResource)
-})
-
-var dvdPublishResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(dvdPublishResponseSchemaFile, dvdPublishResponseSchemaLocation,
-		wireTypesSchemaResource)
-})
-
-var blurayIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayIdentifyRequestSchemaFile,
-		blurayIdentifyRequestSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var blurayIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayIdentifyResponseSchemaFile,
-		blurayIdentifyResponseSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var blurayRemuxRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayRemuxRequestSchemaFile,
-		blurayRemuxRequestSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var blurayRemuxResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayRemuxResponseSchemaFile,
-		blurayRemuxResponseSchemaLocation,
-		wireTypesSchemaResource,
-		mediaEvidenceSchemaResource,
-	)
-})
-
-var blurayPublishRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayPublishRequestSchemaFile, blurayPublishRequestSchemaLocation,
-		wireTypesSchemaResource, blurayRemuxRequestSchemaResource,
-	)
-})
-
-var blurayPublishResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		blurayPublishResponseSchemaFile, blurayPublishResponseSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
 var probeResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		probeResponseSchemaFile,
-		probeResponseSchemaLocation,
-		wireTypesSchemaResource,
-		mediaEvidenceSchemaResource,
-	)
+	return compileSchema(probeResponseSchemaFile, probeResponseSchemaLocation, wireTypesSchemaResource, mediaEvidenceSchemaResource)
+})
+var dvdIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdIdentifyRequestSchemaFile, dvdIdentifyRequestSchemaLocation, wireTypesSchemaResource)
+})
+var dvdIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdIdentifyResponseSchemaFile, dvdIdentifyResponseSchemaLocation, wireTypesSchemaResource)
+})
+var blurayIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(blurayIdentifyRequestSchemaFile, blurayIdentifyRequestSchemaLocation, wireTypesSchemaResource)
+})
+var blurayIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(blurayIdentifyResponseSchemaFile, blurayIdentifyResponseSchemaLocation, wireTypesSchemaResource)
 })
 
-var joinRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		joinRequestSchemaFile,
-		joinRequestSchemaLocation,
-		wireTypesSchemaResource,
-	)
-})
-
-var joinResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(
-		joinResponseSchemaFile,
-		joinResponseSchemaLocation,
-		wireTypesSchemaResource,
-		mediaEvidenceSchemaResource,
-	)
-})
-
-func compileSchema(
-	fileName string,
-	location string,
-	references ...schemaResource,
-) (*jsonschema.Schema, error) {
+func compileSchema(fileName, location string, references ...schemaResource) (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
 	compiler.DefaultDraft(jsonschema.Draft2020)
 	compiler.AssertFormat()
@@ -242,7 +85,7 @@ func compileSchema(
 	return schema, nil
 }
 
-func registerSchema(compiler *jsonschema.Compiler, fileName string, location string) error {
+func registerSchema(compiler *jsonschema.Compiler, fileName, location string) error {
 	data, err := schemaFiles.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("read embedded schema %s: %w", fileName, err)

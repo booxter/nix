@@ -13,89 +13,15 @@ type DVDIdentifyResponseV1 struct {
 	Failure *DVDIdentifyFailureV1
 }
 
-type DVDRemuxRequestV1 = RadarrRepairWorkerDVDRemuxStageRequest
-type DVDRemuxSourceV1 = Navigation
-type DVDRemuxTrackV1 = DVDRemuxRequestSchema
-type DVDRemuxSuccessV1 = DVDRemuxSuccessResponseV1Class
-type DVDRemuxFailureV1 = DVDRemuxFailureResponseV1Class
-type DVDPublishRequestV1 = RadarrRepairWorkerDVDRemuxPublishRequest
-type DVDPublishSuccessV1 = DVDPublishSuccessResponseV1Class
-type DVDPublishFailureV1 = DVDPublishFailureResponseV1Class
-
-type DVDRemuxResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *DVDRemuxSuccessV1
-	Failure *DVDRemuxFailureV1
-}
-
-func (response DVDRemuxResponseV1) RequestID() string {
-	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
-		func(success *DVDRemuxSuccessV1) string { return success.RequestID },
-		func(failure *DVDRemuxFailureV1) string { return failure.RequestID })
-}
-
-type DVDPublishResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *DVDPublishSuccessV1
-	Failure *DVDPublishFailureV1
-}
-
-func (response DVDPublishResponseV1) RequestID() string {
-	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
-		func(success *DVDPublishSuccessV1) string { return success.RequestID },
-		func(failure *DVDPublishFailureV1) string { return failure.RequestID })
-}
-
 func (response DVDIdentifyResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind, response.Success, response.Failure,
+	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
 		func(success *DVDIdentifySuccessV1) string { return success.RequestID },
-		func(failure *DVDIdentifyFailureV1) string { return failure.RequestID },
-	)
+		func(failure *DVDIdentifyFailureV1) string { return failure.RequestID })
 }
 
 type BlurayIdentifyRequestV1 = RadarrRepairWorkerBluRayIdentificationRequest
 type BlurayIdentifySuccessV1 = BlurayIdentifySuccessResponseV1Class
 type BlurayIdentifyFailureV1 = BlurayIdentifyFailureResponseV1Class
-
-type BlurayRemuxRequestV1 = RadarrRepairWorkerBluRayRemuxStageRequest
-type BlurayRemuxSourceV1 = BlurayRemuxRequestSchema
-type BlurayRemuxTrackV1 = ExpectedTrackElement
-type BlurayRemuxSuccessV1 = BlurayRemuxSuccessResponseV1Class
-type BlurayRemuxFailureV1 = BlurayRemuxFailureResponseV1Class
-type BlurayPublishRequestV1 = RadarrRepairWorkerBluRayRemuxPublishRequest
-type BlurayPublishSuccessV1 = BlurayPublishSuccessResponseV1Class
-type BlurayPublishFailureV1 = BlurayPublishFailureResponseV1Class
-
-type BlurayPublishResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *BlurayPublishSuccessV1
-	Failure *BlurayPublishFailureV1
-}
-
-func (response BlurayPublishResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind, response.Success, response.Failure,
-		func(success *BlurayPublishSuccessV1) string { return success.RequestID },
-		func(failure *BlurayPublishFailureV1) string { return failure.RequestID },
-	)
-}
-
-type BlurayRemuxResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *BlurayRemuxSuccessV1
-	Failure *BlurayRemuxFailureV1
-}
-
-func (response BlurayRemuxResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		func(success *BlurayRemuxSuccessV1) string { return success.RequestID },
-		func(failure *BlurayRemuxFailureV1) string { return failure.RequestID },
-	)
-}
 
 type BlurayIdentifyResponseV1 struct {
 	Kind    ProbeResponseKind
@@ -104,13 +30,9 @@ type BlurayIdentifyResponseV1 struct {
 }
 
 func (response BlurayIdentifyResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
+	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
 		func(success *BlurayIdentifySuccessV1) string { return success.RequestID },
-		func(failure *BlurayIdentifyFailureV1) string { return failure.RequestID },
-	)
+		func(failure *BlurayIdentifyFailureV1) string { return failure.RequestID })
 }
 
 type ProbeRequestV1 = RadarrRepairWorkerProbeRequestVersion1
@@ -121,8 +43,6 @@ type Reason = ProbeFailureResponseV1Reason
 type ProbeFailureResponseV1Status = BlurayIdentifyFailureResponseV1Status
 type ProbeSuccessResponseV1Status = BlurayIdentifySuccessResponseV1Status
 
-const Failed ProbeFailureResponseV1Status = "failed"
-
 const (
 	FileUnavailable     Reason = "file_unavailable"
 	FingerprintMismatch Reason = "fingerprint_mismatch"
@@ -130,7 +50,6 @@ const (
 	InvalidOutput       Reason = "invalid_output"
 	InvalidPath         Reason = "invalid_path"
 	NotRegularFile      Reason = "not_regular_file"
-	ProbeError          Reason = "probe_error"
 	Timeout             Reason = "timeout"
 	UnknownRoot         Reason = "unknown_root"
 )
@@ -149,91 +68,14 @@ type ProbeResponseV1 struct {
 }
 
 func (response ProbeResponseV1) RequestID() string {
-	switch response.Kind {
-	case ProbeResponseSucceeded:
-		if response.Success != nil {
-			return response.Success.RequestID
-		}
-	case ProbeResponseFailed:
-		if response.Failure != nil {
-			return response.Failure.RequestID
-		}
-	}
-	return ""
-}
-
-type StageJoinPartV1 = JoinRequestSchema
-
-type StageJoinResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *StageJoinSuccessResponseV1
-	Failure *StageJoinFailureResponseV1
-}
-
-func (response StageJoinResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		func(success *StageJoinSuccessResponseV1) string { return success.RequestID },
-		func(failure *StageJoinFailureResponseV1) string { return failure.RequestID },
-	)
-}
-
-type PublishResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *PublishSuccessResponseV1
-	Failure *PublishFailureResponseV1
-}
-
-func (response PublishResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		func(success *PublishSuccessResponseV1) string { return success.RequestID },
-		func(failure *PublishFailureResponseV1) string { return failure.RequestID },
-	)
-}
-
-type DiscardResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *DiscardSuccessResponseV1
-	Failure *DiscardFailureResponseV1
-}
-
-func (response DiscardResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		func(success *DiscardSuccessResponseV1) string { return success.RequestID },
-		func(failure *DiscardFailureResponseV1) string { return failure.RequestID },
-	)
-}
-
-type InspectJoinResponseV1 struct {
-	Kind    ProbeResponseKind
-	Success *InspectJoinSuccessResponseV1
-	Failure *InspectJoinFailureResponseV1
-}
-
-func (response InspectJoinResponseV1) RequestID() string {
-	return operationResponseRequestID(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		func(success *InspectJoinSuccessResponseV1) string { return success.RequestID },
-		func(failure *InspectJoinFailureResponseV1) string { return failure.RequestID },
-	)
+	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
+		func(success *ProbeSuccessResponseV1) string { return success.RequestID },
+		func(failure *ProbeFailureResponseV1) string { return failure.RequestID })
 }
 
 func operationResponseRequestID[S any, F any](
-	kind ProbeResponseKind,
-	success *S,
-	failure *F,
-	successRequestID func(*S) string,
-	failureRequestID func(*F) string,
+	kind ProbeResponseKind, success *S, failure *F,
+	successRequestID func(*S) string, failureRequestID func(*F) string,
 ) string {
 	switch kind {
 	case ProbeResponseSucceeded:
@@ -248,7 +90,9 @@ func operationResponseRequestID[S any, F any](
 	return ""
 }
 
-type StageJoinFailureReason = StageJoinFailureResponseV1Reason
+// These types describe internal staging results, not worker wire operations.
+type StageJoinFailureReason string
+type OutputContainer string
 
 const (
 	StageJoinUnknownRoot         StageJoinFailureReason = "unknown_root"
@@ -267,38 +111,4 @@ const (
 	OutputContainerAVI           OutputContainer        = "avi"
 	OutputContainerMKV           OutputContainer        = "mkv"
 	OutputContainerMP4           OutputContainer        = "mp4"
-)
-
-type PublishFailureReason = PublishFailureResponseV1Reason
-
-const (
-	PublishArtifactNotFound            PublishFailureReason = "artifact_not_found"
-	PublishArtifactFingerprintMismatch PublishFailureReason = "artifact_fingerprint_mismatch"
-	PublishArtifactNotStaged           PublishFailureReason = "artifact_not_staged"
-	PublishDestinationExists           PublishFailureReason = "destination_exists"
-	PublishErrorReason                 PublishFailureReason = "publish_error"
-	PublishInternalError               PublishFailureReason = "internal_error"
-)
-
-type DiscardFailureReason = DiscardFailureResponseV1Reason
-
-const (
-	DiscardArtifactNotFound            DiscardFailureReason = "artifact_not_found"
-	DiscardArtifactFingerprintMismatch DiscardFailureReason = "artifact_fingerprint_mismatch"
-	DiscardArtifactPublished           DiscardFailureReason = "artifact_published"
-	DiscardErrorReason                 DiscardFailureReason = "discard_error"
-	DiscardInternalError               DiscardFailureReason = "internal_error"
-)
-
-type InspectJoinState = State
-type InspectJoinFailureReason = InspectJoinFailureResponseV1Reason
-
-const (
-	InspectJoinAbsent    InspectJoinState         = "absent"
-	InspectJoinPrepared  InspectJoinState         = "prepared"
-	InspectJoinStaged    InspectJoinState         = "staged"
-	InspectJoinPublished InspectJoinState         = "published"
-	InspectJoinDiscarded InspectJoinState         = "discarded"
-	InspectJoinFailed    InspectJoinState         = "failed"
-	InspectJoinInternal  InspectJoinFailureReason = "internal_error"
 )

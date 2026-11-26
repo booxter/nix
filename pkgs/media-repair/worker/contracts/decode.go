@@ -48,44 +48,6 @@ func DecodeDVDIdentifyResponse(data []byte) (DVDIdentifyResponseV1, error) {
 	return DVDIdentifyResponseV1{Kind: kind, Success: success, Failure: failure}, nil
 }
 
-func DecodeDVDRemuxRequest(data []byte) (DVDRemuxRequestV1, error) {
-	var request DVDRemuxRequestV1
-	if err := validateAndDecode(data, MaxDVDRemuxRequestBytes, "DVD remux request",
-		dvdRemuxRequestSchema, &request); err != nil {
-		return DVDRemuxRequestV1{}, err
-	}
-	return request, nil
-}
-
-func DecodeDVDRemuxResponse(data []byte) (DVDRemuxResponseV1, error) {
-	kind, success, failure, err := decodeOperationResponse[DVDRemuxSuccessV1, DVDRemuxFailureV1](
-		data, "DVD remux response", "stage_dvd_remux_v1", MaxDVDRemuxResponseBytes,
-		dvdRemuxResponseSchema)
-	if err != nil {
-		return DVDRemuxResponseV1{}, err
-	}
-	return DVDRemuxResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodeDVDPublishRequest(data []byte) (DVDPublishRequestV1, error) {
-	var request DVDPublishRequestV1
-	if err := validateAndDecode(data, MaxDVDPublishRequestBytes, "DVD publish request",
-		dvdPublishRequestSchema, &request); err != nil {
-		return DVDPublishRequestV1{}, err
-	}
-	return request, nil
-}
-
-func DecodeDVDPublishResponse(data []byte) (DVDPublishResponseV1, error) {
-	kind, success, failure, err := decodeOperationResponse[DVDPublishSuccessV1, DVDPublishFailureV1](
-		data, "DVD publish response", "publish_dvd_remux_v1", MaxDVDPublishResponseBytes,
-		dvdPublishResponseSchema)
-	if err != nil {
-		return DVDPublishResponseV1{}, err
-	}
-	return DVDPublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
 func DecodeBlurayIdentifyRequest(data []byte) (BlurayIdentifyRequestV1, error) {
 	var request BlurayIdentifyRequestV1
 	if err := validateAndDecode(
@@ -115,62 +77,6 @@ func DecodeBlurayIdentifyResponse(data []byte) (BlurayIdentifyResponseV1, error)
 		return BlurayIdentifyResponseV1{}, err
 	}
 	return BlurayIdentifyResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodeBlurayRemuxRequest(data []byte) (BlurayRemuxRequestV1, error) {
-	var request BlurayRemuxRequestV1
-	if err := validateAndDecode(
-		data,
-		MaxBlurayRemuxRequestBytes,
-		"Blu-ray remux request",
-		blurayRemuxRequestSchema,
-		&request,
-	); err != nil {
-		return BlurayRemuxRequestV1{}, err
-	}
-	return request, nil
-}
-
-func DecodeBlurayRemuxResponse(data []byte) (BlurayRemuxResponseV1, error) {
-	kind, success, failure, err := decodeOperationResponse[
-		BlurayRemuxSuccessV1,
-		BlurayRemuxFailureV1,
-	](
-		data,
-		"Blu-ray remux response",
-		"stage_bluray_remux_v1",
-		MaxBlurayRemuxResponseBytes,
-		blurayRemuxResponseSchema,
-	)
-	if err != nil {
-		return BlurayRemuxResponseV1{}, err
-	}
-	return BlurayRemuxResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodeBlurayPublishRequest(data []byte) (BlurayPublishRequestV1, error) {
-	var request BlurayPublishRequestV1
-	if err := validateAndDecode(
-		data, MaxBlurayPublishRequestBytes, "Blu-ray publish request",
-		blurayPublishRequestSchema, &request,
-	); err != nil {
-		return BlurayPublishRequestV1{}, err
-	}
-	return request, nil
-}
-
-func DecodeBlurayPublishResponse(data []byte) (BlurayPublishResponseV1, error) {
-	kind, success, failure, err := decodeOperationResponse[
-		BlurayPublishSuccessV1,
-		BlurayPublishFailureV1,
-	](
-		data, "Blu-ray publish response", "publish_bluray_remux_v1",
-		MaxBlurayPublishResponseBytes, blurayPublishResponseSchema,
-	)
-	if err != nil {
-		return BlurayPublishResponseV1{}, err
-	}
-	return BlurayPublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
 }
 
 func DecodeProbeResponse(data []byte) (ProbeResponseV1, error) {
@@ -206,100 +112,6 @@ func DecodeProbeResponse(data []byte) (ProbeResponseV1, error) {
 	default:
 		return ProbeResponseV1{}, fmt.Errorf("unsupported probe response status %q", envelope.Status)
 	}
-}
-
-func DecodeStageJoinRequest(data []byte) (StageJoinRequestV1, error) {
-	return decodeJoinRequest[StageJoinRequestV1](data, "stage join request", "stage_join_v1")
-}
-
-func DecodePublishRequest(data []byte) (PublishRequestV1, error) {
-	return decodeJoinRequest[PublishRequestV1](data, "publish request", "publish_v1")
-}
-
-func DecodeDiscardRequest(data []byte) (DiscardRequestV1, error) {
-	return decodeJoinRequest[DiscardRequestV1](data, "discard request", "discard_v1")
-}
-
-func DecodeInspectJoinRequest(data []byte) (InspectJoinRequestV1, error) {
-	return decodeJoinRequest[InspectJoinRequestV1](data, "inspect join request", "inspect_join_v1")
-}
-
-func DecodeStageJoinResponse(data []byte) (StageJoinResponseV1, error) {
-	kind, success, failure, err := decodeJoinResponse[
-		StageJoinSuccessResponseV1,
-		StageJoinFailureResponseV1,
-	](data, "stage join response", "stage_join_v1")
-	if err != nil {
-		return StageJoinResponseV1{}, err
-	}
-	return StageJoinResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodePublishResponse(data []byte) (PublishResponseV1, error) {
-	kind, success, failure, err := decodeJoinResponse[
-		PublishSuccessResponseV1,
-		PublishFailureResponseV1,
-	](data, "publish response", "publish_v1")
-	if err != nil {
-		return PublishResponseV1{}, err
-	}
-	return PublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodeDiscardResponse(data []byte) (DiscardResponseV1, error) {
-	kind, success, failure, err := decodeJoinResponse[
-		DiscardSuccessResponseV1,
-		DiscardFailureResponseV1,
-	](data, "discard response", "discard_v1")
-	if err != nil {
-		return DiscardResponseV1{}, err
-	}
-	return DiscardResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func DecodeInspectJoinResponse(data []byte) (InspectJoinResponseV1, error) {
-	kind, success, failure, err := decodeJoinResponse[
-		InspectJoinSuccessResponseV1,
-		InspectJoinFailureResponseV1,
-	](data, "inspect join response", "inspect_join_v1")
-	if err != nil {
-		return InspectJoinResponseV1{}, err
-	}
-	return InspectJoinResponseV1{Kind: kind, Success: success, Failure: failure}, nil
-}
-
-func decodeJoinRequest[T any](data []byte, name string, operation string) (T, error) {
-	var request T
-	if err := validateMessage(data, MaxJoinRequestBytes, name, joinRequestSchema); err != nil {
-		return request, err
-	}
-	var envelope struct {
-		Operation string `json:"operation"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
-		return request, fmt.Errorf("decode %s operation: %w", name, err)
-	}
-	if envelope.Operation != operation {
-		return request, fmt.Errorf(
-			"decode %s: received operation %q",
-			name,
-			envelope.Operation,
-		)
-	}
-	if err := decodeStrict(data, name, &request); err != nil {
-		return request, err
-	}
-	return request, nil
-}
-
-func decodeJoinResponse[S any, F any](
-	data []byte,
-	name string,
-	operation string,
-) (ProbeResponseKind, *S, *F, error) {
-	return decodeOperationResponse[S, F](
-		data, name, operation, MaxJoinResponseBytes, joinResponseSchema,
-	)
 }
 
 func decodeOperationResponse[S any, F any](
