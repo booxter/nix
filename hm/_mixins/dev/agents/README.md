@@ -30,6 +30,5 @@ loads `/etc/codex/config.toml`. Claude uses Home Manager's `mcpServers` option
 without secrets, or loads a runtime plugin from `/etc/claude-code` with
 secrets. Both clients retain writable authentication state.
 
-Home Manager's mutable settings option is backported on 26.05.
-Activation reapplies declared keys and preserves undeclared keys, including the
-model chosen in Claude.
+Home Manager reapplies declared Claude settings and preserves undeclared keys,
+including the model chosen in Claude.
