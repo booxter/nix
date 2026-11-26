@@ -3,7 +3,6 @@ package repairui
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"golang.org/x/net/html"
 )
 
 const releaseEvidence = `{"case":{"releases":[{"release_id":12,"title":"Album","format":"CD","labels":["Label"]}],"capabilities":[{"action":"import_missing_tracks_v1","capability_id":"cap","release_id":12}]}}`
@@ -70,28 +70,77 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	}
 }
 
-func inboxRequest(t *testing.T, fixture *fixture, job jobs.Job, values url.Values) *http.Request {
+func attributes(node *html.Node) map[string]string {
+	values := make(map[string]string, len(node.Attr))
+	for _, attr := range node.Attr {
+		values[attr.Key] = attr.Val
+	}
+	return values
+}
+
+// These fixtures offer a single release alongside a disabled placeholder.
+func releaseFields(form *html.Node) url.Values {
+	values := url.Values{}
+	for field := range form.Descendants() {
+		attrs := attributes(field)
+		name := attrs["name"]
+		if _, disabled := attrs["disabled"]; disabled || name == "" {
+			continue
+		}
+		switch field.Data {
+		case "input":
+			if attrs["type"] == "hidden" {
+				values.Set(name, attrs["value"])
+			}
+		case "select":
+			for option := range field.ChildNodes() {
+				choice := attributes(option)
+				if _, disabled := choice["disabled"]; option.Data == "option" && !disabled {
+					values.Set(name, choice["value"])
+					break
+				}
+			}
+		}
+	}
+	return values
+}
+
+func inboxRequest(t *testing.T, fixture *fixture, selectionOverride string) *http.Request {
 	t.Helper()
 	page := fixture.get("/")
 	if page.Code != http.StatusOK {
 		t.Fatalf("inbox: %d %s", page.Code, page.Body.String())
 	}
-	cookie := page.Result().Cookies()[0]
-	values.Set("csrf_token", cookie.Value)
-	values.Set("revision", fmt.Sprint(job.Revision))
-	values.Set("fingerprint", job.SourceFingerprint)
-	request := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/jobs/%d/respond", job.ID), strings.NewReader(values.Encode()))
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	request.Header.Set("Origin", "https://repairr.home.arpa")
-	request.AddCookie(cookie)
-	return request
+	document, err := html.Parse(page.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for form := range document.Descendants() {
+		formAttrs := attributes(form)
+		if form.Data != "form" || !strings.EqualFold(formAttrs["method"], "post") {
+			continue
+		}
+		values := releaseFields(form)
+		if selectionOverride != "" {
+			values.Set("selection", selectionOverride)
+		}
+		request := httptest.NewRequest(http.MethodPost, formAttrs["action"], strings.NewReader(values.Encode()))
+		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		request.Header.Set("Origin", "https://repairr.home.arpa")
+		for _, cookie := range page.Result().Cookies() {
+			request.AddCookie(cookie)
+		}
+		return request
+	}
+	t.Fatal("inbox has no answer form")
+	return nil
 }
 
 func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 	fixture := newFixture(t)
 	job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-	request := inboxRequest(t, fixture, job, url.Values{"selection": {"12"}})
-	duplicate := inboxRequest(t, fixture, job, url.Values{"selection": {"12"}})
+	request := inboxRequest(t, fixture, "")
+	duplicate := inboxRequest(t, fixture, "")
 	response := httptest.NewRecorder()
 	fixture.handler.ServeHTTP(response, request)
 	if response.Code != http.StatusSeeOther || !strings.HasPrefix(response.Header().Get("Location"), "/?submitted=") {
@@ -117,12 +166,12 @@ func TestInboxRejectsUnavailableChoicesAndStaleEvidence(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 			fixture := newFixture(t)
 			job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-			choice := "12"
+			choice := ""
 			want := http.StatusConflict
 			if scenario == "unknown choice" {
 				choice, want = "999", http.StatusBadRequest
 			}
-			request := inboxRequest(t, fixture, job, url.Values{"selection": {choice}})
+			request := inboxRequest(t, fixture, choice)
 			if scenario == "new evidence" {
 				job.SourceFingerprint = "case-b"
 				if _, err := fixture.store.Observe(context.Background(), job); err != nil {
