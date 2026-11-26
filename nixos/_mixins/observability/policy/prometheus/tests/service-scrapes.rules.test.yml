@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="home-assistant",instance="home",service="home",scrape_profile="application",availability="always"}'
+      - series: 'up{job="jellyfin",instance="beast",service="jellyfin",scrape_profile="application",availability="always"}'
         values: "0x12"
     alert_rule_test:
       - eval_time: 5m
@@ -15,15 +15,15 @@ tests:
           - exp_labels:
               alertname: ApplicationMetricsScrapeDown
               category: service
-              instance: home
-              job: home-assistant
-              service: home
+              instance: beast
+              job: jellyfin
+              service: jellyfin
               scrape_profile: application
               availability: always
               severity: warning
             exp_annotations:
-              summary: "Application metrics scrape down: home-assistant on home"
-              description: "Prometheus has been unable to scrape the home-assistant metrics endpoint on home for 5 minutes."
+              summary: "Application metrics scrape down: jellyfin on beast"
+              description: "Prometheus has been unable to scrape the jellyfin metrics endpoint on beast for 5 minutes."
 
   - interval: 30s
     input_series:

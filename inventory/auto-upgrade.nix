@@ -83,13 +83,6 @@
         calendar = null;
       };
     };
-    home = {
-      switch = "04:10";
-      reboot = {
-        mode = "with-upgrade";
-        calendar = null;
-      };
-    };
     nv = {
       switch = "05:15";
       reboot = {

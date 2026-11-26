@@ -127,23 +127,6 @@
       declaration.internal.clientAuth = "mtls";
     };
   };
-  home = {
-    home = {
-      declaration = {
-        displayName = "Home Assistant";
-        health.frontend = { };
-        metrics.default = {
-          endpointName = "home-assistant";
-          jobName = "home-assistant";
-          port = 9346;
-        };
-        dashboard = {
-          icon = "sh:home-assistant";
-          section = "infrastructure";
-        };
-      };
-    };
-  };
   org = {
     paperless = {
       declaration = {

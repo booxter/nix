@@ -6,11 +6,11 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+      - series: 'nixos_systemd_unit_expected_active{instance="fana",name="grafana.service",scrape_profile="node"}'
         values: "1x12"
-      - series: 'node_systemd_unit_state{instance="home",name="home-assistant.service",scrape_profile="node",state="active"}'
+      - series: 'node_systemd_unit_state{instance="fana",name="grafana.service",scrape_profile="node",state="active"}'
         values: "1x12"
-      - series: 'up{instance="home",scrape_profile="node"}'
+      - series: 'up{instance="fana",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -18,11 +18,11 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+      - series: 'nixos_systemd_unit_expected_active{instance="fana",name="grafana.service",scrape_profile="node"}'
         values: "1x12"
-      - series: 'node_systemd_unit_state{instance="home",name="home-assistant.service",scrape_profile="node",state="active"}'
+      - series: 'node_systemd_unit_state{instance="fana",name="grafana.service",scrape_profile="node",state="active"}'
         values: "0x12"
-      - series: 'up{instance="home",scrape_profile="node"}'
+      - series: 'up{instance="fana",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 4m30s
@@ -33,13 +33,13 @@ tests:
           - exp_labels:
               alertname: ExpectedSystemdUnitInactive
               category: systemd
-              instance: home
-              name: home-assistant.service
+              instance: fana
+              name: grafana.service
               scrape_profile: node
               severity: warning
             exp_annotations:
-              summary: "Systemd unit inactive: home-assistant.service on home"
-              description: "NixOS expects home-assistant.service to remain active on home, but systemd has not reported it active for 5 minutes."
+              summary: "Systemd unit inactive: grafana.service on fana"
+              description: "NixOS expects grafana.service to remain active on fana, but systemd has not reported it active for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -64,9 +64,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+      - series: 'nixos_systemd_unit_expected_active{instance="fana",name="grafana.service",scrape_profile="node"}'
         values: "1x12"
-      - series: 'up{instance="home",scrape_profile="node"}'
+      - series: 'up{instance="fana",scrape_profile="node"}'
         values: "0x12"
     alert_rule_test:
       - eval_time: 5m
