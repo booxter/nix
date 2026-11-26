@@ -139,6 +139,7 @@
         hostName: hostModule:
         let
           on2611 = builtins.elem hostName [
+            "beast"
             "builder1"
             "builder2"
             "builder3"
