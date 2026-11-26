@@ -7,12 +7,14 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 VIDEO = Path(sys.argv[1])
-DOWNLOAD_SIZE = VIDEO.stat().st_size
+# Radarr and SABnzbd retain their download metadata if the source disappears.
+VIDEO_SIZES = {path: path.stat().st_size for path in sorted(VIDEO.parent.glob("*.mkv"))}
+DOWNLOAD_SIZE = sum(VIDEO_SIZES.values())
 FIXTURE = Path("/run/radarr-fixture")
 COMPLETED_ID = "SABnzbd_nzo_complete"
 UNFINISHED_ID = "SABnzbd_nzo_incomplete"
 MOVIE = {"id": 42, "tmdbId": 123456, "title": "Example Movie", "year": 2026}
-IMPORTS: list[dict[str, object]] = []
+IMPORTS: list[dict] = []
 QUEUED = {"id": 1, "name": "ManualImport", "status": "queued"}
 
 
@@ -72,7 +74,7 @@ def completed_download() -> dict[str, object]:
         "nzo_id": COMPLETED_ID,
         "name": VIDEO.parent.name,
         "status": "Completed",
-        "storage": str(VIDEO),
+        "storage": str(VIDEO if len(VIDEO_SIZES) == 1 else VIDEO.parent),
         "loaded": False,
         "time_added": 1788549636,
         "completed": 1788552041,
@@ -81,20 +83,20 @@ def completed_download() -> dict[str, object]:
     }
 
 
-def manual_import() -> dict[str, object]:
+def manual_import(path: Path, size: int) -> dict[str, object]:
     return {
         "movie": {"id": 42},
         "downloadId": COMPLETED_ID,
-        "path": str(VIDEO),
-        "relativePath": VIDEO.name,
-        "size": DOWNLOAD_SIZE,
+        "path": str(path),
+        "relativePath": path.name,
+        "size": size,
         "languages": [],
         "rejections": [],
         "quality": {"quality": {"id": 1, "name": "HDTV-720p"}},
     }
 
 
-def import_record(history_id: int, file_id: int) -> dict[str, object]:
+def import_record(history_id: int, file_id: int, dropped_path: str) -> dict[str, object]:
     return {
         "id": history_id,
         "eventType": "downloadFolderImported",
@@ -104,7 +106,7 @@ def import_record(history_id: int, file_id: int) -> dict[str, object]:
         "downloadId": COMPLETED_ID,
         "data": {
             "fileId": str(file_id),
-            "droppedPath": str(VIDEO),
+            "droppedPath": dropped_path,
             "importedPath": "/movies/Example Movie (2026)/movie.mkv",
         },
     }
@@ -113,11 +115,12 @@ def import_record(history_id: int, file_id: int) -> dict[str, object]:
 def import_history() -> dict[str, object]:
     # The older entry matches the movie, download and path, so only the
     # history baseline recorded before submission rules it out.
-    records = [import_record(50, 7)]
+    records = [import_record(50, 7, str(VIDEO))]
     if IMPORTS:
         (FIXTURE / "history-checked").touch()
         if (FIXTURE / "publish-import").exists():
-            records.append(import_record(51, 8))
+            (selected,) = IMPORTS[-1]["files"]
+            records.append(import_record(51, 8, selected["path"]))
     return page(*records)
 
 
@@ -146,7 +149,7 @@ def response_for(path: str, query: dict[str, list[str]]) -> object | None:
     ):
         return import_history()
     if path == "/api/v3/manualimport" and query.get("movieId") == ["42"]:
-        return [manual_import()]
+        return [manual_import(path, size) for path, size in VIDEO_SIZES.items()]
 
     if path == "/api" and query.get("nzo_ids") == [COMPLETED_ID]:
         return {"history": {"slots": [completed_download()]}}

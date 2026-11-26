@@ -5,6 +5,9 @@ import json
 import re
 import shlex
 from pathlib import PurePosixPath
+from urllib.parse import urlencode
+
+from lxml.html import fromstring
 
 COMPLETED_QUEUE_ID = 101
 UNFINISHED_QUEUE_ID = 102
@@ -40,15 +43,49 @@ def wait_for_movie(vm, state, text):
     return wait_for_text(vm, f"{REPAIRR}/activity?service=radarr&state={state}", text)
 
 
+def wait_for_job(vm, listing_url, title):
+    link = wait_for_text(vm, listing_url, title)
+    match = re.search(r'href="(/jobs/\d+)"', link)
+    assert match, link
+    return REPAIRR + match[1]
+
+
 def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
     vm.wait_for_open_port(7878)
     vm.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     vm.succeed(f"touch /run/pause-{service}-repairs", "systemctl start repairr.service")
     # Follow the same job across restarts and after it leaves the queue.
-    link = wait_for_text(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
-    match = re.search(r'href="(/jobs/\d+)"', link)
-    assert match, link
-    return REPAIRR + match[1]
+    return wait_for_job(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
+
+
+def answer_file_question(vm, job_url, filename):
+    # Use the form and cookie from the restarted daemon, just as an operator
+    # would after reopening the job. Hidden fields identify this case revision.
+    cookies = "/tmp/repairr-operator.cookies"
+    page = vm.succeed(f"curl -fsS -c {cookies} {job_url}")
+    (form,) = fromstring(page, base_url=job_url).forms
+    choices = {
+        option.text_content(): option.get("value")
+        for option in form.xpath('.//select[@name="selection"]/option')
+        if option.get("value")
+    }
+    assert set(choices) == {"movie.mkv", "theatrical.mkv"}, choices
+    form.fields["selection"] = choices[filename]
+    vm.succeed(
+        shlex.join(
+            [
+                "curl",
+                "-fsS",
+                "-b",
+                cookies,
+                "-H",
+                "Sec-Fetch-Site: same-origin",
+                "--data",
+                urlencode(form.form_values()),
+                form.action,
+            ]
+        )
+    )
 
 
 def submitted_imports(vm):
@@ -62,11 +99,11 @@ def import_receipt(vm, job_url):
     return json.loads(html.unescape(raw_receipt))
 
 
-def confirm_from_history(vm, job_url):
+def confirm_from_history(vm, job_url, expected_path=VIDEO):
     vm.succeed(f"touch {FIXTURE}/publish-import")
     receipt = import_receipt(vm, job_url)
     assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
-    assert receipt["DroppedPath"] == VIDEO and receipt["MovieID"] == 42, receipt
+    assert receipt["DroppedPath"] == expected_path and receipt["MovieID"] == 42, receipt
     assert receipt["DownloadID"] == "SABnzbd_nzo_complete", receipt
     assert len(submitted_imports(vm)) == 1
 
@@ -179,6 +216,30 @@ with subtest("a lost command response is recovered from history after restart"):
     assert len(submitted_imports(lostResponse)) == 1
     confirm_from_history(lostResponse, job)
     lostResponse.shutdown()
+
+with subtest("an operator can reopen a movie after restart and choose the file to import"):
+    fileChoice.start()
+    fileChoice.wait_for_open_port(7878)
+    fileChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
+    fileChoice.succeed("systemctl start repairr.service")
+
+    job = wait_for_job(fileChoice, f"{REPAIRR}/radarr", "Example Movie")
+    question = "Which file should be used for this movie?"
+    wait_for_text(fileChoice, job, question)
+    assert submitted_imports(fileChoice) == []
+
+    fileChoice.succeed("systemctl restart repairr.service")
+    wait_for_text(fileChoice, job, question)
+    assert submitted_imports(fileChoice) == []
+    answer_file_question(fileChoice, job, "theatrical.mkv")
+
+    chosen = str(PurePosixPath(VIDEO).with_name("theatrical.mkv"))
+    wait_for_text(fileChoice, job, "Import command #1")
+    (command,) = submitted_imports(fileChoice)
+    (selected,) = command["files"]
+    assert selected["path"] == chosen, command
+    confirm_from_history(fileChoice, job, chosen)
+    fileChoice.shutdown()
 
 
 with subtest("Lidarr confirms the album only after both selected tracks appear in history"):

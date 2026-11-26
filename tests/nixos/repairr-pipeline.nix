@@ -94,8 +94,15 @@ pkgs.testers.runNixOSTest {
     replaced = movieNode;
     missingMovie = movieNode;
     lostResponse = movieNode;
+    fileChoice = {
+      imports = [ movieNode ];
+      systemd.services.repairr-fixture.preStart = lib.mkAfter ''
+        cp ${video} ${release}/theatrical.mkv
+      '';
+    };
     albumImport = albumNode;
     unfinishedAlbum = albumNode;
   };
+  extraPythonPackages = ps: [ ps.lxml ];
   testScript = builtins.readFile ./repairr-pipeline/test.py;
 }

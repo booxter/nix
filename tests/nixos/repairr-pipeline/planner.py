@@ -6,9 +6,24 @@ from http.server import BaseHTTPRequestHandler
 from socketserver import UnixStreamServer
 
 
-def movie_plan(case):
+def movie_plan(request):
+    case = request["repair_case"]
     action = "manual_import_file_v1"
-    (offer,) = [option for option in case["capabilities"] if option["action"] == action]
+    offers = [option for option in case["capabilities"] if option["action"] == action]
+    if len(offers) > 1:
+        # Repairr sends the selected file ID in the operator's guidance.
+        guidance = request.get("operator_guidance", "")
+        if not guidance:
+            return {
+                "action": "no_repair",
+                "reason": "ambiguous_file_selection",
+                "missing_evidence": ["file_selection"],
+                "evidence_refs": [offer["file_id"] for offer in offers],
+                "explanation": "Both videos can be imported. Choose the movie file.",
+            }
+        offers = [offer for offer in offers if offer["file_id"] in guidance]
+
+    (offer,) = offers
     return {
         "action": action,
         "capability_id": offer["capability_id"],
@@ -18,7 +33,8 @@ def movie_plan(case):
     }
 
 
-def album_plan(case):
+def album_plan(request):
+    case = request["repair_case"]
     (offer,) = case["capabilities"]
     mappings = []
     for file in case["assessments"]:
@@ -44,12 +60,12 @@ class Planner(BaseHTTPRequestHandler):
         if plan is None:
             self.send_error(404)
             return
-        request = self.rfile.read(int(self.headers["Content-Length"]))
-        case = json.loads(request)["repair_case"]
+        request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        case = request["repair_case"]
         decision = {
             "schema_version": case["schema_version"],
             "case_id": case["case_id"],
-            **plan(case),
+            **plan(request),
         }
         data = json.dumps(decision).encode()
         self.send_response(200)
