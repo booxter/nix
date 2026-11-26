@@ -115,6 +115,7 @@ in
         '';
         approvals_reviewer = "auto_review";
         desktop.keepRemoteControlAwakeWhilePluggedIn = true;
+        features.prevent_idle_sleep = true;
         mcp_servers = mcps.settings;
         mcp_oauth_credentials_store = "file";
         notice.fast_default_opt_out = true;
