@@ -48,18 +48,11 @@ func (failure *IneligibleError) Error() string {
 	return fmt.Sprintf("Radarr queue record %d is ineligible: %v", failure.QueueID, failure.Reasons)
 }
 
-type assembleFunc func(casebuilder.Observation) (casebuilder.Assembly, error)
-
 type Inspector struct {
 	dependencies Dependencies
-	assemble     assembleFunc
 }
 
 func New(dependencies Dependencies) (*Inspector, error) {
-	return newInspector(dependencies, casebuilder.Assemble)
-}
-
-func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector, error) {
 	switch {
 	case dependencies.Clock == nil:
 		return nil, fmt.Errorf("inspection clock is required")
@@ -73,10 +66,8 @@ func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector,
 		return nil, fmt.Errorf("media probe reader is required")
 	case dependencies.CollectionTimeout <= 0:
 		return nil, fmt.Errorf("collection timeout must be positive")
-	case assemble == nil:
-		return nil, fmt.Errorf("case assembler is required")
 	default:
-		return &Inspector{dependencies: dependencies, assemble: assemble}, nil
+		return &Inspector{dependencies: dependencies}, nil
 	}
 }
 
@@ -84,7 +75,7 @@ func (inspector *Inspector) Inspect(
 	ctx context.Context,
 	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
-	if inspector == nil || inspector.assemble == nil {
+	if inspector == nil || inspector.dependencies.Clock == nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inspector is not configured")
 	}
 	if err := ctx.Err(); err != nil {
@@ -211,7 +202,7 @@ func (inspector *Inspector) inspectRecord(
 		}
 	}
 
-	assembly, err := inspector.assemble(casebuilder.Observation{
+	assembly, err := casebuilder.Assemble(casebuilder.Observation{
 		ObservedAt:      inspector.dependencies.Clock.Now(),
 		Correlation:     correlation,
 		Movie:           movie,

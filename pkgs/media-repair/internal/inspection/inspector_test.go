@@ -20,36 +20,20 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
-	var observed casebuilder.Observation
-	wantAssembly := casebuilder.Assembly{}
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		observed = observation
-		return wantAssembly, nil
-	})
+	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
+	assembly, err := inspector.Inspect(context.Background(), fixture.record)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(assembly, wantAssembly) {
-		t.Fatalf("assembly = %#v, want %#v", assembly, wantAssembly)
-	}
-	if !observed.ObservedAt.Equal(fixture.clock.now) ||
-		!reflect.DeepEqual(observed.Movie, &fixture.radarr.movie) ||
-		!reflect.DeepEqual(observed.History, fixture.radarr.history) ||
-		!reflect.DeepEqual(observed.ManualImports, fixture.radarr.imports) ||
-		!reflect.DeepEqual(observed.Inventory, fixture.files.inventory) {
-		t.Fatalf("assembled observation is incomplete: %#v", observed)
-	}
-	if !observed.Correlation.Eligible() ||
-		observed.Correlation.DownloadRoot != "/downloads/Example_Movie" {
-		t.Fatalf("correlation = %#v", observed.Correlation)
-	}
-	if len(observed.Probes) != 2 || observed.Probes[0].FileID != "file:one" ||
-		observed.Probes[1].FileID != "file:two" {
-		t.Fatalf("probes = %#v", observed.Probes)
+	result := assembly.Request
+	if !result.ObservedAt.Equal(fixture.clock.now) || result.Radarr.Movie == nil ||
+		result.Radarr.Movie.Title != fixture.radarr.movie.Title || result.Radarr.Failure.Title != fixture.record.Title ||
+		len(result.Radarr.History) != 1 || len(result.Radarr.ManualImports) != 1 ||
+		len(result.Files) != 2 || result.Files[0].FileID != "file:one" ||
+		result.Files[1].FileID != "file:two" || result.Files[0].Probe.Status != contracts.Ok ||
+		result.Files[1].Probe.Status != contracts.Ok {
+		t.Fatalf("assembled case = %#v", result)
 	}
 	if fixture.transmission.downloadID != strings.ToUpper(testDownloadHash) {
 		t.Fatalf("Transmission download ID = %q", fixture.transmission.downloadID)
@@ -74,13 +58,12 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 
 	fixture := inspectionFixture()
 	const downloadID = "998d2f1f-cb49-4714-be1e-875f03e1f3c2"
-	record := fixture.radarr.records[0]
+	record := fixture.record
 	record.DownloadID = downloadID
 	record.Protocol = "usenet"
 	record.DownloadClient = "SABnzbd"
 	record.OutputPath = "/downloads/Robin.Hood"
 	record.SizeBytes = 32_596_371_005
-	fixture.radarr.records = []controller.RadarrQueueRecord{record}
 	fixture.radarr.history = []controller.RadarrHistoryEvent{{
 		ID: 501, MovieID: 42, DownloadID: downloadID, EventType: "grabbed",
 		OccurredAt:  fixture.clock.now.Add(-time.Hour),
@@ -118,8 +101,8 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 		controller.MediaProbeUnsupportedFormat,
 	)
 
-	inspector := newTestInspector(t, fixture.dependencies(), casebuilder.Assemble)
-	assembly, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
+	inspector := newTestInspector(t, fixture.dependencies())
+	assembly, err := inspector.Inspect(context.Background(), record)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,6 +129,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
+	fixture.radarr.imports = nil
 	materializedFile := controller.InventoryFile{
 		ID: "artifact:movie", PathComponents: []string{"Movie", "movie.mkv"},
 		Fingerprint: controller.FileFingerprint{Device: 2, Inode: 3, SizeBytes: 100, MTimeNS: 4},
@@ -166,24 +150,19 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 			},
 			Probes: []casebuilder.FileProbe{{
 				FileID:  materializedFile.ID,
-				Outcome: controller.SuccessfulMediaProbe(controller.ProbeEvidence{}),
+				Outcome: controller.SuccessfulMediaProbe(testProbeEvidence(100)),
 			}},
 		},
 	}
-	var observed casebuilder.Observation
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		observed = observation
-		return casebuilder.Assembly{}, nil
-	})
+	inspector := newTestInspector(t, fixture.dependencies())
 
-	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
+	assembly, err := inspector.Inspect(context.Background(), fixture.record)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if fixture.archives.calls != 1 || !reflect.DeepEqual(observed.Inventory, fixture.archives.source.Inventory) ||
-		!reflect.DeepEqual(observed.Probes, fixture.archives.source.Probes) {
-		t.Fatalf("archive source was not used: %#v", observed)
+	if len(assembly.Request.Files) != 1 || assembly.Request.Files[0].FileID != string(materializedFile.ID) ||
+		assembly.Request.Files[0].Probe.Status != contracts.Ok {
+		t.Fatalf("archive source was not used: %#v", assembly.Request.Files)
 	}
 	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root ||
 		len(fixture.probes.targets) != 0 {
@@ -191,77 +170,38 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 }
 
-func TestInspectUsesTheSuppliedRecord(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	other := fixture.radarr.records[0]
-	other.Title = "Different record with the same queue ID"
-	fixture.radarr.records = append([]controller.RadarrQueueRecord{other}, fixture.radarr.records...)
-	var selectedTitle string
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		selectedTitle = observation.Correlation.Radarr.Title
-		return casebuilder.Assembly{}, nil
-	})
-
-	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[1]); err != nil {
-		t.Fatal(err)
-	}
-	if selectedTitle != fixture.radarr.records[1].Title {
-		t.Fatalf("selected title = %q", selectedTitle)
-	}
-	if fixture.radarr.queueReads != 0 {
-		t.Fatalf("unexpected queue reads = %d", fixture.radarr.queueReads)
-	}
-}
-
 func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
-	fixture.radarr.records[0].MovieID = nil
-	fixture.radarr.records[0].ErrorMessage = "A download client diagnostic"
-	fixture.radarr.records[0].StatusMessages = nil
+	fixture.record.MovieID = nil
+	fixture.record.ErrorMessage = "A download client diagnostic"
+	fixture.record.StatusMessages = nil
 	fixture.radarr.recoveredMovieID = 42
 	fixture.radarr.recoveredMovieFound = true
-	var observed casebuilder.Observation
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		observed = observation
-		return casebuilder.Assembly{}, nil
-	})
+	inspector := newTestInspector(t, fixture.dependencies())
 
-	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
+	assembly, err := inspector.Inspect(context.Background(), fixture.record)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if observed.Movie == nil || observed.Movie.ID != 42 ||
-		len(observed.History) != 1 || len(observed.ManualImports) != 1 {
-		t.Fatalf("recovered movie-specific evidence = %#v", observed)
+	radarr := assembly.Request.Radarr
+	if radarr.Movie == nil || radarr.Movie.Title != fixture.radarr.movie.Title ||
+		len(radarr.History) != 1 || len(radarr.ManualImports) != 1 {
+		t.Fatalf("recovered movie-specific evidence = %#v", radarr)
 	}
-	if fixture.radarr.identityReads != 1 || fixture.radarr.movieReads != 1 ||
-		fixture.radarr.historyReads != 1 || fixture.radarr.manualImportReads != 1 {
-		t.Fatalf("movie-specific reads = %d, %d, %d, %d",
-			fixture.radarr.identityReads,
-			fixture.radarr.movieReads,
-			fixture.radarr.historyReads,
-			fixture.radarr.manualImportReads,
-		)
-	}
-	if observed.Correlation.Radarr.ErrorMessage != "A download client diagnostic" ||
-		observed.Correlation.Radarr.StatusMessages != nil {
-		t.Fatalf("queue evidence = %#v", observed.Correlation.Radarr)
+	if radarr.Failure.ErrorMessage != "A download client diagnostic" ||
+		len(radarr.Failure.StatusMessages) != 0 {
+		t.Fatalf("queue evidence = %#v", radarr.Failure)
 	}
 }
 
 func TestInspectRejectsIneligibleRecord(t *testing.T) {
 	t.Parallel()
 	fixture := inspectionFixture()
-	fixture.radarr.records[0].Protocol = "usenet"
-	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-	_, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
+	fixture.record.Protocol = "usenet"
+	inspector := newTestInspector(t, fixture.dependencies())
+	_, err := inspector.Inspect(context.Background(), fixture.record)
 	if err == nil || !strings.Contains(err.Error(), "record 71 is ineligible") {
 		t.Fatalf("error = %v", err)
 	}
@@ -303,13 +243,6 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 			},
 			want: "probe candidate file",
 		},
-		{
-			name: "assembler rejection",
-			mutate: func(fixture *inspectionTestFixture) {
-				fixture.assembleError = errors.New("infeasible")
-			},
-			want: "assemble repair case: infeasible",
-		},
 	}
 
 	for _, test := range tests {
@@ -317,12 +250,8 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 			t.Parallel()
 			fixture := inspectionFixture()
 			test.mutate(&fixture)
-			inspector := newTestInspector(t, fixture.dependencies(), func(
-				casebuilder.Observation,
-			) (casebuilder.Assembly, error) {
-				return casebuilder.Assembly{}, fixture.assembleError
-			})
-			_, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
+			inspector := newTestInspector(t, fixture.dependencies())
+			_, err := inspector.Inspect(context.Background(), fixture.record)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -334,14 +263,11 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
-	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
+	inspector := newTestInspector(t, fixture.dependencies())
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := inspector.Inspect(ctx, fixture.radarr.records[0]); !errors.Is(err, context.Canceled) {
+	if _, err := inspector.Inspect(ctx, fixture.record); !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
-	}
-	if fixture.radarr.queueReads != 0 {
-		t.Fatal("Radarr queue was read after cancellation")
 	}
 }
 
@@ -351,8 +277,18 @@ func TestNewRejectsMissingCollectionTimeout(t *testing.T) {
 	fixture := inspectionFixture()
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 0
-	if _, err := newInspector(dependencies, successfulTestAssembler); err == nil ||
+	if _, err := New(dependencies); err == nil ||
 		!strings.Contains(err.Error(), "collection timeout") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestZeroValueInspectorIsUnconfigured(t *testing.T) {
+	t.Parallel()
+
+	var inspector Inspector
+	if _, err := inspector.Inspect(context.Background(), controller.RadarrQueueRecord{}); err == nil ||
+		!strings.Contains(err.Error(), "inspector is not configured") {
 		t.Fatalf("error = %v", err)
 	}
 }
@@ -369,22 +305,16 @@ func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
 	fixture.probes.outcome = controller.FailedMediaProbe(
 		controller.MediaProbeUnsupportedFormat,
 	)
-	var observed casebuilder.Observation
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		observed = observation
-		return casebuilder.Assembly{}, nil
-	})
-	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
+	inspector := newTestInspector(t, fixture.dependencies())
+	assembly, err := inspector.Inspect(context.Background(), fixture.record)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if len(observed.Probes) != 3 ||
-		observed.Probes[0].Outcome.Status != controller.MediaProbeFailed ||
-		observed.Probes[1].Outcome.Status != controller.MediaProbeFailed ||
-		observed.Probes[2].Outcome.Status != controller.MediaProbeNotCollected ||
-		observed.Probes[2].Outcome.Reason != controller.MediaProbeNotCandidate {
-		t.Fatalf("probe outcomes = %#v", observed.Probes)
+	files := assembly.Request.Files
+	if len(files) != 3 || files[0].Probe.Status != contracts.Failed ||
+		files[1].Probe.Status != contracts.Failed || files[2].Probe.Status != contracts.NotProbed ||
+		files[2].Probe.Reason == nil || string(*files[2].Probe.Reason) != "not_probe_candidate" {
+		t.Fatalf("probe outcomes = %#v", files)
 	}
 	if len(fixture.probes.targets) != 2 {
 		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
@@ -398,23 +328,18 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 	fixture.probes.waitForCancellation = true
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 20 * time.Millisecond
-	var observed casebuilder.Observation
-	inspector := newTestInspector(t, dependencies, func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		observed = observation
-		return casebuilder.Assembly{}, nil
-	})
-	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
+	inspector := newTestInspector(t, dependencies)
+	assembly, err := inspector.Inspect(context.Background(), fixture.record)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if len(observed.Probes) != 2 {
-		t.Fatalf("probe outcomes = %#v", observed.Probes)
+	if len(assembly.Request.Files) != 2 {
+		t.Fatalf("files = %#v", assembly.Request.Files)
 	}
-	for _, probe := range observed.Probes {
-		if probe.Outcome.Status != controller.MediaProbeNotCollected ||
-			probe.Outcome.Reason != controller.MediaProbeCollectionLimit {
-			t.Fatalf("probe outcome = %#v", probe)
+	for _, file := range assembly.Request.Files {
+		if file.Probe.Status != contracts.NotProbed || file.Probe.Reason == nil ||
+			string(*file.Probe.Reason) != "collection_limit" {
+			t.Fatalf("probe outcome = %#v", file.Probe)
 		}
 	}
 	if len(fixture.probes.targets) != 1 {
@@ -423,13 +348,13 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 }
 
 type inspectionTestFixture struct {
-	clock         *fakeClock
-	radarr        *fakeRadarr
-	transmission  *fakeTransmission
-	files         *fakeFiles
-	probes        *fakeProbes
-	assembleError error
-	archives      *fakeArchiveMaterializer
+	record       controller.RadarrQueueRecord
+	clock        *fakeClock
+	radarr       *fakeRadarr
+	transmission *fakeTransmission
+	files        *fakeFiles
+	probes       *fakeProbes
+	archives     *fakeArchiveMaterializer
 }
 
 func inspectionFixture() inspectionTestFixture {
@@ -437,12 +362,16 @@ func inspectionFixture() inspectionTestFixture {
 	first := inventoryFile("file:one", "CD1.mkv", 1_000, 10, 0)
 	second := inventoryFile("file:two", "CD2.mkv", 2_000, 11, 1)
 	return inspectionTestFixture{
-		clock: &fakeClock{now: time.Date(2026, time.September, 7, 18, 0, 0, 0, time.UTC)},
+		record: record,
+		clock:  &fakeClock{now: time.Date(2026, time.September, 7, 18, 0, 0, 0, time.UTC)},
 		radarr: &fakeRadarr{
-			records: []controller.RadarrQueueRecord{record},
-			movie:   controller.RadarrMovie{ID: 42, TMDBID: 1234, Title: "Example Movie", Year: 2024},
-			history: []controller.RadarrHistoryEvent{{ID: 501, MovieID: 42, DownloadID: record.DownloadID}},
-			imports: []controller.RadarrManualImport{{Path: "/downloads/Example_Movie/CD1.mkv"}},
+			movie: controller.RadarrMovie{ID: 42, TMDBID: 1234, Title: "Example Movie", Year: 2024},
+			history: []controller.RadarrHistoryEvent{{
+				ID: 501, MovieID: 42, DownloadID: record.DownloadID,
+				EventType: "grabbed", OccurredAt: time.Date(2026, time.September, 7, 17, 0, 0, 0, time.UTC),
+				SourceTitle: "Example.Movie.2024",
+			}},
+			imports: []controller.RadarrManualImport{{Path: "/downloads/Example_Movie/CD1.mkv", SizeBytes: 1_000}},
 		},
 		transmission: &fakeTransmission{torrent: torrent, found: true},
 		files: &fakeFiles{inventory: controller.FileInventory{
@@ -452,9 +381,7 @@ func inspectionFixture() inspectionTestFixture {
 				{FileID: second.ID, AbsolutePath: "/downloads/Example_Movie/CD2.mkv"},
 			},
 		}},
-		probes: &fakeProbes{evidence: controller.ProbeEvidence{Format: controller.ProbeFormat{
-			Names: []string{"matroska"},
-		}}},
+		probes: &fakeProbes{},
 	}
 }
 
@@ -473,7 +400,6 @@ type fakeArchiveMaterializer struct {
 	source archivematerialize.Source
 	found  bool
 	err    error
-	calls  int
 }
 
 func (materializer *fakeArchiveMaterializer) MaterializeVideo(
@@ -481,7 +407,6 @@ func (materializer *fakeArchiveMaterializer) MaterializeVideo(
 	int64,
 	controller.FileInventory,
 ) (archivematerialize.Source, bool, error) {
-	materializer.calls++
 	return materializer.source, materializer.found, materializer.err
 }
 
@@ -530,17 +455,13 @@ func inventoryFile(
 	}
 }
 
-func newTestInspector(t *testing.T, dependencies Dependencies, assemble assembleFunc) *Inspector {
+func newTestInspector(t *testing.T, dependencies Dependencies) *Inspector {
 	t.Helper()
-	inspector, err := newInspector(dependencies, assemble)
+	inspector, err := New(dependencies)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return inspector
-}
-
-func successfulTestAssembler(casebuilder.Observation) (casebuilder.Assembly, error) {
-	return casebuilder.Assembly{}, nil
 }
 
 type fakeClock struct {
@@ -552,32 +473,19 @@ func (clock *fakeClock) Now() time.Time {
 }
 
 type fakeRadarr struct {
-	records             []controller.RadarrQueueRecord
 	movie               controller.RadarrMovie
 	history             []controller.RadarrHistoryEvent
 	imports             []controller.RadarrManualImport
 	manualImportQuery   controller.RadarrManualImportQuery
 	recoveredMovieID    int64
 	recoveredMovieFound bool
-	queueReads          int
-	movieReads          int
-	historyReads        int
-	manualImportReads   int
-	identityReads       int
 }
 
 func (reader *fakeRadarr) RecoverMovieID(context.Context, string) (int64, bool, error) {
-	reader.identityReads++
 	return reader.recoveredMovieID, reader.recoveredMovieFound, nil
 }
 
-func (reader *fakeRadarr) ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error) {
-	reader.queueReads++
-	return reader.records, nil
-}
-
 func (reader *fakeRadarr) ReadMovie(context.Context, int64) (controller.RadarrMovie, error) {
-	reader.movieReads++
 	return reader.movie, nil
 }
 
@@ -586,7 +494,6 @@ func (reader *fakeRadarr) ReadHistory(
 	int64,
 	string,
 ) ([]controller.RadarrHistoryEvent, error) {
-	reader.historyReads++
 	return reader.history, nil
 }
 
@@ -594,7 +501,6 @@ func (reader *fakeRadarr) ReadManualImports(
 	_ context.Context,
 	query controller.RadarrManualImportQuery,
 ) ([]controller.RadarrManualImport, error) {
-	reader.manualImportReads++
 	reader.manualImportQuery = query
 	return reader.imports, nil
 }
@@ -648,8 +554,23 @@ func (reader *fakeFiles) Inventory(
 	return reader.inventory, nil
 }
 
+func testProbeEvidence(size int64) controller.ProbeEvidence {
+	kind := controller.ProbeStreamVideo
+	codec := "h264"
+	flag := false
+	return controller.ProbeEvidence{
+		Format: controller.ProbeFormat{Names: []string{"matroska"}, SizeBytes: &size},
+		Streams: []controller.ProbeStream{{
+			Kind: &kind, CodecName: &codec,
+			TimeBase: &controller.Rational{Numerator: 1, Denominator: 1000},
+			Disposition: &controller.ProbeDisposition{
+				Default: &flag, Forced: &flag, HearingImpaired: &flag, VisualImpaired: &flag,
+			},
+		}},
+	}
+}
+
 type fakeProbes struct {
-	evidence            controller.ProbeEvidence
 	outcome             controller.MediaProbeOutcome
 	err                 error
 	waitForCancellation bool
@@ -671,5 +592,5 @@ func (reader *fakeProbes) Probe(
 	if reader.outcome.Status != "" {
 		return reader.outcome, nil
 	}
-	return controller.SuccessfulMediaProbe(reader.evidence), nil
+	return controller.SuccessfulMediaProbe(testProbeEvidence(target.Fingerprint.SizeBytes)), nil
 }
