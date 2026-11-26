@@ -2,24 +2,15 @@
   description = "booxter Nix* flake configs";
 
   inputs = {
-    nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
-    nixpkgs-2611.url = "github:NixOS/nixpkgs/release-26.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-26.11";
     # TODO(26.11): Drop when beast's required plugins support Jellyfin 12.
     nixpkgs-jellyfin.url = "https://releases.nixos.org/nixos/26.05/nixos-26.05.15079.0dc498bfe49b/nixexprs.tar.zst";
-    home-manager-2611.url = "github:nix-community/home-manager/master";
-    home-manager-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
-    stylix-2611.url = "github:nix-community/stylix/master";
-    stylix-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
-    stylix-2611.inputs.nur.follows = "nur";
-    # TODO(26.11): Fold this into nixvim when all editor hosts use 26.11.
-    nixvim-2611.url = "github:nix-community/nixvim/main";
-    nixvim-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-2611";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     # TODO(26.11): Drop the fork module once upstream reconciles GUI agents.
     nix-darwin-launchd = {
       url = "github:booxter/nix-darwin/56814e3905de59744e112a2a8ecc7958a2d1edb5";
@@ -27,12 +18,12 @@
     };
 
     nix-darwin-vm.url = "github:booxter/nix-darwin-vm";
-    nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs-2611";
+    nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin-vm.inputs.nix-darwin.follows = "nix-darwin";
 
     # Follow upstream's weekly database snapshots through flake updates.
     nix-index-database.url = "github:nix-community/nix-index-database";
-    nix-index-database.inputs.nixpkgs.follows = "nixpkgs-2611";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -53,17 +44,17 @@
       flake = false;
     };
 
-    home-manager.url = "github:nix-community/home-manager/release-26.05";
+    home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    stylix.url = "github:nix-community/stylix/release-26.05";
+    stylix.url = "github:nix-community/stylix/master";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     stylix.inputs.nur.follows = "nur";
 
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
     spicetify-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    nixvim.url = "github:nix-community/nixvim/nixos-26.05";
+    nixvim.url = "github:nix-community/nixvim/main";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
@@ -105,30 +96,17 @@
         inherit lib;
       };
       sshKeys = fleetInventory.ssh;
-      # TODO(26.11): Remove the split once every release host has migrated.
-      releaseInputs = inputs // {
-        nixpkgs = inputs.nixpkgs-2611;
-        home-manager = inputs.home-manager-2611;
-        nixvim = inputs.nixvim-2611;
-        stylix = inputs.stylix-2611;
-      };
       specialArgsForHost =
         {
           hostName,
           system,
-          hostInputs ? inputs,
         }:
         {
           backupConfigurations = outputs.nixosConfigurations;
           storageConfigurations = outputs.nixosConfigurations;
-          inputs = hostInputs;
-          outputs = outputs // {
-            overlays = import ./overlays {
-              inputs = hostInputs;
-              inherit fleetInventory;
-            };
-          };
           inherit
+            inputs
+            outputs
             hostName
             fleetInventory
             sshKeys
@@ -138,30 +116,16 @@
       mkNixos =
         hostName: hostModule:
         let
-          on2611 = builtins.elem hostName [
-            "beast"
-            "builder1"
-            "builder2"
-            "builder3"
-            "ci"
-            "fana"
-            "frame"
-            "gw"
-            "org"
-            "pki"
-            "srvarr"
-          ];
-          hostInputs = if on2611 then releaseInputs else inputs;
           # Keep node modules and base packages on Proxmox's tested nixpkgs pin.
           nixpkgsInput =
             if builtins.hasAttr hostName fleetInventory.proxmox.nodes then
               inputs.proxmox-nixos.inputs.nixpkgs-stable
             else
-              hostInputs.nixpkgs;
+              inputs.nixpkgs;
         in
         nixpkgsInput.lib.nixosSystem {
           specialArgs = specialArgsForHost {
-            inherit hostName hostInputs;
+            inherit hostName;
             system = "x86_64-linux";
           };
           modules = [
@@ -174,7 +138,6 @@
         inputs.nix-darwin.lib.darwinSystem {
           specialArgs = specialArgsForHost {
             inherit hostName;
-            hostInputs = releaseInputs;
             system = "aarch64-darwin";
           };
           modules = [
@@ -191,8 +154,8 @@
           (
             system:
             import ./per-system.nix {
-              inputs = if system == "aarch64-darwin" then releaseInputs else inputs;
               inherit
+                inputs
                 fleetInventory
                 outputs
                 system
