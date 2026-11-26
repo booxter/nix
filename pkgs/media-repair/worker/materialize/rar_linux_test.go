@@ -87,7 +87,6 @@ func TestMaterializeRARMedia(t *testing.T) {
 	if err := os.WriteFile(archive, []byte("rar"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	probeWorkspaceSetup(t, root)
 	prober := &fakeProber{}
 	executor, err := NewExecutor(
 		&fakeFiles{root: root, archive: archive}, prober, fakeRARExtractor{},
@@ -96,7 +95,7 @@ func TestMaterializeRARMedia(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := validRequest()
+	request := validRequest(t, archive)
 	request.SourceComponents = []string{"release.rar"}
 	for _, test := range []struct{ operation, want string }{
 		{OperationMaterializeRAR, "Album/01.flac"},
