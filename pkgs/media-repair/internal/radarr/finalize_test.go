@@ -30,12 +30,12 @@ func TestFinalizationCandidatesRequireExistingMovieFile(t *testing.T) {
 		}},
 		movie: controller.RadarrMovie{ID: movieID, HasFile: true},
 	}
-	candidates, err := FinalizationCandidates(context.Background(), reader)
+	candidates, err := FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 1 || candidates[0].SubjectID != movieID {
 		t.Fatalf("candidates = %#v, error = %v", candidates, err)
 	}
 	reader.movie.HasFile = false
-	candidates, err = FinalizationCandidates(context.Background(), reader)
+	candidates, err = FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("missing-file candidates = %#v, error = %v", candidates, err)
 	}

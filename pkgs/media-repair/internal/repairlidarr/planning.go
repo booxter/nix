@@ -26,7 +26,7 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 	}
 
 	observed := repair.Observation{}
-	complete, err := lidarr.FinalizationCandidates(ctx, adapter.Client)
+	complete, err := lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
 	if err != nil {
 		return repair.Observation{}, err
 	}

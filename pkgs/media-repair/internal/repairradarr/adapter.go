@@ -11,7 +11,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
-	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
@@ -20,8 +19,7 @@ import (
 )
 
 type Inspector interface {
-	Inspect(context.Context, inspection.Selection) (casebuilder.Assembly, error)
-	InspectAll(context.Context) (inspection.Result, error)
+	Inspect(context.Context, controller.RadarrQueueRecord) (casebuilder.Assembly, error)
 }
 
 type Client interface {
@@ -110,7 +108,7 @@ func (adapter *Adapter) authorize(
 	if index < 0 {
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: "download is no longer queued"}
 	}
-	fresh, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entries[index].ID})
+	fresh, err := adapter.Inspector.Inspect(ctx, entries[index])
 	if err != nil {
 		return fresh, executioncheck.Authorization{}, repair.RetryableRead(err)
 	}

@@ -43,9 +43,8 @@ type LocalSnapshot struct {
 }
 
 type Assembly struct {
-	Request        contracts.RepairCaseV3
-	EncodedRequest []byte
-	LocalSnapshot  LocalSnapshot
+	Request       contracts.RepairCaseV3
+	LocalSnapshot LocalSnapshot
 }
 
 type InvalidEvidenceError struct {
@@ -151,7 +150,7 @@ func Assemble(observation Observation) (Assembly, error) {
 	if err != nil {
 		return Assembly{}, fmt.Errorf("calculate repair case ID: %w", err)
 	}
-	encoded, err := contracts.EncodeCase(request)
+	_, err = contracts.EncodeCase(request)
 	if err != nil {
 		return Assembly{}, &InvalidEvidenceError{
 			Err: fmt.Errorf("encode repair case: %w", err),
@@ -159,8 +158,7 @@ func Assemble(observation Observation) (Assembly, error) {
 	}
 
 	return Assembly{
-		Request:        request,
-		EncodedRequest: encoded,
+		Request: request,
 		LocalSnapshot: LocalSnapshot{
 			CaseID:               request.CaseID,
 			Observation:          observation,

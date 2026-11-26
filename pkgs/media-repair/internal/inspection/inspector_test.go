@@ -12,7 +12,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
-	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 const testDownloadHash = "abcdef0123456789abcdef0123456789abcdef01"
@@ -22,7 +21,7 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 
 	fixture := inspectionFixture()
 	var observed casebuilder.Observation
-	wantAssembly := casebuilder.Assembly{EncodedRequest: []byte("assembled")}
+	wantAssembly := casebuilder.Assembly{}
 	inspector := newTestInspector(t, fixture.dependencies(), func(
 		observation casebuilder.Observation,
 	) (casebuilder.Assembly, error) {
@@ -30,7 +29,7 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 		return wantAssembly, nil
 	})
 
-	assembly, err := inspector.Inspect(context.Background(), Selection{})
+	assembly, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +119,7 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 	)
 
 	inspector := newTestInspector(t, fixture.dependencies(), casebuilder.Assemble)
-	assembly, err := inspector.Inspect(context.Background(), Selection{})
+	assembly, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +133,11 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 		assembly.Request.Files[0].DownloadMembership.SourceIndex != nil {
 		t.Fatalf("file evidence = %#v", assembly.Request.Files)
 	}
-	if _, err := contracts.DecodeCase(assembly.EncodedRequest); err != nil {
+	encoded, err := contracts.EncodeCase(assembly.Request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := contracts.DecodeCase(encoded); err != nil {
 		t.Fatalf("decode assembled case: %v", err)
 	}
 }
@@ -175,7 +178,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 		return casebuilder.Assembly{}, nil
 	})
 
-	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
 		t.Fatal(err)
 	}
 	if fixture.archives.calls != 1 || !reflect.DeepEqual(observed.Inventory, fixture.archives.source.Inventory) ||
@@ -188,151 +191,29 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 }
 
-func TestInspectSelectsAnExplicitEligibleCandidate(t *testing.T) {
+func TestInspectUsesTheSuppliedRecord(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	other := fixture.radarr.records[0]
-	other.ID = 72
+	other.Title = "Different record with the same queue ID"
 	fixture.radarr.records = append([]controller.RadarrQueueRecord{other}, fixture.radarr.records...)
-	var selectedQueueID int64
+	var selectedTitle string
 	inspector := newTestInspector(t, fixture.dependencies(), func(
 		observation casebuilder.Observation,
 	) (casebuilder.Assembly, error) {
-		selectedQueueID = observation.Correlation.Radarr.ID
+		selectedTitle = observation.Correlation.Radarr.Title
 		return casebuilder.Assembly{}, nil
 	})
 
-	if _, err := inspector.Inspect(context.Background(), Selection{QueueID: 71}); err != nil {
+	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[1]); err != nil {
 		t.Fatal(err)
 	}
-	if selectedQueueID != 71 {
-		t.Fatalf("selected queue ID = %d", selectedQueueID)
+	if selectedTitle != fixture.radarr.records[1].Title {
+		t.Fatalf("selected title = %q", selectedTitle)
 	}
-}
-
-func TestInspectAllCollectsEveryEligibleCandidateFromOneQueueRead(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	other := fixture.radarr.records[0]
-	other.ID = 72
-	fixture.radarr.records = append(fixture.radarr.records, other)
-	var selectedQueueIDs []int64
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		selectedQueueIDs = append(selectedQueueIDs, observation.Correlation.Radarr.ID)
-		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
-	})
-
-	result, err := inspector.InspectAll(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	assemblies := result.Assemblies
-	if len(assemblies) != 2 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
-		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
-	}
-	if fixture.radarr.queueReads != 1 {
-		t.Fatalf("Radarr queue reads = %d", fixture.radarr.queueReads)
-	}
-}
-
-func TestInspectAllReturnsSuccessfulCasesAlongsideCollectionErrors(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	other := fixture.radarr.records[0]
-	other.ID = 72
-	fixture.radarr.records = append(fixture.radarr.records, other)
-	var selectedQueueIDs []int64
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		queueID := observation.Correlation.Radarr.ID
-		selectedQueueIDs = append(selectedQueueIDs, queueID)
-		if queueID == 71 {
-			return casebuilder.Assembly{}, errors.New("cannot assemble")
-		}
-		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
-	})
-
-	result, err := inspector.InspectAll(context.Background())
-	assemblies := result.Assemblies
-	if err == nil || !strings.Contains(err.Error(), "queue record 71") {
-		t.Fatalf("error = %v", err)
-	}
-	if len(assemblies) != 1 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
-		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
-	}
-}
-
-func TestInspectAllRejectsInvalidEvidenceWithoutFailingCollection(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	other := fixture.radarr.records[0]
-	other.ID = 72
-	fixture.radarr.records = append(fixture.radarr.records, other)
-	inspector := newTestInspector(t, fixture.dependencies(), func(
-		observation casebuilder.Observation,
-	) (casebuilder.Assembly, error) {
-		if observation.Correlation.Radarr.ID == 71 {
-			return casebuilder.Assembly{}, &casebuilder.InvalidEvidenceError{
-				Err: errors.New("does not conform to the planner contract"),
-			}
-		}
-		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
-	})
-
-	result, err := inspector.InspectAll(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(result.Assemblies) != 1 || !reflect.DeepEqual(result.Rejections, []Rejection{{
-		QueueID: 71,
-		Reason:  RejectionInvalidEvidence,
-	}}) {
-		t.Fatalf("result = %#v", result)
-	}
-}
-
-func TestInspectAllRejectsUnsupportedArchiveWithoutFailingCollection(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	fixture.archives = &fakeArchiveMaterializer{
-		found: true,
-		err:   &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
-	}
-	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-
-	result, err := inspector.InspectAll(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(result.Assemblies) != 0 || !reflect.DeepEqual(result.Rejections, []Rejection{{
-		QueueID: 71,
-		Reason:  RejectionUnsupportedSource,
-	}}) {
-		t.Fatalf("result = %#v", result)
-	}
-}
-
-func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
-	t.Parallel()
-
-	fixture := inspectionFixture()
-	fixture.radarr.records[0].Protocol = "usenet"
-	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-	result, err := inspector.InspectAll(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	assemblies := result.Assemblies
-	if len(assemblies) != 0 {
-		t.Fatalf("assemblies = %d", len(assemblies))
+	if fixture.radarr.queueReads != 0 {
+		t.Fatalf("unexpected queue reads = %d", fixture.radarr.queueReads)
 	}
 }
 
@@ -353,7 +234,7 @@ func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 		return casebuilder.Assembly{}, nil
 	})
 
-	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
 		t.Fatal(err)
 	}
 	if observed.Movie == nil || observed.Movie.ID != 42 ||
@@ -375,73 +256,14 @@ func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	}
 }
 
-func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
+func TestInspectRejectsIneligibleRecord(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		name        string
-		selection   Selection
-		mutate      func(*inspectionTestFixture)
-		want        string
-		unavailable CandidateUnavailableReason
-	}{
-		{
-			name: "no eligible candidates",
-			mutate: func(fixture *inspectionTestFixture) {
-				fixture.radarr.records[0].Protocol = "usenet"
-			},
-			want: "no completed unimported downloads",
-		},
-		{
-			name: "ambiguous candidates",
-			mutate: func(fixture *inspectionTestFixture) {
-				other := fixture.radarr.records[0]
-				other.ID++
-				fixture.radarr.records = append(fixture.radarr.records, other)
-			},
-			want: "2 completed unimported downloads",
-		},
-		{
-			name:        "missing requested candidate",
-			selection:   Selection{QueueID: 999},
-			mutate:      func(*inspectionTestFixture) {},
-			want:        "record 999 was not found",
-			unavailable: CandidateMissing,
-		},
-		{
-			name:      "ineligible requested candidate",
-			selection: Selection{QueueID: 71},
-			mutate: func(fixture *inspectionTestFixture) {
-				fixture.radarr.records[0].Protocol = "usenet"
-			},
-			want:        "record 71 is ineligible",
-			unavailable: CandidateIneligible,
-		},
-		{
-			name:      "negative requested candidate",
-			selection: Selection{QueueID: -1},
-			mutate:    func(*inspectionTestFixture) {},
-			want:      "must not be negative",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			fixture := inspectionFixture()
-			test.mutate(&fixture)
-			inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-			_, err := inspector.Inspect(context.Background(), test.selection)
-			if err == nil || !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("error = %v, want substring %q", err, test.want)
-			}
-			if test.unavailable != "" {
-				var unavailable *CandidateUnavailableError
-				if !errors.As(err, &unavailable) || unavailable.Reason != test.unavailable {
-					t.Fatalf("unavailable error = %#v, want %q", unavailable, test.unavailable)
-				}
-			}
-		})
+	fixture := inspectionFixture()
+	fixture.radarr.records[0].Protocol = "usenet"
+	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
+	_, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
+	if err == nil || !strings.Contains(err.Error(), "record 71 is ineligible") {
+		t.Fatalf("error = %v", err)
 	}
 }
 
@@ -500,7 +322,7 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 			) (casebuilder.Assembly, error) {
 				return casebuilder.Assembly{}, fixture.assembleError
 			})
-			_, err := inspector.Inspect(context.Background(), Selection{})
+			_, err := inspector.Inspect(context.Background(), fixture.radarr.records[0])
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -515,7 +337,7 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := inspector.Inspect(ctx, Selection{}); !errors.Is(err, context.Canceled) {
+	if _, err := inspector.Inspect(ctx, fixture.radarr.records[0]); !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
 	}
 	if fixture.radarr.queueReads != 0 {
@@ -554,7 +376,7 @@ func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
 		observed = observation
 		return casebuilder.Assembly{}, nil
 	})
-	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
 		t.Fatal(err)
 	}
 	if len(observed.Probes) != 3 ||
@@ -583,7 +405,7 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 		observed = observation
 		return casebuilder.Assembly{}, nil
 	})
-	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+	if _, err := inspector.Inspect(context.Background(), fixture.radarr.records[0]); err != nil {
 		t.Fatal(err)
 	}
 	if len(observed.Probes) != 2 {

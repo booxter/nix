@@ -33,7 +33,11 @@ func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := contracts.DecodeCase(assembly.EncodedRequest); err != nil {
+	encoded, err := contracts.EncodeCase(assembly.Request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := contracts.DecodeCase(encoded); err != nil {
 		t.Fatalf("decode assembled case: %v", err)
 	}
 	if assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
@@ -50,7 +54,7 @@ func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 		"/srv/downloads",
 		"/srv/downloads/Example.Movie.2024/CD1.mkv",
 	} {
-		if bytes.Contains(bytes.ToLower(assembly.EncodedRequest), []byte(strings.ToLower(localOnly))) {
+		if bytes.Contains(bytes.ToLower(encoded), []byte(strings.ToLower(localOnly))) {
 			t.Fatalf("planner request contains local-only value %q", localOnly)
 		}
 	}
@@ -60,7 +64,7 @@ func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 		t.Fatal(err)
 	}
 	var pretty bytes.Buffer
-	if err := json.Indent(&pretty, assembly.EncodedRequest, "", "  "); err != nil {
+	if err := json.Indent(&pretty, encoded, "", "  "); err != nil {
 		t.Fatal(err)
 	}
 	pretty.WriteByte('\n')
@@ -379,7 +383,11 @@ func TestAssemblePreservesMediaWithUnnamedDataStreams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	decoded, err := contracts.DecodeCase(assembly.EncodedRequest)
+	encoded, err := contracts.EncodeCase(assembly.Request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := contracts.DecodeCase(encoded)
 	if err != nil {
 		t.Fatal(err)
 	}

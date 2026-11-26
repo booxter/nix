@@ -52,18 +52,18 @@ func TestFinalizationCandidatesRequireCompleteUniqueMonitoredRelease(t *testing.
 			{ID: 11, HasFile: true, TrackFileID: 21},
 		},
 	}
-	candidates, err := FinalizationCandidates(context.Background(), reader)
+	candidates, err := FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 1 || candidates[0].SubjectID != albumID {
 		t.Fatalf("candidates = %#v, error = %v", candidates, err)
 	}
 	reader.tracks[1].HasFile = false
-	candidates, err = FinalizationCandidates(context.Background(), reader)
+	candidates, err = FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("incomplete candidates = %#v, error = %v", candidates, err)
 	}
 	reader.tracks[1].HasFile = true
 	reader.album.Releases = append(reader.album.Releases, Release{ID: 5, Monitored: true, TrackCount: 2})
-	candidates, err = FinalizationCandidates(context.Background(), reader)
+	candidates, err = FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("ambiguous candidates = %#v, error = %v", candidates, err)
 	}
@@ -74,7 +74,7 @@ func TestFinalizationCandidatesRefuseUnresolvedQueueIdentity(t *testing.T) {
 	reader := &finalizationReader{queue: []QueueRecord{{
 		ID: 1, DownloadID: "download", Status: "completed", TrackedDownloadStatus: "warning",
 	}}}
-	candidates, err := FinalizationCandidates(context.Background(), reader)
+	candidates, err := FinalizationCandidates(context.Background(), reader, reader.queue)
 	if err != nil || len(candidates) != 0 {
 		t.Fatalf("candidates = %#v, error = %v", candidates, err)
 	}

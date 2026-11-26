@@ -9,20 +9,16 @@ import (
 )
 
 type FinalizationReader interface {
-	ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error)
 	ReadMovie(context.Context, int64) (controller.RadarrMovie, error)
 }
 
 func FinalizationCandidates(
 	ctx context.Context,
 	reader FinalizationReader,
+	records []controller.RadarrQueueRecord,
 ) ([]queuefinalize.Entry, error) {
 	if reader == nil {
 		return nil, fmt.Errorf("Radarr finalization reader is required")
-	}
-	records, err := reader.ReadQueue(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("read Radarr queue for finalization: %w", err)
 	}
 	complete := make(map[int64]bool)
 	checked := make(map[int64]bool)

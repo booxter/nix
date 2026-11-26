@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
-	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
@@ -23,7 +22,7 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 	}
 
 	observed := repair.Observation{}
-	complete, err := radarr.FinalizationCandidates(ctx, adapter.Client)
+	complete, err := radarr.FinalizationCandidates(ctx, adapter.Client, queue)
 	if err != nil {
 		return repair.Observation{}, err
 	}
@@ -34,7 +33,7 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 		observed.Queue = append(observed.Queue, jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID})
 		job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
 
-		assembly, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entry.ID})
+		assembly, err := adapter.Inspector.Inspect(ctx, entry)
 		if err != nil {
 			job.CollectionError = err.Error()
 		} else {
