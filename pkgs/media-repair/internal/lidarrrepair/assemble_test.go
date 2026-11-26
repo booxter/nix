@@ -51,7 +51,8 @@ func TestAssembleNormalizesExternalLists(t *testing.T) {
 		AlbumReleaseID: 4,
 		AudioTags:      &lidarr.AudioTags{TrackNumbers: []int{0, 1, 1}},
 	}}
-	repairCase, _, err := assembleAlbum(time.Unix(1, 0), queue, album, tracks, workspace, imports)
+	facts := albumFacts{album: album, tracks: tracks, imports: imports}
+	repairCase, _, err := assembleAlbum(time.Unix(1, 0), queue, workspace, facts)
 	if err != nil {
 		t.Fatal(err)
 	}

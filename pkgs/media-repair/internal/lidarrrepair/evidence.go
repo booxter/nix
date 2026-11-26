@@ -59,18 +59,17 @@ func (inspection albumInspection) collectEvidence(ctx context.Context, queue lid
 		return Evidence{}, err
 	}
 
-	album, tracks, err := inspection.readCatalog(ctx, queue)
-	if err != nil {
+	input := collectionInput{
+		client:      inspection.lidarr,
+		albumID:     *queue.AlbumID,
+		importQuery: lidarr.ManualImportQuery{Folder: workspace.root, ArtistID: *queue.ArtistID},
+	}
+	var facts albumFacts
+	if err := albumCollectors.Collect(ctx, input, &facts); err != nil {
 		return Evidence{}, err
 	}
-	imports, err := inspection.lidarr.ReadManualImports(ctx, lidarr.ManualImportQuery{
-		Folder: workspace.root, ArtistID: *queue.ArtistID,
-	})
-	if err != nil {
-		return Evidence{}, fmt.Errorf("read manual imports: %w", err)
-	}
 
-	repairCase, bindings, err := assembleAlbum(inspection.now(), queue, album, tracks, workspace, imports)
+	repairCase, bindings, err := assembleAlbum(inspection.now(), queue, workspace, facts)
 	if err != nil {
 		return Evidence{}, fmt.Errorf("assemble album case: %w", err)
 	}
@@ -80,25 +79,4 @@ func (inspection albumInspection) collectEvidence(ctx context.Context, queue lid
 		SourceFingerprint: workspace.fingerprint, WorkspaceRoot: workspace.root,
 		Recovered: workspace.recovered,
 	}, nil
-}
-
-func (collector *EvidenceCollector) readCatalog(
-	ctx context.Context,
-	queue lidarr.QueueRecord,
-) (lidarr.Album, []lidarr.Track, error) {
-	album, err := collector.lidarr.ReadAlbum(ctx, *queue.AlbumID)
-	if err != nil {
-		return lidarr.Album{}, nil, fmt.Errorf("read album: %w", err)
-	}
-	var tracks []lidarr.Track
-	for _, release := range album.Releases {
-		releaseTracks, readErr := collector.lidarr.ReadReleaseTracks(ctx, album.ID, release.ID)
-		if readErr != nil {
-			return lidarr.Album{}, nil, fmt.Errorf(
-				"read release %d tracks: %w", release.ID, readErr,
-			)
-		}
-		tracks = append(tracks, releaseTracks...)
-	}
-	return album, tracks, nil
 }

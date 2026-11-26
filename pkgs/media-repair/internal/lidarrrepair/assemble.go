@@ -26,13 +26,11 @@ const (
 func assembleAlbum(
 	observedAt time.Time,
 	queue lidarr.QueueRecord,
-	album lidarr.Album,
-	tracks []lidarr.Track,
 	workspace albumWorkspace,
-	manualImports []lidarr.ManualImport,
+	facts albumFacts,
 ) (lidarrcontracts.Case, []ImportBinding, error) {
-	importsByPath := make(map[string]lidarr.ManualImport, len(manualImports))
-	for _, item := range manualImports {
+	importsByPath := make(map[string]lidarr.ManualImport, len(facts.imports))
+	for _, item := range facts.imports {
 		importsByPath[item.Path] = item
 	}
 	assessments := make([]lidarrcontracts.Assessment, 0, len(workspace.files))
@@ -51,7 +49,7 @@ func assembleAlbum(
 		artifactIDs = append(artifactIDs, artifact.ArtifactID)
 	}
 	return assembleCase(
-		observedAt, queue, album, tracks, workspace.files, assessments, bindings, artifactIDs,
+		observedAt, queue, facts.album, facts.tracks, workspace.files, assessments, bindings, artifactIDs,
 	)
 }
 

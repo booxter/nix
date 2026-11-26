@@ -3,6 +3,7 @@ package lidarrrepair
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,8 @@ import (
 
 type fakeLidarr struct {
 	imports           []lidarr.ManualImport
+	tracksErr         error
+	importsErr        error
 	trackInLibrary    bool
 	recoveredIdentity lidarr.AlbumIdentity
 	recoveredFound    bool
@@ -51,6 +54,9 @@ func (fake *fakeLidarr) ReadReleaseTracks(
 	albumID int64,
 	releaseID int64,
 ) ([]lidarr.Track, error) {
+	if fake.tracksErr != nil {
+		return nil, fake.tracksErr
+	}
 	if albumID != 3 || releaseID != 4 {
 		return nil, nil
 	}
@@ -65,6 +71,9 @@ func (fake *fakeLidarr) ReadManualImports(
 	_ context.Context,
 	query lidarr.ManualImportQuery,
 ) ([]lidarr.ManualImport, error) {
+	if fake.importsErr != nil {
+		return nil, fake.importsErr
+	}
 	var matches []lidarr.ManualImport
 	for _, item := range fake.imports {
 		if filepath.Dir(item.Path) == query.Folder && item.ArtistID == query.ArtistID {
@@ -204,6 +213,26 @@ func TestEvidenceCollectorMaterializesSourcesAndRefreshesEvidence(t *testing.T) 
 			second := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
 			if first.Case.CaseID == second.Case.CaseID {
 				t.Fatal("changed queue evidence retained the old case identity")
+			}
+		})
+	}
+}
+
+func TestAlbumInspectionStopsWhenLidarrCannotSupplyFacts(t *testing.T) {
+	t.Parallel()
+	unavailable := errors.New("Lidarr unavailable")
+	for _, test := range []struct {
+		name   string
+		client fakeLidarr
+	}{
+		{"release tracks", fakeLidarr{tracksErr: unavailable}},
+		{"manual imports", fakeLidarr{importsErr: unavailable}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			collector := NewEvidenceCollector(&test.client, &fakeWorker{root: "/downloads", directoryAudio: true})
+			result := collector.Inspect(t.Context(), evidenceQueue(t.TempDir()), nil)
+			if result.Case != nil || !errors.Is(result.Err, unavailable) {
+				t.Fatalf("expected inspection to stop with the Lidarr error, got %+v", result)
 			}
 		})
 	}
