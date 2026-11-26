@@ -22,7 +22,6 @@ let
 in
 {
   imports = [
-    ./repositories.nix
     ./smtp.nix
   ];
 
