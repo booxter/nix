@@ -291,7 +291,7 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 		{
 			name: "extra probe",
 			mutate: func(observation *Observation) {
-				observation.Probes = append(observation.Probes, FileProbe{
+				observation.Probes = append(observation.Probes, controller.FileProbe{
 					FileID: "file:3333333333333333333333333333333333333333333333333333333333333333",
 				})
 			},
@@ -561,7 +561,7 @@ func TestAssembleKeepsUsableCandidatesWhenAnotherProbeFails(t *testing.T) {
 	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
 		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/Broken.mkv",
 	})
-	observation.Probes = append(observation.Probes, FileProbe{
+	observation.Probes = append(observation.Probes, controller.FileProbe{
 		FileID: extra.ID,
 		Outcome: controller.FailedMediaProbe(
 			controller.MediaProbeUnsupportedFormat,
@@ -632,7 +632,7 @@ func TestAssembleRetainsEvidenceOnlyFiles(t *testing.T) {
 	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
 		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/README.txt",
 	})
-	observation.Probes = append(observation.Probes, FileProbe{
+	observation.Probes = append(observation.Probes, controller.FileProbe{
 		FileID: extra.ID,
 		Outcome: controller.UncollectedMediaProbe(
 			controller.MediaProbeNotCandidate,
@@ -895,7 +895,7 @@ func testObservation() Observation {
 			},
 		},
 		Inventory: controller.FileInventory{Files: files, Paths: paths},
-		Probes: []FileProbe{
+		Probes: []controller.FileProbe{
 			{
 				FileID: testFileOneID,
 				Outcome: controller.SuccessfulMediaProbe(

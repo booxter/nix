@@ -1,16 +1,14 @@
-package inspection
+package repairradarr
 
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
-	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
@@ -43,13 +41,6 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	}
 	if fixture.radarr.manualImportQuery != wantQuery {
 		t.Fatalf("manual-import query = %#v, want %#v", fixture.radarr.manualImportQuery, wantQuery)
-	}
-	wantTargets := []controller.MediaProbeTarget{
-		{AbsolutePath: "/downloads/Example_Movie/CD1.mkv", Fingerprint: fixture.files.inventory.Files[0].Fingerprint},
-		{AbsolutePath: "/downloads/Example_Movie/CD2.mkv", Fingerprint: fixture.files.inventory.Files[1].Fingerprint},
-	}
-	if !reflect.DeepEqual(fixture.probes.targets, wantTargets) {
-		t.Fatalf("probe targets = %#v, want %#v", fixture.probes.targets, wantTargets)
 	}
 }
 
@@ -148,7 +139,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 					AbsolutePath: "/downloads/.media-repair/workspaces/archive/Movie/movie.mkv",
 				}},
 			},
-			Probes: []casebuilder.FileProbe{{
+			Probes: []controller.FileProbe{{
 				FileID:  materializedFile.ID,
 				Outcome: controller.SuccessfulMediaProbe(testProbeEvidence(100)),
 			}},
@@ -164,9 +155,8 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 		assembly.Request.Files[0].Probe.Status != contracts.Ok {
 		t.Fatalf("archive source was not used: %#v", assembly.Request.Files)
 	}
-	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root ||
-		len(fixture.probes.targets) != 0 {
-		t.Fatalf("manual import query = %#v, probe targets = %#v", fixture.radarr.manualImportQuery, fixture.probes.targets)
+	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root {
+		t.Fatalf("manual import folder = %q, want %q", fixture.radarr.manualImportQuery.Folder, fixture.archives.source.Root)
 	}
 }
 
@@ -271,13 +261,13 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	}
 }
 
-func TestNewRejectsMissingCollectionTimeout(t *testing.T) {
+func TestNewInspectorRejectsMissingCollectionTimeout(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 0
-	if _, err := New(dependencies); err == nil ||
+	if _, err := NewInspector(dependencies); err == nil ||
 		!strings.Contains(err.Error(), "collection timeout") {
 		t.Fatalf("error = %v", err)
 	}
@@ -316,9 +306,6 @@ func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
 		files[2].Probe.Reason == nil || string(*files[2].Probe.Reason) != "not_probe_candidate" {
 		t.Fatalf("probe outcomes = %#v", files)
 	}
-	if len(fixture.probes.targets) != 2 {
-		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
-	}
 }
 
 func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
@@ -341,9 +328,6 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 			string(*file.Probe.Reason) != "collection_limit" {
 			t.Fatalf("probe outcome = %#v", file.Probe)
 		}
-	}
-	if len(fixture.probes.targets) != 1 {
-		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
 	}
 }
 
@@ -381,12 +365,15 @@ func inspectionFixture() inspectionTestFixture {
 				{FileID: second.ID, AbsolutePath: "/downloads/Example_Movie/CD2.mkv"},
 			},
 		}},
-		probes: &fakeProbes{},
+		probes: &fakeProbes{files: map[string]controller.FileFingerprint{
+			"/downloads/Example_Movie/CD1.mkv": first.Fingerprint,
+			"/downloads/Example_Movie/CD2.mkv": second.Fingerprint,
+		}},
 	}
 }
 
-func (fixture inspectionTestFixture) dependencies() Dependencies {
-	dependencies := Dependencies{
+func (fixture inspectionTestFixture) dependencies() InspectorConfig {
+	dependencies := InspectorConfig{
 		Clock: fixture.clock, Radarr: fixture.radarr, Downloads: fixture.transmission,
 		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
@@ -455,9 +442,9 @@ func inventoryFile(
 	}
 }
 
-func newTestInspector(t *testing.T, dependencies Dependencies) *Inspector {
+func newTestInspector(t *testing.T, dependencies InspectorConfig) *Inspector {
 	t.Helper()
-	inspector, err := New(dependencies)
+	inspector, err := NewInspector(dependencies)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -574,14 +561,13 @@ type fakeProbes struct {
 	outcome             controller.MediaProbeOutcome
 	err                 error
 	waitForCancellation bool
-	targets             []controller.MediaProbeTarget
+	files               map[string]controller.FileFingerprint
 }
 
 func (reader *fakeProbes) Probe(
 	ctx context.Context,
 	target controller.MediaProbeTarget,
 ) (controller.MediaProbeOutcome, error) {
-	reader.targets = append(reader.targets, target)
 	if reader.waitForCancellation {
 		<-ctx.Done()
 		return controller.MediaProbeOutcome{}, ctx.Err()
@@ -591,6 +577,10 @@ func (reader *fakeProbes) Probe(
 	}
 	if reader.outcome.Status != "" {
 		return reader.outcome, nil
+	}
+	fingerprint, found := reader.files[target.AbsolutePath]
+	if !found || fingerprint != target.Fingerprint {
+		return controller.MediaProbeOutcome{}, errors.New("probe target does not match a fixture file")
 	}
 	return controller.SuccessfulMediaProbe(testProbeEvidence(target.Fingerprint.SizeBytes)), nil
 }

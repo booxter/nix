@@ -143,7 +143,7 @@ func indexFiles(inventory controller.FileInventory) map[controller.FileID]contro
 	return files
 }
 
-func indexProbes(probes []casebuilder.FileProbe) map[controller.FileID]controller.MediaProbeOutcome {
+func indexProbes(probes []controller.FileProbe) map[controller.FileID]controller.MediaProbeOutcome {
 	indexed := make(map[controller.FileID]controller.MediaProbeOutcome, len(probes))
 	for _, probe := range probes {
 		indexed[probe.FileID] = probe.Outcome

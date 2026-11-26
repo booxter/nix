@@ -18,10 +18,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
-type Inspector interface {
-	Inspect(context.Context, controller.RadarrQueueRecord) (casebuilder.Assembly, error)
-}
-
 type Client interface {
 	ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error)
 	ReadMovie(context.Context, int64) (controller.RadarrMovie, error)
@@ -46,7 +42,7 @@ func (evidence Evidence) Assembly() casebuilder.Assembly {
 }
 
 type Adapter struct {
-	Inspector     Inspector
+	Inspector     *Inspector
 	Client        Client
 	Media         Media
 	Planner       Planner

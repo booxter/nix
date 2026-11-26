@@ -8,7 +8,6 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
-	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/repairradarr"
 )
 
@@ -43,7 +42,7 @@ func (w *reportWriter) write(record controller.RadarrQueueRecord, result repairr
 func writeRadarrQueueReport(
 	ctx context.Context,
 	queue controller.RadarrQueueReader,
-	inspector *inspection.Inspector,
+	inspector *repairradarr.Inspector,
 	output io.Writer,
 ) error {
 	reports := reportWriter{encoder: json.NewEncoder(output)}

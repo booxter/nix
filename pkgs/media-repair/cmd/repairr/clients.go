@@ -7,7 +7,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/downloadsource"
 	"github.com/booxter/nix-config/media-repair/internal/filesystem"
-	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
@@ -31,7 +30,7 @@ func (wallClock) Now() time.Time {
 func (configuration config) radarrInspection(
 	httpClient *http.Client,
 	media *workerclient.Client,
-) (*radarr.Client, *inspection.Inspector, error) {
+) (*radarr.Client, *repairradarr.Inspector, error) {
 	radarrKey, err := servarr.ReadAPIKey("Radarr", configuration.Radarr.APIKeyFile)
 	if err != nil {
 		return nil, nil, err
@@ -49,7 +48,7 @@ func (configuration config) radarrInspection(
 	if err != nil {
 		return nil, nil, err
 	}
-	inspector, err := inspection.New(inspection.Dependencies{
+	inspector, err := repairradarr.NewInspector(repairradarr.InspectorConfig{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
 		Downloads:         downloads,
@@ -72,7 +71,7 @@ func (configuration config) radarrInspection(
 func (configuration config) newRepairServices(
 	httpClient *http.Client,
 	radarrClient *radarr.Client,
-	inspector *inspection.Inspector,
+	inspector *repairradarr.Inspector,
 	planner *plannerclient.Client,
 	media *workerclient.Client,
 ) (repairServices, error) {

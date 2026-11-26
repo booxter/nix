@@ -1,4 +1,4 @@
-package inspection
+package repairradarr
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type VideoArchiveMaterializer interface {
 	) (archivematerialize.Source, bool, error)
 }
 
-type Dependencies struct {
+type InspectorConfig struct {
 	Clock             controller.Clock
 	Radarr            RadarrReader
 	Downloads         controller.DownloadResolver
@@ -38,22 +38,22 @@ type Dependencies struct {
 	CollectionTimeout time.Duration
 }
 
-type IneligibleError struct {
+type ineligibleError struct {
 	QueueID int64
 	Reasons []controller.CandidateRejectionReason
 }
 
-func (failure *IneligibleError) Error() string {
+func (failure *ineligibleError) Error() string {
 	return fmt.Sprintf("Radarr queue record %d is ineligible: %v", failure.QueueID, failure.Reasons)
 }
 
 type Inspector struct {
-	dependencies Dependencies
+	dependencies InspectorConfig
 }
 
-// New requires readers for the movie, download, and files. Archive extraction
+// NewInspector requires readers for the movie, download, and files. Archive extraction
 // and disc inspection are optional.
-func New(dependencies Dependencies) (*Inspector, error) {
+func NewInspector(dependencies InspectorConfig) (*Inspector, error) {
 	switch {
 	case dependencies.Clock == nil:
 		return nil, fmt.Errorf("inspection clock is required")
@@ -89,9 +89,9 @@ func (inspector *Inspector) Inspect(
 
 	assessment := controller.ClassifyRepairCandidate(record, inspector.dependencies.Downloads)
 	if !assessment.Eligible() {
-		return casebuilder.Assembly{}, &IneligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
+		return casebuilder.Assembly{}, &ineligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
 	}
-	entry := ResolvedEntry{record: record, sourceSupported: true}
+	entry := resolvedEntry{record: record, sourceSupported: true}
 	entry, err := inspector.lookUpMovieAndDownload(collectionContext, entry)
 	if err != nil {
 		return casebuilder.Assembly{}, err
@@ -108,9 +108,9 @@ func (inspector *Inspector) Inspect(
 	return inspector.buildCase(ctx, collectionContext, *entry.source)
 }
 
-// Collect builds a planner case for an entry that passed the pipeline's checks.
+// collect builds a planner case for an entry that passed the pipeline's checks.
 // Its time limit starts after the movie and download lookup.
-func (inspector *Inspector) Collect(ctx context.Context, entry ResolvedEntry) (casebuilder.Assembly, error) {
+func (inspector *Inspector) collect(ctx context.Context, entry resolvedEntry) (casebuilder.Assembly, error) {
 	if entry.source == nil {
 		return casebuilder.Assembly{}, fmt.Errorf("queue record %d has no resolved download", entry.record.ID)
 	}

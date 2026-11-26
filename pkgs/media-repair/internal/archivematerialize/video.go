@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
@@ -29,7 +28,7 @@ type Worker interface {
 type Source struct {
 	Root      string
 	Inventory controller.FileInventory
-	Probes    []casebuilder.FileProbe
+	Probes    []controller.FileProbe
 }
 
 type Materializer struct {
@@ -124,7 +123,7 @@ func (instance *Materializer) sourceFromResult(
 			Files: make([]controller.InventoryFile, 0, len(result.Artifacts)),
 			Paths: make([]controller.FilePathMapping, 0, len(result.Artifacts)),
 		},
-		Probes: make([]casebuilder.FileProbe, 0, len(result.Artifacts)),
+		Probes: make([]controller.FileProbe, 0, len(result.Artifacts)),
 	}
 	for _, artifact := range result.Artifacts {
 		absolute, err := instance.worker.ResolvePublishedPath(result.RootID, artifact.PathComponents)
@@ -151,7 +150,7 @@ func (instance *Materializer) sourceFromResult(
 		source.Inventory.Paths = append(source.Inventory.Paths, controller.FilePathMapping{
 			FileID: fileID, AbsolutePath: absolute,
 		})
-		source.Probes = append(source.Probes, casebuilder.FileProbe{
+		source.Probes = append(source.Probes, controller.FileProbe{
 			FileID:  fileID,
 			Outcome: controller.SuccessfulMediaProbe(workerclient.EvidenceFromWorker(artifact.Evidence)),
 		})
