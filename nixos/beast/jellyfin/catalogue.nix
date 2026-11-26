@@ -1,6 +1,11 @@
 { pkgs, ... }:
 let
   url = "http://127.0.0.1:8181";
+  plugins = import ../pkgs/jellyfin-plugins { inherit pkgs; };
+  catalogue = pkgs.callPackage ../pkgs/jellyfin-plugins/catalogue.nix { } {
+    inherit url;
+    plugins = builtins.attrValues plugins;
+  };
 in
 {
   services.nginx = {
@@ -13,7 +18,7 @@ in
           port = 8181;
         }
       ];
-      root = pkgs.writeTextDir "manifest.json" (builtins.toJSON [ ]);
+      root = catalogue;
     };
   };
 

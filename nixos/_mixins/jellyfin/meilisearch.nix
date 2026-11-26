@@ -31,13 +31,6 @@ in
     };
 
     host.jellyfinDeclarativeConfig = {
-      system.pluginRepositories = [
-        {
-          name = "Meilisearch";
-          url = "https://raw.githubusercontent.com/arnesacnussem/jellyfin-plugin-meilisearch/refs/heads/master/manifest.json";
-          enabled = true;
-        }
-      ];
       plugins = [
         {
           name = "Meilisearch";

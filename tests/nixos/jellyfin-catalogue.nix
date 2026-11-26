@@ -56,6 +56,9 @@ pkgs.testers.runNixOSTest {
         services.nginx.virtualHosts.jellyfin-plugins.locations."= /existing.json".alias =
           pkgs.writeText "existing.json"
             (builtins.toJSON [ ]);
+        services.nginx.virtualHosts.jellyfin-plugins.root = lib.mkForce (
+          pkgs.writeTextDir "manifest.json" (builtins.toJSON [ ])
+        );
 
         environment.systemPackages = [ pkgs.curl ];
         virtualisation = {
