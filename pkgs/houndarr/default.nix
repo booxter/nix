@@ -7,6 +7,7 @@
   pnpm,
   pnpmConfigHook,
   python313Packages,
+  tzdata,
 }:
 python313Packages.buildPythonApplication (finalAttrs: {
   pname = "houndarr";
@@ -19,6 +20,9 @@ python313Packages.buildPythonApplication (finalAttrs: {
     tag = "v${finalAttrs.version}";
     hash = "sha256-Ha/6i5VmjzWOXUYNHB2T23nS6uST1+pJ7b8MrsFup3g=";
   };
+
+  # The timezone tests must preserve TZDIR for libc inside the Nix sandbox.
+  patches = [ ../../patches/houndarr-test-zone-database.patch ];
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname src version;
@@ -52,11 +56,12 @@ python313Packages.buildPythonApplication (finalAttrs: {
     uvicorn
   ];
 
-  # Houndarr tracks newer compatible patch releases than the pinned nixpkgs
+  # Houndarr tracks newer compatible releases than the pinned nixpkgs
   # snapshot currently carries. Its upstream suite is run below against the
   # exact nixpkgs dependency set before the package is accepted.
   pythonRelaxDeps = [
     "aiosqlite"
+    "async-lru"
     "click"
     "cryptography"
     "python-multipart"
@@ -82,8 +87,13 @@ python313Packages.buildPythonApplication (finalAttrs: {
   pytestFlags = [
     "tests"
     "--ignore=tests/e2e_browser"
+    # The Helm chart is a separate distribution, not part of this package.
+    "--ignore=tests/test_helm_chart.py"
   ];
   preCheck = ''
+    export TZDIR="${tzdata}/share/zoneinfo"
+    export PYTHONTZPATH="$TZDIR"
+
     # Upstream's repository-invariant tests intentionally locate source files
     # relative to the imported houndarr module, so prefer the unpacked tree
     # over the already-installed wheel during pytestCheckPhase.
