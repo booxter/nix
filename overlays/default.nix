@@ -8,6 +8,8 @@
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
       gpclientBrowserPatch = ../patches/gpclient-3-browser-listen.patch;
+      # Use the same Nix toolchain on hosts with a separate Proxmox base.
+      releasePkgs = inputs.nixpkgs.legacyPackages.${system};
       pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -52,7 +54,6 @@
     {
       # Keep the interactive clients, including Codex, on the latest packaged releases.
       inherit (pkgsNixpkgsUnstable)
-        aerospace
         chatgpt
         claude-code
         mcp-nixos
@@ -95,14 +96,12 @@
         patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
       });
 
-      nix = pkgsNixpkgsUnstable.nixVersions.latest.appendPatches [
+      nix = releasePkgs.nixVersions.latest.appendPatches [
         # Avoid inheriting a locked signal callback registry in daemon workers.
         ../patches/nix-reset-signal-callbacks-after-fork.patch
       ];
 
-      # Drop once stable's monitor accepts the activity types emitted by Nix 2.36.
-      # https://github.com/maralorn/nix-output-monitor/pull/321
-      inherit (pkgsNixpkgsUnstable) nix-output-monitor;
+      inherit (releasePkgs) nix-output-monitor;
 
       jiratui = prev.jiratui.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -287,10 +286,10 @@
         }
       );
 
-      shelfmark = pkgsNixpkgsUnstable.shelfmark.overrideAttrs (old: {
+      shelfmark = prev.shelfmark.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           PYTHONPYCACHEPREFIX="$TMPDIR/shelfmark-pycache" \
-            ${pkgsNixpkgsUnstable.python314}/bin/python -m compileall -q shelfmark
+            ${prev.python314}/bin/python -m compileall -q shelfmark
         '';
         patchFlags = [
           "-p1"
