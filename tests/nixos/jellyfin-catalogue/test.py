@@ -38,6 +38,22 @@ with subtest("Jellarr registers the empty catalogue alongside existing repositor
     reconcile()
     reconcile()
 
+with subtest("one reconciliation replaces a larger existing repository list"):
+    configuration = api("System/Configuration")
+    configuration["EnableMetrics"] = True
+    configuration["PluginRepositories"] = [
+        {
+            "Name": f"Old repository {index}",
+            "Url": f"http://127.0.0.1:8181/existing.json?old={index}",
+            "Enabled": True,
+        }
+        for index in range(6)
+    ]
+    api("System/Configuration", method="POST", data=configuration)
+    reconcile()
+    assert api("System/Configuration")["EnableMetrics"] is True
+    reconcile()
+
 with subtest("registration survives restarting Jellyfin and nginx"):
     machine.succeed("systemctl restart nginx.service jellyfin.service")
     machine.wait_until_succeeds(
