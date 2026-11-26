@@ -1,8 +1,5 @@
 { ... }:
 {
-  # Keep active torrent files open across bursts of NFS reads and writes.
-  services.transmission.settings.open_file_limit = 128;
-
   host.transmission = {
     stateDir = "/data/.state/nixarr/transmission";
     dynamicIpUpdater = {

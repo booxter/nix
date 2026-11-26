@@ -21,6 +21,8 @@ Device names, serials, and public keys belong in the
 Configure handle paths with `host.ssh.credentials.yubikey.identityFiles`.
 Keep the corresponding `.pub` files beside the handles. The OpenSSH
 [patches](../../../patches) use the [device resolver](../../../pkgs/ssh-device).
+On YubiKey hosts, the resolver reads device mappings and PIN-prompt policy
+from `/etc/ssh/ssh-device-identities.json` for each request.
 
 PIN and touch prompts identify known keys by inventory name. macOS uses native
 dialogs and a SketchyBar indicator; Linux graphical sessions use Zenity.

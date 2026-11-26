@@ -16,7 +16,7 @@ diff --git a/ssh-agent.c b/ssh-agent.c
  	if (sshkey_is_sk(id->key) &&
 -	    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
 +	    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD) &&
-+	    (pin != NULL || !ssh_device_pin_first(id->key, id->sk_provider))) {
++	    (pin != NULL || !ssh_device_pin_first(id->key, id->sk_provider, fp))) {
  		notifier = notify_start(0,
  		    "Confirm user presence for key %s %s%s%s",
  		    sshkey_type(id->key), fp,
@@ -24,33 +24,23 @@ diff --git a/ssh-device-pin.h b/ssh-device-pin.h
 new file mode 100644
 --- /dev/null
 +++ b/ssh-device-pin.h
-@@ -0,0 +1,29 @@
-+/* Only mapped, PIN-only devices can skip the initial touch notification.
-+ * Other providers and keys retain discovery and built-in verification prompts.
+@@ -0,0 +1,19 @@
++/* The resolver reads PIN policy from the same manifest used for device
++ * selection. If it cannot confirm the policy, keep the touch notification.
 + */
 +static int
-+ssh_device_pin_first(struct sshkey *key, const char *provider)
++ssh_device_pin_first(struct sshkey *key, const char *provider, char *fp)
 +{
-+	static const char *public_keys[] = {
-+@public_keys@
-+		NULL
-+	};
-+	char *encoded = NULL;
-+	size_t i;
-+	int found = 0;
++	char *argv[] = { "@resolver@/bin/ssh-device", "pin-first", fp, NULL };
++	pid_t pid;
 +
 +	if (provider == NULL || strcmp(provider, "internal") != 0 ||
-+	    !(key->sk_flags & SSH_SK_USER_VERIFICATION_REQD))
-+		return 0;
-+	if (sshkey_to_base64(key, &encoded) != 0)
++	    sshkey_is_cert(key) || !(key->sk_flags & SSH_SK_USER_VERIFICATION_REQD))
 +		return 0;
 +
-+	for (i = 0; public_keys[i] != NULL; i++) {
-+		if (strcmp(encoded, public_keys[i]) == 0) {
-+			found = 1;
-+			break;
-+		}
-+	}
-+	free(encoded);
-+	return found;
++	/* argv[0] is the immutable Nix store path of the configured helper. */
++	pid = subprocess("SSH PIN policy", argv[0], 3, argv, NULL,
++	    SSH_SUBPROCESS_STDOUT_DISCARD | SSH_SUBPROCESS_UNSAFE_PATH,
++	    NULL, NULL, NULL);
++	return pid > 0 && exited_cleanly(pid, "SSH PIN policy", argv[0], 1) == 0;
 +}

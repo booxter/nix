@@ -3,12 +3,8 @@
   python3,
   pythonRuffCheckHook,
   yubikey-manager,
-  identities,
   openssh,
 }:
-let
-  manifest = builtins.toFile "ssh-device-identities.json" (builtins.toJSON identities);
-in
 python3.pkgs.buildPythonApplication {
   pname = "ssh-device";
   version = "0.1.0";
@@ -31,10 +27,6 @@ python3.pkgs.buildPythonApplication {
     mypy src/ssh_device
   '';
   makeWrapperArgs = [
-    "--add-flag"
-    "--identities"
-    "--add-flag"
-    (toString manifest)
     "--prefix"
     "PATH"
     ":"

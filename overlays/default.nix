@@ -1,4 +1,4 @@
-{ inputs, fleetInventory, ... }:
+{ inputs }:
 {
   additions = final: _prev: import ../pkgs final.pkgs;
 
@@ -13,27 +13,8 @@
         inherit system;
         config.allowUnfree = true;
       };
-      sshKeys = lib.concatLists (
-        lib.mapAttrsToList (
-          _: keys: builtins.attrValues (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
-        ) fleetInventory.yubikeys
-      );
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
-      # The 4.1.x release branch can ship stale generated Web UI assets.
-      # https://github.com/transmission/transmission/issues/9245
-      transmissionWeb = prev.buildNpmPackage {
-        pname = "transmission-web";
-        version = releaseTransmissionVersion;
-        inherit (releaseTransmission) src;
-        sourceRoot = "source/web";
-        npmDepsHash = "sha256-1VhDmwFu/FR7ZW2h1gw5tAxRGk5iWZZ1/MOZF801wI4=";
-        installPhase = ''
-          runHook preInstall
-          cp -r public_html "$out"
-          runHook postInstall
-        '';
-      };
       # Track the release branch now that trackers allow 4.1.x, but fail
       # evaluation before accepting an unvetted 4.2.x+ daemon.
       guardedTransmission = (
@@ -42,16 +23,8 @@
           && lib.versionOlder releaseTransmissionVersion "4.2.0"
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
         releaseTransmission.overrideAttrs (old: {
+          # Keep 128 torrent files open across bursts of NFS I/O on srvarr.
           patches = (old.patches or [ ]) ++ [ ../patches/transmission-open-file-limit.patch ];
-          postPatch = (old.postPatch or "") + ''
-            cp -r ${transmissionWeb}/. web/public_html/
-          '';
-          doCheck = true;
-          checkPhase = ''
-            runHook preCheck
-            ctest --output-on-failure --no-tests=error -R '^LT\.(Configured)?OpenFilesTest\.'
-            runHook postCheck
-          '';
         })
       );
     in
@@ -124,41 +97,16 @@
           '';
         });
 
-      ssh-device = prev.callPackage ../pkgs/ssh-device {
-        identities = map (key: {
-          inherit (key) serial;
-          public_key = builtins.readFile key.sshPublicKey;
-        }) sshKeys;
-        openssh = prev.openssh;
-      };
-
-      openssh-yubikey =
-        let
-          # These models require a PIN for verification; biometric keys may need touch first.
-          pinFirstKeys = builtins.filter (
-            key:
-            builtins.elem key.model [
-              "YubiKey 5C Nano"
-              "YubiKey 5C NFC"
-            ]
-          ) sshKeys;
-          # Substitution must preserve the patch's line counts.
-          pinFirstBlobs = lib.concatMapStrings (
-            key:
-            builtins.toJSON (builtins.elemAt (lib.splitString " " (builtins.readFile key.sshPublicKey)) 1)
-            + ", "
-          ) pinFirstKeys;
-        in
-        prev.openssh.overrideAttrs (old: {
-          pname = "openssh-yubikey";
-          patches = (old.patches or [ ]) ++ [
-            ../patches/openssh-restore-touch-prompt-after-pin.patch
-            (prev.replaceVars ../patches/openssh-resolve-signing-device.patch { resolver = final.ssh-device; })
-            (prev.replaceVars ../patches/openssh-prompt-for-pin-before-touch.patch {
-              public_keys = pinFirstBlobs;
-            })
-          ];
-        });
+      openssh-yubikey = prev.openssh.overrideAttrs (old: {
+        pname = "openssh-yubikey";
+        patches = (old.patches or [ ]) ++ [
+          ../patches/openssh-restore-touch-prompt-after-pin.patch
+          (prev.replaceVars ../patches/openssh-resolve-signing-device.patch { resolver = final.ssh-device; })
+          (prev.replaceVars ../patches/openssh-prompt-for-pin-before-touch.patch {
+            resolver = final.ssh-device;
+          })
+        ];
+      });
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [

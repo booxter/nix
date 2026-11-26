@@ -15,6 +15,7 @@ from pydantic import BaseModel, TypeAdapter
 class Identity(BaseModel):
     serial: str
     public_key: str
+    pin_first: bool = False
 
     @property
     def fingerprint(self) -> str:
@@ -147,10 +148,18 @@ def load_identity(
 
 def run(argv: Sequence[str], discovery: Discovery, agent: Agent | None = None) -> int:
     parser = argparse.ArgumentParser(description="Select an SSH YubiKey without a touch")
-    parser.add_argument("--identities", required=True, type=pathlib.Path)
+    parser.add_argument(
+        "--identities",
+        type=pathlib.Path,
+        default=pathlib.Path("/etc/ssh/ssh-device-identities.json"),
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     device = commands.add_parser("device")
     device.add_argument("fingerprint")
+    pin_first = commands.add_parser(
+        "pin-first", help="Test whether to prompt for a PIN before touch"
+    )
+    pin_first.add_argument("fingerprint")
     preferred = commands.add_parser("preferred")
     preferred.add_argument("serials", nargs="+")
     load = commands.add_parser("load")
@@ -159,6 +168,12 @@ def run(argv: Sequence[str], discovery: Discovery, agent: Agent | None = None) -
 
     try:
         identities = TypeAdapter(list[Identity]).validate_json(args.identities.read_text())
+        if args.command == "pin-first":
+            return (
+                0
+                if any(key.fingerprint == args.fingerprint and key.pin_first for key in identities)
+                else 1
+            )
         if args.command == "device":
             path = device_path(identities, args.fingerprint, discovery)
             if path:
