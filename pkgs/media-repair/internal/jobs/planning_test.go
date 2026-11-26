@@ -39,7 +39,7 @@ func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
@@ -73,7 +73,7 @@ func TestMissingQueueItemKeepsImportRecoveryEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())

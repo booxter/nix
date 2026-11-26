@@ -35,7 +35,7 @@ func Authorize(
 			return Authorization{}, string(validation.Rejections[0].Reason), nil, false
 		}
 	case contracts.ActionManualImportFile:
-		validation := decisionpolicy.ValidateManualImportWithPolicy(assembly, decision, policy)
+		validation := decisionpolicy.ValidateManualImport(assembly, decision, policy)
 		if validation.Accepted() {
 			return Authorization{ManualImport: validation.Authorized}, "", validation.Runtime, true
 		}
@@ -43,7 +43,7 @@ func Authorize(
 			return Authorization{}, string(validation.Rejections[0].Reason), validation.Runtime, false
 		}
 	case contracts.ActionRemuxBluray:
-		validation := decisionpolicy.ValidateRemuxWithPolicy(assembly, decision, policy)
+		validation := decisionpolicy.ValidateRemux(assembly, decision, policy)
 		if validation.Accepted() {
 			return Authorization{Remux: validation.Authorized}, "", validation.Runtime, true
 		}
@@ -51,7 +51,7 @@ func Authorize(
 			return Authorization{}, string(validation.Rejections[0]), validation.Runtime, false
 		}
 	case contracts.ActionRemuxDVD:
-		validation := decisionpolicy.ValidateDVDWithPolicy(assembly, decision, policy)
+		validation := decisionpolicy.ValidateDVD(assembly, decision, policy)
 		if validation.Accepted() {
 			return Authorization{DVD: validation.Authorized}, "", validation.Runtime, true
 		}

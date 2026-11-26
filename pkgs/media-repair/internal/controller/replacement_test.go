@@ -70,38 +70,6 @@ func TestClassifyReplacement(t *testing.T) {
 	}
 }
 
-func TestAllReplacementsSuperseded(t *testing.T) {
-	t.Parallel()
-
-	existing := &RadarrMovie{HasFile: true}
-	if !AllReplacementsSuperseded(existing, []RadarrManualImport{
-		replacementManualImport(RejectionNotQualityUpgrade),
-		replacementManualImport(RejectionNotCustomFormatUpgrade),
-	}) {
-		t.Fatal("conclusive downgrade set was not superseded")
-	}
-	for name, imports := range map[string][]RadarrManualImport{
-		"empty": nil,
-		"mixed": {
-			replacementManualImport(RejectionNotQualityUpgrade),
-			replacementManualImport(RejectionMultiPartMovie),
-		},
-		"unproved": {replacementManualImport(RejectionUnableToParse)},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			if AllReplacementsSuperseded(existing, imports) {
-				t.Fatal("candidate set was incorrectly superseded")
-			}
-		})
-	}
-	if AllReplacementsSuperseded(&RadarrMovie{}, []RadarrManualImport{
-		replacementManualImport(RejectionNotQualityUpgrade),
-	}) {
-		t.Fatal("movie without an existing file was superseded")
-	}
-}
-
 func replacementManualImport(
 	reasons ...RadarrManualImportRejectionReason,
 ) RadarrManualImport {

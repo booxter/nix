@@ -26,7 +26,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan := json.RawMessage(`{"action":"join","files":["part1","part2"]}`)
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, plan, "", at); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, plan, at); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, at)
@@ -52,7 +52,10 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	if err != nil || job.State != Blocked || job.Reason != attempt.Reason {
 		t.Fatalf("job=%+v error=%v", job, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, plan, "retry", at); err != nil {
+	if err := store.RequestAction(ctx, job.ID, Reconsider, "retry", 0, at); err != nil {
+		t.Fatal(err)
+	}
+	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, plan, at); err != nil {
 		t.Fatal(err)
 	}
 	retry, err := store.Start(ctx, job.ID, at)
@@ -94,7 +97,7 @@ func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", json.RawMessage(`{"action":"import"}`), "", job.UpdatedAt); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "first", json.RawMessage(`{"action":"import"}`), job.UpdatedAt); err != nil {
 		t.Fatal(err)
 	}
 	job.SourceFingerprint = "second"
@@ -103,7 +106,7 @@ func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 	if err != nil || job.State != Observed || len(job.Plan) != 0 {
 		t.Fatalf("changed job=%+v error=%v", job, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", json.RawMessage(`{}`), "", job.UpdatedAt); !errors.Is(err, ErrConflict) {
+	if err := finishTestPlan(ctx, store, job.ID, "first", json.RawMessage(`{}`), job.UpdatedAt); !errors.Is(err, ErrConflict) {
 		t.Fatalf("stale plan accepted: %v", err)
 	}
 }
@@ -153,7 +156,7 @@ func TestObservationPreservesActiveAttemptEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan := json.RawMessage(`{"action":"join"}`)
-	if err := store.SetPlan(ctx, job.ID, "first", plan, "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "first", plan, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())
@@ -165,7 +168,7 @@ func TestObservationPreservesActiveAttemptEvidence(t *testing.T) {
 	if err != nil || observed.State != Running || observed.SourceFingerprint != "first" || string(observed.Evidence) != `{"source":"first"}` {
 		t.Fatalf("active evidence changed: %+v, %v", observed, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", plan, "", time.Now()); !errors.Is(err, ErrConflict) {
+	if err := finishTestPlan(ctx, store, job.ID, "first", plan, time.Now()); !errors.Is(err, ErrConflict) {
 		t.Fatalf("replaced an active plan: %v", err)
 	}
 	attempt.State = Failed
@@ -186,7 +189,7 @@ func TestConcurrentStartCreatesOneAttempt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := first.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, first, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	start := make(chan struct{})
@@ -229,7 +232,7 @@ func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())
@@ -248,6 +251,18 @@ func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	if err != nil || len(attempts) != 1 || attempts[0].State != Running || len(attempts[0].ImportReceipt) != 0 {
 		t.Fatalf("failed write changed attempt: %+v, %v", attempts, err)
 	}
+}
+
+func finishTestPlan(ctx context.Context, store *Store, id int64, fingerprint string, plan json.RawMessage, at time.Time) error {
+	job, err := store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	job.SourceFingerprint = fingerprint
+	job.State = Ready
+	job.Plan = plan
+	job.UpdatedAt = at
+	return store.FinishPlanning(ctx, job)
 }
 
 func openStore(t *testing.T, path string) *Store {

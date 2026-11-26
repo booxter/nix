@@ -197,29 +197,6 @@ func (store *Store) List(ctx context.Context, service Service) ([]Job, error) {
 	return jobs, err
 }
 
-// A model response may arrive after the source files changed.
-func (store *Store) SetPlan(ctx context.Context, id int64, fingerprint string, plan json.RawMessage, guidance string, at time.Time) error {
-	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var job Job
-		if err := tx.First(&job, id).Error; err != nil {
-			return err
-		}
-		if job.SourceFingerprint != fingerprint || active(job.State) || job.State == Imported || job.State == Removed {
-			return ErrConflict
-		}
-
-		job.Plan = plan
-		job.Guidance = guidance
-		job.UpdatedAt = at
-		job.State = Ready
-		job.Reason = ""
-		if err := rememberPlanning(tx, job); err != nil {
-			return err
-		}
-		return tx.Save(&job).Error
-	})
-}
-
 func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt, error) {
 	var attempt Attempt
 	err := store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

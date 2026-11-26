@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
-	"github.com/booxter/nix-config/media-repair/internal/controller"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
@@ -63,8 +62,6 @@ type Client struct {
 	transport      *http.Transport
 	requestTimeout time.Duration
 }
-
-var _ controller.Planner = (*Client)(nil)
 
 func New(socketPath string, requestTimeout time.Duration) (*Client, error) {
 	if socketPath == "" || strings.ContainsRune(socketPath, '\x00') ||

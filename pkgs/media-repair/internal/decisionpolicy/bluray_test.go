@@ -13,7 +13,7 @@ import (
 func TestValidateRemuxAuthorizesCompleteMatchingDisc(t *testing.T) {
 	t.Parallel()
 	assembly, decision := remuxCase()
-	validation := ValidateRemux(assembly, decision)
+	validation := ValidateRemux(assembly, decision, RuntimePolicy{})
 	if !validation.Accepted() || validation.Authorized == nil {
 		t.Fatalf("remux authorization = %#v", validation)
 	}
@@ -32,28 +32,28 @@ func TestValidateRemuxRejectsRuntimeMismatch(t *testing.T) {
 	assembly, decision := remuxCase()
 	runtime := 116
 	assembly.LocalSnapshot.Observation.Movie.RuntimeMinutes = &runtime
-	assertRemuxRejection(t, ValidateRemux(assembly, decision), RemuxRuntimeMismatch)
+	assertRemuxRejection(t, ValidateRemux(assembly, decision, RuntimePolicy{}), RemuxRuntimeMismatch)
 }
 
 func TestValidateRemuxRejectsIncompleteClip(t *testing.T) {
 	t.Parallel()
 	assembly, decision := remuxCase()
 	assembly.LocalSnapshot.Observation.Inventory.Files[1].DownloadFile.BytesCompleted--
-	assertRemuxRejection(t, ValidateRemux(assembly, decision), RemuxFileUnavailable)
+	assertRemuxRejection(t, ValidateRemux(assembly, decision, RuntimePolicy{}), RemuxFileUnavailable)
 }
 
 func TestValidateRemuxRejectsChangedPlaylistEvidence(t *testing.T) {
 	t.Parallel()
 	assembly, decision := remuxCase()
 	assembly.LocalSnapshot.Observation.BluRayPlaylists[0].Details.Tracks[0].Codec = "different"
-	assertRemuxRejection(t, ValidateRemux(assembly, decision), RemuxPlaylistMismatch)
+	assertRemuxRejection(t, ValidateRemux(assembly, decision, RuntimePolicy{}), RemuxPlaylistMismatch)
 }
 
 func TestValidateRemuxRejectsUnknownCapability(t *testing.T) {
 	t.Parallel()
 	assembly, decision := remuxCase()
 	decision.RemuxBluray.CapabilityID = "other"
-	assertRemuxRejection(t, ValidateRemux(assembly, decision), RemuxCapabilityMissing)
+	assertRemuxRejection(t, ValidateRemux(assembly, decision, RuntimePolicy{}), RemuxCapabilityMissing)
 }
 
 func assertRemuxRejection(

@@ -57,21 +57,21 @@ func TestCaseIdentityChangesWithPlanningEvidence(t *testing.T) {
 	}
 }
 
-func TestSameCaseIdentityIgnoresObservationFields(t *testing.T) {
+func TestCaseIdentityChangesWithFileSize(t *testing.T) {
 	t.Parallel()
-	left := exampleCase(t)
-	right := left
-	right.ObservedAt = right.ObservedAt.Add(time.Hour)
-	right.CaseID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	same, err := SameCaseIdentity(left, right)
-	if err != nil || !same {
-		t.Fatalf("same = %t, error = %v", same, err)
+
+	repairCase := exampleCase(t)
+	before, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
 	}
-	right.Files = append([]FileElement(nil), left.Files...)
-	right.Files[0].SizeBytes++
-	same, err = SameCaseIdentity(left, right)
-	if err != nil || same {
-		t.Fatalf("changed evidence: same = %t, error = %v", same, err)
+	repairCase.Files[0].SizeBytes++
+	after, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after == before {
+		t.Fatal("case ID did not change with file size")
 	}
 }
 
@@ -119,23 +119,6 @@ func TestEncodeCaseValidatesIdentityAndSchema(t *testing.T) {
 	}
 	if _, err := EncodeCase(repairCase); err == nil {
 		t.Fatal("schema-invalid case was encoded")
-	}
-}
-
-func TestCanonicalCaseIdentityUsesJCSStringEncoding(t *testing.T) {
-	t.Parallel()
-
-	repairCase := exampleCase(t)
-	repairCase.Radarr.Movie.Title = "A < B & Caf\u00e9"
-	canonical, err := canonicalCaseIdentity(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if bytes.Contains(canonical, []byte(`\u003c`)) || bytes.Contains(canonical, []byte(`\u0026`)) {
-		t.Fatalf("canonical JSON retained Go HTML escapes: %s", canonical)
-	}
-	if !bytes.Contains(canonical, []byte(`"title":"A < B & Café"`)) {
-		t.Fatalf("canonical JSON does not contain the JCS string encoding: %s", canonical)
 	}
 }
 

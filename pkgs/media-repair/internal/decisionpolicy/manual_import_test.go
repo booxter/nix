@@ -16,6 +16,7 @@ func TestValidateManualImportReturnsBoundRadarrCommand(t *testing.T) {
 	validation := ValidateManualImport(
 		assembly,
 		manualImportDecision(assembly.Request.CaseID),
+		RuntimePolicy{},
 	)
 	if !validation.Accepted() || validation.Authorized == nil {
 		t.Fatalf("validation = %#v", validation)
@@ -116,7 +117,7 @@ func TestValidateManualImportRequiresGrantedFile(t *testing.T) {
 			assembly := manualImportAssembly()
 			decision := manualImportDecision(assembly.Request.CaseID)
 			test.mutate(&assembly, &decision)
-			assertManualImportRejected(t, ValidateManualImport(assembly, decision), test.reason)
+			assertManualImportRejected(t, ValidateManualImport(assembly, decision, RuntimePolicy{}), test.reason)
 		})
 	}
 }
@@ -221,7 +222,7 @@ func TestValidateManualImportRequiresUnchangedLocalEvidence(t *testing.T) {
 			test.mutate(&assembly)
 			assertManualImportRejected(
 				t,
-				ValidateManualImport(assembly, manualImportDecision(assembly.Request.CaseID)),
+				ValidateManualImport(assembly, manualImportDecision(assembly.Request.CaseID), RuntimePolicy{}),
 				test.reason,
 			)
 		})
@@ -256,6 +257,7 @@ func TestValidateManualImportRuntimeTolerance(t *testing.T) {
 			validation := ValidateManualImport(
 				assembly,
 				manualImportDecision(assembly.Request.CaseID),
+				RuntimePolicy{},
 			)
 			if test.accepted && !validation.Accepted() {
 				t.Fatalf("validation = %#v", validation)
@@ -274,6 +276,7 @@ func TestValidateManualImportAllowsSilentVideo(t *testing.T) {
 	validation := ValidateManualImport(
 		assembly,
 		manualImportDecision(assembly.Request.CaseID),
+		RuntimePolicy{},
 	)
 	if !validation.Accepted() {
 		t.Fatalf("silent video was rejected: %#v", validation)
@@ -288,7 +291,7 @@ func TestValidateManualImportRejectsAnotherDecisionVariant(t *testing.T) {
 		NoRepair: &contracts.NoRepairDecision{
 			Action: contracts.NoRepair,
 		},
-	})
+	}, RuntimePolicy{})
 	assertManualImportRejected(t, validation, ManualImportWrongDecisionAction)
 }
 

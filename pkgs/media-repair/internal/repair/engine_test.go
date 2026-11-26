@@ -136,7 +136,13 @@ func TestHistoryOutageDoesNotMakeImportRetryable(t *testing.T) {
 		t.Fatal("lost history error")
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	if err := engine.Store.SetPlan(ctx, job.ID, job.SourceFingerprint, job.Plan, "retry", engine.Now()); !errors.Is(err, jobs.ErrConflict) {
+	planned, err := engine.Store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planned.State = jobs.Ready
+	planned.UpdatedAt = engine.Now()
+	if err := engine.Store.FinishPlanning(ctx, planned); !errors.Is(err, jobs.ErrConflict) {
 		t.Fatalf("uncertain import became retryable: %v", err)
 	}
 	adapter.checkError = nil
@@ -203,7 +209,10 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, json.RawMessage(`{"action":"join"}`), "", time.Now()); err != nil {
+	job.State = jobs.Ready
+	job.Plan = json.RawMessage(`{"action":"join"}`)
+	job.UpdatedAt = time.Now()
+	if err := store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
 	adapter := &fakeAdapter{store: store, jobID: job.ID}

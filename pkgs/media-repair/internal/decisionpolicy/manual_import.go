@@ -70,13 +70,6 @@ func (validation ManualImportValidation) Accepted() bool {
 func ValidateManualImport(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
-) ManualImportValidation {
-	return ValidateManualImportWithPolicy(assembly, decision, RuntimePolicy{})
-}
-
-func ValidateManualImportWithPolicy(
-	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV3,
 	policy RuntimePolicy,
 ) ManualImportValidation {
 	validation := ManualImportValidation{Rejections: make([]ManualImportRejection, 0)}

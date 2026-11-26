@@ -131,7 +131,7 @@ func TestAssessmentChangesPreserveReadyPlanEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	observation.SourceFingerprint, observation.Evidence = "new-case", json.RawMessage(`{"files":"a","score":39.5}`)

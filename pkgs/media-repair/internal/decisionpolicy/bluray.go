@@ -55,13 +55,6 @@ func (validation RemuxValidation) Accepted() bool {
 func ValidateRemux(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
-) RemuxValidation {
-	return ValidateRemuxWithPolicy(assembly, decision, RuntimePolicy{})
-}
-
-func ValidateRemuxWithPolicy(
-	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV3,
 	policy RuntimePolicy,
 ) RemuxValidation {
 	if decision.Kind != contracts.ActionRemuxBluray || decision.RemuxBluray == nil ||
