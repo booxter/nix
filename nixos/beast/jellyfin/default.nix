@@ -1,17 +1,4 @@
 {
-  config,
-  inputs,
-  pkgs,
-  ...
-}:
-let
-  # Keep the deployed server, web client, transcoder and reconciler together.
-  jellyfinPkgs = import inputs.nixpkgs-jellyfin {
-    inherit (config.nixpkgs) config overlays;
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
-in
-{
   imports = [
     ./catalogue.nix
     ./language-tags-refresh.nix
@@ -21,11 +8,6 @@ in
     ./server.nix
     ./users.nix
   ];
-
-  services.jellyfin.package = jellyfinPkgs.jellyfin;
-  services.jellarr.package = jellyfinPkgs.callPackage ../../_mixins/jellyfin/packages/jellarr {
-    src = inputs.jellarr;
-  };
 
   host.jellyfin = {
     media = {

@@ -20,9 +20,11 @@ buildPlugin {
   pluginId = "6d033048-d833-4df8-bfb5-d7555d612737";
   pluginName = "Catalogue Fixture";
   pluginFiles = [ "Fixture.dll" ];
-  targetAbi = "10.11.0.0";
+  targetAbi = "12.0.0.0";
   projectFile = "Fixture.csproj";
   nugetDeps = [ ];
+  dotnet-sdk = pkgs.dotnetCorePackages.sdk_10_0;
+  dotnet-runtime = pkgs.dotnetCorePackages.aspnetcore_10_0;
   dotnetFlags = [ "-p:JellyfinLib=${jellyfin}/lib/jellyfin" ];
   meta.description = "Plugin catalogue integration test fixture";
 }

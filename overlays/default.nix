@@ -271,23 +271,12 @@
       });
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
-        patches = old.patches or [ ] ++ [
-          # Catch websocket keepalive send races.
-          # Upstream: https://github.com/jellyfin/jellyfin/issues/14837
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/jellyfin/commit/b5a385d185.patch";
-            hash = "sha256-maX9MLOK/lq/6LPpJi2Dw8ZZTvzSR9t15648JT0jS2Q=";
-          })
-          # Catch websocket close teardown races while testing fixes for Jellyfin coredumps.
+        patches = (old.patches or [ ]) ++ [
+          # Jellyfin 12 still leaves disposed-session errors unhandled in the close callback.
           # Upstream: https://github.com/jellyfin/jellyfin/issues/16512
           (prev.fetchpatch {
             url = "https://github.com/booxter/jellyfin/commit/c64abc489e.patch";
             hash = "sha256-/Y2QiBkeLY4Wi+RlgFcNuzLPuwOF1sRyf7hnBuUEzAM=";
-          })
-          # Ignore stale progress updates unless transcode job exists.
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/jellyfin/commit/3b63ec92420305d24e0fe90a452f0cdcbb624872.patch";
-            hash = "sha256-X5qv8+R2s/zk411gQHyNhRaf9VRFSG+47W8Fy0N+96U=";
           })
         ];
       });

@@ -1,9 +1,6 @@
 { inputs, pkgs, ... }:
 let
   inherit (pkgs) lib;
-  jellyfinPkgs = import inputs.nixpkgs-jellyfin {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
 in
 pkgs.testers.runNixOSTest {
   name = "jellyfin-catalogue";
@@ -24,12 +21,12 @@ pkgs.testers.runNixOSTest {
       config = {
         services.jellyfin = {
           enable = true;
-          package = jellyfinPkgs.jellyfin;
+          package = pkgs.jellyfin;
         };
 
         services.jellarr = {
           enable = true;
-          package = jellyfinPkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
+          package = pkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
             src = inputs.jellarr;
           };
           environmentFile = "/run/jellarr.env";

@@ -2,24 +2,27 @@
   lib,
   buildPlugin,
   fetchFromGitHub,
+  dotnetCorePackages,
 }:
 buildPlugin {
   pname = "jellyfin-plugin-tvdb";
-  version = "22";
+  version = "24";
 
   src = fetchFromGitHub {
     owner = "jellyfin";
     repo = "jellyfin-plugin-tvdb";
-    tag = "v22";
-    hash = "sha256-3cTzCKKgvnwwdaCJv70qAl5j73hixM4cCKVr1KOLh5A=";
+    tag = "v24";
+    hash = "sha256-/n+f/6ZuNwHquWGwVqwLYi7TIhg1dBUhKUwcN90Btcg=";
   };
 
   projectFile = "Jellyfin.Plugin.Tvdb/Jellyfin.Plugin.Tvdb.csproj";
   nugetDeps = ./deps.json;
+  dotnet-sdk = dotnetCorePackages.sdk_10_0;
+  dotnet-runtime = dotnetCorePackages.aspnetcore_10_0;
 
   pluginId = "a677c0da-fac5-4cde-941a-7134223f14c8";
   pluginName = "TheTVDB";
-  targetAbi = "10.11.8.0";
+  targetAbi = "12.0.0.0";
   pluginFiles = [
     "Jellyfin.Plugin.Tvdb.dll"
     "Tvdb.Sdk.dll"
