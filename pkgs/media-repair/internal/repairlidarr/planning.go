@@ -6,6 +6,7 @@ import (
 	"errors"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -60,20 +61,22 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 			}
 		}
 
-		evidence, err := adapter.Inspector.Inspect(ctx, entry, record)
-		if err != nil {
-			job.CollectionError = err.Error()
+		result := adapter.Inspector.Inspect(ctx, entry, record)
+		switch {
+		case len(result.Findings) > 0:
+			job.CollectionError = strings.Join(result.Findings, ", ")
+			job.CollectionOutcome = jobs.OutcomeQueueNotReady
+		case result.Err != nil:
+			job.CollectionError = result.Err.Error()
 			job.CollectionOutcome = jobs.OutcomeOther
 			var rejection *materialize.Rejection
-			switch {
-			case errors.Is(err, lidarrrepair.ErrQueueNotReady):
-				job.CollectionOutcome = jobs.OutcomeQueueNotReady
-			case errors.As(err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet:
+			if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
 				job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
 			}
-		} else {
+		default:
+			evidence := result.Case
 			job.SourceFingerprint = evidence.Case.CaseID
-			job.Evidence, err = encodeEvidence(evidence)
+			job.Evidence, err = encodeEvidence(*evidence)
 			if err != nil {
 				return repair.Observation{}, err
 			}

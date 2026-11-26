@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -19,7 +20,7 @@ type Client interface {
 }
 
 type Inspector interface {
-	Inspect(context.Context, lidarr.QueueRecord, *lidarrrepair.Record) (lidarrrepair.Evidence, error)
+	Inspect(context.Context, lidarr.QueueRecord, *lidarrrepair.Record) lidarrrepair.CollectionResult
 }
 
 type Adapter struct {
@@ -40,11 +41,15 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 		return repair.PreparedImport{}, err
 	}
 
-	current, err := adapter.Inspector.Inspect(ctx, queue, &planned)
-	if err != nil {
-		return repair.PreparedImport{}, err
+	result := adapter.Inspector.Inspect(ctx, queue, &planned)
+	if result.Err != nil {
+		return repair.PreparedImport{}, result.Err
 	}
-	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, current)
+	if len(result.Findings) > 0 {
+		return repair.PreparedImport{}, errors.New(strings.Join(result.Findings, ", "))
+	}
+	current := result.Case
+	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, *current)
 	if err != nil {
 		blocked := &repair.BlockedError{Reason: err.Error()}
 		var changed *lidarrrepair.EvidenceChangedError

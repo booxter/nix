@@ -17,8 +17,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
-var ErrQueueNotReady = errors.New("Lidarr queue item is not eligible for repair")
-
 type Lidarr interface {
 	ReadQueue(context.Context) ([]lidarr.QueueRecord, error)
 	RecoverAlbumIdentity(context.Context, string) (lidarr.AlbumIdentity, bool, error)
@@ -85,28 +83,21 @@ const (
 	archiveRAR
 )
 
-func (collector *EvidenceCollector) Inspect(
+// Use the archive when present, then try loose audio. A missing source can
+// fall back to a saved workspace. A broken source needs operator attention.
+func (inspection albumInspection) collectEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
-	previous *Record,
 ) (Evidence, error) {
-	var err error
-	queue, err = collector.recoverQueueIdentity(ctx, queue)
-	if err != nil {
-		return Evidence{}, err
-	}
-	if !eligibleQueue(queue) {
-		return Evidence{}, ErrQueueNotReady
-	}
 	archivePath, snapshot, kind, err := findArchive(queue.OutputPath)
 	if err == nil {
-		return collector.buildArchiveEvidence(ctx, queue, archivePath, snapshot, kind)
+		return inspection.buildArchiveEvidence(ctx, queue, archivePath, snapshot, kind)
 	}
 	if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, errNoArchive) {
 		return Evidence{}, fmt.Errorf("discover archive: %w", err)
 	}
 	if errors.Is(err, errNoArchive) {
-		evidence, directoryErr := collector.buildDirectoryEvidence(ctx, queue)
+		evidence, directoryErr := inspection.buildDirectoryEvidence(ctx, queue)
 		if directoryErr == nil {
 			return evidence, nil
 		}
@@ -114,29 +105,11 @@ func (collector *EvidenceCollector) Inspect(
 			return Evidence{}, directoryErr
 		}
 	}
-	if previous == nil {
+	if inspection.previous == nil {
 		return Evidence{}, fmt.Errorf("discover archive: %w", err)
 	}
 
-	return collector.buildStoredEvidence(ctx, queue, *previous)
-}
-
-func (collector *EvidenceCollector) recoverQueueIdentity(
-	ctx context.Context,
-	queue lidarr.QueueRecord,
-) (lidarr.QueueRecord, error) {
-	if queue.AlbumID != nil && queue.ArtistID != nil {
-		return queue, nil
-	}
-	if !eligibleQueueWithoutIdentity(queue) {
-		return queue, nil
-	}
-
-	recovered, err := lidarr.RecoverQueueIdentity(ctx, collector.lidarr, queue)
-	if err != nil {
-		return queue, fmt.Errorf("recover Lidarr album identity: %w", err)
-	}
-	return recovered, nil
+	return inspection.buildStoredEvidence(ctx, queue, *inspection.previous)
 }
 
 func (collector *EvidenceCollector) buildArchiveEvidence(
@@ -304,16 +277,6 @@ func (collector *EvidenceCollector) readCatalog(
 		tracks = append(tracks, releaseTracks...)
 	}
 	return album, tracks, nil
-}
-
-func eligibleQueue(queue lidarr.QueueRecord) bool {
-	return queue.AlbumID != nil && queue.ArtistID != nil &&
-		eligibleQueueWithoutIdentity(queue)
-}
-
-func eligibleQueueWithoutIdentity(queue lidarr.QueueRecord) bool {
-	return queue.OutputPath != "" && queue.DownloadID != "" &&
-		queue.Status == "completed" && queue.TrackedDownloadStatus == "warning"
 }
 
 func findArchive(outputPath string) (string, fileidentity.Snapshot, archiveKind, error) {

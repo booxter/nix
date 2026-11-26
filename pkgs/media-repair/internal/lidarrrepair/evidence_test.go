@@ -4,11 +4,14 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
+	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
@@ -46,7 +49,7 @@ func (fake *fakeLidarr) ReadReleaseTracks(
 	releaseID int64,
 ) ([]lidarr.Track, error) {
 	if albumID != 3 || releaseID != 4 {
-		panic("unexpected release-track query")
+		return nil, nil
 	}
 	return []lidarr.Track{{
 		ID: 5, AlbumID: 3, ReleaseID: 4, ArtistID: 2, AbsoluteTrackNumber: 1,
@@ -59,7 +62,7 @@ func (fake *fakeLidarr) ReadManualImports(
 	query lidarr.ManualImportQuery,
 ) ([]lidarr.ManualImport, error) {
 	if query.Folder != "/downloads/.media-repair/workspaces/workspace:test" || query.ArtistID != 2 {
-		panic("unexpected manual-import workspace")
+		return nil, nil
 	}
 	return fake.imports, nil
 }
@@ -162,20 +165,33 @@ func TestEvidenceCollectorMaterializesSourcesAndRefreshesEvidence(t *testing.T) 
 			collector := NewEvidenceCollector(client, &fakeWorker{directoryAudio: true})
 			collector.now = func() time.Time { return time.Date(2026, 9, 21, 12, 0, 0, 0, time.UTC) }
 
-			first, err := collector.Inspect(context.Background(), queue, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			first := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
 			if first.SourceKind != test.sourceKind || first.Case.Queue.QueueID != queue.ID ||
-				len(first.Bindings) != 1 || first.Bindings[0].DownloadID != queue.DownloadID ||
-				len(first.Case.Capabilities) != 1 {
+				len(first.Bindings) != 1 || first.Bindings[0].DownloadID != queue.DownloadID {
 				t.Fatalf("incomplete evidence: %#v", first)
 			}
-			queue.ErrorMessage = "New planning evidence"
-			second, err := collector.Inspect(context.Background(), queue, nil)
-			if err != nil {
-				t.Fatal(err)
+
+			tracks := first.Case.Tracks
+			if len(tracks) != 1 || tracks[0].TrackID != 5 || tracks[0].ReleaseID != 4 {
+				t.Fatalf("unexpected album tracks: %+v", tracks)
 			}
+			files := first.Case.Artifacts
+			if len(files) != 1 || files[0].RelativePath != "01.flac" {
+				t.Fatalf("unexpected audio files: %+v", files)
+			}
+			options := first.Case.Capabilities
+			if len(options) != 1 {
+				t.Fatalf("expected one import option, got %+v", options)
+			}
+			option := options[0]
+			if option.Action != string(lidarrcontracts.ActionImportMissingTracks) || option.AlbumID != 3 ||
+				option.ReleaseID != 4 || !slices.Equal(option.TrackIDs, []int64{5}) ||
+				!slices.Equal(option.ArtifactIDs, []string{files[0].ArtifactID}) {
+				t.Fatalf("unexpected import option: %+v", option)
+			}
+
+			queue.ErrorMessage = "New planning evidence"
+			second := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
 			if first.Case.CaseID == second.Case.CaseID {
 				t.Fatal("changed queue evidence retained the old case identity")
 			}
@@ -193,10 +209,7 @@ func TestEvidenceCollectorRecoversAlbumIdentity(t *testing.T) {
 	client.recoveredFound = true
 	collector := NewEvidenceCollector(client, &fakeWorker{directoryAudio: true})
 
-	evidence, err := collector.Inspect(context.Background(), queue, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	evidence := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
 	if evidence.Queue.AlbumID == nil || *evidence.Queue.AlbumID != 3 ||
 		evidence.Queue.ArtistID == nil || *evidence.Queue.ArtistID != 2 ||
 		evidence.SourceKind != SourceDirectoryAudio {
@@ -213,12 +226,13 @@ func TestEvidenceCollectorRejectsUnsupportedArchive(t *testing.T) {
 	collector := NewEvidenceCollector(evidenceClient(), &fakeWorker{
 		archiveError: &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
 	})
-	if _, err := collector.Inspect(context.Background(), evidenceQueue(download), nil); !materialize.IsUnsupportedSource(err) {
-		t.Fatalf("unsupported archive error = %v", err)
+	result := collector.Inspect(context.Background(), evidenceQueue(download), nil)
+	if !materialize.IsUnsupportedSource(result.Err) {
+		t.Fatalf("unsupported archive error = %v", result.Err)
 	}
 }
 
-func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
+func TestEvidenceCollectorRejectsAmbiguousDownload(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 	for _, name := range []string{"one.tar", "two.TAR"} {
@@ -226,9 +240,19 @@ func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, _, _, err := findArchive(directory); err == nil {
-		t.Fatal("ambiguous archive was accepted")
+	collector := NewEvidenceCollector(evidenceClient(), &fakeWorker{})
+	result := collector.Inspect(context.Background(), evidenceQueue(directory), nil)
+	if result.Err == nil || !strings.Contains(result.Err.Error(), "multiple supported archives") {
+		t.Fatalf("expected an ambiguous download error, got %v", result.Err)
 	}
+}
+
+func requireAlbumEvidence(t *testing.T, result CollectionResult) *Evidence {
+	t.Helper()
+	if result.Case == nil {
+		t.Fatalf("expected album evidence, got findings %v and error %v", result.Findings, result.Err)
+	}
+	return result.Case
 }
 
 func evidenceQueue(download string) lidarr.QueueRecord {
