@@ -6,7 +6,12 @@
   ...
 }:
 let
-  inherit (pinepodsModel) cfg databaseName ollamaTunnelPort;
+  inherit (pinepodsModel)
+    cfg
+    databaseName
+    serviceAddress
+    ollamaTunnelPort
+    ;
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -27,7 +32,7 @@ in
           databaseName
           "--set=ON_ERROR_STOP=1"
           "--set=model=${cfg.adDetectionModel}"
-          "--set=url=http://10.0.2.2:${toString ollamaTunnelPort}/v1"
+          "--set=url=http://${serviceAddress}:${toString ollamaTunnelPort}/v1"
           "--single-transaction"
           "--file=${./ai-settings.sql}"
         ];

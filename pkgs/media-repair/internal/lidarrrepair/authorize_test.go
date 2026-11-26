@@ -168,19 +168,21 @@ func testPlannedImport(t *testing.T, albumHasFiles bool) (Record, Evidence) {
 		ArtifactID: "artifact:one", Path: "/downloads/staged/02.flac",
 		Quality: quality, DownloadID: "download",
 	}}
-	return Record{
-			Version: stateVersion, QueueID: 1, SourceKind: SourceTarAudio,
-			SourcePath:        "/downloads/album.tar",
-			SourceFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			WorkspaceRoot:     "/downloads/staged",
-			Case:              caseData, Decision: decisionData, Bindings: bindings,
-		}, Evidence{
-			Queue: lidarr.QueueRecord{
-				ID: 1, DownloadID: "download", AlbumID: pointer(int64(3)), ArtistID: pointer(int64(2)),
-			},
-			SourceKind: SourceTarAudio, SourcePath: "/downloads/album.tar",
-			SourceFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			WorkspaceRoot:     "/downloads/staged", Case: repairCase,
-			Bindings: append([]ImportBinding(nil), bindings...),
-		}
+	record := Record{
+		Version: stateVersion, QueueID: 1, SourceKind: SourceTarAudio,
+		SourcePath:        "/downloads/album.tar",
+		SourceFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		WorkspaceRoot:     "/downloads/staged",
+		Case:              caseData, Decision: decisionData, Bindings: bindings,
+	}
+	evidence := Evidence{
+		Queue: lidarr.QueueRecord{
+			ID: 1, DownloadID: "download", AlbumID: pointer(int64(3)), ArtistID: pointer(int64(2)),
+		},
+		SourceKind: SourceTarAudio, SourcePath: "/downloads/album.tar",
+		SourceFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		WorkspaceRoot:     "/downloads/staged", Case: repairCase,
+		Bindings: append([]ImportBinding(nil), bindings...),
+	}
+	return record, evidence
 }

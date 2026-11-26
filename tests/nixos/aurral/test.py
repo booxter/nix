@@ -9,8 +9,11 @@ def command(arguments):
     return " ".join(shlex.quote(str(argument)) for argument in arguments)
 
 
-def request(path, *, data=None, user=None):
+def request(path, *, data=None, user=None, method=None):
     arguments = [CURL, "--silent", "--show-error", "--fail-with-body"]
+    if method is not None:
+        arguments += ["--request", method]
+
     if user is not None:
         arguments += ["--header", f"x-forwarded-user: {user}"]
     if data is not None:
@@ -68,17 +71,17 @@ with subtest("serves the application and reports a live backend"):
     assert request("/api/health/live")["status"] == "ok"
     machine.succeed(command([CURL, "--fail", "--silent", f"{AURRAL_URL}/"]))
 
-with subtest("completes onboarding against Lidarr"):
+with subtest("completes onboarding"):
     bootstrap = request("/api/health/bootstrap")
     assert bootstrap["onboardingRequired"] is True
     assert bootstrap["proxyAuthEnabled"] is True
-    assert request(
+    result = request(
         "/api/onboarding/complete",
         data={
-            "lidarr": {"url": LIDARR_URL, "apiKey": LIDARR_API_KEY},
             "security": {"localNetworkBypass": {"enabled": False}},
         },
-    ) == {"success": True}
+    )
+    assert result["success"] is True
     assert request("/api/health/bootstrap")["onboardingRequired"] is False
 
 with subtest("maps trusted proxy users to configured roles"):
@@ -87,6 +90,22 @@ with subtest("maps trusted proxy users to configured roles"):
     listener = request("/api/auth/me", user="listener")["user"]
     assert (admin["username"], admin["role"]) == ("admin", "admin")
     assert (listener["username"], listener["role"]) == ("listener", "user")
+
+with subtest("connects to Lidarr through the packaged plugin"):
+    plugins = request("/api/plugins", user="admin")["plugins"]
+    assert any(plugin["id"] == "lidarr" for plugin in plugins), plugins
+
+    request(
+        "/api/plugins/lidarr",
+        method="PUT",
+        user="admin",
+        data={
+            "enabled": True,
+            "settings": {"url": LIDARR_URL, "apiKey": LIDARR_API_KEY},
+        },
+    )
+    result = request("/api/plugins/lidarr/test", method="POST", user="admin")
+    assert result["message"] == "Connected to Lidarr test", result
 
 with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
@@ -106,3 +125,5 @@ with subtest("configuration and state survive restart"):
     machine.wait_for_open_port(3001)
     assert request("/api/health/bootstrap")["onboardingRequired"] is False
     assert request("/api/auth/me", user="admin")["user"]["role"] == "admin"
+    plugins = request("/api/plugins", user="admin")["plugins"]
+    assert any(plugin["id"] == "lidarr" and plugin["enabled"] for plugin in plugins), plugins

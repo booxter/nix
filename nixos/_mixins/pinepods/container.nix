@@ -15,6 +15,7 @@ let
     downloadsDir
     image
     imageFile
+    serviceAddress
     oidcClient
     port
     storageGroup
@@ -62,7 +63,6 @@ in
     };
 
     virtualisation = {
-      podman.extraPackages = [ pkgs.slirp4netns ];
       oci-containers = {
         backend = "podman";
         containers.pinepods = {
@@ -70,11 +70,11 @@ in
           pull = "never";
           environment = {
             DB_TYPE = "postgresql";
-            DB_HOST = "10.0.2.2";
+            DB_HOST = serviceAddress;
             DB_PORT = "5432";
             DB_USER = user;
             DB_NAME = databaseName;
-            VALKEY_HOST = "10.0.2.2";
+            VALKEY_HOST = serviceAddress;
             VALKEY_PORT = toString cachePort;
             HOSTNAME = pinepodsModel.service.public.url;
             PINEPODS_PORT = "443";
@@ -114,7 +114,7 @@ in
           };
           environmentFiles = [ config.sops.templates."pinepods.env".path ];
           ports = [ "127.0.0.1:${toString port}:8040" ];
-          networks = [ "slirp4netns:allow_host_loopback=true" ];
+          networks = [ "pinepods" ];
           volumes = [
             "${downloadsDir}:/opt/pinepods/downloads:rw"
             "/var/lib/pinepods/yt-dlp:/opt/pinepods/yt-dlp:rw"
@@ -147,7 +147,6 @@ in
       ];
       wants = dependencies;
       after = dependencies;
-      path = [ pkgs.slirp4netns ];
       environment.PINEPODS_LISTEN_PORT = toString port;
       serviceConfig.ExecStartPost = readinessCommand;
     };

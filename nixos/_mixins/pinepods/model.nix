@@ -32,8 +32,9 @@ in
   databaseName = "pinepods";
   port = 8040;
   cachePort = 6382;
-  aiPort = 8100;
   ollamaTunnelPort = 11436;
+  containerSubnet = "10.89.42.0/28";
+  serviceAddress = "10.89.42.16";
   downloadsDir = if claim == null then null else "${claim.mountPoint}/podcasts/pinepods";
   storageGroup =
     if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then

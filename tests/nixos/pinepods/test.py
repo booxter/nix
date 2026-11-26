@@ -28,6 +28,27 @@ base = "http://127.0.0.1:8040/api/data"
 machine.wait_until_succeeds(
     f"{api} {base}/ai_status | {JQ} -e '.available and .transcription_ready and .ad_removal_ready'"
 )
+
+# Check both the host's LAN address and an explicit route to the private listeners.
+ollama.succeed("getent hosts podcast-node")
+service_address = machine.succeed("podman exec pinepods printenv DB_HOST").strip()
+host_address = ollama.succeed("getent ahostsv4 podcast-node").split()[0]
+ollama.succeed(f"ip route replace {service_address}/32 via {host_address}")
+backend_ports = (5432, 6382, 11436)
+for port in (8040, 8100, *backend_ports):
+    ollama.fail(f"nc -z -w 2 podcast-node {port}")
+for port in backend_ports:
+    ollama.fail(f"nc -z -w 2 {service_address} {port}")
+
+# The app also needs outbound connectivity for fetching feeds. Use the second VM
+# so this exercises the container's external route without depending on the internet.
+remote_address = machine.succeed("getent ahostsv4 ollama").split()[0]
+machine.succeed(
+    "nsenter --net --target "
+    + machine.succeed("podman inspect -f '{{.State.Pid}}' pinepods").strip()
+    + f" -- timeout 5 bash -c 'true > /dev/tcp/{remote_address}/443'"
+)
+
 settings = json.loads(machine.succeed(f"{api} {base}/ai_settings"))["settings"]
 assert settings["llm_backend"] == "remote", settings
 assert settings["llm_model"] == "test-model", settings
@@ -72,7 +93,12 @@ def check_subscription(podcast_id: int) -> None:
     assert result["auto_download"], (podcast_id, result)
 
 
-machine.succeed("systemctl start pinepods-subscriptions.service")
+def enforce_subscriptions() -> None:
+    status, _ = machine.execute("systemctl start pinepods-subscriptions.service")
+    assert status == 0, machine.succeed("journalctl -u pinepods-subscriptions.service --no-pager")
+
+
+enforce_subscriptions()
 check_subscription(101)
 
 # A later run picks up new subscriptions and restores the approval requirement.
@@ -89,7 +115,7 @@ machine.succeed(
     f"{api} -H 'Content-Type: application/json' -d {shlex.quote(payload)}"
     f" {base}/adjust_ad_skip_auto_activate"
 )
-machine.succeed("systemctl start pinepods-subscriptions.service")
+enforce_subscriptions()
 check_subscription(101)
 check_subscription(103)
 
@@ -103,3 +129,9 @@ other_settings = machine.succeed(
 assert other_settings == "f", other_settings
 machine.succeed("systemctl start pinepods-subscriptions.timer")
 machine.succeed("systemctl is-active pinepods-subscriptions.timer")
+
+machine.succeed("systemctl stop podman-pinepods.service podman-pinepods-ai.service")
+machine.succeed("systemctl start podman-pinepods.service")
+machine.wait_until_succeeds(f"{api} {base}/ai_status | {JQ} -e '.available'")
+machine.succeed(f"curl -fsS http://127.0.0.1:8040/api/health | {JQ} -e '.database and .redis'")
+enforce_subscriptions()

@@ -149,6 +149,7 @@
             "gw"
             "org"
             "pki"
+            "srvarr"
           ];
           hostInputs = if on2611 then releaseInputs else inputs;
           # Keep node modules and base packages on Proxmox's tested nixpkgs pin.

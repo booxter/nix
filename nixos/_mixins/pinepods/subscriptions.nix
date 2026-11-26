@@ -5,7 +5,12 @@
   ...
 }:
 let
-  inherit (pinepodsModel) cfg package port;
+  inherit (pinepodsModel)
+    cfg
+    containerSubnet
+    package
+    port
+    ;
   secretName = "pinepods/subscriptions/api_key";
 in
 {
@@ -45,7 +50,12 @@ in
         ProtectHome = true;
         ProtectSystem = "strict";
         RestrictAddressFamilies = [ "AF_INET" ];
-        IPAddressAllow = "localhost";
+        # Podman's published loopback port is translated to the container IP
+        # before systemd's egress filter sees the request.
+        IPAddressAllow = [
+          "localhost"
+          containerSubnet
+        ];
         IPAddressDeny = "any";
       };
     };
