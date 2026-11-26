@@ -1,0 +1,263 @@
+diff --git a/README.md b/README.md
+index 65c1000..572a340 100644
+--- a/README.md
++++ b/README.md
+@@ -380,10 +380,10 @@ docker run --rm -it --cap-add=NET_ADMIN --device=/dev/net/tun \
+   connect <portal> --browser manual
+ ```
+ 
+-On a host with multiple network interfaces, use `--browser-listen` to select the IP address reachable from the browser machine:
++On a host with multiple network interfaces, use `--browser-listen` to select the IP address and port reachable from the browser machine:
+ 
+ ```bash
+-gpclient connect <portal> --browser manual --browser-listen 192.168.107.15
++gpclient connect <portal> --browser manual --browser-listen 192.168.107.15:38080
+ ```
+ 
+ On a Linux host, add host networking if the VPN routes should affect the host network namespace:
+diff --git a/apps/gpauth/src/cli.rs b/apps/gpauth/src/cli.rs
+index a29f37c..04e3491 100644
+--- a/apps/gpauth/src/cli.rs
++++ b/apps/gpauth/src/cli.rs
+@@ -19,7 +19,7 @@ use gpapi::{
+ };
+ use log::info;
+ use serde_json::json;
+-use std::net::IpAddr;
++use std::net::SocketAddr;
+ #[cfg(not(target_os = "macos"))]
+ use tempfile::NamedTempFile;
+ 
+@@ -115,8 +115,8 @@ struct Cli {
+   )]
+   browser: Option<String>,
+ 
+-  #[arg(long, help = "Listen on this IP address when using '--browser manual'")]
+-  browser_listen: Option<IpAddr>,
++  #[arg(long, help = "Listen on this IP:PORT when using '--browser manual'")]
++  browser_listen: Option<SocketAddr>,
+ 
+   #[cfg(feature = "webview-auth")]
+   #[arg(long, help = "The HiDPI mode, useful for high-resolution screens")]
+@@ -454,18 +454,37 @@ mod tests {
+   }
+ 
+   #[test]
+-  fn browser_listen_accepts_ip_address() {
+-    let cli = Cli::try_parse_from([
+-      "gpauth",
+-      "portal.example.com",
+-      "--browser",
+-      "manual",
+-      "--browser-listen",
+-      "192.168.107.15",
+-    ])
+-    .expect("gpauth args should parse");
++  fn browser_listen_accepts_socket_address() {
++    for addr in ["192.168.107.15:38080", "[::1]:38080"] {
++      let cli = Cli::try_parse_from([
++        "gpauth",
++        "portal.example.com",
++        "--browser",
++        "remote",
++        "--browser-listen",
++        addr,
++      ])
++      .expect("gpauth args should parse");
+ 
+-    assert_eq!(cli.browser_listen, Some("192.168.107.15".parse().unwrap()));
++      assert_eq!(cli.browser_listen, Some(addr.parse().unwrap()));
++    }
++  }
++
++  #[test]
++  fn browser_listen_rejects_invalid_address() {
++    for addr in ["192.168.107.15", "192.168.107.15:65536", "invalid:38080"] {
++      assert!(
++        Cli::try_parse_from([
++          "gpauth",
++          "portal.example.com",
++          "--browser",
++          "remote",
++          "--browser-listen",
++          addr,
++        ])
++        .is_err()
++      );
++    }
+   }
+ 
+   #[test]
+diff --git a/apps/gpclient/src/connect/args.rs b/apps/gpclient/src/connect/args.rs
+index 493f06b..a5ef9ef 100644
+--- a/apps/gpclient/src/connect/args.rs
++++ b/apps/gpclient/src/connect/args.rs
+@@ -6,7 +6,7 @@ use gpapi::{
+   os_profile::{ClientOs, OsProfile},
+ };
+ use log::warn;
+-use std::{net::IpAddr, path::PathBuf};
++use std::{net::SocketAddr, path::PathBuf};
+ 
+ #[derive(Args)]
+ pub(crate) struct ConnectArgs {
+@@ -179,8 +179,8 @@ pub(crate) struct ConnectArgs {
+   )]
+   pub(super) browser: Option<String>,
+ 
+-  #[arg(long, help = "Listen on this IP address when using '--browser manual'")]
+-  pub(super) browser_listen: Option<IpAddr>,
++  #[arg(long, help = "Listen on this IP:PORT when using '--browser manual'")]
++  pub(super) browser_listen: Option<SocketAddr>,
+ 
+   #[arg(
+     long,
+@@ -307,20 +307,41 @@ mod tests {
+   }
+ 
+   #[test]
+-  fn browser_listen_accepts_ip_address() {
++  fn browser_listen_accepts_socket_address() {
+     use clap::Parser;
+ 
+-    let cli = ConnectArgsTestCli::try_parse_from([
+-      "test",
+-      "portal.example.com",
+-      "--browser",
+-      "manual",
+-      "--browser-listen",
+-      "192.168.107.15",
+-    ])
+-    .expect("connect args should parse");
++    for addr in ["192.168.107.15:38080", "[::1]:38080"] {
++      let cli = ConnectArgsTestCli::try_parse_from([
++        "test",
++        "portal.example.com",
++        "--browser",
++        "remote",
++        "--browser-listen",
++        addr,
++      ])
++      .expect("connect args should parse");
++
++      assert_eq!(cli.args.browser_listen, Some(addr.parse().unwrap()));
++    }
++  }
+ 
+-    assert_eq!(cli.args.browser_listen, Some("192.168.107.15".parse().unwrap()));
++  #[test]
++  fn browser_listen_rejects_invalid_address() {
++    use clap::Parser;
++
++    for addr in ["192.168.107.15", "192.168.107.15:65536", "invalid:38080"] {
++      assert!(
++        ConnectArgsTestCli::try_parse_from([
++          "test",
++          "portal.example.com",
++          "--browser",
++          "remote",
++          "--browser-listen",
++          addr,
++        ])
++        .is_err()
++      );
++    }
+   }
+ 
+   #[test]
+diff --git a/crates/auth/src/browser/browser_auth.rs b/crates/auth/src/browser/browser_auth.rs
+index b6b3d81..ddf9ab4 100644
+--- a/crates/auth/src/browser/browser_auth.rs
++++ b/crates/auth/src/browser/browser_auth.rs
+@@ -13,11 +13,11 @@ use crate::{AuthCallbackReceiver, browser::auth_server::AuthServer, ensure_auth_
+ pub struct BrowserAuthenticator<'a> {
+   auth_request: &'a str,
+   browser: &'a str,
+-  browser_listen: Option<IpAddr>,
++  browser_listen: Option<SocketAddr>,
+ }
+ 
+ impl<'a> BrowserAuthenticator<'a> {
+-  pub fn new(auth_request: &'a str, browser: &'a str, browser_listen: Option<IpAddr>) -> Self {
++  pub fn new(auth_request: &'a str, browser: &'a str, browser_listen: Option<SocketAddr>) -> Self {
+     Self {
+       auth_request,
+       browser,
+@@ -70,11 +70,10 @@ Note that the URL is only valid for a single use.
+ 
+   async fn determine_addr(&self) -> anyhow::Result<SocketAddr> {
+     if is_manual_browser(self.browser) {
+-      let local_ip = match self.browser_listen {
+-        Some(ip) => ip,
+-        None => detect_local_ip().await?,
+-      };
+-      Ok(SocketAddr::new(local_ip, 0))
++      match self.browser_listen {
++        Some(addr) => Ok(addr),
++        None => Ok(SocketAddr::new(detect_local_ip().await?, 0)),
++      }
+     } else {
+       Ok(SocketAddr::from(([127, 0, 0, 1], 0)))
+     }
+@@ -130,14 +129,11 @@ mod tests {
+ 
+   #[tokio::test]
+   async fn manual_browser_uses_explicit_listen_address() {
+-    let listen_ip = "192.168.107.15".parse().unwrap();
++    let listen_addr = "192.168.107.15:38080".parse().unwrap();
+     for browser in ["manual", "MANUAL", "remote", "REMOTE"] {
+-      let authenticator = BrowserAuthenticator::new("request", browser, Some(listen_ip));
++      let authenticator = BrowserAuthenticator::new("request", browser, Some(listen_addr));
+ 
+-      assert_eq!(
+-        authenticator.determine_addr().await.unwrap(),
+-        SocketAddr::new(listen_ip, 0)
+-      );
++      assert_eq!(authenticator.determine_addr().await.unwrap(), listen_addr);
+     }
+   }
+ }
+diff --git a/crates/gpapi/src/process/auth_launcher.rs b/crates/gpapi/src/process/auth_launcher.rs
+index 1919a52..c2bde0c 100644
+--- a/crates/gpapi/src/process/auth_launcher.rs
++++ b/crates/gpapi/src/process/auth_launcher.rs
+@@ -1,5 +1,5 @@
+ use std::{
+-  net::IpAddr,
++  net::SocketAddr,
+   path::{Path, PathBuf},
+ };
+ 
+@@ -47,7 +47,7 @@ pub struct SamlAuthLauncher<'a> {
+   #[cfg(feature = "webview-auth")]
+   window_theme: Option<AuthWindowTheme>,
+   browser: Option<&'a str>,
+-  browser_listen: Option<IpAddr>,
++  browser_listen: Option<SocketAddr>,
+   verbose: Option<&'a str>,
+   log_format: LogFormat,
+   dmabuf_disabled: bool,
+@@ -176,7 +176,7 @@ impl<'a> SamlAuthLauncher<'a> {
+     self
+   }
+ 
+-  pub fn browser_listen(mut self, browser_listen: Option<IpAddr>) -> Self {
++  pub fn browser_listen(mut self, browser_listen: Option<SocketAddr>) -> Self {
+     self.browser_listen = browser_listen;
+     self
+   }
+@@ -507,14 +507,6 @@ mod tests {
+     assert_eq!(launcher.key_password, Some("secret"));
+   }
+ 
+-  #[test]
+-  fn browser_listen_address_is_stored() {
+-    let listen_ip = "192.168.107.15".parse().unwrap();
+-    let launcher = SamlAuthLauncher::new("portal.example.com").browser_listen(Some(listen_ip));
+-
+-    assert_eq!(launcher.browser_listen, Some(listen_ip));
+-  }
+-
+   #[test]
+   fn only_a_manual_browser_reads_the_terminal() {
+     assert!(matches!(auth_stdin(Some("manual")), ChildInput::Terminal));
