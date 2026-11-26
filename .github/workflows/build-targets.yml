@@ -238,22 +238,23 @@ jobs:
           path: diff-output/*
           if-no-files-found: warn
 
-  mair-vm:
-    needs:
-      - format
-    name: darwin vm mair (aarch64-darwin)
-    runs-on: nix-ci-darwin
-    timeout-minutes: 90
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Boot and activate mair
-        shell: bash
-        # Replace the step shell so cancellation reaches the script.
-        run: exec .github/scripts/boot-mair-vm.sh
+  # TODO: Re-enable this job and its ci-success checks after completing the 26.11 switch.
+  # mair-vm:
+  #   needs:
+  #     - format
+  #   name: darwin vm mair (aarch64-darwin)
+  #   runs-on: nix-ci-darwin
+  #   timeout-minutes: 90
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  #       with:
+  #         persist-credentials: false
+  #
+  #     - name: Boot and activate mair
+  #       shell: bash
+  #       # Replace the step shell so cancellation reaches the script.
+  #       run: exec .github/scripts/boot-mair-vm.sh
 
   post-config-diffs:
     name: post config diffs
@@ -719,7 +720,6 @@ jobs:
       - format
       - check-success
       - build
-      - mair-vm
       - post-config-diffs
     runs-on: nix-ci
     steps:
@@ -731,7 +731,6 @@ jobs:
             "format=${{ needs.format.result }}"
             "check-success=${{ needs.check-success.result }}"
             "build=${{ needs.build.result }}"
-            "mair-vm=${{ needs.mair-vm.result }}"
           )
 
           for result in "${results[@]}"; do
