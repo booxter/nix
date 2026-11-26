@@ -9,50 +9,27 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
 )
 
-type sourceFacts struct {
-	folder    string
-	inventory controller.FileInventory
-	probes    []controller.FileProbe
-}
-
-// collectSource finds the files Repairr can use, examines their media streams,
-// and identifies the folder Radarr should scan for imports.
-func (inspector *Inspector) collectSource(
-	callerContext context.Context,
-	collectionContext context.Context,
+// prepareSource chooses the files once so the probe results and Radarr's
+// import options describe the same download or extracted archive.
+func (inspector *Inspector) prepareSource(
+	ctx context.Context,
 	correlation controller.DownloadCorrelation,
-) (sourceFacts, error) {
-	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
+) (controller.VideoSource, error) {
+	inventory, err := inspector.dependencies.Files.Inventory(ctx, correlation)
 	if err != nil {
-		return sourceFacts{}, fmt.Errorf("inventory download files: %w", err)
+		return controller.VideoSource{}, fmt.Errorf("inventory download files: %w", err)
 	}
-	files := sourceFacts{folder: correlation.DownloadRoot, inventory: inventory}
+
 	if inspector.dependencies.Archives != nil {
-		extracted, found, err := inspector.dependencies.Archives.MaterializeVideo(
-			collectionContext, correlation.Radarr.ID, inventory,
-		)
+		extracted, found, err := inspector.dependencies.Archives.MaterializeVideo(ctx, correlation.Radarr.ID, inventory)
 		if err != nil {
-			return sourceFacts{}, fmt.Errorf("materialize archive video: %w", err)
+			return controller.VideoSource{}, fmt.Errorf("materialize archive video: %w", err)
 		}
 		if found {
-			// Ask Radarr about files in the extracted folder. The file list and
-			// probe results must describe those same files.
-			files = sourceFacts{
-				folder:    extracted.Root,
-				inventory: extracted.Inventory,
-				probes:    extracted.Probes,
-			}
+			return extracted, nil
 		}
 	}
-	if files.probes == nil {
-		files.probes, err = controller.ProbeVideoFiles(
-			callerContext, collectionContext, files.inventory, inspector.dependencies.Probes,
-		)
-		if err != nil {
-			return sourceFacts{}, err
-		}
-	}
-	return files, nil
+	return controller.VideoSource{Root: correlation.DownloadRoot, Inventory: inventory}, nil
 }
 
 // collectDiscChoices finds Blu-ray playlists and DVD titles that Repairr could turn into a movie file.

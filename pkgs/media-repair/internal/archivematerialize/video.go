@@ -25,12 +25,6 @@ type Worker interface {
 	ResolvePublishedPath(string, []string) (string, error)
 }
 
-type Source struct {
-	Root      string
-	Inventory controller.FileInventory
-	Probes    []controller.FileProbe
-}
-
 type Materializer struct {
 	worker Worker
 }
@@ -52,22 +46,22 @@ func (instance *Materializer) MaterializeVideo(
 	ctx context.Context,
 	queueID int64,
 	inventory controller.FileInventory,
-) (Source, bool, error) {
+) (controller.VideoSource, bool, error) {
 	if instance == nil || instance.worker == nil {
-		return Source{}, false, fmt.Errorf("archive materializer is not configured")
+		return controller.VideoSource{}, false, fmt.Errorf("archive materializer is not configured")
 	}
 	if queueID <= 0 {
-		return Source{}, false, fmt.Errorf("queue ID must be positive")
+		return controller.VideoSource{}, false, fmt.Errorf("queue ID must be positive")
 	}
 	for _, assessment := range controller.ClassifyMediaFiles(inventory) {
 		if assessment.ProbeCandidate() {
-			return Source{}, false, nil
+			return controller.VideoSource{}, false, nil
 		}
 	}
 	paths := make(map[controller.FileID]string, len(inventory.Paths))
 	for _, mapping := range inventory.Paths {
 		if _, duplicate := paths[mapping.FileID]; duplicate {
-			return Source{}, false, fmt.Errorf("archive inventory contains duplicate paths")
+			return controller.VideoSource{}, false, fmt.Errorf("archive inventory contains duplicate paths")
 		}
 		paths[mapping.FileID] = mapping.AbsolutePath
 	}
@@ -82,15 +76,15 @@ func (instance *Materializer) MaterializeVideo(
 		}
 		path, found := paths[file.ID]
 		if !found {
-			return Source{}, false, fmt.Errorf("archive candidate has no local path")
+			return controller.VideoSource{}, false, fmt.Errorf("archive candidate has no local path")
 		}
 		if candidate != nil {
-			return Source{}, true, fmt.Errorf("download contains multiple supported archives")
+			return controller.VideoSource{}, true, fmt.Errorf("download contains multiple supported archives")
 		}
 		candidate = &archiveCandidate{path: path, snapshot: file.Fingerprint, extension: extension}
 	}
 	if candidate == nil {
-		return Source{}, false, nil
+		return controller.VideoSource{}, false, nil
 	}
 	workspaceID := videoWorkspaceID(queueID, candidate.snapshot.StableFingerprint())
 	var result materialize.Success
@@ -105,38 +99,38 @@ func (instance *Materializer) MaterializeVideo(
 		)
 	}
 	if err != nil {
-		return Source{}, true, err
+		return controller.VideoSource{}, true, err
 	}
 	return instance.sourceFromResult(result)
 }
 
 func (instance *Materializer) sourceFromResult(
 	result materialize.Success,
-) (Source, bool, error) {
+) (controller.VideoSource, bool, error) {
 	root, err := instance.worker.ResolvePublishedPath(result.RootID, result.WorkspaceComponents)
 	if err != nil {
-		return Source{}, true, fmt.Errorf("resolve materialized video workspace: %w", err)
+		return controller.VideoSource{}, true, fmt.Errorf("resolve materialized video workspace: %w", err)
 	}
-	source := Source{
+	source := controller.VideoSource{
 		Root: root,
 		Inventory: controller.FileInventory{
 			Files: make([]controller.InventoryFile, 0, len(result.Artifacts)),
 			Paths: make([]controller.FilePathMapping, 0, len(result.Artifacts)),
 		},
-		Probes: make([]controller.FileProbe, 0, len(result.Artifacts)),
+		ExistingProbes: make([]controller.FileProbe, 0, len(result.Artifacts)),
 	}
 	for _, artifact := range result.Artifacts {
 		absolute, err := instance.worker.ResolvePublishedPath(result.RootID, artifact.PathComponents)
 		if err != nil {
-			return Source{}, true, fmt.Errorf("resolve materialized video artifact: %w", err)
+			return controller.VideoSource{}, true, fmt.Errorf("resolve materialized video artifact: %w", err)
 		}
 		info, err := os.Lstat(absolute)
 		if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-			return Source{}, true, fmt.Errorf("materialized video artifact is unavailable")
+			return controller.VideoSource{}, true, fmt.Errorf("materialized video artifact is unavailable")
 		}
 		snapshot, err := fileidentity.FromFileInfo(info)
 		if err != nil || snapshot.SizeBytes != artifact.SizeBytes {
-			return Source{}, true, fmt.Errorf("materialized video artifact changed")
+			return controller.VideoSource{}, true, fmt.Errorf("materialized video artifact changed")
 		}
 		fileID := controller.FileID(artifact.ArtifactID)
 		source.Inventory.Files = append(source.Inventory.Files, controller.InventoryFile{
@@ -150,13 +144,13 @@ func (instance *Materializer) sourceFromResult(
 		source.Inventory.Paths = append(source.Inventory.Paths, controller.FilePathMapping{
 			FileID: fileID, AbsolutePath: absolute,
 		})
-		source.Probes = append(source.Probes, controller.FileProbe{
+		source.ExistingProbes = append(source.ExistingProbes, controller.FileProbe{
 			FileID:  fileID,
 			Outcome: controller.SuccessfulMediaProbe(workerclient.EvidenceFromWorker(artifact.Evidence)),
 		})
 	}
 	if len(source.Inventory.Files) == 0 {
-		return Source{}, true, fmt.Errorf("materialized video workspace is empty")
+		return controller.VideoSource{}, true, fmt.Errorf("materialized video workspace is empty")
 	}
 	return source, true, nil
 }

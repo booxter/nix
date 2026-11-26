@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
-	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
@@ -130,7 +129,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 	fixture.archives = &fakeArchiveMaterializer{
 		found: true,
-		source: archivematerialize.Source{
+		source: controller.VideoSource{
 			Root: "/downloads/.media-repair/workspaces/archive",
 			Inventory: controller.FileInventory{
 				Files: []controller.InventoryFile{materializedFile},
@@ -139,7 +138,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 					AbsolutePath: "/downloads/.media-repair/workspaces/archive/Movie/movie.mkv",
 				}},
 			},
-			Probes: []controller.FileProbe{{
+			ExistingProbes: []controller.FileProbe{{
 				FileID:  materializedFile.ID,
 				Outcome: controller.SuccessfulMediaProbe(testProbeEvidence(100)),
 			}},
@@ -384,7 +383,7 @@ func (fixture inspectionTestFixture) dependencies() InspectorConfig {
 }
 
 type fakeArchiveMaterializer struct {
-	source archivematerialize.Source
+	source controller.VideoSource
 	found  bool
 	err    error
 }
@@ -393,7 +392,7 @@ func (materializer *fakeArchiveMaterializer) MaterializeVideo(
 	context.Context,
 	int64,
 	controller.FileInventory,
-) (archivematerialize.Source, bool, error) {
+) (controller.VideoSource, bool, error) {
 	return materializer.source, materializer.found, materializer.err
 }
 

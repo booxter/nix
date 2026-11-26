@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
@@ -23,7 +22,7 @@ type VideoArchiveMaterializer interface {
 		context.Context,
 		int64,
 		controller.FileInventory,
-	) (archivematerialize.Source, bool, error)
+	) (controller.VideoSource, bool, error)
 }
 
 type InspectorConfig struct {
@@ -122,15 +121,19 @@ func (inspector *Inspector) buildCase(
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	source, err := inspector.collectSource(callerContext, collectionContext, correlation)
+	source, err := inspector.prepareSource(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	imports, err := inspector.collectImports(collectionContext, record, source.folder)
+	probes, err := source.ProbeFiles(callerContext, collectionContext, inspector.dependencies.Probes)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	playlists, dvdTitles, err := inspector.collectDiscChoices(collectionContext, source.inventory)
+	imports, err := inspector.collectImports(collectionContext, record, source.Root)
+	if err != nil {
+		return casebuilder.Assembly{}, err
+	}
+	playlists, dvdTitles, err := inspector.collectDiscChoices(collectionContext, source.Inventory)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
@@ -141,8 +144,8 @@ func (inspector *Inspector) buildCase(
 		Movie:           library.movie,
 		History:         library.history,
 		ManualImports:   imports,
-		Inventory:       source.inventory,
-		Probes:          source.probes,
+		Inventory:       source.Inventory,
+		Probes:          probes,
 		BluRayPlaylists: playlists,
 		DVDTitles:       dvdTitles,
 	})

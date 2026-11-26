@@ -11,14 +11,18 @@ type FileProbe struct {
 	Outcome MediaProbeOutcome
 }
 
-// ProbeVideoFiles reads media details for each candidate file and records gaps
-// when time runs out. Canceling the whole scan discards the partial results.
-func ProbeVideoFiles(
+// ProbeFiles reuses results from extraction when available. Otherwise it probes
+// the candidate files and records which ones the collection deadline cut short.
+func (source VideoSource) ProbeFiles(
 	callerContext context.Context,
 	collectionContext context.Context,
-	inventory FileInventory,
 	reader MediaProbeReader,
 ) ([]FileProbe, error) {
+	if source.ExistingProbes != nil {
+		return source.ExistingProbes, nil
+	}
+
+	inventory := source.Inventory
 	paths := make(map[FileID]string, len(inventory.Paths))
 	for _, mapping := range inventory.Paths {
 		if _, duplicate := paths[mapping.FileID]; duplicate {
