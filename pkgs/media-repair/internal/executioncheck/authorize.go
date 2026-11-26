@@ -11,6 +11,8 @@ type RejectionReason string
 const (
 	SupersededReplacement RejectionReason = "superseded_replacement"
 	UnprovedReplacement   RejectionReason = "unproved_replacement"
+	UnsupportedAction     RejectionReason = "unsupported_action"
+	RuntimeMismatch       RejectionReason = RejectionReason(decisionpolicy.RemuxRuntimeMismatch)
 )
 
 type Authorization struct {
@@ -24,40 +26,20 @@ func Authorize(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 	policy decisionpolicy.RuntimePolicy,
-) (Authorization, string, *decisionpolicy.ManualImportRuntimeAssessment, bool) {
+) (Authorization, RejectionReason) {
 	switch decision.Kind {
 	case contracts.ActionJoinParts:
-		validation := decisionpolicy.ValidateJoin(assembly, decision)
-		if validation.Accepted() {
-			return Authorization{Join: validation.Authorized}, "", nil, true
-		}
-		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0].Reason), nil, false
-		}
+		authorized, reason := decisionpolicy.ValidateJoin(assembly, decision)
+		return Authorization{Join: authorized}, RejectionReason(reason)
 	case contracts.ActionManualImportFile:
-		validation := decisionpolicy.ValidateManualImport(assembly, decision, policy)
-		if validation.Accepted() {
-			return Authorization{ManualImport: validation.Authorized}, "", validation.Runtime, true
-		}
-		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0].Reason), validation.Runtime, false
-		}
+		authorized, reason := decisionpolicy.ValidateManualImport(assembly, decision, policy)
+		return Authorization{ManualImport: authorized}, RejectionReason(reason)
 	case contracts.ActionRemuxBluray:
-		validation := decisionpolicy.ValidateRemux(assembly, decision, policy)
-		if validation.Accepted() {
-			return Authorization{Remux: validation.Authorized}, "", validation.Runtime, true
-		}
-		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0]), validation.Runtime, false
-		}
+		authorized, reason := decisionpolicy.ValidateRemux(assembly, decision, policy)
+		return Authorization{Remux: authorized}, RejectionReason(reason)
 	case contracts.ActionRemuxDVD:
-		validation := decisionpolicy.ValidateDVD(assembly, decision, policy)
-		if validation.Accepted() {
-			return Authorization{DVD: validation.Authorized}, "", validation.Runtime, true
-		}
-		if len(validation.Rejections) != 0 {
-			return Authorization{}, string(validation.Rejections[0]), validation.Runtime, false
-		}
+		authorized, reason := decisionpolicy.ValidateDVD(assembly, decision, policy)
+		return Authorization{DVD: authorized}, RejectionReason(reason)
 	}
-	return Authorization{}, "", nil, false
+	return Authorization{}, UnsupportedAction
 }

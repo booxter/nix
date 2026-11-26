@@ -13,33 +13,20 @@ func TestValidateManualImportReturnsBoundRadarrCommand(t *testing.T) {
 	t.Parallel()
 
 	assembly := manualImportAssembly()
-	validation := ValidateManualImport(
+	authorized, reason := ValidateManualImport(
 		assembly,
 		manualImportDecision(assembly.Request.CaseID),
 		RuntimePolicy{},
 	)
-	if !validation.Accepted() || validation.Authorized == nil {
-		t.Fatalf("validation = %#v", validation)
+	if reason != "" || authorized == nil {
+		t.Fatalf("authorization = %#v, reason = %q", authorized, reason)
 	}
 
 	binding := assembly.LocalSnapshot.ManualImportBindings["capability:manual"]
-	authorized := validation.Authorized
-	if authorized.CaseID != assembly.Request.CaseID ||
-		authorized.CapabilityID != "capability:manual" ||
-		authorized.FileID != binding.FileID ||
-		authorized.ExpectedFingerprint != binding.ExpectedFingerprint ||
-		authorized.ImportMode != controller.RadarrImportModeCopy ||
-		authorized.ProbeDurationMS != 60*60*1_000 ||
+	if authorized.ImportMode != controller.RadarrImportModeCopy ||
 		!reflect.DeepEqual(authorized.File, binding.File) {
 		t.Fatalf("authorized import = %#v", authorized)
 	}
-	if validation.Runtime == nil || validation.Runtime.MovieRuntimeMS == nil ||
-		*validation.Runtime.MovieRuntimeMS != 60*60*1_000 ||
-		*validation.Runtime.DifferenceMS != 0 ||
-		*validation.Runtime.ToleranceMS != 6*60*1_000 {
-		t.Fatalf("runtime assessment = %#v", validation.Runtime)
-	}
-
 	authorized.File.Languages[0].Name = "changed"
 	authorized.File.Quality.Revision.Version++
 	stored := assembly.LocalSnapshot.ManualImportBindings["capability:manual"]
@@ -117,7 +104,8 @@ func TestValidateManualImportRequiresGrantedFile(t *testing.T) {
 			assembly := manualImportAssembly()
 			decision := manualImportDecision(assembly.Request.CaseID)
 			test.mutate(&assembly, &decision)
-			assertManualImportRejected(t, ValidateManualImport(assembly, decision, RuntimePolicy{}), test.reason)
+			authorized, reason := ValidateManualImport(assembly, decision, RuntimePolicy{})
+			assertManualImportRejected(t, authorized, reason, test.reason)
 		})
 	}
 }
@@ -220,11 +208,8 @@ func TestValidateManualImportRequiresUnchangedLocalEvidence(t *testing.T) {
 			t.Parallel()
 			assembly := manualImportAssembly()
 			test.mutate(&assembly)
-			assertManualImportRejected(
-				t,
-				ValidateManualImport(assembly, manualImportDecision(assembly.Request.CaseID), RuntimePolicy{}),
-				test.reason,
-			)
+			authorized, reason := ValidateManualImport(assembly, manualImportDecision(assembly.Request.CaseID), RuntimePolicy{})
+			assertManualImportRejected(t, authorized, reason, test.reason)
 		})
 	}
 }
@@ -254,16 +239,16 @@ func TestValidateManualImportRuntimeTolerance(t *testing.T) {
 			probe.Format.DurationMS = &test.durationMS
 			probe.Streams[0].DurationMS = &test.durationMS
 
-			validation := ValidateManualImport(
+			authorized, reason := ValidateManualImport(
 				assembly,
 				manualImportDecision(assembly.Request.CaseID),
 				RuntimePolicy{},
 			)
-			if test.accepted && !validation.Accepted() {
-				t.Fatalf("validation = %#v", validation)
+			if test.accepted && (reason != "" || authorized == nil) {
+				t.Fatalf("authorization = %#v, reason = %q", authorized, reason)
 			}
 			if !test.accepted {
-				assertManualImportRejected(t, validation, ManualImportRuntimeMismatch)
+				assertManualImportRejected(t, authorized, reason, ManualImportRuntimeMismatch)
 			}
 		})
 	}
@@ -273,43 +258,45 @@ func TestValidateManualImportAllowsSilentVideo(t *testing.T) {
 	t.Parallel()
 
 	assembly := manualImportAssembly()
-	validation := ValidateManualImport(
+	authorized, reason := ValidateManualImport(
 		assembly,
 		manualImportDecision(assembly.Request.CaseID),
 		RuntimePolicy{},
 	)
-	if !validation.Accepted() {
-		t.Fatalf("silent video was rejected: %#v", validation)
+	if reason != "" || authorized == nil {
+		t.Fatalf("silent video was rejected: %q", reason)
 	}
 }
 
 func TestValidateManualImportRejectsAnotherDecisionVariant(t *testing.T) {
 	t.Parallel()
 
-	validation := ValidateManualImport(manualImportAssembly(), contracts.RepairDecisionV3{
+	authorized, reason := ValidateManualImport(manualImportAssembly(), contracts.RepairDecisionV3{
 		Kind: contracts.ActionNoRepair,
 		NoRepair: &contracts.NoRepairDecision{
 			Action: contracts.NoRepair,
 		},
 	}, RuntimePolicy{})
-	assertManualImportRejected(t, validation, ManualImportWrongDecisionAction)
+	assertManualImportRejected(t, authorized, reason, ManualImportWrongDecisionAction)
+}
+
+func TestValidateManualImportReportsFirstRejection(t *testing.T) {
+	assembly := manualImportAssembly()
+	decision := manualImportDecision("different")
+	decision.ManualImportFile.CapabilityID = "missing"
+	authorized, reason := ValidateManualImport(assembly, decision, RuntimePolicy{})
+	assertManualImportRejected(t, authorized, reason, ManualImportCaseMismatch)
 }
 
 func assertManualImportRejected(
 	t *testing.T,
-	validation ManualImportValidation,
-	reason ManualImportRejectionReason,
+	authorized *AuthorizedManualImport,
+	reason, want ManualImportRejectionReason,
 ) {
 	t.Helper()
-	if validation.Accepted() || validation.Authorized != nil {
-		t.Fatalf("decision was authorized: %#v", validation)
+	if authorized != nil || reason != want {
+		t.Fatalf("authorization = %#v, reason = %q, want %q", authorized, reason, want)
 	}
-	for _, rejection := range validation.Rejections {
-		if rejection.Reason == reason {
-			return
-		}
-	}
-	t.Fatalf("rejections = %#v, want %q", validation.Rejections, reason)
 }
 
 func manualImportAssembly() casebuilder.Assembly {

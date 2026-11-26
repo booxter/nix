@@ -123,9 +123,9 @@ func (adapter *Adapter) authorize(
 	}
 
 	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}
-	authorized, reason, _, accepted := executioncheck.Authorize(fresh, decision, policy)
-	if !accepted {
-		return fresh, authorized, &repair.BlockedError{Reason: "decision rejected: " + reason}
+	authorized, reason := executioncheck.Authorize(fresh, decision, policy)
+	if reason != "" {
+		return fresh, authorized, &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
 	}
 	if reason, unsafe := executioncheck.ReplacementRejection(fresh, authorized); unsafe {
 		return fresh, authorized, &repair.BlockedError{Reason: string(reason)}

@@ -13,16 +13,15 @@ import (
 func TestValidateDVDRequiresCompleteMatchingTitle(t *testing.T) {
 	t.Parallel()
 	assembly, decision := dvdCase()
-	validation := ValidateDVD(assembly, decision, RuntimePolicy{})
-	if !validation.Accepted() || validation.Authorized == nil ||
-		len(validation.Authorized.Titles) != 1 || validation.Authorized.Titles[0].TitleNumber != 1 ||
-		len(validation.Authorized.Titles[0].Sources) != 2 {
-		t.Fatalf("DVD authorization = %#v", validation)
+	authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{})
+	if reason != "" || authorized == nil ||
+		len(authorized.Titles) != 1 || authorized.Titles[0].TitleNumber != 1 ||
+		len(authorized.Titles[0].Sources) != 2 {
+		t.Fatalf("DVD authorization = %#v, reason = %q", authorized, reason)
 	}
 	assembly.LocalSnapshot.Observation.Inventory.Files[1].DownloadFile.BytesCompleted--
-	if rejection := ValidateDVD(assembly, decision, RuntimePolicy{}); rejection.Accepted() ||
-		len(rejection.Rejections) != 1 || rejection.Rejections[0] != RemuxFileUnavailable {
-		t.Fatalf("incomplete DVD source was authorized: %#v", rejection)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil || reason != RemuxFileUnavailable {
+		t.Fatalf("incomplete DVD source: %#v, %q", authorized, reason)
 	}
 }
 
@@ -33,8 +32,8 @@ func TestValidateDVDAcceptsFlatDirectory(t *testing.T) {
 		path := &assembly.LocalSnapshot.Observation.Inventory.Paths[index]
 		path.AbsolutePath = filepath.Join("/media/movie", filepath.Base(path.AbsolutePath))
 	}
-	if validation := ValidateDVD(assembly, decision, RuntimePolicy{}); !validation.Accepted() {
-		t.Fatalf("flat DVD authorization = %#v", validation)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized == nil || reason != "" {
+		t.Fatalf("flat DVD authorization = %#v, reason = %q", authorized, reason)
 	}
 }
 
@@ -42,16 +41,14 @@ func TestValidateDVDRejectsChangedTitleAndRuntime(t *testing.T) {
 	t.Parallel()
 	assembly, decision := dvdCase()
 	assembly.LocalSnapshot.Observation.DVDTitles[0].Details.Chapters++
-	if rejection := ValidateDVD(assembly, decision, RuntimePolicy{}); rejection.Accepted() ||
-		rejection.Rejections[0] != RemuxPlaylistMismatch {
-		t.Fatalf("changed DVD title was authorized: %#v", rejection)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil || reason != RemuxPlaylistMismatch {
+		t.Fatalf("changed DVD title: %#v, %q", authorized, reason)
 	}
 	assembly, decision = dvdCase()
 	runtime := 90
 	assembly.LocalSnapshot.Observation.Movie.RuntimeMinutes = &runtime
-	if rejection := ValidateDVD(assembly, decision, RuntimePolicy{}); rejection.Accepted() ||
-		rejection.Rejections[0] != RemuxRuntimeMismatch {
-		t.Fatalf("wrong movie runtime was authorized: %#v", rejection)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil || reason != RemuxRuntimeMismatch {
+		t.Fatalf("wrong movie runtime: %#v, %q", authorized, reason)
 	}
 }
 
@@ -64,16 +61,14 @@ func TestValidateDVDAcceptsAuthorizedRuntimeDifference(t *testing.T) {
 	assembly.LocalSnapshot.Observation.DVDTitles[0].Details.DurationMS = titleDurationMS
 	assembly.Request.Capabilities[0].DurationMS = pointer(titleDurationMS)
 
-	if validation := ValidateDVD(assembly, decision, RuntimePolicy{}); validation.Accepted() ||
-		validation.Rejections[0] != RemuxRuntimeMismatch {
-		t.Fatalf("default policy authorized runtime difference: %#v", validation)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil || reason != RemuxRuntimeMismatch {
+		t.Fatalf("default policy: %#v, %q", authorized, reason)
 	}
-	validation := ValidateDVD(assembly, decision, RuntimePolicy{
+	authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{
 		MaximumDifferenceMS: 30 * 60 * 1_000,
 	})
-	if !validation.Accepted() || validation.Authorized == nil ||
-		validation.Authorized.RuntimeToleranceMS != 30*60*1_000 {
-		t.Fatalf("override validation = %#v", validation)
+	if reason != "" || authorized == nil || authorized.RuntimeToleranceMS != 30*60*1_000 {
+		t.Fatalf("override authorization = %#v, reason = %q", authorized, reason)
 	}
 }
 
@@ -93,19 +88,18 @@ func TestValidateDVDUsesCombinedRuntimeAndKeepsSelectedTitleOrder(t *testing.T) 
 	capability.DurationMS = pointer(second.Details.DurationMS)
 	assembly.Request.Capabilities = append(assembly.Request.Capabilities, capability)
 
-	if validation := ValidateDVD(assembly, decision, RuntimePolicy{}); validation.Accepted() ||
-		validation.Rejections[0] != RemuxRuntimeMismatch {
-		t.Fatalf("accepted an incomplete selection: %#v", validation)
+	if authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil || reason != RemuxRuntimeMismatch {
+		t.Fatalf("incomplete selection: %#v, %q", authorized, reason)
 	}
 	decision.RemuxDVD.OrderedTitleIDS = []string{capability.CapabilityID, "capability:dvd"}
-	validation := ValidateDVD(assembly, decision, RuntimePolicy{})
-	if !validation.Accepted() || len(validation.Authorized.Titles) != 2 ||
-		validation.Authorized.Titles[0].TitleNumber != 2 || validation.Authorized.Titles[1].TitleNumber != 1 {
-		t.Fatalf("wrong combined DVD authorization: %#v", validation)
+	authorized, reason := ValidateDVD(assembly, decision, RuntimePolicy{})
+	if reason != "" || authorized == nil || len(authorized.Titles) != 2 ||
+		authorized.Titles[0].TitleNumber != 2 || authorized.Titles[1].TitleNumber != 1 {
+		t.Fatalf("combined DVD authorization: %#v, %q", authorized, reason)
 	}
 
 	decision.RemuxDVD.OrderedTitleIDS = []string{capability.CapabilityID, capability.CapabilityID}
-	if ValidateDVD(assembly, decision, RuntimePolicy{}).Accepted() {
+	if authorized, _ := ValidateDVD(assembly, decision, RuntimePolicy{}); authorized != nil {
 		t.Fatal("accepted the same DVD title twice")
 	}
 }
