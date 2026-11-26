@@ -13,6 +13,11 @@
         inherit system;
         config.allowUnfree = true;
       };
+      sshKeys = lib.concatLists (
+        lib.mapAttrsToList (
+          _: keys: builtins.attrValues (lib.filterAttrs (_: key: key ? sshPublicKey) keys)
+        ) fleetInventory.yubikeys
+      );
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # The 4.1.x release branch can ship stale generated Web UI assets.
@@ -92,11 +97,41 @@
         ];
       });
 
-      openssh-yubikey = prev.callPackage ./openssh {
-        inherit fleetInventory;
+      ssh-device = prev.callPackage ../pkgs/ssh-device {
+        identities = map (key: {
+          inherit (key) serial;
+          public_key = builtins.readFile key.sshPublicKey;
+        }) sshKeys;
         openssh = prev.openssh;
       };
-      ssh-device = final.openssh-yubikey.resolver;
+
+      openssh-yubikey =
+        let
+          # These models require a PIN for verification; biometric keys may need touch first.
+          pinFirstKeys = builtins.filter (
+            key:
+            builtins.elem key.model [
+              "YubiKey 5C Nano"
+              "YubiKey 5C NFC"
+            ]
+          ) sshKeys;
+          # Substitution must preserve the patch's line counts.
+          pinFirstBlobs = lib.concatMapStrings (
+            key:
+            builtins.toJSON (builtins.elemAt (lib.splitString " " (builtins.readFile key.sshPublicKey)) 1)
+            + ", "
+          ) pinFirstKeys;
+        in
+        prev.openssh.overrideAttrs (old: {
+          pname = "openssh-yubikey";
+          patches = (old.patches or [ ]) ++ [
+            ../patches/openssh-restore-touch-prompt-after-pin.patch
+            (prev.replaceVars ../patches/openssh-resolve-signing-device.patch { resolver = final.ssh-device; })
+            (prev.replaceVars ../patches/openssh-prompt-for-pin-before-touch.patch {
+              public_keys = pinFirstBlobs;
+            })
+          ];
+        });
 
       cuetools = prev.cuetools.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
