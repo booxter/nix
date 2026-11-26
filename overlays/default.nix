@@ -20,20 +20,6 @@
       );
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
-      # The 4.1.x release branch can ship stale generated Web UI assets.
-      # https://github.com/transmission/transmission/issues/9245
-      transmissionWeb = prev.buildNpmPackage {
-        pname = "transmission-web";
-        version = releaseTransmissionVersion;
-        inherit (releaseTransmission) src;
-        sourceRoot = "source/web";
-        npmDepsHash = "sha256-1VhDmwFu/FR7ZW2h1gw5tAxRGk5iWZZ1/MOZF801wI4=";
-        installPhase = ''
-          runHook preInstall
-          cp -r public_html "$out"
-          runHook postInstall
-        '';
-      };
       # Track the release branch now that trackers allow 4.1.x, but fail
       # evaluation before accepting an unvetted 4.2.x+ daemon.
       guardedTransmission = (
@@ -44,9 +30,6 @@
         releaseTransmission.overrideAttrs (old: {
           # Keep 128 torrent files open across bursts of NFS I/O on srvarr.
           patches = (old.patches or [ ]) ++ [ ../patches/transmission-open-file-limit.patch ];
-          postPatch = (old.postPatch or "") + ''
-            cp -r ${transmissionWeb}/. web/public_html/
-          '';
         })
       );
     in
