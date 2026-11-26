@@ -20,18 +20,13 @@ import (
 type Adapter interface {
 	ImportSteps() ImportFlow
 	Submit(context.Context, json.RawMessage) (int64, error)
-	CheckImport(context.Context, jobs.Attempt) (ImportStatus, error)
+	ConfirmationSteps() ConfirmationSteps
 }
 
 type PreparedImport struct {
 	OutputPath      string
 	Request         json.RawMessage
 	HistoryIDBefore int64
-}
-
-type ImportStatus struct {
-	Receipt json.RawMessage
-	Failure string
 }
 
 type BlockedError struct {
@@ -164,26 +159,9 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 }
 
 func (engine *Engine) reconcile(ctx context.Context, attempt jobs.Attempt) error {
-	status, err := engine.Adapter.CheckImport(ctx, attempt)
+	err := engine.checkImport(ctx, &attempt)
 	if err != nil {
 		attempt.Reason = fmt.Sprintf("checking import: %v", err)
-	} else if len(status.Receipt) != 0 {
-		attempt.State = jobs.Imported
-		attempt.Reason = ""
-		attempt.ImportReceipt = status.Receipt
-	} else if status.Failure != "" {
-		// Give history time to catch up with a completed command. Starting the
-		// grace period at submission would break for long-running imports.
-		if attempt.ImportTerminalAt.IsZero() {
-			attempt.ImportTerminalAt = engine.Now().UTC()
-		}
-		attempt.Reason = "command finished; waiting for import history"
-		if engine.Now().Sub(attempt.ImportTerminalAt) >= 30*time.Second {
-			attempt.State = jobs.Failed
-			attempt.Reason = status.Failure
-		}
-	} else if attempt.CommandID == 0 {
-		attempt.Reason = "import submission uncertain; checking history without resubmitting"
 	}
 
 	attempt.UpdatedAt = engine.Now().UTC()

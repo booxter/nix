@@ -37,7 +37,7 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 	}
 
 	service.authorizeError = nil
-	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	service.receipt = json.RawMessage(`{"file_id":42}`)
 	if err := scheduler.advance(ctx); err != nil || service.submissions != 0 {
 		t.Fatalf("retried during backoff: %v, submissions: %d", err, service.submissions)
 	}

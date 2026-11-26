@@ -143,22 +143,28 @@ func (adapter *Adapter) Submit(ctx context.Context, data json.RawMessage) (int64
 	return command.ID, err
 }
 
-func (adapter *Adapter) CheckImport(ctx context.Context, attempt jobs.Attempt) (repair.ImportStatus, error) {
+func (adapter *Adapter) ConfirmationSteps() repair.ConfirmationSteps {
+	return repair.ConfirmationSteps{
+		FindReceipt:       adapter.findReceipt,
+		ReadCommandStatus: adapter.Client.ReadManualImportCommand,
+	}
+}
+
+// An album receipt is complete only when history includes every selected track.
+func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (json.RawMessage, error) {
 	var request lidarr.ManualImportCommand
 	if err := json.Unmarshal(attempt.ImportRequest, &request); err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 	if len(request.Files) == 0 {
-		return repair.ImportStatus{}, fmt.Errorf("stored import has no selected tracks")
+		return nil, fmt.Errorf("stored import has no selected tracks")
 	}
 
 	history, err := adapter.Client.ReadImportedTracks(ctx, request.Files[0].AlbumID, "")
 	if err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 
-	// A completed Lidarr command is not proof that every selected track made
-	// it into the library. Match each file against history after our request.
 	confirmed := make([]lidarr.ImportedTrack, 0, len(request.Files))
 	for _, file := range request.Files {
 		imported, found := lidarr.FindImportedTrack(history, lidarr.ImportedTrackMatch{
@@ -167,22 +173,10 @@ func (adapter *Adapter) CheckImport(ctx context.Context, attempt jobs.Attempt) (
 			AfterHistoryID: attempt.HistoryIDBefore,
 			NotBefore:      attempt.ImportStartedAt,
 		})
-		if found {
-			confirmed = append(confirmed, imported)
+		if !found {
+			return nil, nil
 		}
+		confirmed = append(confirmed, imported)
 	}
-	if len(confirmed) == len(request.Files) {
-		receipt, err := json.Marshal(confirmed)
-		return repair.ImportStatus{Receipt: receipt}, err
-	}
-
-	if attempt.CommandID == 0 {
-		return repair.ImportStatus{}, nil
-	}
-	command, err := adapter.Client.ReadManualImportCommand(ctx, attempt.CommandID)
-	if err != nil {
-		return repair.ImportStatus{}, err
-	}
-
-	return repair.CommandStatus(command, false)
+	return json.Marshal(confirmed)
 }

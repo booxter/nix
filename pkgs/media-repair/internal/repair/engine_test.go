@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -53,7 +54,9 @@ func TestRepairImportsAndKeepsUIStateCurrent(t *testing.T) {
 	if attempt.CommandID != 12 || attempt.HistoryIDBefore != 7 || attempt.OutputPath != "/repaired/movie.mkv" {
 		t.Fatalf("missing import recovery evidence: %+v", attempt)
 	}
-	adapter.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	// History still proves the import after Servarr drops the command.
+	adapter.command = servarr.Command{}
+	adapter.receipt = json.RawMessage(`{"file_id":42}`)
 	if err := engine.Run(ctx, job.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +90,7 @@ func TestUncertainSubmissionIsReconciledAfterRestartWithoutResubmission(t *testi
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	service.receipt = json.RawMessage(`{"file_id":42}`)
 	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +146,11 @@ func TestRepairRejectionAndFailureNeverSubmitImports(t *testing.T) {
 func TestHistoryOutageDoesNotMakeImportRetryable(t *testing.T) {
 	engine, adapter, job := fixture(t)
 	ctx := context.Background()
-	adapter.checkError = errors.New("history unavailable")
+	now := engine.Now()
+	engine.Now = func() time.Time { return now }
+	adapter.command.Status = servarr.CommandCompleted
+	adapter.command.Result = servarr.CommandResultSuccessful
+	adapter.historyError = errors.New("history unavailable")
 	if err := engine.Run(ctx, job.ID); err == nil {
 		t.Fatal("lost history error")
 	}
@@ -157,15 +164,16 @@ func TestHistoryOutageDoesNotMakeImportRetryable(t *testing.T) {
 	if err := engine.Store.FinishPlanning(ctx, planned); !errors.Is(err, jobs.ErrConflict) {
 		t.Fatalf("uncertain import became retryable: %v", err)
 	}
-	adapter.checkError = nil
-	adapter.status.Failure = "command completed without importing the selected files"
+	// Even after a long outage, allow history time to catch up from the
+	// first poll that sees the finished command.
+	now = now.Add(time.Hour)
+	adapter.historyError = nil
 	if err := engine.Run(ctx, job.ID); err != nil {
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
 
-	later := engine.Now().Add(time.Minute)
-	engine.Now = func() time.Time { return later }
+	now = now.Add(30 * time.Second)
 	if err := engine.Run(ctx, job.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -177,12 +185,13 @@ type fakeAdapter struct {
 	jobID       int64
 	repairs     int
 	submissions int
-	status      ImportStatus
+	receipt     json.RawMessage
+	command     servarr.Command
 
 	authorizeError error
 	prepareError   error
 	submitError    error
-	checkError     error
+	historyError   error
 }
 
 func (adapter *fakeAdapter) ImportSteps() ImportFlow {
@@ -214,8 +223,18 @@ func (adapter *fakeAdapter) Submit(ctx context.Context, request json.RawMessage)
 	return 12, adapter.submitError
 }
 
-func (adapter *fakeAdapter) CheckImport(_ context.Context, _ jobs.Attempt) (ImportStatus, error) {
-	return adapter.status, adapter.checkError
+func (adapter *fakeAdapter) ConfirmationSteps() ConfirmationSteps {
+	return ConfirmationSteps{
+		FindReceipt: func(context.Context, jobs.Attempt) (json.RawMessage, error) {
+			return adapter.receipt, adapter.historyError
+		},
+		ReadCommandStatus: func(_ context.Context, id int64) (servarr.Command, error) {
+			if id != adapter.command.ID {
+				return servarr.Command{}, errors.New("unknown import command")
+			}
+			return adapter.command, nil
+		},
+	}
 }
 
 func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
@@ -240,7 +259,10 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	if err := store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	adapter := &fakeAdapter{store: store, jobID: job.ID}
+	adapter := &fakeAdapter{
+		store: store, jobID: job.ID,
+		command: servarr.Command{ID: 12, Status: servarr.CommandQueued},
+	}
 	return &Engine{Store: store, Adapter: adapter, Now: time.Now}, adapter, job
 }
 

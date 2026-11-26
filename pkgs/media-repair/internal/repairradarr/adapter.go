@@ -125,34 +125,32 @@ func (adapter *Adapter) Submit(ctx context.Context, request json.RawMessage) (in
 	return result.ID, err
 }
 
-func (adapter *Adapter) CheckImport(ctx context.Context, attempt jobs.Attempt) (repair.ImportStatus, error) {
+func (adapter *Adapter) ConfirmationSteps() repair.ConfirmationSteps {
+	return repair.ConfirmationSteps{
+		FindReceipt:             adapter.findReceipt,
+		ReadCommandStatus:       adapter.Client.ReadManualImportCommand,
+		RequireCompletionResult: true,
+	}
+}
+
+// Match the file sent to Radarr against history recorded after this attempt began.
+func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (json.RawMessage, error) {
 	var request controller.RadarrManualImportCommand
 	if err := json.Unmarshal(attempt.ImportRequest, &request); err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 
 	history, err := adapter.Client.ReadImportedFiles(ctx, request.File.MovieID, request.File.DownloadID)
 	if err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 
 	imported, found := radarr.FindImportedFile(history, radarr.ImportedFileMatch{
 		MovieID: request.File.MovieID, DownloadID: request.File.DownloadID,
 		DroppedPath: request.File.Path, AfterHistoryID: attempt.HistoryIDBefore,
 	})
-	if found {
-		receipt, err := json.Marshal(imported)
-		return repair.ImportStatus{Receipt: receipt}, err
+	if !found {
+		return nil, nil
 	}
-
-	if attempt.CommandID == 0 {
-		return repair.ImportStatus{}, nil
-	}
-
-	command, err := adapter.Client.ReadManualImportCommand(ctx, attempt.CommandID)
-	if err != nil {
-		return repair.ImportStatus{}, err
-	}
-
-	return repair.CommandStatus(command, true)
+	return json.Marshal(imported)
 }
