@@ -128,6 +128,7 @@
             "builder3"
             "ci"
             "fana"
+            "frame"
             "gw"
             "org"
             "pki"
