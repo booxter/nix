@@ -127,6 +127,7 @@
             "builder2"
             "builder3"
             "ci"
+            "fana"
             "gw"
             "org"
             "pki"
