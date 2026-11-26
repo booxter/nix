@@ -7,6 +7,10 @@
 {
   stylix = {
     enable = config.host.desktop != null;
+
+    # Avoid rebuilding desktop packages for theme customizations.
+    overlays.enable = false;
+
     # Read the scheme from a source input so evaluation does not require IFD.
     base16Scheme = "${inputs.stylix.inputs.tinted-schemes}/base16/gruvbox-dark-hard.yaml";
     polarity = "dark";
