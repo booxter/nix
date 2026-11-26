@@ -97,6 +97,33 @@
         ];
       });
 
+      sops-with-age-askpass = prev.sops.overrideAttrs (old: {
+        # User services need a graphical PIN prompt. Drop when SOPS supports it.
+        patches = (old.patches or [ ]) ++ [ ../patches/sops-use-askpass-for-age-pins.patch ];
+        preCheck = (old.preCheck or "") + ''
+          go test ./age ./keyservice
+        '';
+      });
+
+      sops-install-secrets-with-keyservice =
+        let
+          inherit (import inputs.sops-nix { pkgs = final; }) sops-install-secrets;
+        in
+        sops-install-secrets.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            ../patches/sops-install-secrets-decrypt-with-remote-keyservice.patch
+          ];
+          # The full installer suite needs root. The remote decryption tests run as a user.
+          doCheck = true;
+          __darwinAllowLocalNetworking = true;
+          checkPhase = ''
+            runHook preCheck
+            export TEST_ASSETS="$PWD/pkgs/sops-install-secrets/test-assets"
+            go test ./pkgs/sops-install-secrets -run '^TestRemoteDecryption' -count=1
+            runHook postCheck
+          '';
+        });
+
       ssh-device = prev.callPackage ../pkgs/ssh-device {
         identities = map (key: {
           inherit (key) serial;

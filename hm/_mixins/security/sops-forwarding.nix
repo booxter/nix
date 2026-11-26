@@ -20,7 +20,6 @@ let
   logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin-private/sops-keyservice.log";
   realmsByHost = lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
-  sops = pkgs.callPackage ../../../pkgs/sops-keyservice { };
   askpass = pkgs.callPackage (
     if isDarwin then ../ssh/pkgs/ssh-askpass-macos else ../ssh/pkgs/ssh-askpass-linux
   ) { };
@@ -41,7 +40,7 @@ let
     ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg socketDirectory}
     ${pkgs.coreutils}/bin/chmod 700 ${lib.escapeShellArg socketDirectory}
     ${pkgs.coreutils}/bin/rm -f ${lib.escapeShellArg localSocket}
-    exec ${sops}/bin/sops keyservice --network unix --address ${lib.escapeShellArg localSocket}
+    exec ${pkgs.sops-with-age-askpass}/bin/sops keyservice --network unix --address ${lib.escapeShellArg localSocket}
   '';
   ssh = pkgs.symlinkJoin {
     name = "openssh-with-sops";
