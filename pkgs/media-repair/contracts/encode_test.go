@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"bytes"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -138,6 +138,11 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			var joinOrder []string
+			if decision.Kind == ActionJoinParts {
+				slices.Reverse(decision.JoinParts.OrderedFileIDS)
+				joinOrder = slices.Clone(decision.JoinParts.OrderedFileIDS)
+			}
 			encoded, err := EncodeDecision(decision)
 			if err != nil {
 				t.Fatal(err)
@@ -146,12 +151,11 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			reencoded, err := EncodeDecision(roundTripped)
-			if err != nil {
-				t.Fatal(err)
+			if !reflect.DeepEqual(roundTripped, decision) {
+				t.Fatalf("round trip = %#v, want %#v", roundTripped, decision)
 			}
-			if !bytes.Equal(reencoded, encoded) {
-				t.Fatalf("second encoding differs:\n got: %s\nwant: %s", reencoded, encoded)
+			if joinOrder != nil && !slices.Equal(roundTripped.JoinParts.OrderedFileIDS, joinOrder) {
+				t.Fatalf("join order = %v, want %v", roundTripped.JoinParts.OrderedFileIDS, joinOrder)
 			}
 		})
 	}
@@ -198,7 +202,7 @@ func TestDVDDecisionKeepsTitleOrder(t *testing.T) {
 	}
 
 	order := []string{"capability:disc2", "capability:disc1"}
-	decision.RemuxDVD.OrderedTitleIDS = order
+	decision.RemuxDVD.OrderedTitleIDS = slices.Clone(order)
 	encoded, err := EncodeDecision(decision)
 	if err != nil {
 		t.Fatal(err)
@@ -206,6 +210,9 @@ func TestDVDDecisionKeepsTitleOrder(t *testing.T) {
 	decoded, err := DecodeDecision(encoded)
 	if err != nil || !slices.Equal(decoded.RemuxDVD.OrderedTitleIDS, order) {
 		t.Fatalf("DVD selection changed on round trip: %+v, %v", decoded, err)
+	}
+	if !reflect.DeepEqual(decoded, decision) {
+		t.Fatalf("DVD decision round trip = %#v, want %#v", decoded, decision)
 	}
 	decision.RemuxDVD.OrderedTitleIDS = []string{"capability:disc1", "capability:disc1"}
 	if _, err := EncodeDecision(decision); err == nil {

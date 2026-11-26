@@ -1,6 +1,9 @@
 package workercontracts
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestBlurayIdentificationExamplesRoundTrip(t *testing.T) {
 	t.Parallel()
@@ -15,8 +18,12 @@ func TestBlurayIdentificationExamplesRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := DecodeBlurayIdentifyRequest(encodedRequest); err != nil {
+	decodedRequest, err := DecodeBlurayIdentifyRequest(encodedRequest)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(decodedRequest, request) {
+		t.Fatalf("request round trip = %#v, want %#v", decodedRequest, request)
 	}
 
 	for _, fixture := range []string{
@@ -34,8 +41,12 @@ func TestBlurayIdentificationExamplesRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := DecodeBlurayIdentifyResponse(encodedResponse); err != nil {
+		decodedResponse, err := DecodeBlurayIdentifyResponse(encodedResponse)
+		if err != nil {
 			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(decodedResponse, response) {
+			t.Fatalf("%s: response round trip = %#v, want %#v", fixture, decodedResponse, response)
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -37,8 +38,12 @@ func TestProbeRequestExampleDecodesAndRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := DecodeProbeRequest(encoded); err != nil {
+	decoded, err := DecodeProbeRequest(encoded)
+	if err != nil {
 		t.Fatalf("decode round trip: %v", err)
+	}
+	if !reflect.DeepEqual(decoded, request) {
+		t.Fatalf("round trip = %#v, want %#v", decoded, request)
 	}
 }
 
@@ -88,7 +93,12 @@ func TestDecodeProbeRequestRejectsTrailingJSON(t *testing.T) {
 func TestDecodeProbeRequestRejectsOversizedDocument(t *testing.T) {
 	t.Parallel()
 
-	if _, err := DecodeProbeRequest(make([]byte, MaxProbeRequestBytes+1)); err == nil {
-		t.Fatal("oversized probe request was accepted")
+	valid := readFixture(t, "v1/examples/probe-request.json")
+	data := append(valid, []byte(strings.Repeat(" ", MaxProbeRequestBytes-len(valid)))...)
+	if _, err := DecodeProbeRequest(data); err != nil {
+		t.Fatalf("probe request at byte limit rejected: %v", err)
+	}
+	if _, err := DecodeProbeRequest(append(data, ' ')); err == nil || !strings.Contains(err.Error(), "limit is") {
+		t.Fatalf("oversized probe request error = %v", err)
 	}
 }
