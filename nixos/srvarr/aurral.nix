@@ -8,8 +8,9 @@
 {
   # TODO(26.11): Drop the intermediate package and its upstream restart
   # policy once the live database is ready for Aurral 3.
-  services.aurral.package =
-    inputs.nixpkgs-aurral.legacyPackages.${pkgs.stdenv.hostPlatform.system}.aurral_213;
+  services.aurral.package = pkgs.callPackage (
+    inputs.nixpkgs-aurral + "/pkgs/by-name/au/aurral_213/package.nix"
+  ) { };
   systemd.services.aurral.serviceConfig.Restart = lib.mkForce "always";
 
   host.aurral = {
