@@ -26,7 +26,7 @@ def serve_metadata(fixture_path):
                 self.send_json([])
                 return
 
-            show = re.fullmatch(r"/v1/tvdb/shows/en/(\d+)", self.path)
+            show = re.fullmatch(r"/v2/tvdb/shows/eng/(\d+)/official", self.path)
             if show is None:
                 self.send_error(404)
                 return
@@ -38,9 +38,15 @@ def serve_metadata(fixture_path):
             )
             episode = series["episodes"][0]
             series["episodes"] = [
-                dict(episode, tvdbId=1000 * tvdb_id + number, episodeNumber=number)
+                dict(
+                    episode,
+                    tvdbShowId=tvdb_id,
+                    tvdbId=1000 * tvdb_id + number,
+                    episodeNumber=number,
+                )
                 for number in range(1, EPISODE_COUNT + 1)
             ]
+            series["seasonTypes"][0]["episodeCount"] = EPISODE_COUNT
 
             with lock:
                 request_counts[tvdb_id] += 1
