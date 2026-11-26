@@ -115,6 +115,8 @@ in
 
     (lib.mkIf (remoteClaims != { }) {
       boot.supportedFilesystems = [ "nfs" ];
+      # Keep routes to hard-mounted NFS shares available across DHCP restarts.
+      networking.dhcpcd.extraConfig = "persistent";
     })
 
     {
