@@ -143,6 +143,23 @@ async def test_operator_guidance_reaches_planner(include_prior: bool) -> None:
     }
 
 
+async def test_file_choice_without_notes_reaches_planner() -> None:
+    case = json.loads((FIXTURES / "repair-case-manual-importable.json").read_bytes())
+    file_id = next(
+        c["file_id"] for c in case["capabilities"] if c["action"] == "manual_import_file_v1"
+    )
+    planner = StaticPlanner()
+    async with client_for(planner) as client:
+        response = await client.post(
+            "/radarr/plan", json={"repair_case": case, "selected_file_id": file_id}
+        )
+
+    assert response.status_code == 200
+    (context,) = planner.contexts
+    assert context is not None
+    assert json.loads(context.user_content)["selected_file_id"] == file_id
+
+
 async def test_runtime_override_without_prior_plan_reaches_planner() -> None:
     planner = StaticPlanner()
     payload = {

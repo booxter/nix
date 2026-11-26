@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"gorm.io/gorm"
 )
 
@@ -13,15 +14,16 @@ const (
 )
 
 func (store *Store) RequestAction(ctx context.Context, id int64, action, guidance string, runtimeToleranceMS int64, at time.Time) error {
-	return store.requestAction(ctx, id, action, guidance, runtimeToleranceMS, at, nil)
+	answer := planning.Answer{Guidance: guidance, RuntimeToleranceMS: runtimeToleranceMS}
+	return store.requestAction(ctx, id, action, answer, at, nil)
 }
 
 // Answers from the inbox apply only to the evidence and revision the user saw.
-func (store *Store) RequestReconsideration(ctx context.Context, expected Job, guidance string, runtimeToleranceMS int64, at time.Time) error {
-	return store.requestAction(ctx, expected.ID, Reconsider, guidance, runtimeToleranceMS, at, &expected)
+func (store *Store) RequestReconsideration(ctx context.Context, expected Job, answer planning.Answer, at time.Time) error {
+	return store.requestAction(ctx, expected.ID, Reconsider, answer, at, &expected)
 }
 
-func (store *Store) requestAction(ctx context.Context, id int64, action, guidance string, runtimeToleranceMS int64, at time.Time, expected *Job) error {
+func (store *Store) requestAction(ctx context.Context, id int64, action string, answer planning.Answer, at time.Time, expected *Job) error {
 	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var job Job
 		if err := tx.First(&job, id).Error; err != nil {
@@ -45,8 +47,7 @@ func (store *Store) requestAction(ctx context.Context, id int64, action, guidanc
 		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		if action == Reconsider {
-			job.Guidance = guidance
-			job.RuntimeToleranceMS = runtimeToleranceMS
+			job.Answer = answer
 			job.PlanningAttempts = 0
 			job.State = Observed
 		}

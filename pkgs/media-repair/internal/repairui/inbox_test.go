@@ -78,8 +78,8 @@ func attributes(node *html.Node) map[string]string {
 	return values
 }
 
-// These fixtures offer a single release alongside a disabled placeholder.
-func releaseFields(form *html.Node) url.Values {
+// Include the hidden fields from the page and the first offered choice.
+func answerFields(form *html.Node) url.Values {
 	values := url.Values{}
 	for field := range form.Descendants() {
 		attrs := attributes(field)
@@ -105,7 +105,7 @@ func releaseFields(form *html.Node) url.Values {
 	return values
 }
 
-func inboxRequest(t *testing.T, fixture *fixture, selectionOverride string) *http.Request {
+func inboxRequest(t *testing.T, fixture *fixture, answer url.Values) *http.Request {
 	t.Helper()
 	page := fixture.get("/")
 	if page.Code != http.StatusOK {
@@ -120,9 +120,9 @@ func inboxRequest(t *testing.T, fixture *fixture, selectionOverride string) *htt
 		if form.Data != "form" || !strings.EqualFold(formAttrs["method"], "post") {
 			continue
 		}
-		values := releaseFields(form)
-		if selectionOverride != "" {
-			values.Set("selection", selectionOverride)
+		values := answerFields(form)
+		for name := range answer {
+			values.Set(name, answer.Get(name))
 		}
 		request := httptest.NewRequest(http.MethodPost, formAttrs["action"], strings.NewReader(values.Encode()))
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -139,8 +139,9 @@ func inboxRequest(t *testing.T, fixture *fixture, selectionOverride string) *htt
 func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 	fixture := newFixture(t)
 	job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-	request := inboxRequest(t, fixture, "")
-	duplicate := inboxRequest(t, fixture, "")
+	note := "Keep the original track order."
+	request := inboxRequest(t, fixture, url.Values{"guidance": {note}})
+	duplicate := inboxRequest(t, fixture, nil)
 	response := httptest.NewRecorder()
 	fixture.handler.ServeHTTP(response, request)
 	if response.Code != http.StatusSeeOther || !strings.HasPrefix(response.Header().Get("Location"), "/?submitted=") {
@@ -148,7 +149,7 @@ func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 	}
 	current, err := fixture.store.Get(context.Background(), job.ID)
 	if err != nil || current.PendingAction != jobs.Reconsider || current.State != jobs.Observed ||
-		!strings.Contains(current.Guidance, "release 12") || !strings.Contains(current.Guidance, "accept uncertainty") || len(fixture.wakes) != 1 {
+		current.SelectedReleaseID != 12 || current.Guidance != note || len(fixture.wakes) != 1 {
 		t.Fatalf("answer not persisted: %+v, %v", current, err)
 	}
 	if strings.Contains(fixture.get("/").Body.String(), "Choose my release") {
@@ -166,12 +167,13 @@ func TestInboxRejectsUnavailableChoicesAndStaleEvidence(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 			fixture := newFixture(t)
 			job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-			choice := ""
+			answer := url.Values{}
 			want := http.StatusConflict
 			if scenario == "unknown choice" {
-				choice, want = "999", http.StatusBadRequest
+				answer.Set("selection", "999")
+				want = http.StatusBadRequest
 			}
-			request := inboxRequest(t, fixture, choice)
+			request := inboxRequest(t, fixture, answer)
 			if scenario == "new evidence" {
 				job.SourceFingerprint = "case-b"
 				if _, err := fixture.store.Observe(context.Background(), job); err != nil {
@@ -222,25 +224,54 @@ func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 	}
 }
 
-func TestAnswerRequiresExplicitRuntimeConsentAndPreservesRetryInstructions(t *testing.T) {
-	job := jobs.Job{Service: jobs.Radarr, Guidance: "use the longer cut", RuntimeToleranceMS: 1200000}
-	request := httptest.NewRequest(http.MethodPost, "/", nil)
-	guidance, tolerance, err := responseGuidance(request, job, attention{Kind: "retry"})
-	if err != nil || guidance != job.Guidance || tolerance != job.RuntimeToleranceMS {
-		t.Fatalf("retry discarded operator instructions: %q %d %v", guidance, tolerance, err)
+func TestRuntimeQuestionAndRetryKeepTheChosenFile(t *testing.T) {
+	fixture := newFixture(t)
+	ctx := context.Background()
+	job, err := fixture.store.Observe(ctx, jobs.Job{
+		Service: jobs.Radarr, QueueID: 100,
+		Evidence: json.RawMessage(`{"case":{"radarr":{"movie":{"runtime_minutes":90}},"capabilities":[{"action":"manual_import_file_v1","file_id":"file_a"}]}}`),
+		Answer:   planning.Answer{SelectedFileID: "file_a"},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	question := attention{Kind: "runtime", AllowRuntime: true, RequireGuidance: true}
-	request.PostForm = url.Values{"guidance": {"I accept the shorter edition"}, "runtime_minutes": {"20"}}
-	if _, _, err := responseGuidance(request, job, question); err == nil {
-		t.Fatal("runtime override accepted without explicit consent")
+	job.State, job.Outcome = jobs.Blocked, jobs.OutcomeRuntimeMismatch
+	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
+		t.Fatal(err)
 	}
-	request.PostForm.Set("override_runtime_difference", "on")
-	guidance, tolerance, err = responseGuidance(request, job, question)
-	if err != nil || tolerance != 1200000 || guidance != "I accept the shorter edition" {
-		t.Fatalf("runtime answer lost: %q %d %v", guidance, tolerance, err)
+	note := "I accept the shorter edition."
+	answer := url.Values{"guidance": {note}, "runtime_minutes": {"20"}, "override_runtime_difference": {""}}
+	submit := func(want int) {
+		t.Helper()
+		response := httptest.NewRecorder()
+		fixture.handler.ServeHTTP(response, inboxRequest(t, fixture, answer))
+		if response.Code != want {
+			t.Fatalf("answer returned %d, want %d: %s", response.Code, want, response.Body)
+		}
 	}
-	request.PostForm.Set("guidance", "")
-	if _, _, err := responseGuidance(request, job, question); err == nil {
-		t.Fatal("empty answer bought another review")
+	submit(http.StatusBadRequest)
+	answer.Set("override_runtime_difference", "on")
+	answer.Set("guidance", "")
+	submit(http.StatusBadRequest)
+	answer.Set("guidance", note)
+	submit(http.StatusSeeOther)
+
+	job, err = fixture.store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := planning.Answer{SelectedFileID: "file_a", Guidance: note, RuntimeToleranceMS: 1_200_000}
+	if job.Answer != want {
+		t.Fatalf("runtime answer: %+v", job.Answer)
+	}
+	job.State, job.Outcome = jobs.Blocked, jobs.OutcomePlannerFailed
+	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
+		t.Fatal(err)
+	}
+	answer = nil
+	submit(http.StatusSeeOther)
+	retried, err := fixture.store.Get(ctx, job.ID)
+	if err != nil || retried.Answer != want {
+		t.Fatalf("retry lost the operator answer: %+v, %v", retried.Answer, err)
 	}
 }

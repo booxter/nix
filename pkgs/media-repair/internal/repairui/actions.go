@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
@@ -64,12 +65,12 @@ func (app *Handler) respond(w http.ResponseWriter, r *http.Request, job jobs.Job
 		http.Error(w, "This item changed. Refresh the inbox before answering.", http.StatusConflict)
 		return
 	}
-	guidance, tolerance, err := responseGuidance(r, job, *entry.Attention)
+	answer, err := readAnswer(r, job, *entry.Attention)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := app.config.Store.RequestReconsideration(r.Context(), job, guidance, tolerance, time.Now().UTC()); err != nil {
+	if err := app.config.Store.RequestReconsideration(r.Context(), job, answer, time.Now().UTC()); err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, jobs.ErrConflict) {
 			status = http.StatusConflict
@@ -81,45 +82,45 @@ func (app *Handler) respond(w http.ResponseWriter, r *http.Request, job jobs.Job
 	http.Redirect(w, r, "/?submitted="+strconv.FormatInt(job.ID, 10), http.StatusSeeOther)
 }
 
-func responseGuidance(r *http.Request, job jobs.Job, request attention) (string, int64, error) {
+// A retry reuses the saved answer. For a new answer, accept only the choices
+// and overrides offered by this question.
+func readAnswer(r *http.Request, job jobs.Job, request attention) (planning.Answer, error) {
 	if request.Kind == "retry" {
-		return job.Guidance, job.RuntimeToleranceMS, nil
+		return job.Answer, nil
 	}
 	guidance, tolerance, err := parseGuidance(r, job.Service)
 	if err != nil {
-		return "", 0, err
+		return planning.Answer{}, err
 	}
 	if tolerance != 0 && !request.AllowRuntime {
-		return "", 0, fmt.Errorf("this question does not offer a runtime override")
+		return planning.Answer{}, fmt.Errorf("this question does not offer a runtime override")
 	}
 	if request.Kind == "runtime" && tolerance == 0 {
-		return "", 0, fmt.Errorf("choose the maximum runtime difference you accept")
+		return planning.Answer{}, fmt.Errorf("choose the maximum runtime difference you accept")
 	}
 	if request.RequireGuidance && guidance == "" {
-		return "", 0, fmt.Errorf("provide instructions before requesting another review")
+		return planning.Answer{}, fmt.Errorf("provide instructions before requesting another review")
 	}
-	if len(request.Choices) > 0 {
-		selected := r.PostForm.Get("selection")
-		found := false
-		for _, choice := range request.Choices {
-			found = found || choice.Value == selected
+	// A follow-up question about runtime can refer to a file already chosen.
+	answer := job.Answer
+	answer.Guidance = guidance
+	answer.RuntimeToleranceMS = tolerance
+	if len(request.Choices) == 0 {
+		return answer, nil
+	}
+	for _, choice := range request.Choices {
+		if choice.Value != r.PostForm.Get("selection") {
+			continue
 		}
-		if !found {
-			return "", 0, fmt.Errorf("choose one of the offered options")
-		}
-		instruction := ""
 		switch request.Kind {
 		case "release":
-			instruction = fmt.Sprintf("Prefer offered release %s. I accept uncertainty about the edition. Only map tracks supported by the available evidence.", selected)
+			answer.SelectedReleaseID, err = strconv.ParseInt(choice.Value, 10, 64)
 		case "file":
-			instruction = fmt.Sprintf("Use offered file %s for this movie. I accept the file-selection ambiguity. Keep all structural and capability checks.", selected)
+			answer.SelectedFileID = choice.Value
 		}
-		guidance = strings.TrimSpace(instruction + "\n" + guidance)
+		return answer, err
 	}
-	if len(guidance) > 2000 {
-		return "", 0, fmt.Errorf("instructions are too long; shorten your answer")
-	}
-	return guidance, tolerance, nil
+	return planning.Answer{}, fmt.Errorf("choose one of the offered options")
 }
 
 func (app *Handler) validForm(w http.ResponseWriter, r *http.Request) bool {

@@ -11,9 +11,8 @@ def movie_plan(request):
     action = "manual_import_file_v1"
     offers = [option for option in case["capabilities"] if option["action"] == action]
     if len(offers) > 1:
-        # Repairr sends the selected file ID in the operator's guidance.
-        guidance = request.get("operator_guidance", "")
-        if not guidance:
+        selected = request.get("selected_file_id")
+        if selected is None:
             return {
                 "action": "no_repair",
                 "reason": "ambiguous_file_selection",
@@ -21,7 +20,7 @@ def movie_plan(request):
                 "evidence_refs": [offer["file_id"] for offer in offers],
                 "explanation": "Both videos can be imported. Choose the movie file.",
             }
-        offers = [offer for offer in offers if offer["file_id"] in guidance]
+        offers = [offer for offer in offers if offer["file_id"] == selected]
 
     (offer,) = offers
     return {

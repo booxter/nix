@@ -175,7 +175,7 @@
   {{if .Attention.Hint}}<p class="input-hint">{{.Attention.Hint}}</p>{{end}}
   {{if ne .Attention.Kind "retry"}}
   <label for="answer-{{.Job.ID}}">{{if .Attention.RequireGuidance}}Your instructions{{else}}Additional instructions (optional){{end}}</label>
-  <textarea id="answer-{{.Job.ID}}" name="guidance" maxlength="1700"{{if .Attention.RequireGuidance}} required{{end}}>{{.Job.Guidance}}</textarea>
+  <textarea id="answer-{{.Job.ID}}" name="guidance" maxlength="2000"{{if .Attention.RequireGuidance}} required{{end}}>{{.Job.Guidance}}</textarea>
   {{end}}
   {{if .Attention.AllowRuntime}}
   <fieldset>

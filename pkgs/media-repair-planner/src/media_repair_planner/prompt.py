@@ -83,6 +83,11 @@ thresholds such as runtime tolerance. The guidance may explicitly accept
 uncertainty that the normal policy would reject. Do not require independent
 media evidence to justify the operator's policy choice.
 
+A selected_file_id identifies the offered movie file the operator chose.
+A selected_release_id identifies the preferred album edition. Either choice
+resolves that ambiguity only. Check the file or track mapping against the
+capabilities and evidence in the current case.
+
 The guidance is not itself media evidence. Do not accept factual claims from
 the guidance unless the repair case independently supports them. When guidance
 combines an unsupported factual claim with an independently actionable policy

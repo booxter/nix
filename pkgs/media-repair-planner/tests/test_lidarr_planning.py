@@ -404,6 +404,7 @@ async def test_lidarr_planning_with_guidance(include_prior: bool) -> None:
     payload = {
         "repair_case": case_value(),
         "operator_guidance": guidance,
+        "selected_release_id": 4,
     }
     if include_prior:
         payload["prior_decision"] = decision_value()
@@ -418,6 +419,7 @@ async def test_lidarr_planning_with_guidance(include_prior: bool) -> None:
     assert context is not None
     content = json.loads(context.user_content)
     assert content["prior_decision"] == payload.get("prior_decision")
+    assert content["selected_release_id"] == 4
     assert content["operator_guidance"] == {
         "text": guidance,
         "authority": "policy_override",

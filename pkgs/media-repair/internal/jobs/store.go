@@ -68,8 +68,7 @@ type Job struct {
 	CollectionError     string
 	CollectionOutcome   Outcome
 	Plan                json.RawMessage `gorm:"serializer:json"`
-	Guidance            string
-	RuntimeToleranceMS  int64
+	planning.Answer     `gorm:"embedded"`
 	RetryAt             time.Time
 	PlanningAttempts    int
 	PendingAction       string
@@ -197,6 +196,11 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			// A ready plan belongs to its original full evidence. Import execution
 			// revalidates it; assessment noise must not silently replace that case.
 			if job.State != Ready || changed {
+				// The operator picked from the files or releases offered in that case.
+				if job.SourceFingerprint != observed.SourceFingerprint {
+					job.SelectedFileID = ""
+					job.SelectedReleaseID = 0
+				}
 				job.SourceFingerprint = observed.SourceFingerprint
 				job.Evidence = observed.Evidence
 			}

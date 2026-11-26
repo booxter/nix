@@ -35,9 +35,8 @@ func TestFirstPlanAcceptsOperatorGuidance(t *testing.T) {
 	client := testClient(t, socket, time.Second)
 
 	_, err := client.Plan(context.Background(), repairCase, planning.Options{
-		JobID:                      42,
-		Guidance:                   guidance,
-		MaximumRuntimeDifferenceMS: 1_800_000,
+		JobID:  42,
+		Answer: planning.Answer{Guidance: guidance, RuntimeToleranceMS: 1_800_000},
 	})
 	if err != nil {
 		t.Fatalf("first plan with operator guidance failed: %v", err)

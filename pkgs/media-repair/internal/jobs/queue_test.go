@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
@@ -67,7 +69,7 @@ func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
 func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 10, DownloadID: "download", Guidance: "keep guidance"})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 10, DownloadID: "download", Answer: planning.Answer{Guidance: "keep guidance"}})
 	if err != nil {
 		t.Fatal(err)
 	}

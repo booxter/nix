@@ -15,14 +15,20 @@ class PlanningRequest(BaseModel):
     job_id: int | None = Field(default=None, gt=0)
     prior_decision: JsonValue | None = None
     operator_guidance: str = Field(default="", max_length=2_000)
+    selected_file_id: str | None = Field(default=None, min_length=1, max_length=128)
+    selected_release_id: int | None = Field(default=None, gt=0)
     maximum_runtime_difference_ms: int = Field(default=0, ge=0, le=3_600_000)
 
     def context(self) -> PlanningContext | None:
-        if not self.operator_guidance and not self.maximum_runtime_difference_ms:
+        choices = self.model_dump(
+            include={"selected_file_id", "selected_release_id"}, exclude_none=True
+        )
+        if not (choices or self.operator_guidance or self.maximum_runtime_difference_ms):
             return None
 
         # Operator intent is policy input, never additional media evidence.
         content: dict[str, JsonValue] = {
+            **choices,
             "operator_guidance": {
                 "authority": "policy_override",
                 "media_evidence": False,
