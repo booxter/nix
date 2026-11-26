@@ -8,10 +8,9 @@
 }:
 let
   inherit (pinepodsModel)
-    aiPort
     aiProvider
     cfg
-    containerNetwork
+    serviceAddress
     downloadsDir
     ollamaTunnelPort
     storageGroup
@@ -54,7 +53,7 @@ in
       user = null;
       group = null;
       clients.pinepods-ollama = {
-        accept = "127.0.0.1:${toString ollamaTunnelPort}";
+        accept = "${serviceAddress}:${toString ollamaTunnelPort}";
         connect = "${serverName}:443";
         cert = client.materializations.default.certificatePath;
         key = client.materializations.default.keyPath;
@@ -85,8 +84,7 @@ in
           WHISPER_DEVICE = "cpu";
           WHISPER_COMPUTE_TYPE = "int8";
         };
-        ports = [ "127.0.0.1:${toString aiPort}:8100" ];
-        networks = [ containerNetwork ];
+        networks = [ "pinepods" ];
         volumes = [
           "${downloadsDir}:/opt/pinepods/downloads:ro"
           "/var/lib/pinepods-ai:/models:rw"

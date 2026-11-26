@@ -7,7 +7,13 @@
   ...
 }:
 let
-  inherit (pinepodsModel) cfg databaseName user;
+  inherit (pinepodsModel)
+    cfg
+    databaseName
+    serviceAddress
+    containerSubnet
+    user
+    ;
   passwordSecret = "pinepods/postgresql/password";
   setPasswordCommand = utils.escapeSystemdExecArgs [
     (lib.getExe pkgs.postgresql-role-password)
@@ -35,12 +41,13 @@ in
       enable = true;
       enableTCPIP = true;
       settings = {
-        listen_addresses = lib.mkForce "127.0.0.1";
+        listen_addresses = lib.mkForce "127.0.0.1,${serviceAddress}";
         password_encryption = "scram-sha-256";
       };
       authentication = lib.mkAfter ''
         host postgres ${user} 127.0.0.1/32 scram-sha-256
         host ${databaseName} ${user} 127.0.0.1/32 scram-sha-256
+        host postgres,${databaseName} ${user} ${containerSubnet} scram-sha-256
       '';
       ensureDatabases = [ databaseName ];
       ensureUsers = [

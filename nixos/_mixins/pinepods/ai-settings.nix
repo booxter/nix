@@ -9,7 +9,7 @@ let
   inherit (pinepodsModel)
     cfg
     databaseName
-    hostGateway
+    serviceAddress
     ollamaTunnelPort
     ;
 in
@@ -32,7 +32,7 @@ in
           databaseName
           "--set=ON_ERROR_STOP=1"
           "--set=model=${cfg.adDetectionModel}"
-          "--set=url=http://${hostGateway}:${toString ollamaTunnelPort}/v1"
+          "--set=url=http://${serviceAddress}:${toString ollamaTunnelPort}/v1"
           "--single-transaction"
           "--file=${./ai-settings.sql}"
         ];

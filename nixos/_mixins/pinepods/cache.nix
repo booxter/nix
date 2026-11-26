@@ -6,7 +6,12 @@
   ...
 }:
 let
-  inherit (pinepodsModel) cachePort cfg user;
+  inherit (pinepodsModel)
+    cachePort
+    cfg
+    serviceAddress
+    user
+    ;
   passwordSecret = "pinepods/valkey/password";
 in
 {
@@ -24,7 +29,7 @@ in
       group = config.users.users.${user}.group;
       mode = "0400";
       content = ''
-        bind 127.0.0.1
+        bind ${serviceAddress}
         protected-mode yes
         port ${toString cachePort}
         daemonize no

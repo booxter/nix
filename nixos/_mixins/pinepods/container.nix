@@ -11,12 +11,11 @@ let
   inherit (pinepodsModel)
     cfg
     cachePort
-    containerNetwork
     databaseName
     downloadsDir
     image
     imageFile
-    hostGateway
+    serviceAddress
     oidcClient
     port
     storageGroup
@@ -71,11 +70,11 @@ in
           pull = "never";
           environment = {
             DB_TYPE = "postgresql";
-            DB_HOST = hostGateway;
+            DB_HOST = serviceAddress;
             DB_PORT = "5432";
             DB_USER = user;
             DB_NAME = databaseName;
-            VALKEY_HOST = hostGateway;
+            VALKEY_HOST = serviceAddress;
             VALKEY_PORT = toString cachePort;
             HOSTNAME = pinepodsModel.service.public.url;
             PINEPODS_PORT = "443";
@@ -115,7 +114,7 @@ in
           };
           environmentFiles = [ config.sops.templates."pinepods.env".path ];
           ports = [ "127.0.0.1:${toString port}:8040" ];
-          networks = [ containerNetwork ];
+          networks = [ "pinepods" ];
           volumes = [
             "${downloadsDir}:/opt/pinepods/downloads:rw"
             "/var/lib/pinepods/yt-dlp:/opt/pinepods/yt-dlp:rw"
