@@ -1,30 +1,28 @@
 {
   houndarr,
   lib,
-  python3,
+  python313Packages,
   pythonRuffCheckHook,
 }:
-let
-  pythonPackages = python3.pkgs;
-in
-pythonPackages.buildPythonApplication {
+# The helpers import Houndarr's modules from its Python 3.13 installation.
+python313Packages.buildPythonApplication {
   pname = "houndarr-tools";
   version = "0.1.0";
   pyproject = true;
 
   src = ./.;
 
-  build-system = [ pythonPackages.setuptools ];
+  build-system = [ python313Packages.setuptools ];
   dependencies = [
     houndarr
   ]
-  ++ (with pythonPackages; [
+  ++ (with python313Packages; [
     httpx
     prometheus-client
     pydantic
   ]);
 
-  nativeCheckInputs = with pythonPackages; [
+  nativeCheckInputs = with python313Packages; [
     mypy
     pytestCheckHook
     pytest-cov
