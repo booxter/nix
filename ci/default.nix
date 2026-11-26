@@ -6,7 +6,8 @@ let
   darwinSystem = "aarch64-darwin";
   nixosSystem = "x86_64-linux";
   nixosBuildHosts = removeAttrs hosts.nixos [
-    # builder1 is the release canary. builder2 covers the stable builders.
+    # builder1 covers the shared builder profile.
+    "builder2"
     "builder3"
     # prx2-lab covers the shared Proxmox node profile.
     "prx3-lab"
