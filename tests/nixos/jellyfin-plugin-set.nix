@@ -1,14 +1,11 @@
 { inputs, pkgs, ... }:
 let
   inherit (pkgs) lib;
-  jellyfinPkgs = import inputs.nixpkgs-jellyfin {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
   plugins = builtins.attrValues (import ../../nixos/beast/pkgs/jellyfin-plugins { inherit pkgs; });
   catalogue = pkgs.callPackage ../../nixos/beast/pkgs/jellyfin-plugins/catalogue.nix { } {
     inherit plugins;
   };
-  jellarr = jellyfinPkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
+  jellarr = pkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
     src = inputs.jellarr;
   };
   jellarrConfig = pkgs.writeText "jellarr-plugin-set.json" (
@@ -34,7 +31,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     services.jellyfin = {
       enable = true;
-      package = jellyfinPkgs.jellyfin;
+      package = pkgs.jellyfin;
     };
     services.nginx = {
       enable = true;

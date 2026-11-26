@@ -1,14 +1,11 @@
 { inputs, pkgs, ... }:
 let
   inherit (pkgs) lib;
-  jellyfinPkgs = import inputs.nixpkgs-jellyfin {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
   fixture =
     localRevision:
     import ./jellyfin-plugin-updates/package.nix {
       inherit pkgs localRevision;
-      jellyfin = jellyfinPkgs.jellyfin;
+      jellyfin = pkgs.jellyfin;
     };
   original = fixture 1;
   updated = fixture 2;
@@ -31,7 +28,7 @@ let
         jq '.[0].versions[0].checksum = "00000000000000000000000000000000"' \
           ${updatedCatalogue}/manifest.json > "$out/manifest.json"
       '';
-  jellarr = jellyfinPkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
+  jellarr = pkgs.callPackage ../../nixos/_mixins/jellyfin/packages/jellarr {
     src = inputs.jellarr;
   };
   jellarrConfig = pkgs.writeText "jellarr-catalogue.json" (
@@ -60,7 +57,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     services.jellyfin = {
       enable = true;
-      package = jellyfinPkgs.jellyfin;
+      package = pkgs.jellyfin;
     };
     services.nginx = {
       enable = true;
