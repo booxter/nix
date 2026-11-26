@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
+    # TODO(26.11): Drop after srvarr finishes the Aurral 2.x migrations.
+    nixpkgs-aurral.url = "github:NixOS/nixpkgs/3476822c30aa890f665f7a718f75590b76e86f37";
     nixpkgs-2611.url = "github:NixOS/nixpkgs/release-26.11";
     # TODO(26.11): Drop when beast's required plugins support Jellyfin 12.
     nixpkgs-jellyfin.url = "https://releases.nixos.org/nixos/26.05/nixos-26.05.15079.0dc498bfe49b/nixexprs.tar.zst";
