@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
-	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
-	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
 )
 
 // prepareSource chooses the files once so the probe results and Radarr's
@@ -30,31 +28,4 @@ func (inspector *Inspector) prepareSource(
 		}
 	}
 	return controller.VideoSource{Root: correlation.DownloadRoot, Inventory: inventory}, nil
-}
-
-// collectDiscChoices finds Blu-ray playlists and DVD titles that Repairr could turn into a movie file.
-func (inspector *Inspector) collectDiscChoices(
-	ctx context.Context,
-	inventory controller.FileInventory,
-) ([]mkvmerge.Candidate, []dvdvideo.Candidate, error) {
-	var playlists []mkvmerge.Candidate
-	var err error
-	if inspector.dependencies.Playlists != nil {
-		playlists, err = mkvmerge.ListFeaturePlaylists(
-			ctx, inventory, inspector.dependencies.Playlists,
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("identify Blu-ray playlists: %w", err)
-		}
-	}
-	var dvdTitles []dvdvideo.Candidate
-	if inspector.dependencies.DVDs != nil {
-		dvdTitles, err = dvdvideo.ListRemuxableTitles(
-			ctx, inventory, inspector.dependencies.DVDs,
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("identify DVD titles: %w", err)
-		}
-	}
-	return playlists, dvdTitles, nil
 }

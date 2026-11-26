@@ -116,81 +116,33 @@ func (inspector *Inspector) buildCase(
 	collectionContext context.Context,
 	correlation controller.DownloadCorrelation,
 ) (casebuilder.Assembly, error) {
-	record := correlation.Radarr
-	library, err := inspector.collectMovie(collectionContext, record)
-	if err != nil {
-		return casebuilder.Assembly{}, err
-	}
 	source, err := inspector.prepareSource(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	probes, err := source.ProbeFiles(callerContext, collectionContext, inspector.dependencies.Probes)
-	if err != nil {
-		return casebuilder.Assembly{}, err
+
+	input := collectionInput{
+		scanCtx:    callerContext,
+		downloadID: correlation.Radarr.DownloadID,
+		source:     source,
+		radarr:     inspector.dependencies.Radarr,
+		probes:     inspector.dependencies.Probes,
+		playlists:  inspector.dependencies.Playlists,
+		dvds:       inspector.dependencies.DVDs,
 	}
-	imports, err := inspector.collectImports(collectionContext, record, source.Root)
-	if err != nil {
-		return casebuilder.Assembly{}, err
+	if id := correlation.Radarr.MovieID; id != nil {
+		input.movieID = *id
 	}
-	playlists, dvdTitles, err := inspector.collectDiscChoices(collectionContext, source.Inventory)
-	if err != nil {
+
+	facts := casebuilder.Observation{Correlation: correlation, Inventory: source.Inventory}
+	if err := radarrCollectors.Collect(collectionContext, input, &facts); err != nil {
 		return casebuilder.Assembly{}, err
 	}
 
-	assembly, err := casebuilder.Assemble(casebuilder.Observation{
-		ObservedAt:      inspector.dependencies.Clock.Now(),
-		Correlation:     correlation,
-		Movie:           library.movie,
-		History:         library.history,
-		ManualImports:   imports,
-		Inventory:       source.Inventory,
-		Probes:          probes,
-		BluRayPlaylists: playlists,
-		DVDTitles:       dvdTitles,
-	})
+	facts.ObservedAt = inspector.dependencies.Clock.Now()
+	assembly, err := casebuilder.Assemble(facts)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("assemble repair case: %w", err)
 	}
 	return assembly, nil
-}
-
-type movieFacts struct {
-	movie   *controller.RadarrMovie
-	history []controller.RadarrHistoryEvent
-}
-
-// collectMovie gets the library record and this download's history for the case.
-func (inspector *Inspector) collectMovie(ctx context.Context, record controller.RadarrQueueRecord) (movieFacts, error) {
-	if record.MovieID == nil || *record.MovieID <= 0 {
-		return movieFacts{}, nil
-	}
-	movieID := *record.MovieID
-	movie, err := inspector.dependencies.Radarr.ReadMovie(ctx, movieID)
-	if err != nil {
-		return movieFacts{}, fmt.Errorf("read Radarr movie: %w", err)
-	}
-	history, err := inspector.dependencies.Radarr.ReadHistory(ctx, movieID, record.DownloadID)
-	if err != nil {
-		return movieFacts{}, fmt.Errorf("read Radarr history: %w", err)
-	}
-	return movieFacts{movie: &movie, history: history}, nil
-}
-
-// collectImports asks Radarr which files it sees in the inspected folder for this movie.
-func (inspector *Inspector) collectImports(
-	ctx context.Context,
-	record controller.RadarrQueueRecord,
-	folder string,
-) ([]controller.RadarrManualImport, error) {
-	if record.MovieID == nil || *record.MovieID <= 0 {
-		return nil, nil
-	}
-	imports, err := inspector.dependencies.Radarr.ReadManualImports(ctx, controller.RadarrManualImportQuery{
-		MovieID: *record.MovieID, DownloadID: record.DownloadID, Folder: folder,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("read Radarr manual imports: %w", err)
-	}
-	return imports, nil
 }
