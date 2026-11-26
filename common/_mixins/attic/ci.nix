@@ -22,7 +22,7 @@ in
       file = clientConfig;
       mode = "0400";
       # Linux hands the root-owned config to each runner through LoadCredential.
-      owner = if pkgs.stdenv.isDarwin then "_github-runner" else "root";
+      owner = if pkgs.stdenv.hostPlatform.isDarwin then "_github-runner" else "root";
     };
   };
 }
