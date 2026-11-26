@@ -10,20 +10,20 @@
 }:
 python313Packages.buildPythonApplication (finalAttrs: {
   pname = "houndarr";
-  version = "1.13.3";
+  version = "1.13.4";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "av1155";
     repo = "houndarr";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ozIyfuvNYl1PxN/jd4J4ghDzGald4ai1hIWgh2muzI4=";
+    hash = "sha256-Ha/6i5VmjzWOXUYNHB2T23nS6uST1+pJ7b8MrsFup3g=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname src version;
     fetcherVersion = 4;
-    hash = "sha256-V/X8tWToeqLiPHOSBzGuEFCDPdTNxrNiA2Y+xDs0tYU=";
+    hash = "sha256-qQe2FYQExc7SAcUJ8J3QdhjiuTMORpUS5vGX1vbKFPY=";
   };
 
   nativeBuildInputs = [
