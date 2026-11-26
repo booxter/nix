@@ -35,10 +35,12 @@ openssh.overrideAttrs (old: {
   pname = "openssh-yubikey";
   patches = (old.patches or [ ]) ++ [
     # General agent fix; independent of the inventory and suitable for upstream.
-    ./agent-touch-after-pin.patch
+    ../../patches/openssh-restore-touch-prompt-after-pin.patch
     # Local policy: resolve mapped keys and defer prompts for PIN-only models.
-    (replaceVars ./signing-device.patch { inherit resolver; })
-    (replaceVars ./agent-pin-first.patch { public_keys = pinFirstBlobs; })
+    (replaceVars ../../patches/openssh-resolve-signing-device.patch { inherit resolver; })
+    (replaceVars ../../patches/openssh-prompt-for-pin-before-touch.patch {
+      public_keys = pinFirstBlobs;
+    })
   ];
   passthru = (old.passthru or { }) // {
     inherit resolver;

@@ -60,7 +60,7 @@
       attic-client = prev.attic-client.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Drop when the packaged client honors NIX_SSL_CERT_FILE.
-          ./attic-client-nix-ssl-cert-file.patch
+          ../patches/attic-client-honor-nix-ssl-cert-file.patch
         ];
       });
 
@@ -76,7 +76,7 @@
         patches = (old.patches or [ ]) ++ [
           # Prevent malformed timestamps from overflowing the output buffer.
           # https://github.com/svend/cuetools/pull/44
-          ./cuetools-time-frame-buffer-overflow.patch
+          ../patches/cuetools-prevent-time-frame-buffer-overflow.patch
         ];
       });
 
@@ -90,7 +90,7 @@
 
       nix = pkgsNixpkgsUnstable.nixVersions.latest.appendPatches [
         # Avoid inheriting a locked signal callback registry in daemon workers.
-        ./nix/reset-signal-callbacks-after-fork.patch
+        ../patches/nix-reset-signal-callbacks-after-fork.patch
       ];
 
       # Drop once stable's monitor accepts the activity types emitted by Nix 2.36.

@@ -7,7 +7,7 @@ pkgs.stdenv.mkDerivation {
   unpackPhase = ''
     tar -xf "$src" --strip-components=3 --wildcards '*/net/sched/sch_cake.c'
   '';
-  patches = [ ./cake-idle-decay.patch ];
+  patches = [ ../../../../patches/linux-cake-decay-blue-penalty-while-idle.patch ];
 
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];

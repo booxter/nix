@@ -17,7 +17,7 @@ let
       )
     ) (builtins.attrValues publishingServers)
   );
-  rootDir = if pkgs.stdenv.isDarwin then "/private/var/root" else "/root";
+  rootDir = if pkgs.stdenv.hostPlatform.isDarwin then "/private/var/root" else "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   endpointHost =
     endpoint:
@@ -68,7 +68,7 @@ in
       secrets."attic/token" = { };
       templates."attic-client-config.toml" = {
         owner = "root";
-        group = if pkgs.stdenv.isDarwin then "wheel" else "root";
+        group = if pkgs.stdenv.hostPlatform.isDarwin then "wheel" else "root";
         mode = "0400";
         file = clientConfig;
       };

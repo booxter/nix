@@ -53,6 +53,7 @@ Scope: whole repository.
 - Host inventory: directories containing `nixos/<host>/default.nix` and
   `darwin/<host>/default.nix`.
 - Shared packages: `pkgs/`; checkout-run apps/scripts: `apps/`.
+- Keep patches for external software in `patches/<package>-<change>.patch`.
 - Secrets: `secrets/`; checks: `tests/`, `checks.nix`.
 
 ## Application Development

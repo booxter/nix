@@ -10,7 +10,7 @@ let
   }) fleetInventory.proxmox.guests;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = (pkgs.callPackage (inputs.proxmox-nixos + "/pkgs/nixmoxer") { }).overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [ ./prox-deploy/nixmoxer-return-vmid.patch ];
+      patches = (old.patches or [ ]) ++ [ ../patches/nixmoxer-return-vmid.patch ];
     });
     inherit vmSpecs;
   };

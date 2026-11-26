@@ -32,7 +32,9 @@ in
   imports = [ ./mutable-settings.nix ];
 
   host.hm.sketchybar.claude.enable = lib.mkDefault (
-    pkgs.stdenv.isDarwin && config.programs.claude-code.enable && config.host.hm.sketchybar.enable
+    pkgs.stdenv.hostPlatform.isDarwin
+    && config.programs.claude-code.enable
+    && config.host.hm.sketchybar.enable
   );
 
   programs.claude-code =
