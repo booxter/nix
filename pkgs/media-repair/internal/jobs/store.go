@@ -39,11 +39,14 @@ const (
 )
 
 type Job struct {
-	ID                  int64   `gorm:"primaryKey"`
-	Service             Service `gorm:"uniqueIndex:queue_identity"`
-	QueueID             int64   `gorm:"uniqueIndex:queue_identity"`
-	DownloadID          string  `gorm:"uniqueIndex:queue_identity"`
-	Title               string
+	ID         int64   `gorm:"primaryKey"`
+	Service    Service `gorm:"uniqueIndex:queue_identity"`
+	QueueID    int64   `gorm:"uniqueIndex:queue_identity"`
+	DownloadID string  `gorm:"uniqueIndex:queue_identity"`
+	Title      string
+	// SourceFingerprint identifies the observed case used to authorize execution.
+	// PlanningFingerprint ignores assessment noise so an unchanged planning
+	// question can reuse its previous result.
 	SourceFingerprint   string
 	PlanningFingerprint string
 	StableSince         time.Time

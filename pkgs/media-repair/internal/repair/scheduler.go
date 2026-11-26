@@ -115,7 +115,7 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 }
 
 func (scheduler *Scheduler) advance(ctx context.Context) error {
-	listed, err := scheduler.Store.List(ctx, scheduler.Name)
+	listed, err := scheduler.Store.DueRepairs(ctx, scheduler.Name, scheduler.Now())
 	if err != nil {
 		return err
 	}
@@ -143,20 +143,10 @@ func (scheduler *Scheduler) advanceJob(ctx context.Context, engine Engine, job j
 	if job.State == jobs.Importing || job.State == jobs.Running {
 		return engine.Run(ctx, job.ID)
 	}
-	if !job.InQueue {
-		return nil
-	}
-	if scheduler.Now().Before(job.RetryAt) {
-		return nil
-	}
-
-	if job.PendingAction == jobs.Delete {
-		return nil
-	}
-	if job.State == jobs.Observed && job.CollectionError == "" && len(job.Evidence) != 0 {
+	if job.State == jobs.Observed {
 		return scheduler.plan(ctx, job)
 	}
-	if job.State == jobs.Ready && job.CollectionError == "" && !disabled && scheduler.Service.Ready(job) {
+	if job.State == jobs.Ready && !disabled && scheduler.Service.Ready(job) {
 		return engine.Run(ctx, job.ID)
 	}
 
@@ -217,18 +207,14 @@ func (scheduler *Scheduler) runActions(ctx context.Context, workWake chan<- stru
 }
 
 func (scheduler *Scheduler) removeRequested(ctx context.Context) error {
-	listed, err := scheduler.Store.List(ctx, scheduler.Name)
+	ids, err := scheduler.Store.DueRemovals(ctx, scheduler.Name, scheduler.Now())
 	if err != nil {
 		return err
 	}
 
 	var failures []error
-	for _, job := range listed {
-		if job.PendingAction != jobs.Delete || scheduler.Now().Before(job.RetryAt) {
-			continue
-		}
-
-		requested, err := scheduler.Store.StartRemoval(ctx, job.ID, scheduler.Now())
+	for _, id := range ids {
+		requested, err := scheduler.Store.StartRemoval(ctx, id, scheduler.Now())
 		if errors.Is(err, jobs.ErrConflict) {
 			continue
 		}
@@ -239,7 +225,7 @@ func (scheduler *Scheduler) removeRequested(ctx context.Context) error {
 		removeErr := scheduler.Service.Remove(ctx, requested)
 		storeErr := scheduler.Store.FinishRemoval(context.WithoutCancel(ctx), requested, removeErr, scheduler.Now())
 		if err := errors.Join(removeErr, storeErr); err != nil {
-			failures = append(failures, fmt.Errorf("job %d: %w", job.ID, err))
+			failures = append(failures, fmt.Errorf("job %d: %w", id, err))
 		}
 	}
 

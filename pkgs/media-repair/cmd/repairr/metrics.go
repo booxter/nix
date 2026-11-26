@@ -55,14 +55,12 @@ func writeMetrics(ctx context.Context, path string, store *jobs.Store, scheduler
 		for _, state := range []jobs.State{jobs.Observed, jobs.Ready, jobs.Running, jobs.Importing, jobs.Blocked, jobs.Failed, jobs.Removing} {
 			counts.WithLabelValues(label, string(state)).Set(0)
 		}
-		listed, err := store.List(ctx, service)
+		totals, err := store.QueueCounts(ctx, service)
 		if err != nil {
 			return err
 		}
-		for _, job := range listed {
-			if job.InQueue || job.State == jobs.Importing {
-				counts.WithLabelValues(label, string(job.State)).Inc()
-			}
+		for _, total := range totals {
+			counts.WithLabelValues(label, string(total.State)).Set(float64(total.Count))
 		}
 	}
 
