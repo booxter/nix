@@ -65,7 +65,7 @@ python3Packages.buildPythonApplication {
     pythonRuffCheckHook
   ];
 
-  RADARR_REPAIR_CONTRACT_FIXTURES = "${contracts}/share/radarr-repair";
+  env.RADARR_REPAIR_CONTRACT_FIXTURES = "${contracts}/share/radarr-repair";
 
   preCheck = ''
     mypy src/media_repair_planner
