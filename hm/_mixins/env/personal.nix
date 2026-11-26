@@ -9,10 +9,7 @@
 
   developer = {
     host.hm = {
-      env = {
-        sendEmail.transport = "gmail";
-        repositories.requests.developer = [ "dotfiles" ];
-      };
+      env.sendEmail.transport = "gmail";
       dev = {
         act.enable = true;
         codex.enable = true;

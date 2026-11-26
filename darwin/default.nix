@@ -65,8 +65,6 @@ in
 
   system.primaryUser = username;
 
-  host.nix.rosetta.acceptLicense = true;
-
   users.users.${username} = {
     home = "/Users/${username}";
     createHome = true;

@@ -18,6 +18,7 @@ pythonPackages.buildPythonApplication {
   pname = "nr";
   version = "0.1.0";
   pyproject = true;
+  __structuredAttrs = true;
 
   src = ./.;
 
@@ -37,18 +38,27 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${
-      lib.makeBinPath [
-        nixpkgs-reviewFull
-        openssh
-        git
-        tmux
-      ]
-    }"
-    "--set NR_BUILDERS ${lib.escapeShellArg builders}"
-    "--set NR_LOCAL_BUILDERS ${lib.escapeShellArg localBuilders}"
-    "--set-default NR_REMOTE_HOST ${lib.escapeShellArg remoteHost}"
-    "--set-default NR_REVIEW_DIRECTORY ${lib.escapeShellArg reviewDirectory}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [
+      nixpkgs-reviewFull
+      openssh
+      git
+      tmux
+    ])
+    "--set"
+    "NR_BUILDERS"
+    builders
+    "--set"
+    "NR_LOCAL_BUILDERS"
+    localBuilders
+    "--set-default"
+    "NR_REMOTE_HOST"
+    remoteHost
+    "--set-default"
+    "NR_REVIEW_DIRECTORY"
+    reviewDirectory
   ];
 
   preCheck = ''

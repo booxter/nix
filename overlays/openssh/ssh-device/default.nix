@@ -31,8 +31,14 @@ python3.pkgs.buildPythonApplication {
     mypy src/ssh_device
   '';
   makeWrapperArgs = [
-    "--add-flags '--identities ${manifest}'"
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+    "--add-flag"
+    "--identities"
+    "--add-flag"
+    (toString manifest)
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ openssh ])
   ];
   pythonImportsCheck = [ "ssh_device" ];
   meta = {

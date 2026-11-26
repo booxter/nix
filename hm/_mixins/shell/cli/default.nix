@@ -7,41 +7,7 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  env = config.host.hm.env;
-  repositoryCatalog = env.repositories.catalog;
-  requiredRepositories = env.repositories.required;
   homeManagerPkgs = import ../../../pkgs pkgs;
-  cliPkgs = import ./pkgs { inherit pkgs; };
-  repositoryPath =
-    repository:
-    let
-      basePath =
-        {
-          home = config.home.homeDirectory;
-          xdgData = config.xdg.dataHome;
-        }
-        .${repository.destination.base};
-    in
-    "${basePath}/${repository.destination.path}";
-  syncRepoConfig = (pkgs.formats.json { }).generate "sync-repo.json" {
-    repositories = builtins.listToAttrs (
-      map (name: {
-        inherit name;
-        value = {
-          inherit (repositoryCatalog.${name}) remote;
-          path = repositoryPath repositoryCatalog.${name};
-        };
-      }) requiredRepositories
-    );
-  };
-  syncRepo = pkgs.symlinkJoin {
-    name = "sync-repo-configured";
-    paths = [ cliPkgs.sync-repo ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram "$out/bin/sync-repo" --add-flags ${lib.escapeShellArg "--config ${syncRepoConfig}"}
-    '';
-  };
 in
 lib.mkIf config.host.hm.env.roles.developer {
   programs.bash.enable = true;
@@ -151,26 +117,21 @@ lib.mkIf config.host.hm.env.roles.developer {
     settings = fromTOML (builtins.readFile ./starship.toml);
   };
 
-  home.packages =
-    with pkgs;
-    [
-      (ripgrep.override { withPCRE2 = true; })
-      ack
-      bc
-      curl
-      fd
-      fzf
-      mkpasswd
-      (homeManagerPkgs.page.override { neovim = config.host.hm.vim.package; })
-      openssl
-      wget
-      yq-go
-      yubikey-manager
-      zstd
-    ]
-    ++ lib.optionals (requiredRepositories != [ ]) [
-      syncRepo
-    ];
+  home.packages = with pkgs; [
+    (ripgrep.override { withPCRE2 = true; })
+    ack
+    bc
+    curl
+    fd
+    fzf
+    mkpasswd
+    (homeManagerPkgs.page.override { neovim = config.host.hm.vim.package; })
+    openssl
+    wget
+    yq-go
+    yubikey-manager
+    zstd
+  ];
 
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";

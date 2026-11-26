@@ -38,15 +38,15 @@ struct ProvisionDocument {
 }
 
 fn sources_from(arguments: &PersonMailArgs) -> Result<Vec<MailSource>> {
-    if !arguments.person_mail.len().is_multiple_of(2) {
+    let (pairs, remainder) = arguments.person_mail.as_chunks::<2>();
+    if !remainder.is_empty() {
         bail!("expected PERSON MAIL_FILE pairs");
     }
-    Ok(arguments
-        .person_mail
-        .chunks_exact(2)
-        .map(|pair| MailSource {
-            person: pair[0].clone(),
-            path: PathBuf::from(&pair[1]),
+    Ok(pairs
+        .iter()
+        .map(|[person, path]| MailSource {
+            person: person.clone(),
+            path: PathBuf::from(path),
         })
         .collect())
 }

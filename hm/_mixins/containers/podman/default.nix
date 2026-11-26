@@ -49,6 +49,8 @@ in
             DOCKER_HOST = podmanSocket;
           }
           // lib.optionalAttrs isDarwin {
+            # Use the forwarded socket: Podman's Go SSH parser rejects newer host keys.
+            CONTAINER_HOST = podmanSocket;
             CONTAINERS_MACHINE_PROVIDER = podmanMachine.provider;
           };
       };

@@ -42,6 +42,8 @@ pub struct MailSenderArgs {
     pub token_group: String,
 }
 
+// async_trait adds #[must_use] to methods that already return a must-use future.
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait MailSenderDirectory {
     async fn service_account_exists(&self) -> Result<bool>;
