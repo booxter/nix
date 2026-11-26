@@ -29,7 +29,10 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ aerospace ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ aerospace ])
   ];
 
   preCheck = ''

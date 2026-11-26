@@ -34,7 +34,7 @@ func (c *Client) command(ctx context.Context, arguments ...string) ([]byte, erro
 }
 
 func (c *Client) List(ctx context.Context) ([]machine.Summary, error) {
-	output, err := c.command(ctx, "machine", "list", "--all-providers", "--format", "json")
+	output, err := c.command(ctx, "machine", "list", "--format", "json")
 	if err != nil {
 		return nil, err
 	}

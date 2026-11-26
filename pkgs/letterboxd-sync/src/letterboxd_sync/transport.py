@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, Protocol, cast
+from typing import Literal, Protocol
 
 from curl_cffi import CurlMime, requests
 
@@ -58,7 +58,8 @@ class HttpTransport:
             )
             if response.status_code != 200:
                 raise SyncError(f"Remote request failed (HTTP {response.status_code})")
-            return cast(str, response.text)
+            text: str = response.text
+            return text
         except requests.RequestsError:
             raise SyncError(
                 "Remote request failed; check connectivity and session credentials"

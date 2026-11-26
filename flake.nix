@@ -13,20 +13,24 @@
     nixvim-2611.url = "github:nix-community/nixvim/main";
     nixvim-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
-    nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
 
-    nix-darwin.url = "github:booxter/nix-darwin/nix-darwin-26.05";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-2611";
+    # TODO(26.11): Drop the fork module once upstream reconciles GUI agents.
+    nix-darwin-launchd = {
+      url = "github:booxter/nix-darwin/56814e3905de59744e112a2a8ecc7958a2d1edb5";
+      flake = false;
+    };
 
     nix-darwin-vm.url = "github:booxter/nix-darwin-vm";
-    nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    nix-darwin-vm.inputs.nixpkgs.follows = "nixpkgs-2611";
     nix-darwin-vm.inputs.nix-darwin.follows = "nix-darwin";
 
     # Follow upstream's weekly database snapshots through flake updates.
     nix-index-database.url = "github:nix-community/nix-index-database";
-    nix-index-database.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs-2611";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -99,6 +103,13 @@
         inherit lib;
       };
       sshKeys = fleetInventory.ssh;
+      # TODO(26.11): Remove the split once every release host has migrated.
+      releaseInputs = inputs // {
+        nixpkgs = inputs.nixpkgs-2611;
+        home-manager = inputs.home-manager-2611;
+        nixvim = inputs.nixvim-2611;
+        stylix = inputs.stylix-2611;
+      };
       specialArgsForHost =
         {
           hostName,
@@ -136,14 +147,7 @@
             "org"
             "pki"
           ];
-          hostInputs =
-            inputs
-            // lib.optionalAttrs on2611 {
-              nixpkgs = inputs.nixpkgs-2611;
-              home-manager = inputs.home-manager-2611;
-              nixvim = inputs.nixvim-2611;
-              stylix = inputs.stylix-2611;
-            };
+          hostInputs = if on2611 then releaseInputs else inputs;
           # Keep node modules and base packages on Proxmox's tested nixpkgs pin.
           nixpkgsInput =
             if builtins.hasAttr hostName fleetInventory.proxmox.nodes then
@@ -166,6 +170,7 @@
         inputs.nix-darwin.lib.darwinSystem {
           specialArgs = specialArgsForHost {
             inherit hostName;
+            hostInputs = releaseInputs;
             system = "aarch64-darwin";
           };
           modules = [
@@ -182,9 +187,9 @@
           (
             system:
             import ./per-system.nix {
+              inputs = if system == "aarch64-darwin" then releaseInputs else inputs;
               inherit
                 fleetInventory
-                inputs
                 outputs
                 system
                 ;

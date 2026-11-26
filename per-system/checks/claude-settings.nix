@@ -6,28 +6,29 @@ let
     overrides:
     (inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
-      modules = [
-        ../../hm/_mixins/dev/agents/claude/mutable-settings.nix
-        {
-          home = {
-            username = "test";
-            homeDirectory = "/home/test";
-            stateVersion = "26.05";
-          };
-          programs.claude-code = {
-            enable = true;
-            package = null;
-            mutableSettings = true;
-            inherit configDir;
-            settings = {
-              env.MANAGED = "nix";
-              permissions.allow = [ "Read" ];
+      modules =
+        pkgs.lib.optional (pkgs.lib.versionOlder pkgs.lib.trivial.release "26.11") ../../hm/_mixins/dev/agents/claude/mutable-settings.nix
+        ++ [
+          {
+            home = {
+              username = "test";
+              homeDirectory = "/home/test";
+              stateVersion = "26.05";
             };
-            marketplaces.example = pkgs.emptyDirectory;
-          };
-        }
-        overrides
-      ];
+            programs.claude-code = {
+              enable = true;
+              package = null;
+              mutableSettings = true;
+              inherit configDir;
+              settings = {
+                env.MANAGED = "nix";
+                permissions.allow = [ "Read" ];
+              };
+              marketplaces.example = pkgs.emptyDirectory;
+            };
+          }
+          overrides
+        ];
     }).config;
   activation =
     name: config:

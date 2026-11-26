@@ -42,8 +42,13 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "vikunja_provision" ];
 
   makeWrapperArgs = [
-    "--set VIKUNJA_DECLARATIONS_FILE ${declarationsFile}"
-    "--prefix PATH : ${sopsTools.runtimePath}"
+    "--set"
+    "VIKUNJA_DECLARATIONS_FILE"
+    (toString declarationsFile)
+    "--prefix"
+    "PATH"
+    ":"
+    sopsTools.runtimePath
   ];
 
   __darwinAllowLocalNetworking = true;

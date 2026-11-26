@@ -25,12 +25,13 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${
-      lib.makeBinPath [
-        nix
-        openssh
-      ]
-    }"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [
+      nix
+      openssh
+    ])
   ];
 
   preCheck = ''

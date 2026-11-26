@@ -14,6 +14,7 @@ let
 in
 pythonPackages.buildPythonApplication {
   pname = "prox-deploy";
+  __structuredAttrs = true;
   version = "0.1.0";
   pyproject = true;
 
@@ -34,10 +35,19 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ nix ]}"
-    "--set PROX_DEPLOY_PASS ${lib.escapeShellArg (lib.getExe pass)}"
-    "--set PROX_DEPLOY_SSH ${lib.escapeShellArg (lib.getExe openssh)}"
-    "--set PROX_DEPLOY_VM_SPECS_JSON ${lib.escapeShellArg (builtins.toJSON vmSpecs)}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ nix ])
+    "--set"
+    "PROX_DEPLOY_PASS"
+    (lib.getExe pass)
+    "--set"
+    "PROX_DEPLOY_SSH"
+    (lib.getExe openssh)
+    "--set"
+    "PROX_DEPLOY_VM_SPECS_JSON"
+    (builtins.toJSON vmSpecs)
   ];
 
   preCheck = ''

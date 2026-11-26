@@ -7,6 +7,12 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
+      # TODO(26.11): Retire the 2.x patch when the work Linux hosts migrate.
+      gpclientBrowserPatch =
+        if lib.versionAtLeast prev.gpclient.version "3" then
+          ../patches/gpclient-3-browser-listen.patch
+        else
+          ../patches/gpclient-browser-listen.patch;
       pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -86,11 +92,11 @@
       });
 
       gpauth = prev.gpauth.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
+        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
       });
 
       gpclient = (prev.gpclient.override { gpauth = final.gpauth; }).overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ../patches/gpclient-browser-listen.patch ];
+        patches = (old.patches or [ ]) ++ [ gpclientBrowserPatch ];
       });
 
       nix = pkgsNixpkgsUnstable.nixVersions.latest.appendPatches [
@@ -364,15 +370,5 @@
           ../patches/shelfmark-release-room-lock-before-emit.patch
         ];
       });
-    }
-    // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-      # Stable still excludes Darwin; upstream support landed in nixpkgs#557620.
-      inherit (pkgsNixpkgsUnstable) pam_rssh;
-
-      darwin = prev.darwin.overrideScope (
-        _: _: {
-          inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
-        }
-      );
     };
 }

@@ -7,12 +7,6 @@
 }:
 let
   pythonPackages = python3.pkgs;
-  serverFlags = lib.escapeShellArgs (
-    lib.concatMap (name: [
-      "--server"
-      name
-    ]) serverNames
-  );
 in
 pythonPackages.buildPythonApplication {
   pname = "codex-mcp-login";
@@ -33,9 +27,17 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ codex ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ codex ])
   ]
-  ++ lib.optional (serverNames != [ ]) "--add-flags ${lib.escapeShellArg serverFlags}";
+  ++ lib.concatMap (name: [
+    "--add-flag"
+    "--server"
+    "--add-flag"
+    name
+  ]) serverNames;
 
   preCheck = ''
     mypy src/codex_mcp_login

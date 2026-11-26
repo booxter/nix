@@ -24,7 +24,12 @@ python3.pkgs.buildPythonApplication {
   '';
   pythonImportsCheck = [ "claude_worktree" ];
 
-  makeWrapperArgs = [ "--prefix PATH : ${lib.makeBinPath [ git ]}" ];
+  makeWrapperArgs = [
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ git ])
+  ];
 
   meta = {
     description = "Claude worktree hooks that check out named branches under ~/.claude/worktrees";
