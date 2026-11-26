@@ -6,7 +6,6 @@
     ci = "prx1-lab";
     fana = "prx1-lab";
     gw = "prx1-lab";
-    home = "prx1-lab";
     mmini = "frame";
     nv = "nvws";
     org = "prx1-lab";

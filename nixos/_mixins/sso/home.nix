@@ -16,13 +16,6 @@ lib.mkIf (config.host.realm == "home") {
           user = "media-users";
         };
       };
-      "home-assistant" = {
-        roles = {
-          admin = "home-admins";
-          user = "home-users";
-        };
-        bootstrapOwner = "ihar";
-      };
       paperless = {
         roles = {
           admin = "paperless-admins";
@@ -62,8 +55,6 @@ lib.mkIf (config.host.realm == "home") {
       "infra-admins"
       "grafana-admins"
       "grafana-viewers"
-      "home-admins"
-      "home-users"
       "paperless-admins"
       "paperless-users"
       "vikunja-users"
@@ -81,8 +72,6 @@ lib.mkIf (config.host.realm == "home") {
           "sso-admins"
           "infra-admins"
           "grafana-admins"
-          "home-admins"
-          "home-users"
           "paperless-admins"
           "paperless-users"
           "vikunja-users"
@@ -99,7 +88,6 @@ lib.mkIf (config.host.realm == "home") {
           "media-admins"
           "media-users"
           "romm-viewers"
-          "home-users"
         ];
       };
       eugene = {

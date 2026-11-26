@@ -32,10 +32,6 @@ lib.mkIf (config.host.site.name == "home") {
           address = "192.168.20.3";
           macAddress = "bc:24:11:91:b5:77";
         };
-        home = {
-          address = "192.168.20.6";
-          macAddress = "02:48:4f:4d:45:01";
-        };
         mdx = {
           address = "192.168.10.100";
           macAddress = "7c:b7:7b:04:05:99";

@@ -21,7 +21,6 @@
     ci = "lab";
     fana = "lab";
     gw = "lab";
-    home = "lab";
     nv = "nvws";
     org = "lab";
     pki = "lab";

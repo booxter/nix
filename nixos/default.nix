@@ -28,7 +28,6 @@
       ./_mixins/glance
       ./_mixins/hardware
       ./_mixins/hm
-      ./_mixins/home-assistant
       ./_mixins/houndarr
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
