@@ -70,13 +70,10 @@ class DjangoRepository(Repository):
             existing.delete()
             self.token_model.objects.create(user=user, key=token)
 
-    def reconcile_ai_workflow(self, enabled: bool) -> None:
+    def reconcile_ai_workflow(self) -> None:
         models = import_module("documents.models")
         transaction = import_module("django.db.transaction")
         with transaction.atomic():
-            if not enabled:
-                models.Workflow.objects.filter(name=AI_WORKFLOW).update(enabled=False)
-                return
             models.Workflow.objects.filter(name__in=LEGACY_WORKFLOWS).update(enabled=False)
             workflow, _ = models.Workflow.objects.get_or_create(name=AI_WORKFLOW)
             trigger = models.WorkflowTrigger(

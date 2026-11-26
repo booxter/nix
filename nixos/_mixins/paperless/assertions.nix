@@ -12,9 +12,7 @@ let
     ssoApplication
     users
     ;
-  textModel = if cfg == null || cfg.ai == null then null else aiModels.${cfg.ai.textModel} or null;
-  visionModel =
-    if cfg == null || cfg.ai == null then null else aiModels.${cfg.ai.visionModel} or null;
+  visionModel = aiModels.${cfg.ai.visionModel} or null;
 in
 {
   assertions = lib.optionals (cfg != null) [
@@ -43,28 +41,27 @@ in
       message = "The Paperless SSO application has no authorized users.";
     }
     {
-      assertion = cfg.ai == null || aiProvider != null;
+      assertion = aiProvider != null;
       message = "host.paperless.ai.providerHost must name a known NixOS host.";
     }
     {
-      assertion = cfg.ai == null || (aiProvider != null && aiProvider.host.realm == config.host.realm);
+      assertion = aiProvider != null && aiProvider.host.realm == config.host.realm;
       message = "Paperless AI and its Ollama provider must be in the same realm.";
     }
     {
-      assertion = cfg.ai == null || (aiProvider != null && aiProvider.host.ollama != null);
+      assertion = aiProvider != null && aiProvider.host.ollama != null;
       message = "The selected Paperless AI provider must enable Ollama.";
     }
     {
-      assertion = cfg.ai == null || textModel != null;
+      assertion = builtins.hasAttr cfg.ai.textModel aiModels;
       message = "host.paperless.ai.textModel must select a model advertised by the Ollama provider.";
     }
     {
-      assertion = cfg.ai == null || visionModel != null;
+      assertion = visionModel != null;
       message = "host.paperless.ai.visionModel must select a model advertised by the Ollama provider.";
     }
     {
-      assertion =
-        cfg.ai == null || (visionModel != null && builtins.elem "vision" visionModel.capabilities);
+      assertion = visionModel != null && builtins.elem "vision" visionModel.capabilities;
       message = "host.paperless.ai.visionModel must advertise the vision capability.";
     }
   ];

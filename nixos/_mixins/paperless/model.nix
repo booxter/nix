@@ -10,12 +10,7 @@ let
   users = lib.filterAttrs (
     _: user: lib.any (group: builtins.elem group user.groups) accessGroups
   ) config.host.sso.users;
-  aiProviderHost = if cfg == null || cfg.ai == null then null else cfg.ai.providerHost;
-  aiProvider =
-    if aiProviderHost == null then
-      null
-    else
-      outputs.nixosConfigurations.${aiProviderHost}.config or null;
+  aiProvider = outputs.nixosConfigurations.${cfg.ai.providerHost}.config or null;
   aiModels =
     if aiProvider == null || aiProvider.host.ollama == null then { } else aiProvider.host.ollama.models;
 in

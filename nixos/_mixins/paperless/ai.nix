@@ -11,9 +11,10 @@ let
   endpoint = "http://127.0.0.1:${toString ollamaTunnelPort}";
 in
 {
-  config = lib.mkIf (cfg != null && cfg.ai != null) {
+  config = lib.mkIf (cfg != null) {
     services.paperless = {
       settings = {
+        PAPERLESS_AI_ENABLED = true;
         PAPERLESS_LLM_OCR_ENABLED = true;
         PAPERLESS_LLM_OCR_BASE_URL = "${endpoint}/v1";
         PAPERLESS_LLM_OCR_MODEL = cfg.ai.visionModel;

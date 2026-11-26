@@ -19,7 +19,7 @@ from paperless_bootstrap.django import DjangoRepository, main
 
 
 @pytest.fixture(scope="module")
-def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
+def paperless_database(tmp_path_factory: pytest.TempPathFactory) -> None:
     root = tmp_path_factory.mktemp("paperless")
     data = root / "data"
     media = root / "media"
@@ -47,7 +47,15 @@ def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
 
     django.setup()
     call_command("migrate", interactive=False, verbosity=0)
-    yield
+
+
+@pytest.fixture
+def paperless(paperless_database: None) -> Iterator[None]:
+    from django.db import transaction
+
+    with transaction.atomic():
+        yield
+        transaction.set_rollback(True)
 
 
 def write_config(
@@ -59,7 +67,6 @@ def write_config(
     path.write_text(
         json.dumps(
             {
-                "ai": False,
                 "groups": ["paperless-admins", "paperless-users"],
                 "users": [
                     {
@@ -186,7 +193,7 @@ class UntouchedRepository(Repository):
     def reconcile_token(self, username: str, token: str) -> None:
         raise AssertionError("invalid secrets must fail before reconciliation")
 
-    def reconcile_ai_workflow(self, enabled: bool) -> None:
+    def reconcile_ai_workflow(self) -> None:
         raise AssertionError("invalid secrets must fail before reconciliation")
 
 
@@ -204,10 +211,10 @@ def test_ai_workflow_migration_is_idempotent_and_preserves_other_workflows(paper
     managed.actions.add(WorkflowAction.objects.create())
 
     repository = DjangoRepository()
-    repository.reconcile_ai_workflow(True)
+    repository.reconcile_ai_workflow()
     action_ids = list(managed.actions.order_by("order").values_list("pk", flat=True))
     trigger_id = managed.triggers.get().pk
-    repository.reconcile_ai_workflow(True)
+    repository.reconcile_ai_workflow()
 
     managed.refresh_from_db()
     assert managed.enabled
@@ -228,10 +235,6 @@ def test_ai_workflow_migration_is_idempotent_and_preserves_other_workflows(paper
     assert unrelated.enabled
     assert WorkflowTrigger.objects.count() == 2
     assert WorkflowAction.objects.count() == 2
-    repository.reconcile_ai_workflow(False)
-    managed.refresh_from_db()
-    assert not managed.enabled
-    assert unrelated.enabled
 
 
 def test_invalid_token_fails_before_mutating_paperless(tmp_path: Path) -> None:

@@ -27,7 +27,6 @@ in
       settings = {
         PAPERLESS_ADMIN_USER = bootstrapOwner;
         PAPERLESS_ADMIN_MAIL = config.host.mailer.address;
-        PAPERLESS_AI_ENABLED = cfg.ai != null;
         PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
         PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
         PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [

@@ -19,7 +19,6 @@ let
     ;
   bootstrapConfig = (pkgs.formats.json { }).generate "paperless-bootstrap.json" {
     groups = accessGroups;
-    ai = cfg.ai != null;
     token = {
       owner = bootstrapOwner;
       file = config.sops.secrets."paperless/api/token".path;
@@ -49,10 +48,10 @@ in
       }
     ];
     services.paperless = lib.optionalAttrs (options.services.paperless ? extraPythonPackages) {
-      extraPythonPackages =
-        ps:
-        [ paperlessPackages.bootstrap ]
-        ++ lib.optional (cfg.ai != null) (ps.callPackage ./pkgs/paperless-llm-ocr { });
+      extraPythonPackages = ps: [
+        paperlessPackages.bootstrap
+        (ps.callPackage ./pkgs/paperless-llm-ocr { })
+      ];
     };
 
     systemd.services.paperless-bootstrap = {
