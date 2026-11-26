@@ -127,6 +127,7 @@
             "builder2"
             "builder3"
             "ci"
+            "org"
           ];
           hostInputs =
             inputs
