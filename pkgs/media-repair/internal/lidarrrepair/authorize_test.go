@@ -1,7 +1,6 @@
 package lidarrrepair
 
 import (
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -55,43 +54,6 @@ func TestAuthorizeImportRevalidatesRecoveredWorkspaceAgainstCurrentCapabilities(
 	current.Case.Capabilities = nil
 	if _, _, err := AuthorizeImport(planned, current); err == nil {
 		t.Fatal("recovered workspace without a current capability was accepted")
-	}
-}
-
-func TestStorePersistsImportExecutionTransitions(t *testing.T) {
-	t.Parallel()
-	planned, current := testPlannedImport(t, false)
-	store, err := NewStore(filepath.Join(t.TempDir(), "state"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := store.Put(planned); err != nil {
-		t.Fatal(err)
-	}
-	authorized, found, err := AuthorizeImport(planned, current)
-	if err != nil || !found {
-		t.Fatalf("found = %v, error = %v", found, err)
-	}
-	now := time.Date(2026, 9, 22, 13, 0, 0, 0, time.UTC)
-	execution, prepared, err := store.PrepareImport(authorized, 90, now)
-	if err != nil || !prepared || execution.State != ImportPrepared {
-		t.Fatalf("execution = %#v, prepared = %v, error = %v", execution, prepared, err)
-	}
-	execution, changed, err := store.MarkImportRequested(authorized.CaseID, 81, now)
-	if err != nil || !changed || execution.State != ImportRequested {
-		t.Fatalf("execution = %#v, changed = %v, error = %v", execution, changed, err)
-	}
-	execution, changed, err = store.MarkImported(authorized.CaseID, []lidarr.ImportedTrack{{
-		HistoryID: 91, AlbumID: 3, ArtistID: 2, TrackID: 11,
-		DroppedPath: "/downloads/staged/02.flac", ImportedPath: "/music/02.flac",
-		OccurredAt: now,
-	}}, now)
-	if err != nil || !changed || execution.State != Imported {
-		t.Fatalf("execution = %#v, changed = %v, error = %v", execution, changed, err)
-	}
-	stored, found, err := store.GetImportExecution(authorized.CaseID)
-	if err != nil || !found || stored.State != Imported || len(stored.Confirmations) != 1 {
-		t.Fatalf("stored = %#v, found = %v, error = %v", stored, found, err)
 	}
 }
 
@@ -169,7 +131,7 @@ func testPlannedImport(t *testing.T, albumHasFiles bool) (Record, Evidence) {
 		Quality: quality, DownloadID: "download",
 	}}
 	record := Record{
-		Version: stateVersion, QueueID: 1, SourceKind: SourceTarAudio,
+		QueueID: 1, SourceKind: SourceTarAudio,
 		SourcePath:        "/downloads/album.tar",
 		SourceFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		WorkspaceRoot:     "/downloads/staged",

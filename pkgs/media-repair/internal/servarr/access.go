@@ -3,9 +3,7 @@ package servarr
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"unicode"
@@ -13,29 +11,6 @@ import (
 )
 
 const MaximumAPIKeySize = 4 << 10
-
-func ValidateLoopbackHTTP(service, endpoint string) error {
-	parsed, err := url.Parse(endpoint)
-	if err != nil {
-		return fmt.Errorf("%s URL is invalid", service)
-	}
-	if parsed.Scheme != "http" || parsed.Host == "" || parsed.User != nil ||
-		parsed.RawQuery != "" || parsed.Fragment != "" || !isLoopbackHost(parsed.Hostname()) {
-		return fmt.Errorf(
-			"%s URL must use loopback HTTP without credentials, query, or fragment",
-			service,
-		)
-	}
-	return nil
-}
-
-func isLoopbackHost(host string) bool {
-	if strings.EqualFold(strings.TrimSuffix(host, "."), "localhost") {
-		return true
-	}
-	address := net.ParseIP(host)
-	return address != nil && address.IsLoopback()
-}
 
 func ReadAPIKey(service, path string) (string, error) {
 	file, err := os.Open(path)
