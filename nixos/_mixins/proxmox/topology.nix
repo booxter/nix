@@ -1,9 +1,8 @@
 {
-  config,
   fleetInventory,
+  hostName,
 }:
 let
-  hostName = config.networking.hostName;
   nodeClusterName = fleetInventory.proxmox.nodes.${hostName} or null;
   guestClusterName = fleetInventory.proxmox.guests.${hostName} or null;
   clusterName = if guestClusterName != null then guestClusterName else nodeClusterName;
