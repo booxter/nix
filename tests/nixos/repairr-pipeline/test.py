@@ -4,6 +4,7 @@ import html
 import json
 import re
 import shlex
+from pathlib import PurePosixPath
 
 COMPLETED_QUEUE_ID = 101
 UNFINISHED_QUEUE_ID = 102
@@ -39,12 +40,12 @@ def wait_for_movie(vm, state, text):
     return wait_for_text(vm, f"{REPAIRR}/activity?service=radarr&state={state}", text)
 
 
-def plan_with_repairs_paused(vm):
+def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
     vm.wait_for_open_port(7878)
     vm.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
-    vm.succeed(f"touch {PAUSE}", "systemctl start repairr.service")
+    vm.succeed(f"touch /run/pause-{service}-repairs", "systemctl start repairr.service")
     # Follow the same job across restarts and after it leaves the queue.
-    link = wait_for_movie(vm, "ready", "Example Movie")
+    link = wait_for_text(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
     match = re.search(r'href="(/jobs/\d+)"', link)
     assert match, link
     return REPAIRR + match[1]
@@ -54,12 +55,16 @@ def submitted_imports(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/imports"))
 
 
-def confirm_from_history(vm, job_url):
-    vm.succeed(f"touch {FIXTURE}/publish-import")
+def import_receipt(vm, job_url):
     wait_for_text(vm, job_url, "Attempt 1 · imported")
     detail = vm.succeed(f"curl -fsS {job_url}")
     (raw_receipt,) = re.findall(r"<pre>(.*?)</pre>", detail, flags=re.DOTALL)
-    receipt = json.loads(html.unescape(raw_receipt))
+    return json.loads(html.unescape(raw_receipt))
+
+
+def confirm_from_history(vm, job_url):
+    vm.succeed(f"touch {FIXTURE}/publish-import")
+    receipt = import_receipt(vm, job_url)
     assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
     assert receipt["DroppedPath"] == VIDEO and receipt["MovieID"] == 42, receipt
     assert receipt["DownloadID"] == "SABnzbd_nzo_complete", receipt
@@ -163,3 +168,34 @@ with subtest("a lost command response is recovered from history after restart"):
     wait_for_text(lostResponse, job, "Attempt 1 · importing")
     assert len(submitted_imports(lostResponse)) == 1
     confirm_from_history(lostResponse, job)
+    lostResponse.shutdown()
+
+
+with subtest("Lidarr confirms the album only after both selected tracks appear in history"):
+    albumImport.start()
+    job = plan_with_repairs_paused(albumImport, "lidarr", "Example Album")
+    albumImport.succeed("rm /run/pause-lidarr-repairs")
+
+    # The fixture returns a completed command and history for just 01.flac.
+    # Wait for Repairr to record that it checked both before releasing 02.flac.
+    wait_for_text(albumImport, job, "waiting for import history")
+    wait_for_text(albumImport, job, "Attempt 1 · importing")
+    albumImport.succeed("touch /run/lidarr-fixture/publish-second-track")
+    receipt = import_receipt(albumImport, job)
+
+    (command,) = submitted_imports(albumImport)
+    assert command["name"] == "ManualImport" and command["importMode"] == "copy", command
+    expected = {"01.flac": 12, "02.flac": 11}
+    assert len(command["files"]) == len(expected), command
+    selected_paths = {}
+    for file in command["files"]:
+        path = PurePosixPath(file["path"])
+        assert path.is_relative_to("/var/lib/repairr-pipeline/.media-repair/workspaces"), file
+        assert (file["artistId"], file["albumId"], file["albumReleaseId"]) == (7, 3, 81), file
+        (track_id,) = file["trackIds"]
+        assert track_id == expected[path.name], file
+        selected_paths[track_id] = str(path)
+    assert set(selected_paths) == set(expected.values()), command
+    assert (
+        len(receipt) == 2 and {r["track_id"]: r["dropped_path"] for r in receipt} == selected_paths
+    ), receipt
