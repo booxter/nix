@@ -1,54 +1,71 @@
 package lidarrrepair
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
 
-func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
+func TestInspectAlbumAfterDownloadDisappears(t *testing.T) {
 	t.Parallel()
-	body := []byte("stored track")
-	digest := sha256.Sum256(body)
-	fingerprint := hex.EncodeToString(digest[:])
-	workspace := filepath.Join(t.TempDir(), "workspace")
-	album := filepath.Join(workspace, "album")
-	if err := os.MkdirAll(album, 0o750); err != nil {
+	root := t.TempDir()
+	client := evidenceClient(root)
+	collector := NewEvidenceCollector(client, &fakeWorker{root: root})
+	queue := evidenceQueue(t.TempDir())
+	archive := filepath.Join(queue.OutputPath, "album.tar")
+	if err := os.WriteFile(archive, []byte("archive"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(album, "01.flac")
-	if err := os.WriteFile(path, body, 0o640); err != nil {
+	// Put the file reported by the fake worker on disk so a later inspection
+	// can verify its contents after the original download is gone.
+	path := client.imports[0].Path
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	artifacts := []lidarrcontracts.Artifact{{
-		ArtifactID: "artifact:1", RelativePath: "album/01.flac",
-		Fingerprint: "sha256:" + fingerprint, SizeBytes: int64(len(body)),
-	}}
-	bindings := []ImportBinding{{ArtifactID: artifacts[0].ArtifactID, Path: path}}
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
+	if err := os.WriteFile(path, []byte(testAudio), 0o640); err != nil {
 		t.Fatal(err)
 	}
-	artifacts[0].ArtifactID = "artifact:2"
-	bindings[0].ArtifactID = artifacts[0].ArtifactID
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err == nil {
-		t.Fatal("incorrect case-local artifact ID was accepted")
-	}
-	artifacts[0].ArtifactID = "artifact:" + fingerprint
-	bindings[0].ArtifactID = artifacts[0].ArtifactID
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err == nil {
-		t.Fatal("content-addressed artifact ID was accepted as a case artifact ID")
-	}
-	artifacts[0].ArtifactID = "artifact:1"
-	bindings[0].ArtifactID = artifacts[0].ArtifactID
 
-	if err := os.WriteFile(path, []byte("alterx track"), 0o640); err != nil {
+	fresh := requireAlbumEvidence(t, collector.Inspect(t.Context(), queue, nil))
+	if len(fresh.Case.Capabilities) != 1 {
+		t.Fatalf("expected the missing track to be offered for import, got %+v", fresh.Case.Capabilities)
+	}
+	data, err := lidarrcontracts.EncodeCase(fresh.Case)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err == nil {
-		t.Fatal("changed stored artifact was accepted")
+	record := Record{
+		QueueID: queue.ID, Case: data, Bindings: fresh.Bindings,
+		WorkspaceRoot: fresh.WorkspaceRoot, SourcePath: fresh.SourcePath,
+		SourceKind: fresh.SourceKind, SourceFingerprint: fresh.SourceFingerprint,
+	}
+
+	if err := os.RemoveAll(queue.OutputPath); err != nil {
+		t.Fatal(err)
+	}
+	client.trackInLibrary = true
+	client.imports[0].IndexerFlags = 7
+	recovered := requireAlbumEvidence(t, collector.Inspect(t.Context(), queue, &record))
+	if !recovered.Recovered || recovered.SourceFingerprint != fresh.SourceFingerprint ||
+		recovered.WorkspaceRoot != fresh.WorkspaceRoot {
+		t.Fatal("inspection lost the identity of the saved workspace")
+	}
+	if len(recovered.Case.Capabilities) != 0 {
+		t.Fatalf("offered to import a track already in the library: %+v", recovered.Case.Capabilities)
+	}
+	if len(recovered.Bindings) != 1 || recovered.Bindings[0].IndexerFlags != 7 {
+		t.Fatalf("expected Lidarr's latest import settings, got %+v", recovered.Bindings)
+	}
+
+	// Keep the size unchanged so only checking the contents catches the edit.
+	if err := os.WriteFile(path, []byte(strings.ToUpper(testAudio)), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	result := collector.Inspect(t.Context(), queue, &record)
+	if result.Case != nil || result.Err == nil || !strings.Contains(result.Err.Error(), "changed contents") {
+		t.Fatalf("expected changed workspace contents to stop inspection, got %+v", result)
 	}
 }

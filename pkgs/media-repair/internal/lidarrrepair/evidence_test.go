@@ -2,6 +2,8 @@ package lidarrrepair
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -18,6 +20,7 @@ import (
 
 type fakeLidarr struct {
 	imports           []lidarr.ManualImport
+	trackInLibrary    bool
 	recoveredIdentity lidarr.AlbumIdentity
 	recoveredFound    bool
 }
@@ -54,6 +57,7 @@ func (fake *fakeLidarr) ReadReleaseTracks(
 	return []lidarr.Track{{
 		ID: 5, AlbumID: 3, ReleaseID: 4, ArtistID: 2, AbsoluteTrackNumber: 1,
 		TrackNumber: "1", MediumNumber: 1, Title: "Track", DurationMS: 1000,
+		HasFile: fake.trackInLibrary,
 	}}, nil
 }
 
@@ -61,13 +65,17 @@ func (fake *fakeLidarr) ReadManualImports(
 	_ context.Context,
 	query lidarr.ManualImportQuery,
 ) ([]lidarr.ManualImport, error) {
-	if query.Folder != "/downloads/.media-repair/workspaces/workspace:test" || query.ArtistID != 2 {
-		return nil, nil
+	var matches []lidarr.ManualImport
+	for _, item := range fake.imports {
+		if filepath.Dir(item.Path) == query.Folder && item.ArtistID == query.ArtistID {
+			matches = append(matches, item)
+		}
 	}
-	return fake.imports, nil
+	return matches, nil
 }
 
 type fakeWorker struct {
+	root           string
 	directoryAudio bool
 	archiveError   error
 }
@@ -96,6 +104,8 @@ func (fake *fakeWorker) MaterializeTarAudio(
 	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StableFingerprint()), nil
 }
 
+const testAudio = "recorded audio"
+
 func testMaterialization(operation, sourceFingerprint string) materialize.Success {
 	duration := int64(1000)
 	kind := workercontracts.FluffyAudio
@@ -110,11 +120,11 @@ func testMaterialization(operation, sourceFingerprint string) materialize.Succes
 			PathComponents: []string{
 				".media-repair", "workspaces", "workspace:test", "01.flac",
 			},
-			RelativePath: "01.flac", SizeBytes: 100,
-			Fingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			RelativePath: "01.flac", SizeBytes: int64(len(testAudio)),
+			Fingerprint: fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(testAudio))),
 			Evidence: workercontracts.Evidence{
 				Format: workercontracts.Format{
-					Names: []string{"flac"}, DurationMS: &duration, SizeBytes: pointer(int64(100)),
+					Names: []string{"flac"}, DurationMS: &duration, SizeBytes: pointer(int64(len(testAudio))),
 				},
 				Streams: []workercontracts.StreamElement{{
 					Index: 0, Kind: &kind, CodecName: &codec, DurationMS: &duration,
@@ -141,7 +151,7 @@ func (fake *fakeWorker) MaterializeDirectoryAudio(
 }
 
 func (fake *fakeWorker) ResolvePublishedPath(_ string, components []string) (string, error) {
-	return filepath.Join(append([]string{"/downloads"}, components...)...), nil
+	return filepath.Join(append([]string{fake.root}, components...)...), nil
 }
 
 func TestEvidenceCollectorMaterializesSourcesAndRefreshesEvidence(t *testing.T) {
@@ -161,8 +171,8 @@ func TestEvidenceCollectorMaterializesSourcesAndRefreshesEvidence(t *testing.T) 
 				t.Fatal(err)
 			}
 			queue := evidenceQueue(download)
-			client := evidenceClient()
-			collector := NewEvidenceCollector(client, &fakeWorker{directoryAudio: true})
+			client := evidenceClient("/downloads")
+			collector := NewEvidenceCollector(client, &fakeWorker{root: "/downloads", directoryAudio: true})
 			collector.now = func() time.Time { return time.Date(2026, 9, 21, 12, 0, 0, 0, time.UTC) }
 
 			first := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
@@ -204,10 +214,10 @@ func TestEvidenceCollectorRecoversAlbumIdentity(t *testing.T) {
 	queue := evidenceQueue(t.TempDir())
 	queue.AlbumID = nil
 	queue.ArtistID = nil
-	client := evidenceClient()
+	client := evidenceClient("/downloads")
 	client.recoveredIdentity = lidarr.AlbumIdentity{AlbumID: 3, ArtistID: 2}
 	client.recoveredFound = true
-	collector := NewEvidenceCollector(client, &fakeWorker{directoryAudio: true})
+	collector := NewEvidenceCollector(client, &fakeWorker{root: "/downloads", directoryAudio: true})
 
 	evidence := requireAlbumEvidence(t, collector.Inspect(context.Background(), queue, nil))
 	if evidence.Queue.AlbumID == nil || *evidence.Queue.AlbumID != 3 ||
@@ -223,7 +233,7 @@ func TestEvidenceCollectorRejectsUnsupportedArchive(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(download, "album.rar"), []byte("not rar"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	collector := NewEvidenceCollector(evidenceClient(), &fakeWorker{
+	collector := NewEvidenceCollector(evidenceClient("/downloads"), &fakeWorker{
 		archiveError: &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
 	})
 	result := collector.Inspect(context.Background(), evidenceQueue(download), nil)
@@ -240,7 +250,7 @@ func TestEvidenceCollectorRejectsAmbiguousDownload(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	collector := NewEvidenceCollector(evidenceClient(), &fakeWorker{})
+	collector := NewEvidenceCollector(evidenceClient("/downloads"), &fakeWorker{})
 	result := collector.Inspect(context.Background(), evidenceQueue(directory), nil)
 	if result.Err == nil || !strings.Contains(result.Err.Error(), "multiple supported archives") {
 		t.Fatalf("expected an ambiguous download error, got %v", result.Err)
@@ -264,10 +274,10 @@ func evidenceQueue(download string) lidarr.QueueRecord {
 	}
 }
 
-func evidenceClient() *fakeLidarr {
+func evidenceClient(root string) *fakeLidarr {
 	return &fakeLidarr{imports: []lidarr.ManualImport{{
-		Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
-		Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
+		Path: filepath.Join(root, ".media-repair/workspaces/workspace:test/01.flac"),
+		Name: "01.flac", SizeBytes: int64(len(testAudio)), ArtistID: 2, AlbumID: 3,
 		AlbumReleaseID: 4, TrackIDs: []int64{5},
 		AudioTags: &lidarr.AudioTags{
 			Title: "Track", Artist: "Artist", Album: "Album", TrackNumbers: []int{1},
