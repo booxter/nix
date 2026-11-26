@@ -174,6 +174,21 @@
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.autoreconfHook ];
       });
 
+      # Avoid the HTTP idle timeout race that drops Prometheus alert deliveries.
+      # https://github.com/NixOS/nixpkgs/pull/593476
+      prometheus-alertmanager =
+        assert lib.asserts.assertMsg (lib.versionOlder prev.prometheus-alertmanager.version "0.35.1")
+          "Remove the prometheus-alertmanager override: nixpkgs now includes 0.35.1 or newer";
+        prev.prometheus-alertmanager.overrideAttrs (finalAttrs: {
+          version = "0.35.1";
+          src = prev.fetchFromGitHub {
+            owner = "prometheus";
+            repo = "alertmanager";
+            tag = "v${finalAttrs.version}";
+            hash = "sha256-PGGZCdamxZjsINnVxbHQZQ0uJ93XVn+7f6mOvDTX3Sg=";
+          };
+        });
+
       # Expose Radarr's stable manual-import rejection reason beside its human
       # message so local API consumers do not have to match mutable text.
       radarr = prev.radarr.overrideAttrs (old: {
