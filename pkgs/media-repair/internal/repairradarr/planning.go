@@ -10,6 +10,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 )
@@ -18,41 +19,23 @@ type Planner interface {
 	Plan(context.Context, contracts.RepairCaseV3, planning.Options) (contracts.RepairDecisionV3, error)
 }
 
-func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Observation, error) {
-	queue, err := adapter.Client.ReadQueue(ctx)
-	if err != nil {
-		return repair.Observation{}, err
-	}
-
-	observed := repair.Observation{}
-	complete, err := radarr.FinalizationCandidates(ctx, adapter.Client, queue)
-	if err != nil {
-		return repair.Observation{}, err
-	}
-	for _, entry := range complete {
-		observed.Complete = append(observed.Complete, jobs.QueueKey{QueueID: entry.QueueID, DownloadID: entry.DownloadID})
-	}
-	// Cleanup and case collection share the same queue snapshot for this poll.
-	for _, entry := range queue {
-		observed.Queue = append(observed.Queue, jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID})
-		result := adapter.Inspector.Inspect(ctx, entry)
-		if err := ctx.Err(); err != nil {
-			return repair.Observation{}, err
-		}
-		job, err := observedJob(entry, result)
-		if err != nil {
-			return repair.Observation{}, err
-		}
-		observed.Jobs = append(observed.Jobs, job)
-	}
-
-	return observed, nil
+func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.Observation, error) {
+	return repair.QueuePoll[controller.RadarrQueueRecord]{
+		ReadQueue: adapter.Client.ReadQueue,
+		FindComplete: func(ctx context.Context, queue []controller.RadarrQueueRecord) ([]queuefinalize.Entry, error) {
+			return radarr.FinalizationCandidates(ctx, adapter.Client, queue)
+		},
+		NewJob: func(entry controller.RadarrQueueRecord) jobs.Job {
+			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+		},
+		Inspect: adapter.inspectJob,
+	}.Observe(ctx, saved)
 }
 
 // Keep skipped entries visible in the inbox. Only a collected case has
 // evidence that the scheduler can send to the planner.
-func observedJob(entry controller.RadarrQueueRecord, result CollectionResult) (jobs.Job, error) {
-	job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+func (adapter *Adapter) inspectJob(ctx context.Context, entry controller.RadarrQueueRecord, _ json.RawMessage, job *jobs.Job) error {
+	result := adapter.Inspector.Inspect(ctx, entry)
 	switch {
 	case result.Err != nil:
 		job.CollectionError = result.Err.Error()
@@ -68,11 +51,11 @@ func observedJob(entry controller.RadarrQueueRecord, result CollectionResult) (j
 		job.SourceFingerprint = assembly.Request.CaseID
 		data, err := json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
 		if err != nil {
-			return jobs.Job{}, err
+			return err
 		}
 		job.Evidence = data
 	}
-	return job, nil
+	return nil
 }
 
 func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {

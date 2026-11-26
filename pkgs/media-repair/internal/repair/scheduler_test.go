@@ -75,8 +75,7 @@ func TestRemovalDoesNotWaitForPlanner(t *testing.T) {
 	service := &waitingService{
 		fakeAdapter: fakeAdapter{store: store},
 		observed: Observation{
-			Jobs:  []jobs.Job{first, second},
-			Queue: []jobs.QueueKey{{QueueID: 1, DownloadID: "planning"}, {QueueID: 2, DownloadID: "remove"}},
+			Jobs: []jobs.Job{first, second},
 		},
 		planning: make(chan struct{}),
 		removed:  make(chan int64, 1),
@@ -178,8 +177,7 @@ func TestRepeatedInputsDoNotBuyAnotherPlan(t *testing.T) {
 	defer store.Close()
 	service := &countingPlanner{}
 	service.observed = Observation{
-		Jobs:  []jobs.Job{{QueueID: 1, SourceFingerprint: "case-a", Evidence: json.RawMessage(`{"files":"a"}`)}},
-		Queue: []jobs.QueueKey{{QueueID: 1}},
+		Jobs: []jobs.Job{{QueueID: 1, SourceFingerprint: "case-a", Evidence: json.RawMessage(`{"files":"a"}`)}},
 	}
 	scheduler := Scheduler{
 		Store: store, Service: service, Name: jobs.Lidarr, Now: time.Now,

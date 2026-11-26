@@ -137,23 +137,15 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 		if err := tx.Where(&Job{Service: service}).Find(&jobs).Error; err != nil {
 			return err
 		}
-		previous := make([]QueueKey, len(jobs))
-		for index, job := range jobs {
-			previous[index] = job.QueueKey()
-		}
+		previous := QueueKeys(jobs)
 
 		for index, job := range jobs {
-			matched, err := MatchQueue(job.QueueKey(), present)
+			matched, owned, err := matchSavedJob(index, previous, present)
 			if err != nil {
 				return err
 			}
 			if matched >= 0 {
-				// Matching in both directions prevents merging two album jobs.
-				owner, err := MatchQueue(present[matched], previous)
-				if err != nil {
-					return err
-				}
-				if owner != index {
+				if !owned {
 					continue
 				}
 				if job.QueueID == present[matched].QueueID && job.InQueue && job.State != Removed {

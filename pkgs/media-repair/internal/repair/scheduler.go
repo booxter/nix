@@ -13,12 +13,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
-type Observation struct {
-	Jobs     []jobs.Job
-	Queue    []jobs.QueueKey
-	Complete []jobs.QueueKey
-}
-
 type Decision struct {
 	Data   json.RawMessage
 	Repair bool
@@ -96,7 +90,7 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 	}
 
 	// Rebind changing queue IDs before observations look up existing jobs.
-	if err := scheduler.Store.ReconcileQueue(ctx, scheduler.Name, observed.Queue, scheduler.Now()); err != nil {
+	if err := scheduler.Store.ReconcileQueue(ctx, scheduler.Name, jobs.QueueKeys(observed.Jobs), scheduler.Now()); err != nil {
 		return err
 	}
 	for _, job := range observed.Jobs {

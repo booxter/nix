@@ -12,80 +12,57 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
-func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repair.Observation, error) {
-	queue, err := adapter.Client.ReadQueue(ctx)
-	if err != nil {
-		return repair.Observation{}, err
+func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.Observation, error) {
+	return repair.QueuePoll[lidarr.QueueRecord]{
+		ReadQueue: adapter.Client.ReadQueue,
+		FindComplete: func(ctx context.Context, queue []lidarr.QueueRecord) ([]queuefinalize.Entry, error) {
+			return lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
+		},
+		NewJob: func(entry lidarr.QueueRecord) jobs.Job {
+			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+		},
+		Inspect: adapter.inspectJob,
+	}.Observe(ctx, saved)
+}
+
+// The previous album inspection can supply files already prepared in the workspace.
+func (adapter *Adapter) inspectJob(ctx context.Context, entry lidarr.QueueRecord, saved json.RawMessage, job *jobs.Job) error {
+	var record *lidarrrepair.Record
+	if len(saved) != 0 {
+		record = &lidarrrepair.Record{}
+		if err := json.Unmarshal(saved, record); err != nil {
+			return err
+		}
 	}
 
-	stored := make([]jobs.QueueKey, len(previous))
-	for index, job := range previous {
-		stored[index] = job.QueueKey()
-	}
-
-	observed := repair.Observation{}
-	complete, err := lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
-	if err != nil {
-		return repair.Observation{}, err
-	}
-	for _, entry := range complete {
-		observed.Complete = append(observed.Complete, jobs.QueueKey{QueueID: entry.QueueID, DownloadID: entry.DownloadID})
-	}
-	for _, entry := range queue {
-		key := jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
-		observed.Queue = append(observed.Queue, key)
-		job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
-		index, err := jobs.MatchQueue(key, stored)
+	result := adapter.Inspector.Inspect(ctx, entry, record)
+	switch {
+	case len(result.Findings) > 0:
+		job.CollectionError = strings.Join(result.Findings, ", ")
+		job.CollectionOutcome = jobs.OutcomeQueueNotReady
+	case result.Err != nil:
+		job.CollectionError = result.Err.Error()
+		job.CollectionOutcome = jobs.OutcomeOther
+		var rejection *materialize.Rejection
+		if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
+			job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
+		}
+	default:
+		evidence := result.Case
+		job.SourceFingerprint = evidence.Case.CaseID
+		data, err := encodeEvidence(*evidence)
 		if err != nil {
-			return repair.Observation{}, err
+			return err
 		}
-		var prior jobs.Job
-		if index >= 0 {
-			prior = previous[index]
-		}
-		if prior.State == jobs.Running || prior.State == jobs.Importing || prior.State == jobs.Imported {
-			observed.Jobs = append(observed.Jobs, job)
-			continue
-		}
-
-		var record *lidarrrepair.Record
-		if len(prior.Evidence) != 0 {
-			record = &lidarrrepair.Record{}
-			if err := json.Unmarshal(prior.Evidence, record); err != nil {
-				return repair.Observation{}, err
-			}
-		}
-
-		result := adapter.Inspector.Inspect(ctx, entry, record)
-		switch {
-		case len(result.Findings) > 0:
-			job.CollectionError = strings.Join(result.Findings, ", ")
-			job.CollectionOutcome = jobs.OutcomeQueueNotReady
-		case result.Err != nil:
-			job.CollectionError = result.Err.Error()
-			job.CollectionOutcome = jobs.OutcomeOther
-			var rejection *materialize.Rejection
-			if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
-				job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
-			}
-		default:
-			evidence := result.Case
-			job.SourceFingerprint = evidence.Case.CaseID
-			job.Evidence, err = encodeEvidence(*evidence)
-			if err != nil {
-				return repair.Observation{}, err
-			}
-		}
-
-		observed.Jobs = append(observed.Jobs, job)
+		job.Evidence = data
 	}
-
-	return observed, nil
+	return nil
 }
 
 type planningInputs struct {

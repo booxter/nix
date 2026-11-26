@@ -1,4 +1,4 @@
-"""Radarr lists two downloads. Only the completed movie is available in SABnzbd."""
+"""Only the completed download has a SABnzbd history record."""
 
 import json
 import sys
@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 VIDEO = Path(sys.argv[1])
+DOWNLOAD_SIZE = VIDEO.stat().st_size
 FIXTURE = Path("/run/radarr-fixture")
 COMPLETED_ID = "SABnzbd_nzo_complete"
 UNFINISHED_ID = "SABnzbd_nzo_incomplete"
@@ -29,7 +30,7 @@ def radarr_queue() -> dict[str, object]:
         "title": VIDEO.parent.name,
         "outputPath": str(VIDEO.parent),
         "status": "completed",
-        "size": VIDEO.stat().st_size,
+        "size": DOWNLOAD_SIZE,
         "sizeleft": 0,
         "trackedDownloadStatus": "warning",
         "trackedDownloadState": "importBlocked",
@@ -49,10 +50,20 @@ def radarr_queue() -> dict[str, object]:
         "trackedDownloadStatus": "ok",
         "trackedDownloadState": "downloading",
     }
-    # Once Radarr accepts the import, the restarted daemon can find the
-    # movie only through its saved attempt and Radarr's history.
     if IMPORTS:
-        return page(active_download)
+        if (FIXTURE / "drop-reply").exists():
+            # Recovery must also work when the original queue row is gone.
+            return page(active_download)
+        # A second movie in the same download has its own queue row and job.
+        new_movie = {
+            **active_download,
+            "id": 103,
+            "movieId": 44,
+            "downloadId": COMPLETED_ID,
+            "outputPath": str(VIDEO.parent),
+            "title": "New Movie",
+        }
+        return page(blocked_import, active_download, new_movie)
     return page(blocked_import, active_download)
 
 
@@ -65,7 +76,7 @@ def completed_download() -> dict[str, object]:
         "loaded": False,
         "time_added": 1788549636,
         "completed": 1788552041,
-        "bytes": VIDEO.stat().st_size,
+        "bytes": DOWNLOAD_SIZE,
         "category": "movies",
     }
 
@@ -76,7 +87,7 @@ def manual_import() -> dict[str, object]:
         "downloadId": COMPLETED_ID,
         "path": str(VIDEO),
         "relativePath": VIDEO.name,
-        "size": VIDEO.stat().st_size,
+        "size": DOWNLOAD_SIZE,
         "languages": [],
         "rejections": [],
         "quality": {"quality": {"id": 1, "name": "HDTV-720p"}},

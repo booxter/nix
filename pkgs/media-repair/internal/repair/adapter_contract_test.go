@@ -163,9 +163,7 @@ type observedService struct {
 func (service *observedService) Observe(ctx context.Context, _ []jobs.Job) (repair.Observation, error) {
 	select {
 	case job := <-service.observations:
-		return repair.Observation{
-			Jobs: []jobs.Job{job}, Queue: []jobs.QueueKey{job.QueueKey()},
-		}, nil
+		return repair.Observation{Jobs: []jobs.Job{job}}, nil
 	case <-ctx.Done():
 		return repair.Observation{}, ctx.Err()
 	}

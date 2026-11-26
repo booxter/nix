@@ -123,6 +123,16 @@ with subtest("the selected file is confirmed only when Radarr reports a new impo
     wait_for_text(machine, job, "Import command #1")
     machine.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
     wait_for_text(machine, job, "Attempt 1 · importing")
+
+with subtest("a fresh poll finds a new movie while the first waits for import history"):
+    # Restart to poll immediately. Radarr still lists the first movie, but
+    # its source has gone away and only import history can confirm it now.
+    machine.succeed(
+        "systemctl stop repairr.service", f"rm {VIDEO}", "systemctl start repairr.service"
+    )
+    wait_for_text(machine, f"{REPAIRR}/activity?service=radarr&q=New+Movie", "Waiting for download")
+    detail = machine.succeed(f"curl -fsS {job}")
+    assert "Attempt 1 · importing" in detail and "Inspection error" not in detail, detail
     confirm_from_history(machine, job)
     machine.shutdown()
 
