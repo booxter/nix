@@ -10,6 +10,8 @@ import (
 
 	collector "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type traceCollector struct {
@@ -52,10 +54,22 @@ func TestUnixExporterReconnectsAfterCollectorRestart(t *testing.T) {
 	defer provider.Shutdown(context.Background())
 
 	for _, name := range []string{"before restart", "after restart"} {
-		_, span := provider.Tracer("test").Start(context.Background(), name)
-		span.End()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err := provider.ForceFlush(ctx)
+		for {
+			_, span := provider.Tracer("test").Start(ctx, name)
+			span.End()
+			err = provider.ForceFlush(ctx)
+			if name == "before restart" || status.Code(err) != codes.Unavailable {
+				break
+			}
+			// The exporter drops a failed batch. Send a fresh span while
+			// gRPC reconnects to the replacement collector.
+			select {
+			case <-ctx.Done():
+				t.Fatalf("collector did not reconnect: %v", err)
+			case <-time.After(50 * time.Millisecond):
+			}
+		}
 		cancel()
 		if err != nil {
 			t.Fatalf("export %q: %v", name, err)
