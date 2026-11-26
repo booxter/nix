@@ -126,7 +126,8 @@ def run(
     )
     comparison_inputs = options.comparison_inputs or [
         "nixpkgs",
-        "nixpkgs-darwin",
+        # TODO(26.11): Drop the separate release input after fleet migration.
+        "nixpkgs-2611",
         "nixpkgs-unstable",
     ]
     external = (

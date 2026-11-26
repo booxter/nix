@@ -5,7 +5,7 @@
   system,
 }:
 let
-  nixpkgsInput = if system == "aarch64-darwin" then inputs.nixpkgs-darwin else inputs.nixpkgs;
+  nixpkgsInput = inputs.nixpkgs;
   lib = nixpkgsInput.lib;
   plainPkgs = nixpkgsInput.legacyPackages.${system};
   pkgs = import nixpkgsInput {
