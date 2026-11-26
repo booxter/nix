@@ -22,11 +22,24 @@ in
       autodetect = true;
     };
 
-    # Rescan immediately when whole disks appear or disappear. smartd and
-    # smartctl_exporter otherwise discover late HBA attachments slowly.
+    # Coldplug emits an event per disk. Group those events into one SMART
+    # rescan so the daemons can finish starting even on a fully populated HBA.
     services.udev.extraRules = ''
-      ACTION=="add|change|move|remove", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="sd*|nvme*", RUN+="${config.systemd.package}/bin/systemctl --no-block restart ${lib.concatStringsSep " " monitoredServices}"
+      ACTION=="add|change|move|remove", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="sd*|nvme*", RUN+="${config.systemd.package}/bin/systemctl --no-block start smart-rescan.timer"
     '';
+
+    systemd.timers.smart-rescan.timerConfig = {
+      OnActiveSec = "10s";
+      AccuracySec = "1s";
+      RemainAfterElapse = false;
+    };
+    systemd.services.smart-rescan = {
+      description = "Rescan SMART devices after disk changes";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${config.systemd.package}/bin/systemctl restart ${lib.concatStringsSep " " monitoredServices}";
+      };
+    };
 
     environment.systemPackages = [
       pkgs.hdparm
