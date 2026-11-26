@@ -22,12 +22,21 @@ python3.pkgs.buildPythonApplication {
     mypy src/git_hardware_signing_key
   '';
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
-    "--add-flags ${lib.escapeShellArg "--approved-keys ${approvedKeysFile}"}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ openssh ])
+    "--add-flag"
+    "--approved-keys"
+    "--add-flag"
+    (toString approvedKeysFile)
   ]
-  ++ lib.optional (
-    localIdentityCommand != null
-  ) "--add-flags ${lib.escapeShellArg "--local-identity-command ${localIdentityCommand}"}";
+  ++ lib.optionals (localIdentityCommand != null) [
+    "--add-flag"
+    "--local-identity-command"
+    "--add-flag"
+    localIdentityCommand
+  ];
   pythonImportsCheck = [ "git_hardware_signing_key" ];
   meta = {
     description = "Select an approved hardware identity for Git SSH signing";

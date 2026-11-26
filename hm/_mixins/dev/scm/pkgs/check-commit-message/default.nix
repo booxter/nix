@@ -25,7 +25,10 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ git ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ git ])
   ];
 
   preCheck = ''

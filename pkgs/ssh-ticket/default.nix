@@ -35,7 +35,10 @@ pythonPackages.buildPythonApplication {
   '';
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ openssh ])
   ];
 
   pythonImportsCheck = [ "ssh_ticket" ];
