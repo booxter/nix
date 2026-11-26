@@ -134,7 +134,13 @@ async def test_operator_guidance_reaches_planner(include_prior: bool) -> None:
     assert decode_decision(response.content) == DECISION
     context = planner.contexts[0]
     assert context is not None
-    assert guidance in context.user_content
+    content = json.loads(context.user_content)
+    assert content["prior_decision"] == payload.get("prior_decision")
+    assert content["operator_guidance"] == {
+        "text": guidance,
+        "authority": "policy_override",
+        "media_evidence": False,
+    }
 
 
 async def test_runtime_override_without_prior_plan_reaches_planner() -> None:

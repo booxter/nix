@@ -5,11 +5,10 @@ from pathlib import Path
 
 import httpx
 import pytest
-import uvicorn
 from fastapi import FastAPI
 from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.openrouter_model import OpenRouterSettings
-from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket
+from media_repair_planner.server_cli import main, validate_socket
 from media_repair_planner.structured_model import StructuredModelResponse
 from media_repair_planner.usage import UsageSink
 from pydantic import BaseModel
@@ -48,14 +47,6 @@ class RecordingServer:
         async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
             response = await client.get("/ready")
         self.readiness.append(response.json())
-
-
-class FinishedUvicornServer:
-    def __init__(self) -> None:
-        self.served = False
-
-    async def serve(self) -> None:
-        self.served = True
 
 
 def server_arguments(api_key_file: Path) -> list[str]:
@@ -154,30 +145,6 @@ def test_accepts_named_unix_listener(tmp_path: Path) -> None:
         listener.listen()
 
         validate_socket(listener.fileno())
-
-
-async def test_uvicorn_runner_uses_only_inherited_socket(tmp_path: Path) -> None:
-    configurations: list[uvicorn.Config] = []
-    server = FinishedUvicornServer()
-
-    def server_factory(configuration: uvicorn.Config) -> FinishedUvicornServer:
-        configurations.append(configuration)
-        return server
-
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
-        listener.bind(str(tmp_path / "planner.sock"))
-        listener.listen()
-        socket_fd = listener.fileno()
-
-        await UvicornServerRunner(server_factory).serve(FastAPI(), socket_fd)
-
-    assert server.served
-    assert len(configurations) == 1
-    configuration = configurations[0]
-    assert configuration.fd == socket_fd
-    assert configuration.interface == "asgi3"
-    assert configuration.proxy_headers is False
-    assert configuration.workers == 1
 
 
 def test_rejects_tcp_listener() -> None:

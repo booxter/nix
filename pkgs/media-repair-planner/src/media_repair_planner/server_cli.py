@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import socket
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import NoReturn, Protocol
 
 import uvicorn
@@ -35,13 +35,6 @@ class Arguments(ModelArguments):
 
 class ServerRunner(Protocol):
     async def serve(self, app: FastAPI, socket_fd: int) -> None: ...
-
-
-class UvicornServer(Protocol):
-    async def serve(self) -> None: ...
-
-
-UvicornServerFactory = Callable[[uvicorn.Config], UvicornServer]
 
 
 class ServerConfigurationError(ValueError):
@@ -78,9 +71,6 @@ def validate_socket(socket_fd: int) -> None:
 
 
 class UvicornServerRunner:
-    def __init__(self, server_factory: UvicornServerFactory = uvicorn.Server) -> None:
-        self._server_factory = server_factory
-
     async def serve(self, app: FastAPI, socket_fd: int) -> None:
         validate_socket(socket_fd)
         configuration = uvicorn.Config(
@@ -93,7 +83,7 @@ class UvicornServerRunner:
             timeout_graceful_shutdown=30,
             workers=1,
         )
-        await self._server_factory(configuration).serve()
+        await uvicorn.Server(configuration).serve()
 
 
 async def _serve(
