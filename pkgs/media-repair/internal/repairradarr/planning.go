@@ -3,8 +3,8 @@ package repairradarr
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"slices"
+	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
@@ -32,30 +32,48 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 	for _, entry := range complete {
 		observed.Complete = append(observed.Complete, jobs.QueueKey{QueueID: entry.QueueID, DownloadID: entry.DownloadID})
 	}
+	// Cleanup and case collection share the same queue snapshot for this poll.
+	clients := collectionClients{adapter.Client, adapter.Inspector}
 	for _, entry := range queue {
 		observed.Queue = append(observed.Queue, jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID})
-		job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
-
-		assembly, err := adapter.Inspector.Inspect(ctx, entry)
-		if err != nil {
-			job.CollectionError = err.Error()
-			job.CollectionOutcome = jobs.OutcomeOther
-			var ineligible *ineligibleError
-			if errors.As(err, &ineligible) && slices.Contains(ineligible.Reasons, controller.CandidateIncompleteDownload) {
-				job.CollectionOutcome = jobs.OutcomeIncompleteDownload
-			}
-		} else {
-			job.SourceFingerprint = assembly.Request.CaseID
-			job.Evidence, err = json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
-			if err != nil {
-				return repair.Observation{}, err
-			}
+		result := collection.Inspect(ctx, clients, entry)
+		if err := ctx.Err(); err != nil {
+			return repair.Observation{}, err
 		}
-
+		job, err := observedJob(entry, result)
+		if err != nil {
+			return repair.Observation{}, err
+		}
 		observed.Jobs = append(observed.Jobs, job)
 	}
 
 	return observed, nil
+}
+
+// Keep skipped entries visible in the inbox. Only a collected case has
+// evidence that the scheduler can send to the planner.
+func observedJob(entry controller.RadarrQueueRecord, result CollectionResult) (jobs.Job, error) {
+	job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+	switch {
+	case result.Err != nil:
+		job.CollectionError = result.Err.Error()
+		job.CollectionOutcome = jobs.OutcomeOther
+	case len(result.Findings) > 0:
+		job.CollectionError = strings.Join(result.Findings, ", ")
+		job.CollectionOutcome = jobs.OutcomeOther
+		if slices.Contains(result.Findings, string(controller.CandidateIncompleteDownload)) {
+			job.CollectionOutcome = jobs.OutcomeIncompleteDownload
+		}
+	default:
+		assembly := result.Case
+		job.SourceFingerprint = assembly.Request.CaseID
+		data, err := json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
+		if err != nil {
+			return jobs.Job{}, err
+		}
+		job.Evidence = data
+	}
+	return job, nil
 }
 
 func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {

@@ -38,15 +38,6 @@ type InspectorConfig struct {
 	CollectionTimeout time.Duration
 }
 
-type ineligibleError struct {
-	QueueID int64
-	Reasons []controller.CandidateRejectionReason
-}
-
-func (failure *ineligibleError) Error() string {
-	return fmt.Sprintf("Radarr queue record %d is ineligible: %v", failure.QueueID, failure.Reasons)
-}
-
 type Inspector struct {
 	dependencies InspectorConfig
 }
@@ -72,8 +63,8 @@ func NewInspector(dependencies InspectorConfig) (*Inspector, error) {
 	}
 }
 
-// The daemon calls Inspect for one queue entry at a time. It skips ineligible
-// entries before contacting the download client. All reads share one deadline.
+// Inspect rechecks a planned entry before execution. If the queue is no
+// longer eligible, there is no need to open the download again.
 func (inspector *Inspector) Inspect(
 	ctx context.Context,
 	record controller.RadarrQueueRecord,
@@ -89,7 +80,7 @@ func (inspector *Inspector) Inspect(
 
 	assessment := controller.ClassifyRepairCandidate(record, inspector.dependencies.Downloads)
 	if !assessment.Eligible() {
-		return casebuilder.Assembly{}, &ineligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
+		return casebuilder.Assembly{}, fmt.Errorf("Radarr queue record %d is ineligible: %v", record.ID, assessment.RejectionReasons)
 	}
 	entry := resolvedEntry{record: record, sourceSupported: true}
 	entry, err := inspector.lookUpMovieAndDownload(collectionContext, entry)

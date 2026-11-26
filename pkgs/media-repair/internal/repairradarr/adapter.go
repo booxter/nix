@@ -9,8 +9,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
-	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
-	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
@@ -51,12 +49,12 @@ type Adapter struct {
 }
 
 func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.Attempt) (repair.PreparedImport, error) {
-	fresh, authorized, err := adapter.authorize(ctx, job, attempt.Plan)
+	authorized, err := adapter.authorize(ctx, job, attempt.Plan)
 	if err != nil {
 		return repair.PreparedImport{}, err
 	}
 
-	command, err := adapter.importCommand(ctx, job, attempt, fresh, authorized)
+	command, err := adapter.importCommand(ctx, job, attempt, authorized)
 	if err != nil {
 		return repair.PreparedImport{}, err
 	}
@@ -74,73 +72,13 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 	}, err
 }
 
-func (adapter *Adapter) authorize(
-	ctx context.Context,
-	job jobs.Job,
-	plan json.RawMessage,
-) (casebuilder.Assembly, executioncheck.Authorization, error) {
-	var evidence Evidence
-	if err := json.Unmarshal(job.Evidence, &evidence); err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
-	}
-
-	decision, err := contracts.DecodeDecision(plan)
-	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
-	}
-
-	entries, err := adapter.Client.ReadQueue(ctx)
-	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, repair.RetryableRead(err)
-	}
-	keys := make([]jobs.QueueKey, len(entries))
-	for index, entry := range entries {
-		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
-	}
-	index, err := jobs.MatchQueue(job.QueueKey(), keys)
-	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: err.Error()}
-	}
-	if index < 0 {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: "download is no longer queued"}
-	}
-	fresh, err := adapter.Inspector.Inspect(ctx, entries[index])
-	if err != nil {
-		return fresh, executioncheck.Authorization{}, repair.RetryableRead(err)
-	}
-
-	// Planning can be slow; authorize against fresh source and queue evidence.
-	queue := fresh.LocalSnapshot.Observation.Correlation.Radarr
-	if queue.DownloadID != job.DownloadID || !casebuilder.SameCaseState(evidence.Assembly(), fresh) {
-		return fresh, executioncheck.Authorization{}, &repair.BlockedError{Reason: "source or queue identity changed; collect a new plan"}
-	}
-	if queue.TrackedDownloadState == "importPending" && adapter.Now().Sub(job.StableSince) < adapter.Stabilization {
-		return fresh, executioncheck.Authorization{}, &repair.BlockedError{Reason: "source is still stabilizing"}
-	}
-
-	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}
-	authorized, reason := executioncheck.Authorize(fresh, decision, policy)
-	if reason != "" {
-		blocked := &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
-		if reason == executioncheck.RuntimeMismatch {
-			blocked.Code = jobs.OutcomeRuntimeMismatch
-		}
-		return fresh, authorized, blocked
-	}
-	if reason, unsafe := executioncheck.ReplacementRejection(fresh, authorized); unsafe {
-		return fresh, authorized, &repair.BlockedError{Reason: string(reason)}
-	}
-
-	return fresh, authorized, nil
-}
-
 func (adapter *Adapter) importCommand(
 	ctx context.Context,
 	job jobs.Job,
 	attempt jobs.Attempt,
-	fresh casebuilder.Assembly,
-	authorized executioncheck.Authorization,
+	repair authorizedRepair,
 ) (controller.RadarrManualImportCommand, error) {
+	fresh, authorized := repair.source, repair.operation
 	if authorized.ManualImport != nil {
 		return *authorized.ManualImport, nil
 	}

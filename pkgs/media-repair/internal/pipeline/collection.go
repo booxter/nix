@@ -54,7 +54,7 @@ func (flow CollectionFlow[Clients, Entry, Resolved, Case]) Run(
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		result := flow.inspect(ctx, clients, entry)
+		result := flow.Inspect(ctx, clients, entry)
 		// If shutdown interrupted this entry, stop before reporting it as a failure.
 		if err := ctx.Err(); err != nil {
 			return err
@@ -66,8 +66,9 @@ func (flow CollectionFlow[Clients, Entry, Resolved, Case]) Run(
 	return nil
 }
 
-// inspect starts collection only when every check passes.
-func (flow CollectionFlow[Clients, Entry, Resolved, Case]) inspect(
+// Inspect collects one entry from an already-discovered queue. An entry with
+// eligibility findings stops before any facts are collected for the planner.
+func (flow CollectionFlow[Clients, Entry, Resolved, Case]) Inspect(
 	ctx context.Context,
 	clients Clients,
 	entry Entry,

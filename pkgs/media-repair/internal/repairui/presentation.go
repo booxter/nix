@@ -76,7 +76,7 @@ func present(job jobs.Job) item {
 		view.Explanation = job.Reason
 	case result == jobs.OutcomeEvidenceChanged:
 		view.Status = "Evidence changed"
-		view.Explanation = "The current Lidarr evidence no longer matches the planned repair."
+		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review the current evidence."
 	case result == jobs.OutcomePlannerFailed:
 		view.Status = "Planner failed"

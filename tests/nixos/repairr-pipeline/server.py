@@ -10,6 +10,8 @@ VIDEO = Path(sys.argv[1])
 COMPLETED_ID = "SABnzbd_nzo_complete"
 UNFINISHED_ID = "SABnzbd_nzo_incomplete"
 MOVIE = {"id": 42, "tmdbId": 123456, "title": "Example Movie", "year": 2026}
+IMPORTS: list[dict[str, object]] = []
+QUEUED = {"id": 1, "name": "ManualImport", "status": "queued"}
 
 
 def page(*records: dict[str, object]) -> dict[str, object]:
@@ -75,6 +77,12 @@ def manual_import() -> dict[str, object]:
 
 
 def response_for(path: str, query: dict[str, list[str]]) -> object | None:
+    if path == "/fixture/imports":
+        return IMPORTS
+    if path == "/api/v1/queue":
+        return page()
+    if path == "/api/v3/command/1":
+        return QUEUED
     if path == "/api/v3/queue":
         return radarr_queue()
     if path == "/api/v3/movie/42":
@@ -100,6 +108,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
 
+        self.send_json(payload)
+
+    def do_POST(self) -> None:
+        if self.path != "/api/v3/command":
+            self.send_error(404)
+            return
+        IMPORTS.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+        self.send_json(QUEUED)
+
+    def send_json(self, payload: object) -> None:
         data = json.dumps(payload).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
