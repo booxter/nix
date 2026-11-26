@@ -62,6 +62,24 @@ def test_no_preferred_device() -> None:
         preferred_identity([DOCK], ["100"], Connected([Device("300", "home")]))
 
 
+def test_pin_prompt_follows_current_manifest_without_connected_devices(tmp_path: Path) -> None:
+    manifest = tmp_path / "identities.json"
+    command = ["--identities", str(manifest), "pin-first"]
+    disconnected = Connected([])
+
+    def set_policy(pin_first: bool) -> None:
+        identity = DOCK.model_copy(update={"pin_first": pin_first})
+        manifest.write_text(json.dumps([identity.model_dump(), LAPTOP.model_dump()]))
+
+    set_policy(True)
+    assert run([*command, DOCK.fingerprint], disconnected) == 0
+    assert run([*command, LAPTOP.fingerprint], disconnected) == 1
+    assert run([*command, "unknown"], disconnected) == 1
+
+    set_policy(False)
+    assert run([*command, DOCK.fingerprint], disconnected) == 1
+
+
 def test_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     manifest = tmp_path / "identities.json"
     manifest.write_text(json.dumps([DOCK.model_dump(), LAPTOP.model_dump()]))
