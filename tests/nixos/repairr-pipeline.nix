@@ -101,6 +101,10 @@ pkgs.testers.runNixOSTest {
       '';
     };
     albumImport = albumNode;
+    releaseChoice = {
+      imports = [ albumNode ];
+      systemd.services.repairr-fixture.environment.OFFER_REISSUE = "1";
+    };
     unfinishedAlbum = albumNode;
   };
   extraPythonPackages = ps: [ ps.lxml ];

@@ -22,7 +22,8 @@ type PlanningResult struct {
 	Attempts    int
 	RetryAt     time.Time
 	Reason      string
-	Plan        json.RawMessage `gorm:"serializer:json"`
+	Plan        json.RawMessage  `gorm:"serializer:json"`
+	PlanResult  *planning.Result `gorm:"serializer:json"`
 }
 
 func rememberPlanning(tx *gorm.DB, job Job) error {
@@ -32,7 +33,7 @@ func rememberPlanning(tx *gorm.DB, job Job) error {
 	result := PlanningResult{
 		JobID: job.ID, Fingerprint: job.PlanningFingerprint, Revision: job.Revision,
 		Complete: job.State != Observed, Attempts: job.PlanningAttempts,
-		RetryAt: job.RetryAt, Reason: job.Reason, Plan: job.Plan,
+		RetryAt: job.RetryAt, Reason: job.Reason, Plan: job.Plan, PlanResult: job.PlanResult,
 	}
 	return tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&result).Error
 }
@@ -105,6 +106,7 @@ func restorePlanning(tx *gorm.DB, job *Job) error {
 		job.Reason = "these inputs were already planned; request reconsideration to try again"
 		// This is context for an operator answer, never an executable ready plan.
 		job.Plan = result.Plan
+		job.PlanResult = result.PlanResult
 	}
 	return nil
 }

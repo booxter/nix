@@ -58,7 +58,7 @@ def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
     return wait_for_job(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
 
 
-def answer_file_question(vm, job_url, filename):
+def choice_request(vm, job_url, options, selected):
     # Use the form and cookie from the restarted daemon, just as an operator
     # would after reopening the job. Hidden fields identify this case revision.
     cookies = "/tmp/repairr-operator.cookies"
@@ -69,22 +69,24 @@ def answer_file_question(vm, job_url, filename):
         for option in form.xpath('.//select[@name="selection"]/option')
         if option.get("value")
     }
-    assert set(choices) == {"movie.mkv", "theatrical.mkv"}, choices
-    form.fields["selection"] = choices[filename]
-    vm.succeed(
-        shlex.join(
-            [
-                "curl",
-                "-fsS",
-                "-b",
-                cookies,
-                "-H",
-                "Sec-Fetch-Site: same-origin",
-                "--data",
-                urlencode(form.form_values()),
-                form.action,
-            ]
-        )
+    assert set(choices) == set(options), choices
+    form.fields["selection"] = choices[selected]
+    return shlex.join(
+        [
+            "curl",
+            "-sS",
+            "-o",
+            "/dev/null",
+            "-w",
+            "%{http_code}",
+            "-b",
+            cookies,
+            "-H",
+            "Sec-Fetch-Site: same-origin",
+            "--data",
+            urlencode(form.form_values()),
+            form.action,
+        ]
     )
 
 
@@ -231,7 +233,8 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     fileChoice.succeed("systemctl restart repairr.service")
     wait_for_text(fileChoice, job, question)
     assert submitted_imports(fileChoice) == []
-    answer_file_question(fileChoice, job, "theatrical.mkv")
+    answer = choice_request(fileChoice, job, ["movie.mkv", "theatrical.mkv"], "theatrical.mkv")
+    assert fileChoice.succeed(answer) == "303"
 
     chosen = str(PurePosixPath(VIDEO).with_name("theatrical.mkv"))
     wait_for_text(fileChoice, job, "Import command #1")
@@ -272,6 +275,31 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
     ), receipt
     albumImport.shutdown()
 
+with subtest("the operator's edition selects the release and tracks imported into Lidarr"):
+    releaseChoice.start()
+    releaseChoice.wait_for_open_port(7878)
+    releaseChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
+    releaseChoice.succeed("systemctl start repairr.service")
+    job = wait_for_job(releaseChoice, f"{REPAIRR}/lidarr", "Example Artist")
+    wait_for_text(releaseChoice, job, "Which release should these tracks be imported into?")
+    assert submitted_imports(releaseChoice) == []
+
+    original = "Example Album — CD (release 81)"
+    reissue = "Example Album Reissue — CD (release 82)"
+    answer = choice_request(releaseChoice, job, [original, reissue], reissue)
+    assert releaseChoice.succeed(answer) == "303"
+    # A second open tab still has the previous revision of the question.
+    assert releaseChoice.succeed(answer) == "409"
+    releaseChoice.succeed("touch /run/lidarr-fixture/publish-second-track")
+    receipt = import_receipt(releaseChoice, job)
+    (command,) = submitted_imports(releaseChoice)
+    assert [(file["albumReleaseId"], file["trackIds"]) for file in command["files"]] == [
+        (82, [21]),
+        (82, [22]),
+    ], command
+    assert {track["track_id"] for track in receipt} == {21, 22}, receipt
+    releaseChoice.shutdown()
+
 with subtest("an album that resumes downloading blocks the saved plan before import"):
     unfinishedAlbum.start()
     job = plan_with_repairs_paused(unfinishedAlbum, "lidarr", "Example Album")
@@ -279,4 +307,17 @@ with subtest("an album that resumes downloading blocks the saved plan before imp
 
     wait_for_text(unfinishedAlbum, job, "Attempt 1 · blocked")
     wait_for_text(unfinishedAlbum, job, "Lidarr queue item is not eligible for repair")
+    assert submitted_imports(unfinishedAlbum) == []
+
+with subtest("a completed library album is declined without an operator question"):
+    # Pause automatic cleanup so the declined job stays visible in activity.
+    unfinishedAlbum.succeed(
+        "systemctl stop repairr.service",
+        "rm /run/lidarr-fixture/downloading",
+        "touch /run/lidarr-fixture/library-complete /run/pause-lidarr-repairs",
+        "systemctl start repairr.service",
+    )
+    wait_for_text(unfinishedAlbum, job, "There are no missing tracks to import.")
+    inbox = unfinishedAlbum.succeed(f"curl -fsS {REPAIRR}/lidarr")
+    assert "Example Album" not in inbox
     assert submitted_imports(unfinishedAlbum) == []

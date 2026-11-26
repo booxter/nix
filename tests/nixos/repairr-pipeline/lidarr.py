@@ -1,6 +1,7 @@
 """One album is waiting for import. Its two tracks appear in history separately."""
 
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -52,6 +53,20 @@ TRACKS = [
     }
     for number, track_id, title in [(1, 12, "First track"), (2, 11, "Second track")]
 ]
+TRACKS_BY_RELEASE = {81: TRACKS}
+if os.environ.get("OFFER_REISSUE"):
+    ALBUM["releases"].append(
+        {
+            **RELEASE,
+            "id": 82,
+            "title": "Example Album Reissue",
+            "foreignReleaseId": "example-reissue",
+            "monitored": False,
+        }
+    )
+    # Both editions contain the same songs in the same order, with distinct
+    # Lidarr track IDs. The operator's edition choice determines those IDs.
+    TRACKS_BY_RELEASE[82] = [{**track, "id": track["id"] + 10} for track in TRACKS]
 COMMAND = {"id": 1, "name": "ManualImport", "status": "completed"}
 PUBLISH_SECOND = Path("/run/lidarr-fixture/publish-second-track")
 
@@ -99,8 +114,9 @@ class AlbumImport:
     def history(self):
         if not self.commands:
             return page([])
-        # Report the expected imports independently of the submitted command.
-        visible = TRACKS if PUBLISH_SECOND.exists() else TRACKS[:1]
+        release_id = self.commands[-1]["files"][0]["albumReleaseId"]
+        tracks = TRACKS_BY_RELEASE[release_id]
+        visible = tracks if PUBLISH_SECOND.exists() else tracks[:1]
         records = []
         for track in visible:
             number = track["absoluteTrackNumber"]
@@ -136,8 +152,12 @@ class Lidarr(BaseHTTPRequestHandler):
                 payload = album.queue()
             case "/api/v1/album/3":
                 payload = ALBUM
-            case "/api/v1/track" if query.get("albumReleaseId") == ["81"]:
-                payload = TRACKS
+            case "/api/v1/track" if "albumReleaseId" in query:
+                payload = TRACKS_BY_RELEASE[int(query["albumReleaseId"][0])]
+                if Path("/run/lidarr-fixture/library-complete").exists():
+                    payload = [
+                        {**track, "hasFile": True, "trackFileId": track["id"]} for track in payload
+                    ]
             case "/api/v1/manualimport" if query.get("artistId") == ["7"]:
                 payload = album.manual_imports(query["folder"][0])
             case "/api/v1/history" if query.get("albumId") == ["3"]:

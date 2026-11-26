@@ -34,11 +34,40 @@ def movie_plan(request):
 
 def album_plan(request):
     case = request["repair_case"]
-    (offer,) = case["capabilities"]
+    offers = case["capabilities"]
+    if not offers:
+        return {
+            "action": "no_repair",
+            "reason": "no_repair_needed",
+            "evidence_refs": [],
+            "explanation": "There are no missing tracks to import.",
+        }
+    if len(offers) > 1:
+        selected = request.get("selected_release_id")
+        if selected is None:
+            return {
+                "action": "no_repair",
+                "reason": "ambiguous_release",
+                "evidence_refs": [offer["capability_id"] for offer in offers],
+                "explanation": "The same songs appear on both editions. Choose a release.",
+            }
+        offers = [offer for offer in offers if offer["release_id"] == selected]
+
+    (offer,) = offers
+    tracks = {track["track_id"]: track for track in case["tracks"]}
+    # Lidarr assessed the files against the original CD. Match the songs
+    # by title and position within the edition the operator selected.
     mappings = []
     for file in case["assessments"]:
-        (track,) = file["track_ids"]
-        mappings.append({"artifact_id": file["artifact_id"], "track_id": track})
+        (assessed_id,) = file["track_ids"]
+        assessed = tracks[assessed_id]
+        (track_id,) = [
+            id_
+            for id_ in offer["track_ids"]
+            if tracks[id_]["title"] == assessed["title"]
+            and tracks[id_]["absolute_number"] == assessed["absolute_number"]
+        ]
+        mappings.append({"artifact_id": file["artifact_id"], "track_id": track_id})
     return {
         "action": offer["action"],
         "capability_id": offer["capability_id"],

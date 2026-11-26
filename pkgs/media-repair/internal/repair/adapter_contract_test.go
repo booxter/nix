@@ -171,7 +171,7 @@ func (service *observedService) Observe(ctx context.Context, _ []jobs.Job) (repa
 
 func (service *observedService) Plan(context.Context, jobs.Job) (repair.Decision, error) {
 	service.calls.Add(1)
-	return repair.Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair"}, nil
+	return repair.Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair", Result: planning.Result{Outcome: planning.Decline}}, nil
 }
 
 func radarrObservation(t *testing.T, variant string) jobs.Job {

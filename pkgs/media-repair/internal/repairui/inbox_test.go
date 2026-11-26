@@ -33,6 +33,14 @@ func addInboxJob(t *testing.T, fixture *fixture, id int64, title string, state j
 		t.Fatal(err)
 	}
 	job.State = state
+	result := planning.Result{Outcome: planning.Decline}
+	if reason == "ambiguous_release" {
+		result = planning.Result{Outcome: planning.AskOperator, Question: &planning.Question{
+			Kind: planning.ChooseRelease, Title: "Choose a release", Text: "Which edition should be imported?",
+			Button: "Use this release", Choices: []planning.Choice{{Value: "12", Label: "CD (Label)"}},
+		}}
+	}
+	job.PlanResult = &result
 	job.Plan, err = json.Marshal(decision{Action: "no_repair", Reason: reason, Explanation: "The edition is uncertain."})
 	if err != nil {
 		t.Fatal(err)
@@ -196,18 +204,7 @@ func TestInboxRejectsUnavailableChoicesAndStaleEvidence(t *testing.T) {
 func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 	fixture := newFixture(t)
 	ctx := context.Background()
-	job, err := fixture.store.Observe(ctx, jobs.Job{
-		Service: jobs.Lidarr, QueueID: 100, Title: "Edition question", SourceFingerprint: "case-a",
-		Evidence: json.RawMessage(releaseEvidence),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	job.State = jobs.Blocked
-	job.Plan = json.RawMessage(`{"action":"no_repair","reason":"ambiguous_release","explanation":"Choose the edition."}`)
-	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
-		t.Fatal(err)
-	}
+	job := addInboxJob(t, fixture, 100, "Edition question", jobs.Blocked, "ambiguous_release", "")
 	job.SourceFingerprint = "case-b"
 	job.Evidence = json.RawMessage(`{"case":{"releases":[]}}`)
 	if _, err := fixture.store.Observe(ctx, job); err != nil {
@@ -219,7 +216,7 @@ func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	response := fixture.get("/")
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Use this release") {
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Which edition should be imported?") {
 		t.Fatalf("history lost unanswered question: %d %s", response.Code, response.Body.String())
 	}
 }

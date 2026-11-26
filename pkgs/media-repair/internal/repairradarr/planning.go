@@ -70,9 +70,10 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 
 	data, err := contracts.EncodeDecision(decision)
-	result := repair.Decision{Data: data, Repair: decision.Kind != contracts.ActionNoRepair}
-	if decision.NoRepair != nil {
-		result.Reason = string(decision.NoRepair.Reason)
+	result := repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}
+	if stop := decision.NoRepair; stop != nil {
+		result.Reason = string(stop.Reason)
+		result.Result = planning.NoRepair(result.Reason, Question(evidence.Case, result.Reason, stop.MissingEvidence))
 	}
 
 	return result, err

@@ -67,7 +67,8 @@ type Job struct {
 	Evidence            json.RawMessage `gorm:"serializer:json"`
 	CollectionError     string
 	CollectionOutcome   Outcome
-	Plan                json.RawMessage `gorm:"serializer:json"`
+	Plan                json.RawMessage  `gorm:"serializer:json"`
+	PlanResult          *planning.Result `gorm:"serializer:json"`
 	planning.Answer     `gorm:"embedded"`
 	RetryAt             time.Time
 	PlanningAttempts    int
@@ -181,6 +182,7 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			}
 			if changed && job.State != Imported && job.State != Removed {
 				job.Plan = nil
+				job.PlanResult = nil
 				job.State = Observed
 				job.Reason = strings.Join(changes, ", ")
 				job.Outcome = ""

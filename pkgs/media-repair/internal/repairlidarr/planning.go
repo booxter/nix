@@ -132,9 +132,10 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 
 	data, err := lidarrcontracts.EncodeDecision(decision)
-	result := repair.Decision{Data: data, Repair: decision.Kind != lidarrcontracts.ActionNoRepair}
-	if decision.NoRepair != nil {
-		result.Reason = decision.NoRepair.Explanation
+	result := repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}
+	if stop := decision.NoRepair; stop != nil {
+		result.Reason = stop.Explanation
+		result.Result = planning.NoRepair(stop.Reason, Question(repairCase, stop.Reason))
 	}
 
 	return result, err

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 const plannerFallback = "The planner could not produce a valid decision within its attempt limit."
@@ -98,9 +99,9 @@ func present(job jobs.Job) item {
 	if view.Attention != nil {
 		view.Status = view.Attention.Title
 		switch view.Attention.Kind {
-		case "runtime":
+		case planning.AcceptRuntime:
 			view.Explanation = "The proposed import exceeds the allowed runtime difference."
-		case "retry":
+		case planning.Retry:
 			if result == jobs.OutcomePlannerFailed {
 				view.Explanation = "The previous planning attempt ended without a usable decision."
 			} else {

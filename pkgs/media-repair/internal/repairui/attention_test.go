@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
-func TestAttentionClassification(t *testing.T) {
+func TestQuestionsForJobsSavedBeforeExplicitPlanningOutcomes(t *testing.T) {
 	lidarrEvidence := json.RawMessage(`{"case":{"releases":[{"release_id":12,"title":"Album","format":"CD"},{"release_id":13,"title":"Other"}],"capabilities":[{"action":"import_missing_tracks_v1","capability_id":"cap","release_id":12}]}}`)
 	radarrEvidence := json.RawMessage(`{"case":{"radarr":{"movie":{"title":"Movie","runtime_minutes":90}},"files":[{"file_id":"a","path_components":["a.mkv"]},{"file_id":"b","path_components":["b.mkv"]}],"capabilities":[{"action":"manual_import_file_v1","capability_id":"cap-a","file_id":"a"},{"action":"manual_import_file_v1","capability_id":"cap-b","file_id":"b"},{"action":"join_parts_v1","capability_id":"join","candidate_file_ids":["a","b"]}]}}`)
 
@@ -15,7 +17,7 @@ func TestAttentionClassification(t *testing.T) {
 		name    string
 		job     jobs.Job
 		plan    decision
-		kind    string
+		kind    planning.QuestionKind
 		choices int
 	}{
 		{"legacy fallback", jobs.Job{Evidence: lidarrEvidence}, decision{Explanation: plannerFallback}, "retry", 0},
@@ -30,8 +32,8 @@ func TestAttentionClassification(t *testing.T) {
 		{"tracks", jobs.Job{Service: jobs.Lidarr, Evidence: lidarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_tracks"}, "guidance", 0},
 		{"files", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_file_selection"}, "file", 2},
 		{"parts", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_part_order"}, "guidance", 0},
-		{"missing runtime", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"movie_runtime"}}, "guidance", 0},
-		{"technical evidence", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"movie_runtime", "media_probe"}}, "", 0},
+		{"missing runtime", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []contracts.MissingEvidence{"movie_runtime"}}, "guidance", 0},
+		{"technical evidence", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []contracts.MissingEvidence{"movie_runtime", "media_probe"}}, "", 0},
 		{"missing case", jobs.Job{Service: jobs.Lidarr}, decision{Action: "no_repair", Reason: "ambiguous_release"}, "", 0},
 		{"stale decision", jobs.Job{Service: jobs.Lidarr, Evidence: lidarrEvidence, Reason: "current Lidarr import bindings changed after planning"}, decision{Action: "no_repair", Reason: "ambiguous_release"}, "", 0},
 		{"collection error", jobs.Job{CollectionError: "waiting for evidence"}, decision{Explanation: plannerFallback}, "", 0},
@@ -66,9 +68,9 @@ func TestInboxDoesNotOfferInstructionsForUnavailableOperations(t *testing.T) {
 	evidence := json.RawMessage(`{"Case":{"radarr":{"movie":{"title":"Movie"}},"capabilities":[{"action":"manual_import_file_v1","file_id":"a"}]}}`)
 	for _, plan := range []decision{
 		{Action: "no_repair", Reason: "ambiguous_part_order"},
-		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"part_membership"}},
-		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"disc_playlist"}},
-		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"movie_runtime"}},
+		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []contracts.MissingEvidence{"part_membership"}},
+		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []contracts.MissingEvidence{"disc_playlist"}},
+		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []contracts.MissingEvidence{"movie_runtime"}},
 	} {
 		job := jobs.Job{Service: jobs.Radarr, State: jobs.Blocked, InQueue: true, Evidence: evidence}
 		if got := attentionFor(job, plan, classifyOutcome(job, plan)); got != nil {

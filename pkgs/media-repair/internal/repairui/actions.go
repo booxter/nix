@@ -84,8 +84,8 @@ func (app *Handler) respond(w http.ResponseWriter, r *http.Request, job jobs.Job
 
 // A retry reuses the saved answer. For a new answer, accept only the choices
 // and overrides offered by this question.
-func readAnswer(r *http.Request, job jobs.Job, request attention) (planning.Answer, error) {
-	if request.Kind == "retry" {
+func readAnswer(r *http.Request, job jobs.Job, request planning.Question) (planning.Answer, error) {
+	if request.Kind == planning.Retry {
 		return job.Answer, nil
 	}
 	guidance, tolerance, err := parseGuidance(r, job.Service)
@@ -95,7 +95,7 @@ func readAnswer(r *http.Request, job jobs.Job, request attention) (planning.Answ
 	if tolerance != 0 && !request.AllowRuntime {
 		return planning.Answer{}, fmt.Errorf("this question does not offer a runtime override")
 	}
-	if request.Kind == "runtime" && tolerance == 0 {
+	if request.Kind == planning.AcceptRuntime && tolerance == 0 {
 		return planning.Answer{}, fmt.Errorf("choose the maximum runtime difference you accept")
 	}
 	if request.RequireGuidance && guidance == "" {
@@ -113,9 +113,9 @@ func readAnswer(r *http.Request, job jobs.Job, request attention) (planning.Answ
 			continue
 		}
 		switch request.Kind {
-		case "release":
+		case planning.ChooseRelease:
 			answer.SelectedReleaseID, err = strconv.ParseInt(choice.Value, 10, 64)
-		case "file":
+		case planning.ChooseFile:
 			answer.SelectedFileID = choice.Value
 		}
 		return answer, err

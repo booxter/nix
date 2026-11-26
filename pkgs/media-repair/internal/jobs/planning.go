@@ -48,6 +48,7 @@ func (store *Store) requestAction(ctx context.Context, id int64, action string, 
 		job.UpdatedAt = at
 		if action == Reconsider {
 			job.Answer = answer
+			job.PlanResult = nil
 			job.PlanningAttempts = 0
 			job.State = Observed
 		}
@@ -70,6 +71,7 @@ func (store *Store) FinishPlanning(ctx context.Context, planned Job) error {
 		}
 
 		job.Plan = planned.Plan
+		job.PlanResult = planned.PlanResult
 		job.State = planned.State
 		job.Reason = planned.Reason
 		job.Outcome = planned.Outcome

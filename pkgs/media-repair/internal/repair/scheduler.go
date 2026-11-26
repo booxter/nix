@@ -15,7 +15,7 @@ import (
 
 type Decision struct {
 	Data   json.RawMessage
-	Repair bool
+	Result planning.Result
 	Reason string
 }
 
@@ -239,10 +239,15 @@ func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
 		job.RetryAt = job.UpdatedAt.Add(planningDelay(job.PlanningAttempts))
 	} else {
 		job.Plan = decision.Data
+		job.PlanResult = &decision.Result
 		job.Reason = decision.Reason
-		job.State = jobs.Blocked
-		if decision.Repair {
+		switch decision.Result.Outcome {
+		case planning.Repair:
 			job.State = jobs.Ready
+		case planning.Decline, planning.AskOperator:
+			job.State = jobs.Blocked
+		default:
+			return fmt.Errorf("unknown planning outcome %q", decision.Result.Outcome)
 		}
 	}
 

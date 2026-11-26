@@ -235,5 +235,5 @@ type countingPlanner struct {
 
 func (service *countingPlanner) Plan(context.Context, jobs.Job) (Decision, error) {
 	service.calls++
-	return Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair"}, nil
+	return Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair", Result: planning.Result{Outcome: planning.Decline}}, nil
 }

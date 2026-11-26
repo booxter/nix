@@ -12,7 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 //go:embed page.html
@@ -46,15 +48,15 @@ type item struct {
 	Status      string
 	Explanation string
 	NextStep    string
-	Attention   *attention
+	Attention   *planning.Question
 	CSRF        string
 }
 
 type decision struct {
-	Action          string   `json:"action"`
-	Reason          string   `json:"reason"`
-	Explanation     string   `json:"explanation"`
-	MissingEvidence []string `json:"missing_evidence"`
+	Action          string                      `json:"action"`
+	Reason          string                      `json:"reason"`
+	Explanation     string                      `json:"explanation"`
+	MissingEvidence []contracts.MissingEvidence `json:"missing_evidence"`
 }
 
 type page struct {

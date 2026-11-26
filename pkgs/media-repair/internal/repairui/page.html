@@ -163,7 +163,7 @@
   <input type="hidden" name="csrf_token" value="{{.CSRF}}">
   <input type="hidden" name="revision" value="{{.Job.Revision}}">
   <input type="hidden" name="fingerprint" value="{{.Job.SourceFingerprint}}">
-  <h4>{{.Attention.Question}}</h4>
+  <h4>{{.Attention.Text}}</h4>
   {{if .Attention.Context}}<details class="evidence-context"><summary>Files and media information</summary><ul>{{range .Attention.Context}}<li>{{.}}</li>{{end}}</ul></details>{{end}}
   {{if .Attention.Choices}}
   <label for="selection-{{.Job.ID}}">Your choice</label>
