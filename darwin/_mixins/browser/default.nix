@@ -8,7 +8,7 @@ let
   username = config.host.username;
   firefoxEnabled = config.home-manager.users.${username}.host.hm.firefox.enable;
   defaultbrowser = pkgs.defaultbrowser.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [ ./defaultbrowser-app-path.patch ];
+    patches = (old.patches or [ ]) ++ [ ../../../patches/defaultbrowser-select-app-by-path.patch ];
   });
 in
 {

@@ -1,6 +1,8 @@
 { sopsPackage }:
 sopsPackage.overrideAttrs (old: {
-  patches = (old.patches or [ ]) ++ [ ./remote-decryption.patch ];
+  patches = (old.patches or [ ]) ++ [
+    ../../patches/sops-install-secrets-decrypt-with-remote-keyservice.patch
+  ];
 
   # Upstream's full installer suite needs root; these decryption tests do not.
   doCheck = true;
