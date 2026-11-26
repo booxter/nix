@@ -65,5 +65,5 @@ pkgs.testers.runNixOSTest {
       };
     };
 
-  testScript = builtins.readFile ./jellyfin-catalogue/test.py;
+  testScript = builtins.readFile ./lib/jellyfin.py + builtins.readFile ./jellyfin-catalogue/test.py;
 }
