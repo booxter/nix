@@ -1,12 +1,16 @@
 # ruff: noqa: F821
-# The NixOS test driver supplies machine and subtest.
+# The NixOS test driver supplies the VMs and subtest.
+import html
 import json
+import re
 import shlex
 
 COMPLETED_QUEUE_ID = 101
 UNFINISHED_QUEUE_ID = 102
 VIDEO = "/var/lib/repairr-pipeline/Example.Movie.2026/movie.mkv"
 PAUSE = "/run/pause-radarr-repairs"
+FIXTURE = "/run/radarr-fixture"
+REPAIRR = "http://127.0.0.1:8790"
 
 
 def collect_queue():
@@ -25,20 +29,41 @@ def assert_fixture_video(video):
     assert widths == [64], probe
 
 
+def wait_for_text(vm, url, text):
+    return vm.wait_until_succeeds(
+        f"curl -fsS {shlex.quote(url)} | grep -F -- {shlex.quote(text)}", timeout=60
+    )
+
+
 def wait_for_movie(vm, state, text):
-    page = shlex.quote(f"http://127.0.0.1:8790/activity?service=radarr&state={state}")
-    vm.wait_until_succeeds(f"curl -fsS {page} | grep -F -- {shlex.quote(text)}", timeout=60)
+    return wait_for_text(vm, f"{REPAIRR}/activity?service=radarr&state={state}", text)
 
 
 def plan_with_repairs_paused(vm):
     vm.wait_for_open_port(7878)
     vm.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     vm.succeed(f"touch {PAUSE}", "systemctl start repairr.service")
-    wait_for_movie(vm, "ready", "Example Movie")
+    # Follow the same job across restarts and after it leaves the queue.
+    link = wait_for_movie(vm, "ready", "Example Movie")
+    match = re.search(r'href="(/jobs/\d+)"', link)
+    assert match, link
+    return REPAIRR + match[1]
 
 
 def submitted_imports(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/imports"))
+
+
+def confirm_from_history(vm, job_url):
+    vm.succeed(f"touch {FIXTURE}/publish-import")
+    wait_for_text(vm, job_url, "Attempt 1 · imported")
+    detail = vm.succeed(f"curl -fsS {job_url}")
+    (raw_receipt,) = re.findall(r"<pre>(.*?)</pre>", detail, flags=re.DOTALL)
+    receipt = json.loads(html.unescape(raw_receipt))
+    assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
+    assert receipt["DroppedPath"] == VIDEO and receipt["MovieID"] == 42, receipt
+    assert receipt["DownloadID"] == "SABnzbd_nzo_complete", receipt
+    assert len(submitted_imports(vm)) == 1
 
 
 machine.start()
@@ -73,8 +98,8 @@ with subtest("the unfinished download reports problems from both Radarr and SABn
     assert set(unfinished["findings"]) == expected, unfinished
     assert "case" not in unfinished, unfinished
 
-with subtest("the saved plan authorizes the selected file for the expected movie and download"):
-    plan_with_repairs_paused(machine)
+with subtest("the selected file is confirmed only when Radarr reports a new import"):
+    job = plan_with_repairs_paused(machine)
     assert submitted_imports(machine) == []
     machine.succeed(f"rm {PAUSE}")
     wait_for_movie(machine, "importing", "Example Movie")
@@ -90,6 +115,11 @@ with subtest("the saved plan authorizes the selected file for the expected movie
         42,
         "SABnzbd_nzo_complete",
     ), selected
+    wait_for_text(machine, job, "Import command #1")
+    machine.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
+    wait_for_text(machine, job, "Attempt 1 · importing")
+    confirm_from_history(machine, job)
+    machine.shutdown()
 
 with subtest("a same-size replacement blocks the saved plan before Radarr receives a command"):
     replaced.start()
@@ -103,3 +133,21 @@ with subtest("a same-size replacement blocks the saved plan before Radarr receiv
     wait_for_movie(replaced, "blocked", "selected file changed after planning")
     assert submitted_imports(replaced) == []
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
+    replaced.shutdown()
+
+with subtest("a lost command response is recovered from history after restart"):
+    lostResponse.start()
+    job = plan_with_repairs_paused(lostResponse)
+    lostResponse.succeed(f"touch {FIXTURE}/drop-reply", f"rm {PAUSE}")
+    wait_for_text(lostResponse, job, "checking history without resubmitting")
+    assert len(submitted_imports(lostResponse)) == 1
+
+    # Keep fake Radarr running so it counts submissions across both processes.
+    # Clearing the marker while Repairr is stopped proves the next history
+    # lookup comes from the new process, with the receipt still withheld.
+    lostResponse.succeed("systemctl stop repairr.service", f"rm {FIXTURE}/history-checked")
+    lostResponse.succeed("systemctl start repairr.service")
+    lostResponse.wait_until_succeeds(f"test -e {FIXTURE}/history-checked", timeout=60)
+    wait_for_text(lostResponse, job, "Attempt 1 · importing")
+    assert len(submitted_imports(lostResponse)) == 1
+    confirm_from_history(lostResponse, job)

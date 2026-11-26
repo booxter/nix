@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 VIDEO = Path(sys.argv[1])
+FIXTURE = Path("/run/radarr-fixture")
 COMPLETED_ID = "SABnzbd_nzo_complete"
 UNFINISHED_ID = "SABnzbd_nzo_incomplete"
 MOVIE = {"id": 42, "tmdbId": 123456, "title": "Example Movie", "year": 2026}
@@ -46,6 +47,10 @@ def radarr_queue() -> dict[str, object]:
         "trackedDownloadStatus": "ok",
         "trackedDownloadState": "downloading",
     }
+    # Once Radarr accepts the import, the restarted daemon can find the
+    # movie only through its saved attempt and Radarr's history.
+    if IMPORTS:
+        return page(active_download)
     return page(blocked_import, active_download)
 
 
@@ -76,6 +81,33 @@ def manual_import() -> dict[str, object]:
     }
 
 
+def import_record(history_id: int, file_id: int) -> dict[str, object]:
+    return {
+        "id": history_id,
+        "eventType": "downloadFolderImported",
+        "date": "2026-11-01T09:00:00Z",
+        "movieId": MOVIE["id"],
+        "sourceTitle": VIDEO.parent.name,
+        "downloadId": COMPLETED_ID,
+        "data": {
+            "fileId": str(file_id),
+            "droppedPath": str(VIDEO),
+            "importedPath": "/movies/Example Movie (2026)/movie.mkv",
+        },
+    }
+
+
+def import_history() -> dict[str, object]:
+    # The older entry matches the movie, download and path, so only the
+    # history baseline recorded before submission rules it out.
+    records = [import_record(50, 7)]
+    if IMPORTS:
+        (FIXTURE / "history-checked").touch()
+        if (FIXTURE / "publish-import").exists():
+            records.append(import_record(51, 8))
+    return page(*records)
+
+
 def response_for(path: str, query: dict[str, list[str]]) -> object | None:
     if path == "/fixture/imports":
         return IMPORTS
@@ -87,8 +119,12 @@ def response_for(path: str, query: dict[str, list[str]]) -> object | None:
         return radarr_queue()
     if path == "/api/v3/movie/42":
         return MOVIE
-    if path == "/api/v3/history" and query.get("movieIds") == ["42"]:
-        return page()
+    if (
+        path == "/api/v3/history"
+        and query.get("movieIds") == ["42"]
+        and query.get("downloadId") == [COMPLETED_ID]
+    ):
+        return import_history()
     if path == "/api/v3/manualimport" and query.get("movieId") == ["42"]:
         return [manual_import()]
 
@@ -115,6 +151,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         IMPORTS.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+        if (FIXTURE / "drop-reply").exists():
+            # The command is already recorded. Close without sending HTTP headers.
+            self.close_connection = True
+            return
         self.send_json(QUEUED)
 
     def send_json(self, payload: object) -> None:

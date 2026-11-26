@@ -53,7 +53,10 @@ let
         ${lib.getExe' pkgs.ffmpeg-headless "ffmpeg"} -v error -y \
           -f lavfi -i color=size=64x64:rate=1 -frames:v 1 -c:v mpeg4 ${video}
       '';
-      serviceConfig.ExecStart = "${lib.getExe pkgs.python3} ${./repairr-pipeline/server.py} ${video}";
+      serviceConfig = {
+        RuntimeDirectory = "radarr-fixture";
+        ExecStart = "${lib.getExe pkgs.python3} ${./repairr-pipeline/server.py} ${video}";
+      };
     };
     systemd.services.scripted-planner = {
       wantedBy = [ "multi-user.target" ];
@@ -75,6 +78,7 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = node;
     replaced = node;
+    lostResponse = node;
   };
   testScript = builtins.readFile ./repairr-pipeline/test.py;
 }
