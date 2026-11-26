@@ -90,11 +90,7 @@ func (adapter *Adapter) authorize(
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
 
-	currentPlan, err := contracts.UpgradeStoredDecision(plan)
-	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
-	}
-	decision, err := contracts.DecodeDecision(currentPlan)
+	decision, err := contracts.DecodeDecision(plan)
 	if err != nil {
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}

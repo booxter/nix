@@ -203,23 +203,15 @@ func TestEncodeDecisionRejectsInconsistentUnion(t *testing.T) {
 	}
 }
 
-func TestDVDDecisionKeepsOrderAndUpgradesStoredTitle(t *testing.T) {
+func TestDVDDecisionKeepsTitleOrder(t *testing.T) {
 	t.Parallel()
-	old := []byte(`{
-		"schema_version":"radarr-repair/v3",
-		"case_id":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		"action":"remux_dvd_v1",
-		"capability_id":"capability:disc1",
-		"evidence_refs":["capability:disc1"],
-		"explanation":"Remux the movie title."
-	}`)
-	upgraded, err := UpgradeStoredDecision(old)
-	if err != nil {
-		t.Fatal(err)
-	}
-	decision, err := DecodeDecision(upgraded)
-	if err != nil || !slices.Equal(decision.RemuxDVD.OrderedTitleIDS, []string{"capability:disc1"}) {
-		t.Fatalf("upgraded DVD decision: %+v, %v", decision, err)
+	decision := RepairDecisionV3{
+		Kind: ActionRemuxDVD,
+		RemuxDVD: &RemuxDVDDecision{
+			Action: "remux_dvd_v2", SchemaVersion: RadarrRepairV3,
+			CaseID:       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			EvidenceRefs: []string{"capability:disc1"}, Explanation: "Remux the movie titles.",
+		},
 	}
 
 	order := []string{"capability:disc2", "capability:disc1"}
