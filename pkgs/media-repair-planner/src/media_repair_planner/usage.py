@@ -6,10 +6,21 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TextIO
+from typing import Protocol, TextIO
 from uuid import uuid4
 
-from .tracing import ModelTrace
+MetadataValue = str | int | float | bool | None
+
+
+@dataclass(frozen=True)
+class ModelUsage:
+    case_id: str
+    response_metadata: dict[str, MetadataValue]
+    failed: bool
+
+
+class UsageSink(Protocol):
+    def record(self, usage: ModelUsage) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -38,7 +49,7 @@ class JsonlUsageWriter:
     model: str
     provider: str
 
-    def record(self, trace: ModelTrace) -> None:
+    def record(self, usage: ModelUsage) -> None:
         attribution = _attribution.get() or RequestAttribution()
         # Production accounting contains no prompts, decisions, or exception
         # messages: provider parse errors can embed private response content.
@@ -48,11 +59,11 @@ class JsonlUsageWriter:
             "attempt_id": uuid4().hex,
             "service": attribution.service,
             "job_id": attribution.job_id,
-            "case_id": trace.case_id,
-            "outcome": "succeeded" if trace.error is None else "failed",
+            "case_id": usage.case_id,
+            "outcome": "failed" if usage.failed else "succeeded",
             "model": self.model,
             "provider": self.provider,
-            **trace.response_metadata,
+            **usage.response_metadata,
         }
         self.stream.write(json.dumps(value, allow_nan=False) + "\n")
         self.stream.flush()

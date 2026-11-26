@@ -12,7 +12,7 @@ from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket
 from media_repair_planner.structured_model import StructuredModelResponse
-from media_repair_planner.tracing import TraceSink
+from media_repair_planner.usage import UsageSink
 from pydantic import BaseModel
 
 
@@ -89,9 +89,9 @@ def test_server_builds_app_from_typed_settings_and_closes_model(tmp_path: Path) 
 
     def model_factory(
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None,
+        usage_sink: UsageSink | None,
     ) -> CloseableModel:
-        del trace_sink
+        del usage_sink
         settings_seen.append(settings)
         return model
 
@@ -125,9 +125,9 @@ def test_server_closes_model_after_runner_failure(
 
     def model_factory(
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None,
+        usage_sink: UsageSink | None,
     ) -> CloseableModel:
-        del settings, trace_sink
+        del settings, usage_sink
         return model
 
     result = main(

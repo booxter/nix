@@ -14,8 +14,7 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.planning_core import PlanningContext
-from media_repair_planner.tracing import ModelTrace
-from media_repair_planner.usage import JsonlUsageWriter
+from media_repair_planner.usage import JsonlUsageWriter, ModelUsage
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
@@ -95,7 +94,7 @@ async def test_usage_is_attributed_to_the_current_job() -> None:
         async def plan(
             self, repair_case: RepairCaseV3, context: PlanningContext | None = None
         ) -> RepairDecisionV3:
-            writer.record(ModelTrace(repair_case.case_id.root, None, None, {}, None))
+            writer.record(ModelUsage(repair_case.case_id.root, {}, failed=False))
             return await super().plan(repair_case, context)
 
     async with client_for(ReportingPlanner()) as client:

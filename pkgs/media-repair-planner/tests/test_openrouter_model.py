@@ -34,7 +34,6 @@ from media_repair_planner.planning import DecisionModelError, DecisionModelUnava
 from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.structured_model import StructuredDecisionModel
 from media_repair_planner.structured_planning import StructuredDecisionGenerator
-from media_repair_planner.tracing import JsonlTraceWriter
 from media_repair_planner.usage import JsonlUsageWriter, attribute_requests
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
@@ -217,35 +216,6 @@ async def test_decision_model_applies_complete_contract_after_unwrapping() -> No
 
     with pytest.raises(DecisionModelError, match="decision contract failed"):
         await decide(model, repair_case())
-
-
-async def test_decision_model_traces_response_without_reasoning(tmp_path: Path) -> None:
-    path = tmp_path / "trace.jsonl"
-    case = repair_case()
-    raw_output = decision_output()
-    response = OpenRouterResponse(
-        content=raw_output,
-        refused=False,
-        metadata={
-            "provider": "OpenAI",
-            "completion_tokens": 100,
-            "reasoning_tokens": 80,
-        },
-    )
-
-    with JsonlTraceWriter(path, {case.case_id.root: "clear_ordered_join"}) as trace:
-        model = OpenRouterDecisionModel(
-            ScriptedTransport(response),
-            settings(),
-            trace,
-        )
-        await decide(model, case)
-
-    value = json.loads(path.read_text())
-    assert value["raw_output"] == raw_output
-    assert value["reasoning"] is None
-    assert value["response_metadata"] == response.metadata
-    assert value["error"] is None
 
 
 class RecordingOpenRouterServer(ThreadingHTTPServer):

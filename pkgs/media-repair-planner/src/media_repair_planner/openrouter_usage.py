@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, FiniteFloat, ValidationError
 
-from .tracing import MetadataValue
+from .usage import MetadataValue
 
 
 class TokenDetails(BaseModel):
