@@ -7,12 +7,7 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-      # TODO(26.11): Retire the 2.x patch when the work Linux hosts migrate.
-      gpclientBrowserPatch =
-        if lib.versionAtLeast prev.gpclient.version "3" then
-          ../patches/gpclient-3-browser-listen.patch
-        else
-          ../patches/gpclient-browser-listen.patch;
+      gpclientBrowserPatch = ../patches/gpclient-3-browser-listen.patch;
       pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -55,6 +50,7 @@
       );
     in
     {
+      # Keep the interactive clients, including Codex, on the latest packaged releases.
       inherit (pkgsNixpkgsUnstable)
         aerospace
         chatgpt
@@ -108,36 +104,14 @@
       # https://github.com/maralorn/nix-output-monitor/pull/321
       inherit (pkgsNixpkgsUnstable) nix-output-monitor;
 
-      # Drop once stable includes nix-update 1.17.0.
-      nix-update =
-        (pkgsNixpkgsUnstable.nix-update.override {
-          # Keep nix-update-script on the patched executable.
-          nix-update = final.nix-update;
-        }).overrideAttrs
-          (old: {
-            patches = (old.patches or [ ]) ++ [
-              # Materialize local flake sources before evaluation.
-              # https://github.com/Mic92/nix-update/pull/698
-              (prev.fetchpatch {
-                url = "https://github.com/Mic92/nix-update/commit/dcef4fdd7edbd9ef83c701e5d92a3df81fbd0e33.patch";
-                hash = "sha256-uNOfiYbLAm/0Ret2nUQ3Wxd1IoOsclRbF11z2gGx0vM=";
-              })
-            ];
-          });
-
-      jiratui = pkgsNixpkgsUnstable.jiratui.overrideAttrs (old: {
-        nativeInstallCheckInputs = (old.nativeInstallCheckInputs or [ ]) ++ [
-          pkgsNixpkgsUnstable.writableTmpDirAsHomeHook
-        ];
-        versionCheckKeepEnvironment = "HOME";
+      jiratui = prev.jiratui.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/jiratui-fetch-all-projects.patch
           ../patches/jiratui-normalize-jql-expression-ids.patch
         ];
       });
 
-      # Keep Paperless and its Python helpers on v3 until NixOS 26.11.
-      paperless-ngx = pkgsNixpkgsUnstable.paperless-ngx.overrideAttrs (old: {
+      paperless-ngx = prev.paperless-ngx.overrideAttrs (old: {
         disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
           # TODO: report upstream. Real sleeps can exceed the 100 ms stability
           # delay for both files, returning two stable files when one is expected.
@@ -157,21 +131,11 @@
         ];
       });
 
-      # Drop the version override once nixpkgs includes the XML output fixes.
-      # https://github.com/NixOS/nixpkgs/pull/584774
-      lsdvd = prev.lsdvd.overrideAttrs (old: rec {
-        version = "0.21";
-        src = prev.fetchgit {
-          url = "https://git.code.sf.net/p/lsdvd/git";
-          rev = "refs/tags/${version}";
-          hash = "sha256-NCMd0gj8jF0xpixMz3Vp77O+vG/Qso98HxFwoB+b3Zc=";
-        };
+      lsdvd = prev.lsdvd.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/lsdvd-expose-title-continuations.patch
           ../patches/lsdvd-expose-equivalent-titles.patch
         ];
-        buildInputs = (old.buildInputs or [ ]) ++ [ prev.libxml2 ];
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.autoreconfHook ];
       });
 
       # Avoid the HTTP idle timeout race that drops Prometheus alert deliveries.
@@ -210,13 +174,6 @@
         ];
       });
 
-      # The config diff helper uses dix 3's CLI and inline size summaries.
-      # Keep unstable until the stable branch provides that interface.
-      inherit (pkgsNixpkgsUnstable) dix;
-
-      # Stable still has 1.12.0, without the 1.12.1 security fix.
-      inherit (pkgsNixpkgsUnstable) kanidmWithSecretProvisioning_1_12;
-
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
           # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
@@ -229,37 +186,10 @@
         })
       ];
 
-      # TODO(26.11): Drop the 3.x backports once all hosts use the new release.
-      nixpkgs-review =
-        if lib.versionAtLeast prev.nixpkgs-review.version "4" then
-          prev.nixpkgs-review
-        else
-          prev.nixpkgs-review.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (prev.fetchpatch {
-                # Backport --tests (Mic92/nixpkgs-review#397).
-                # Commit 47f4647, rebased after its first two prerequisite commits
-                # landed on main.
-                url = "https://github.com/user-attachments/files/29713758/rebased.patch";
-                hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
-              })
-              # Merge dependent PRs into the reviewed worktree with --include-pr.
-              # https://github.com/Mic92/nixpkgs-review/pull/562
-              (prev.fetchpatch {
-                url = "https://github.com/Mic92/nixpkgs-review/commit/1bf8762fcc5c3a3d8b5219ab340f4a3a83608f13.patch";
-                hash = "sha256-RQJvXwRLZ47vHi4VhuvKLk8UHYQJfo3SmzUsV9dpNR0=";
-              })
-            ];
-          });
-
-      # Support Kubernetes 1.36 and fix apiserver connection loss after an
-      # envoy load balancer container restart.
-      inherit (pkgsNixpkgsUnstable) kind;
-
       lolek =
         let
           lolekPackage = inputs.lolek.packages.${system}.lolek;
-          lolekYtDlp = pkgsNixpkgsUnstable.yt-dlp.overrideAttrs (old: {
+          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
               ../patches/yt-dlp-twitter-only-own-status-media.patch
             ];
@@ -267,8 +197,7 @@
         in
         lolekPackage.override { yt-dlp = lolekYtDlp; };
 
-      # Stable's 1.16 lacks keyboard wakeup and VNC updates for unchanged frames.
-      reframe = pkgsNixpkgsUnstable.reframe.overrideAttrs (old: {
+      reframe = prev.reframe.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Drop once upstream retries connector discovery after waking displays.
           # https://github.com/AlynxZhou/reframe/issues/42
