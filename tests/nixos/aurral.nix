@@ -1,5 +1,7 @@
-{ inputs, pkgs, ... }:
+{ inputs, ... }:
 let
+  # TODO(26.11): Use the suite's pkgs once it follows srvarr's release.
+  pkgs = inputs.self.nixosConfigurations.srvarr.pkgs;
   fixtures = ./aurral;
   inherit (pkgs) lib;
   lidarrApiKey = "lidarr-test-api-key";
