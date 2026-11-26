@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  options,
   paperlessModel,
   paperlessPackages,
   pkgs,
@@ -40,19 +39,10 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    # Proxmox nodes share this mixin but use an older Paperless module.
-    assertions = [
-      {
-        assertion = options.services.paperless ? extraPythonPackages;
-        message = "Paperless requires a NixOS module with Python plugin support.";
-      }
+    services.paperless.extraPythonPackages = ps: [
+      paperlessPackages.bootstrap
+      (ps.callPackage ./pkgs/paperless-llm-ocr { })
     ];
-    services.paperless = lib.optionalAttrs (options.services.paperless ? extraPythonPackages) {
-      extraPythonPackages = ps: [
-        paperlessPackages.bootstrap
-        (ps.callPackage ./pkgs/paperless-llm-ocr { })
-      ];
-    };
 
     systemd.services.paperless-bootstrap = {
       description = "Apply declarative Paperless users, API token and workflows";
