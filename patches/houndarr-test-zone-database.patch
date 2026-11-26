@@ -1,0 +1,37 @@
+diff --git a/tests/test_services/test_time_window.py b/tests/test_services/test_time_window.py
+--- a/tests/test_services/test_time_window.py
++++ b/tests/test_services/test_time_window.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ from datetime import time
++from zoneinfo import TZPATH
+ 
+ import pytest
+ 
+@@ -342,12 +343,12 @@
+ 
+ 
+ @pytest.fixture()
+-def _ignore_ambient_tzdir(monkeypatch: pytest.MonkeyPatch) -> None:
+-    """Hide any TZDIR the developer's machine exports; it silences the TZ check."""
+-    monkeypatch.delenv("TZDIR", raising=False)
++def _use_shared_zone_database(monkeypatch: pytest.MonkeyPatch) -> None:
++    """Make libc and zoneinfo resolve names from the same database."""
++    monkeypatch.setenv("TZDIR", TZPATH[0])
+ 
+ 
+-@pytest.mark.usefixtures("_ignore_ambient_tzdir")
++@pytest.mark.usefixtures("_use_shared_zone_database")
+ @pytest.mark.parametrize("tz", [None, "UTC", "America/New_York"])
+ def test_outside_window_row_calls_a_loaded_zone_local(tz: str | None) -> None:
+     with libc_timezone(tz):
+@@ -357,7 +358,7 @@
+     assert message == "Local time 03:15 is outside configured window 22:00-06:00"
+ 
+ 
+-@pytest.mark.usefixtures("_ignore_ambient_tzdir")
++@pytest.mark.usefixtures("_use_shared_zone_database")
+ def test_outside_window_row_names_a_tz_that_did_not_load() -> None:
+     with libc_timezone("Nowhere/Nope"):
+         reason, message = describe_outside_window(time(3, 15), _OVERNIGHT)
