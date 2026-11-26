@@ -32,7 +32,10 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ ebookConverterCli ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ ebookConverterCli ])
   ];
 
   preCheck = ''

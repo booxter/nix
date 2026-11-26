@@ -20,6 +20,7 @@ python313Packages.buildPythonApplication {
   };
 
   build-system = [ python313Packages.setuptools ];
+  pythonRelaxDeps = [ "html5-parser" ];
 
   dependencies = with python313Packages; [
     beautifulsoup4
