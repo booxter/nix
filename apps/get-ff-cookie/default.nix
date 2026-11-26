@@ -26,7 +26,10 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ gallery-dl ]}"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ gallery-dl ])
   ];
 
   preCheck = ''
