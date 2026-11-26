@@ -120,6 +120,7 @@ pkgs.testers.runNixOSTest {
 
   # A real mTLS endpoint supplies model discovery without downloading an LLM.
   nodes.ollama = {
+    environment.systemPackages = [ pkgs.curl ];
     networking.firewall.allowedTCPPorts = [ 443 ];
     services.nginx = {
       enable = true;

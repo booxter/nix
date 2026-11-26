@@ -16,6 +16,7 @@
     ./cache.nix
     ./container.nix
     ./database.nix
+    ./network.nix
     ./storage.nix
     ./subscriptions.nix
     ./web.nix

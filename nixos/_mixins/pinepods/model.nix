@@ -34,6 +34,9 @@ in
   cachePort = 6382;
   aiPort = 8100;
   ollamaTunnelPort = 11436;
+  containerNetwork = "podman";
+  containerSubnet = "10.88.0.0/16";
+  hostGateway = "10.88.0.1";
   downloadsDir = if claim == null then null else "${claim.mountPoint}/podcasts/pinepods";
   storageGroup =
     if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then

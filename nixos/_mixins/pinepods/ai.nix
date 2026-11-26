@@ -11,6 +11,7 @@ let
     aiPort
     aiProvider
     cfg
+    containerNetwork
     downloadsDir
     ollamaTunnelPort
     storageGroup
@@ -71,7 +72,7 @@ in
     ];
 
     virtualisation.oci-containers.containers = {
-      pinepods.environment.PINEPODS_AI_URL = "http://10.0.2.2:${toString aiPort}";
+      pinepods.environment.PINEPODS_AI_URL = "http://pinepods-ai:8100";
       pinepods-ai = {
         image = containerImage.ref;
         inherit (containerImage) imageFile;
@@ -84,10 +85,8 @@ in
           WHISPER_DEVICE = "cpu";
           WHISPER_COMPUTE_TYPE = "int8";
         };
-        # Both HTTP hops stay on this host; only the authenticated TLS tunnel
-        # crosses the network to frame. slirp exposes host loopback as 10.0.2.2.
         ports = [ "127.0.0.1:${toString aiPort}:8100" ];
-        networks = [ "slirp4netns:allow_host_loopback=true" ];
+        networks = [ containerNetwork ];
         volumes = [
           "${downloadsDir}:/opt/pinepods/downloads:ro"
           "/var/lib/pinepods-ai:/models:rw"

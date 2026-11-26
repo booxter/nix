@@ -28,6 +28,12 @@ base = "http://127.0.0.1:8040/api/data"
 machine.wait_until_succeeds(
     f"{api} {base}/ai_status | {JQ} -e '.available and .transcription_ready and .ad_removal_ready'"
 )
+
+# The private bridge must not expose either application listener to other hosts.
+ollama.succeed("getent hosts podcast-node")
+for port in (8040, 8100):
+    ollama.fail(f"curl --connect-timeout 2 --max-time 5 http://podcast-node:{port}/")
+
 settings = json.loads(machine.succeed(f"{api} {base}/ai_settings"))["settings"]
 assert settings["llm_backend"] == "remote", settings
 assert settings["llm_model"] == "test-model", settings
@@ -72,7 +78,12 @@ def check_subscription(podcast_id: int) -> None:
     assert result["auto_download"], (podcast_id, result)
 
 
-machine.succeed("systemctl start pinepods-subscriptions.service")
+def enforce_subscriptions() -> None:
+    status, _ = machine.execute("systemctl start pinepods-subscriptions.service")
+    assert status == 0, machine.succeed("journalctl -u pinepods-subscriptions.service --no-pager")
+
+
+enforce_subscriptions()
 check_subscription(101)
 
 # A later run picks up new subscriptions and restores the approval requirement.
@@ -89,7 +100,7 @@ machine.succeed(
     f"{api} -H 'Content-Type: application/json' -d {shlex.quote(payload)}"
     f" {base}/adjust_ad_skip_auto_activate"
 )
-machine.succeed("systemctl start pinepods-subscriptions.service")
+enforce_subscriptions()
 check_subscription(101)
 check_subscription(103)
 
