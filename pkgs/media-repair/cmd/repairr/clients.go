@@ -8,6 +8,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/downloadsource"
 	"github.com/booxter/nix-config/media-repair/internal/filesystem"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
+	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
@@ -26,25 +27,16 @@ func (wallClock) Now() time.Time {
 	return time.Now().UTC()
 }
 
-func (configuration config) services(
+// radarrInspection sets up the queue and file readers shared by the daemon and the one-shot scan.
+func (configuration config) radarrInspection(
 	httpClient *http.Client,
-	planner *plannerclient.Client,
 	media *workerclient.Client,
-) (*repairradarr.Adapter, *repairlidarr.Adapter, error) {
+) (*radarr.Client, *inspection.Inspector, error) {
 	radarrKey, err := servarr.ReadAPIKey("Radarr", configuration.Radarr.APIKeyFile)
 	if err != nil {
 		return nil, nil, err
 	}
 	radarrClient, err := radarr.New(configuration.Radarr.URL, radarrKey, httpClient)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	lidarrKey, err := servarr.ReadAPIKey("Lidarr", configuration.Lidarr.APIKeyFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	lidarrClient, err := lidarr.New(configuration.Lidarr.URL, lidarrKey, httpClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,6 +64,27 @@ func (configuration config) services(
 		return nil, nil, err
 	}
 
+	return radarrClient, inspector, nil
+}
+
+// newRepairServices builds one repair handler for Radarr jobs and one for Lidarr jobs.
+// Both use the same planner.
+func (configuration config) newRepairServices(
+	httpClient *http.Client,
+	radarrClient *radarr.Client,
+	inspector *inspection.Inspector,
+	planner *plannerclient.Client,
+	media *workerclient.Client,
+) (repairServices, error) {
+	lidarrKey, err := servarr.ReadAPIKey("Lidarr", configuration.Lidarr.APIKeyFile)
+	if err != nil {
+		return nil, err
+	}
+	lidarrClient, err := lidarr.New(configuration.Lidarr.URL, lidarrKey, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
 	radarrAdapter := &repairradarr.Adapter{
 		Client:        radarrClient,
 		Inspector:     inspector,
@@ -85,9 +98,10 @@ func (configuration config) services(
 		Inspector: lidarrrepair.NewEvidenceCollector(lidarrClient, media),
 		Planner:   planner,
 	}
-	return radarrAdapter, lidarrAdapter, nil
+	return repairServices{jobs.Radarr: radarrAdapter, jobs.Lidarr: lidarrAdapter}, nil
 }
 
+// downloads sets up the client lookup used for torrent and Usenet queue entries.
 func (configuration config) downloads(httpClient *http.Client) (*downloadsource.Resolver, error) {
 	requestTimeout := time.Duration(configuration.Timeouts.RequestSeconds) * time.Second
 	torrents, err := transmission.New(configuration.TransmissionURL, requestTimeout, httpClient)

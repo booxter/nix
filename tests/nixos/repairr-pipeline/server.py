@@ -1,0 +1,111 @@
+"""Radarr lists two downloads. Only the completed movie is available in SABnzbd."""
+
+import json
+import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
+
+VIDEO = Path(sys.argv[1])
+COMPLETED_ID = "SABnzbd_nzo_complete"
+UNFINISHED_ID = "SABnzbd_nzo_incomplete"
+MOVIE = {"id": 42, "tmdbId": 123456, "title": "Example Movie", "year": 2026}
+
+
+def page(*records: dict[str, object]) -> dict[str, object]:
+    return {"page": 1, "pageSize": 250, "totalRecords": len(records), "records": records}
+
+
+def radarr_queue() -> dict[str, object]:
+    usenet = {"downloadClient": "SABnzbd", "protocol": "usenet", "statusMessages": []}
+    blocked_import = {
+        **usenet,
+        "id": 101,
+        "movieId": 42,
+        "downloadId": COMPLETED_ID,
+        "title": VIDEO.parent.name,
+        "outputPath": str(VIDEO.parent),
+        "status": "completed",
+        "size": VIDEO.stat().st_size,
+        "sizeleft": 0,
+        "trackedDownloadStatus": "warning",
+        "trackedDownloadState": "importBlocked",
+    }
+    active_download = {
+        **usenet,
+        "id": 102,
+        "movieId": 43,
+        "downloadId": UNFINISHED_ID,
+        "title": "Unfinished Movie",
+        "outputPath": str(VIDEO.parent.parent / "Unfinished.Movie"),
+        "status": "downloading",
+        "size": 2000,
+        "sizeleft": 1000,
+        "trackedDownloadStatus": "ok",
+        "trackedDownloadState": "downloading",
+    }
+    return page(blocked_import, active_download)
+
+
+def completed_download() -> dict[str, object]:
+    return {
+        "nzo_id": COMPLETED_ID,
+        "name": VIDEO.parent.name,
+        "status": "Completed",
+        "storage": str(VIDEO),
+        "loaded": False,
+        "time_added": 1788549636,
+        "completed": 1788552041,
+        "bytes": VIDEO.stat().st_size,
+        "category": "movies",
+    }
+
+
+def manual_import() -> dict[str, object]:
+    return {
+        "movie": {"id": 42},
+        "downloadId": COMPLETED_ID,
+        "path": str(VIDEO),
+        "relativePath": VIDEO.name,
+        "size": VIDEO.stat().st_size,
+        "languages": [],
+        "rejections": [],
+        "quality": {"quality": {"id": 1, "name": "HDTV-720p"}},
+    }
+
+
+def response_for(path: str, query: dict[str, list[str]]) -> object | None:
+    if path == "/api/v3/queue":
+        return radarr_queue()
+    if path == "/api/v3/movie/42":
+        return MOVIE
+    if path == "/api/v3/history" and query.get("movieIds") == ["42"]:
+        return page()
+    if path == "/api/v3/manualimport" and query.get("movieId") == ["42"]:
+        return [manual_import()]
+
+    if path == "/api" and query.get("nzo_ids") == [COMPLETED_ID]:
+        return {"history": {"slots": [completed_download()]}}
+    if path == "/api" and query.get("nzo_ids") == [UNFINISHED_ID]:
+        return {"history": {"slots": []}}
+    return None
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        request = urlsplit(self.path)
+        payload = response_for(request.path, parse_qs(request.query))
+        if payload is None:
+            # Movie 43 has no collection endpoints. Fetching its facts would fail the scan.
+            self.send_error(404)
+            return
+
+        data = json.dumps(payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+
+HTTPServer(("127.0.0.1", 7878), Handler).serve_forever()

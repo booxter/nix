@@ -2,7 +2,6 @@ package inspection
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -52,6 +51,8 @@ type Inspector struct {
 	dependencies Dependencies
 }
 
+// New requires readers for the movie, download, and files. Archive extraction
+// and disc inspection are optional.
 func New(dependencies Dependencies) (*Inspector, error) {
 	switch {
 	case dependencies.Clock == nil:
@@ -71,6 +72,8 @@ func New(dependencies Dependencies) (*Inspector, error) {
 	}
 }
 
+// The daemon calls Inspect for one queue entry at a time. It skips ineligible
+// entries before contacting the download client. All reads share one deadline.
 func (inspector *Inspector) Inspect(
 	ctx context.Context,
 	record controller.RadarrQueueRecord,
@@ -88,128 +91,67 @@ func (inspector *Inspector) Inspect(
 	if !assessment.Eligible() {
 		return casebuilder.Assembly{}, &IneligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
 	}
-	return inspector.inspectRecord(ctx, collectionContext, record)
-}
-
-func (inspector *Inspector) inspectRecord(
-	callerContext context.Context,
-	collectionContext context.Context,
-	record controller.RadarrQueueRecord,
-) (casebuilder.Assembly, error) {
-	if record.MovieID == nil {
-		movieID, found, err := inspector.dependencies.Radarr.RecoverMovieID(
-			collectionContext,
-			record.DownloadID,
-		)
-		if err != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("recover Radarr movie identity: %w", err)
-		}
-		if found {
-			record.MovieID = &movieID
-		}
-	}
-
-	download, found, err := inspector.dependencies.Downloads.Resolve(collectionContext, record)
+	entry := ResolvedEntry{record: record, sourceSupported: true}
+	entry, err := inspector.lookUpMovieAndDownload(collectionContext, entry)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read download: %w", err)
+		return casebuilder.Assembly{}, err
 	}
-	if !found {
-		return casebuilder.Assembly{}, fmt.Errorf(
-			"download for queue record %d was not found",
-			record.ID,
-		)
+	if entry.source == nil {
+		return casebuilder.Assembly{}, fmt.Errorf("download for queue record %d was not found", record.ID)
 	}
-	correlation := controller.CorrelateDownload(record, download)
-	if !correlation.Eligible() {
+	if !entry.source.Eligible() {
 		return casebuilder.Assembly{}, fmt.Errorf(
 			"queue record %d has an ineligible download correlation: %v",
-			record.ID,
-			correlation.RejectionReasons,
+			record.ID, entry.source.RejectionReasons,
 		)
 	}
+	return inspector.buildCase(ctx, collectionContext, *entry.source)
+}
 
-	var movie *controller.RadarrMovie
-	var history []controller.RadarrHistoryEvent
-	var manualImports []controller.RadarrManualImport
-	if record.MovieID != nil && *record.MovieID > 0 {
-		movieID := *record.MovieID
-		observedMovie, readErr := inspector.dependencies.Radarr.ReadMovie(collectionContext, movieID)
-		if readErr != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("read Radarr movie: %w", readErr)
-		}
-		movie = &observedMovie
-		history, readErr = inspector.dependencies.Radarr.ReadHistory(
-			collectionContext,
-			movieID,
-			record.DownloadID,
-		)
-		if readErr != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", readErr)
-		}
+// Collect builds a planner case for an entry that passed the pipeline's checks.
+// Its time limit starts after the movie and download lookup.
+func (inspector *Inspector) Collect(ctx context.Context, entry ResolvedEntry) (casebuilder.Assembly, error) {
+	if entry.source == nil {
+		return casebuilder.Assembly{}, fmt.Errorf("queue record %d has no resolved download", entry.record.ID)
 	}
-	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
+	collectionContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
+	defer cancel()
+	return inspector.buildCase(ctx, collectionContext, *entry.source)
+}
+
+// buildCase combines Radarr's records with the files on disk so each option
+// offered to the planner refers to files Repairr actually inspected.
+func (inspector *Inspector) buildCase(
+	callerContext context.Context,
+	collectionContext context.Context,
+	correlation controller.DownloadCorrelation,
+) (casebuilder.Assembly, error) {
+	record := correlation.Radarr
+	library, err := inspector.collectMovie(collectionContext, record)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("inventory download files: %w", err)
+		return casebuilder.Assembly{}, err
 	}
-	inspectionRoot := correlation.DownloadRoot
-	var probes []casebuilder.FileProbe
-	if inspector.dependencies.Archives != nil {
-		materialized, found, materializeErr := inspector.dependencies.Archives.MaterializeVideo(
-			collectionContext, record.ID, inventory,
-		)
-		if materializeErr != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("materialize archive video: %w", materializeErr)
-		}
-		if found {
-			inspectionRoot = materialized.Root
-			inventory = materialized.Inventory
-			probes = materialized.Probes
-		}
+	source, err := inspector.collectSource(callerContext, collectionContext, correlation)
+	if err != nil {
+		return casebuilder.Assembly{}, err
 	}
-	if probes == nil {
-		probes, err = inspector.collectProbes(callerContext, collectionContext, inventory)
-		if err != nil {
-			return casebuilder.Assembly{}, err
-		}
+	imports, err := inspector.collectImports(collectionContext, record, source.folder)
+	if err != nil {
+		return casebuilder.Assembly{}, err
 	}
-	if movie != nil {
-		manualImports, err = inspector.dependencies.Radarr.ReadManualImports(
-			collectionContext,
-			controller.RadarrManualImportQuery{
-				MovieID: movie.ID, DownloadID: record.DownloadID, Folder: inspectionRoot,
-			},
-		)
-		if err != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", err)
-		}
-	}
-	var playlists []mkvmerge.Candidate
-	if inspector.dependencies.Playlists != nil {
-		playlists, err = mkvmerge.ListFeaturePlaylists(
-			collectionContext, inventory, inspector.dependencies.Playlists,
-		)
-		if err != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("identify Blu-ray playlists: %w", err)
-		}
-	}
-	var dvdTitles []dvdvideo.Candidate
-	if inspector.dependencies.DVDs != nil {
-		dvdTitles, err = dvdvideo.ListRemuxableTitles(
-			collectionContext, inventory, inspector.dependencies.DVDs,
-		)
-		if err != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("identify DVD titles: %w", err)
-		}
+	playlists, dvdTitles, err := inspector.collectDiscChoices(collectionContext, source.inventory)
+	if err != nil {
+		return casebuilder.Assembly{}, err
 	}
 
 	assembly, err := casebuilder.Assemble(casebuilder.Observation{
 		ObservedAt:      inspector.dependencies.Clock.Now(),
 		Correlation:     correlation,
-		Movie:           movie,
-		History:         history,
-		ManualImports:   manualImports,
-		Inventory:       inventory,
-		Probes:          probes,
+		Movie:           library.movie,
+		History:         library.history,
+		ManualImports:   imports,
+		Inventory:       source.inventory,
+		Probes:          source.probes,
 		BluRayPlaylists: playlists,
 		DVDTitles:       dvdTitles,
 	})
@@ -219,72 +161,42 @@ func (inspector *Inspector) inspectRecord(
 	return assembly, nil
 }
 
-func (inspector *Inspector) collectProbes(
-	callerContext context.Context,
-	collectionContext context.Context,
-	inventory controller.FileInventory,
-) ([]casebuilder.FileProbe, error) {
-	paths := make(map[controller.FileID]string, len(inventory.Paths))
-	for _, mapping := range inventory.Paths {
-		if _, duplicate := paths[mapping.FileID]; duplicate {
-			return nil, fmt.Errorf("inventory contains duplicate path for file %q", mapping.FileID)
-		}
-		paths[mapping.FileID] = mapping.AbsolutePath
-	}
+type movieFacts struct {
+	movie   *controller.RadarrMovie
+	history []controller.RadarrHistoryEvent
+}
 
-	assessments := controller.ClassifyMediaFiles(inventory)
-	probes := make([]casebuilder.FileProbe, 0, len(assessments))
-	for _, assessment := range assessments {
-		if !assessment.ProbeCandidate() {
-			probes = append(probes, casebuilder.FileProbe{
-				FileID: assessment.File.ID,
-				Outcome: controller.UncollectedMediaProbe(
-					controller.MediaProbeNotCandidate,
-				),
-			})
-			continue
-		}
-		if err := collectionContext.Err(); err != nil {
-			if callerErr := callerContext.Err(); callerErr != nil {
-				return nil, callerErr
-			}
-			if !errors.Is(err, context.DeadlineExceeded) {
-				return nil, err
-			}
-			probes = append(probes, casebuilder.FileProbe{
-				FileID: assessment.File.ID,
-				Outcome: controller.UncollectedMediaProbe(
-					controller.MediaProbeCollectionLimit,
-				),
-			})
-			continue
-		}
-		path, ok := paths[assessment.File.ID]
-		if !ok {
-			return nil, fmt.Errorf("candidate file %q has no local path", assessment.File.ID)
-		}
-		outcome, err := inspector.dependencies.Probes.Probe(collectionContext, controller.MediaProbeTarget{
-			AbsolutePath: path,
-			Fingerprint:  assessment.File.Fingerprint,
-		})
-		if err != nil {
-			if callerErr := callerContext.Err(); callerErr != nil {
-				return nil, callerErr
-			}
-			if errors.Is(collectionContext.Err(), context.DeadlineExceeded) {
-				probes = append(probes, casebuilder.FileProbe{
-					FileID: assessment.File.ID,
-					Outcome: controller.UncollectedMediaProbe(
-						controller.MediaProbeCollectionLimit,
-					),
-				})
-				continue
-			}
-			return nil, fmt.Errorf("probe candidate file %q: %w", assessment.File.ID, err)
-		}
-		probes = append(probes, casebuilder.FileProbe{
-			FileID: assessment.File.ID, Outcome: outcome,
-		})
+// collectMovie gets the library record and this download's history for the case.
+func (inspector *Inspector) collectMovie(ctx context.Context, record controller.RadarrQueueRecord) (movieFacts, error) {
+	if record.MovieID == nil || *record.MovieID <= 0 {
+		return movieFacts{}, nil
 	}
-	return probes, nil
+	movieID := *record.MovieID
+	movie, err := inspector.dependencies.Radarr.ReadMovie(ctx, movieID)
+	if err != nil {
+		return movieFacts{}, fmt.Errorf("read Radarr movie: %w", err)
+	}
+	history, err := inspector.dependencies.Radarr.ReadHistory(ctx, movieID, record.DownloadID)
+	if err != nil {
+		return movieFacts{}, fmt.Errorf("read Radarr history: %w", err)
+	}
+	return movieFacts{movie: &movie, history: history}, nil
+}
+
+// collectImports asks Radarr which files it sees in the inspected folder for this movie.
+func (inspector *Inspector) collectImports(
+	ctx context.Context,
+	record controller.RadarrQueueRecord,
+	folder string,
+) ([]controller.RadarrManualImport, error) {
+	if record.MovieID == nil || *record.MovieID <= 0 {
+		return nil, nil
+	}
+	imports, err := inspector.dependencies.Radarr.ReadManualImports(ctx, controller.RadarrManualImportQuery{
+		MovieID: *record.MovieID, DownloadID: record.DownloadID, Folder: folder,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read Radarr manual imports: %w", err)
+	}
+	return imports, nil
 }
