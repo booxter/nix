@@ -74,6 +74,7 @@
     ];
 
     virtualisation.containers.enable = true;
+    systemd.tpm2.enable = lib.mkDefault false;
     time.timeZone = config.host.site.timeZone;
 
     environment.systemPackages = with pkgs; [
