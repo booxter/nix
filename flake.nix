@@ -9,6 +9,9 @@
     stylix-2611.url = "github:nix-community/stylix/master";
     stylix-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
     stylix-2611.inputs.nur.follows = "nur";
+    # TODO(26.11): Fold this into nixvim when all editor hosts use 26.11.
+    nixvim-2611.url = "github:nix-community/nixvim/main";
+    nixvim-2611.inputs.nixpkgs.follows = "nixpkgs-2611";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
     nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -138,6 +141,7 @@
             // lib.optionalAttrs on2611 {
               nixpkgs = inputs.nixpkgs-2611;
               home-manager = inputs.home-manager-2611;
+              nixvim = inputs.nixvim-2611;
               stylix = inputs.stylix-2611;
             };
           # Keep node modules and base packages on Proxmox's tested nixpkgs pin.
