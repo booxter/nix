@@ -72,18 +72,20 @@ func (configuration config) services(
 		return nil, nil, err
 	}
 
-	return &repairradarr.Adapter{
-			Client:        radarrClient,
-			Inspector:     inspector,
-			Media:         media,
-			Planner:       planner,
-			Stabilization: queueInterval,
-			Now:           wallClock{}.Now,
-		}, &repairlidarr.Adapter{
-			Client:    lidarrClient,
-			Inspector: lidarrrepair.NewEvidenceCollector(lidarrClient, media),
-			Planner:   planner,
-		}, nil
+	radarrAdapter := &repairradarr.Adapter{
+		Client:        radarrClient,
+		Inspector:     inspector,
+		Media:         media,
+		Planner:       planner,
+		Stabilization: queueInterval,
+		Now:           wallClock{}.Now,
+	}
+	lidarrAdapter := &repairlidarr.Adapter{
+		Client:    lidarrClient,
+		Inspector: lidarrrepair.NewEvidenceCollector(lidarrClient, media),
+		Planner:   planner,
+	}
+	return radarrAdapter, lidarrAdapter, nil
 }
 
 func (configuration config) downloads(httpClient *http.Client) (*downloadsource.Resolver, error) {
