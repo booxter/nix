@@ -146,10 +146,7 @@ func (adapter *Adapter) importCommand(
 	authorized executioncheck.Authorization,
 ) (controller.RadarrManualImportCommand, error) {
 	if authorized.ManualImport != nil {
-		return controller.RadarrManualImportCommand{
-			ImportMode: authorized.ManualImport.ImportMode,
-			File:       authorized.ManualImport.File,
-		}, nil
+		return *authorized.ManualImport, nil
 	}
 
 	paths := make(map[controller.FileID]string)

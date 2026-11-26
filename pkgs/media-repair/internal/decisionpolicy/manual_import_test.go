@@ -290,7 +290,7 @@ func TestValidateManualImportReportsFirstRejection(t *testing.T) {
 
 func assertManualImportRejected(
 	t *testing.T,
-	authorized *AuthorizedManualImport,
+	authorized *controller.RadarrManualImportCommand,
 	reason, want ManualImportRejectionReason,
 ) {
 	t.Helper()

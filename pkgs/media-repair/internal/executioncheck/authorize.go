@@ -3,6 +3,7 @@ package executioncheck
 import (
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 )
 
@@ -17,7 +18,7 @@ const (
 
 type Authorization struct {
 	Join         *decisionpolicy.AuthorizedJoin
-	ManualImport *decisionpolicy.AuthorizedManualImport
+	ManualImport *controller.RadarrManualImportCommand
 	Remux        *decisionpolicy.AuthorizedRemux
 	DVD          *decisionpolicy.AuthorizedDVDSelection
 }

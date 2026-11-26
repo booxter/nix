@@ -34,16 +34,11 @@ const (
 	ManualImportRuntimeMismatch       ManualImportRejectionReason = "runtime_mismatch"
 )
 
-type AuthorizedManualImport struct {
-	ImportMode controller.RadarrImportMode
-	File       controller.RadarrManualImportCommandFile
-}
-
 func ValidateManualImport(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 	policy RuntimePolicy,
-) (*AuthorizedManualImport, ManualImportRejectionReason) {
+) (*controller.RadarrManualImportCommand, ManualImportRejectionReason) {
 	if decision.Kind != contracts.ActionManualImportFile || decision.ManualImportFile == nil ||
 		string(decision.ManualImportFile.Action) != string(contracts.ActionManualImportFile) {
 		return nil, ManualImportWrongDecisionAction
@@ -124,7 +119,7 @@ func ValidateManualImport(
 		return nil, ManualImportRuntimeMismatch
 	}
 
-	return &AuthorizedManualImport{
+	return &controller.RadarrManualImportCommand{
 		ImportMode: binding.ImportMode,
 		File:       cloneManualImportCommand(binding.File),
 	}, ""
