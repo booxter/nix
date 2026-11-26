@@ -3,13 +3,11 @@ package mediajoin
 import (
 	"context"
 	"crypto/sha256"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -90,8 +88,9 @@ func TestMixedTimeBasesPreserveEveryScene(t *testing.T) {
 
 	for index, timescale := range []int{12800, 25, 12800} {
 		path := filepath.Join(directory, strconv.Itoa(index)+".mp4")
+		color := []string{"red", "green", "blue"}[index]
 		command := exec.Command(toolPath(t, "ffmpeg"),
-			"-v", "error", "-f", "lavfi", "-i", "testsrc2=s=32x32:r=25:d=2",
+			"-v", "error", "-f", "lavfi", "-i", "color="+color+":s=32x32:r=25:d=2",
 			"-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:d=2",
 			"-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-bf", "2",
 			"-c:a", "aac", "-video_track_timescale", strconv.Itoa(timescale), path,
@@ -113,35 +112,27 @@ func TestMixedTimeBasesPreserveEveryScene(t *testing.T) {
 		timelines = append(timelines, timeline)
 	}
 
-	// A mixed-time-base middle scene can collapse while later scenes restore
-	// a plausible total duration.
-	for _, part := range parts {
-		if _, err := part.Seek(0, io.SeekStart); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	broken := openTestFile(t, filepath.Join(directory, "broken.mp4"), os.O_CREATE|os.O_EXCL|os.O_RDWR)
-	command := exec.Command(toolPath(t, "ffmpeg"),
-		"-v", "error", "-f", "concat", "-safe", "0", "-protocol_whitelist", "fd,pipe",
-		"-i", "pipe:0", "-map", "0", "-c", "copy", "-f", "mp4", "-fd", "6", "fd:",
-	)
-	command.Stdin = strings.NewReader(concatManifest(len(parts), nil))
-	command.ExtraFiles = append(append([]*os.File(nil), parts...), broken)
-	if output, err := command.CombinedOutput(); err != nil {
-		t.Fatalf("reproduce corrupt join: %v: %s", err, output)
-	}
-	badTimeline, err := prober.Timeline(ctx, broken)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := joinverification.ValidateTimeline(timelines, badTimeline); err == nil {
-		t.Fatal("historical corrupt join passed timing validation")
-	}
-
 	output := openTestFile(t, filepath.Join(directory, "repaired.mp4"), os.O_CREATE|os.O_EXCL|os.O_RDWR)
 	if _, err := testRunner(t, time.Minute).Join(ctx, parts, output, workercontracts.OutputContainerMP4); err != nil {
 		t.Fatal(err)
+	}
+	joined, err := prober.Timeline(ctx, output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := joinverification.ValidateTimeline(timelines, joined); err != nil {
+		t.Fatalf("joined scenes lost packet timing: %v", err)
+	}
+	for index, at := range []string{"0.5", "2.5", "4.5"} {
+		command := exec.Command(toolPath(t, "ffmpeg"), "-v", "error", "-ss", at,
+			"-i", output.Name(), "-frames:v", "1", "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1")
+		pixel, err := command.Output()
+		if err != nil || len(pixel) != 3 {
+			t.Fatalf("read scene %d: pixel = %v, error = %v", index+1, pixel, err)
+		}
+		if pixel[index] < 80 || pixel[(index+1)%3] > 30 || pixel[(index+2)%3] > 30 {
+			t.Fatalf("scene %d has unexpected color: %v", index+1, pixel)
+		}
 	}
 	for index, part := range parts {
 		data, err := os.ReadFile(part.Name())

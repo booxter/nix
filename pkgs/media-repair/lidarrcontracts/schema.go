@@ -27,14 +27,6 @@ var decisionSchemaV3 = sync.OnceValues(func() (*jsonschema.Schema, error) {
 	return compileSchema(decisionSchemaV3File, decisionSchemaV3Location)
 })
 
-func DecisionSchemaJSON() ([]byte, error) {
-	data, err := schemaFiles.ReadFile(decisionSchemaV3File)
-	if err != nil {
-		return nil, fmt.Errorf("read embedded Lidarr decision schema: %w", err)
-	}
-	return data, nil
-}
-
 func compileSchema(fileName, location string) (*jsonschema.Schema, error) {
 	data, err := schemaFiles.ReadFile(fileName)
 	if err != nil {

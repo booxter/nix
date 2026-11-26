@@ -29,40 +29,6 @@ func EncodeDVDIdentifyResponse(response DVDIdentifyResponseV1) ([]byte, error) {
 	)
 }
 
-func EncodeDVDRemuxRequest(request DVDRemuxRequestV1) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("encode DVD remux request: %w", err)
-	}
-	if err := validateMessage(data, MaxDVDRemuxRequestBytes, "DVD remux request",
-		dvdRemuxRequestSchema); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func EncodeDVDRemuxResponse(response DVDRemuxResponseV1) ([]byte, error) {
-	return encodeOperationResponse(response.Kind, response.Success, response.Failure,
-		"DVD remux response", MaxDVDRemuxResponseBytes, dvdRemuxResponseSchema)
-}
-
-func EncodeDVDPublishRequest(request DVDPublishRequestV1) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("encode DVD publish request: %w", err)
-	}
-	if err := validateMessage(data, MaxDVDPublishRequestBytes, "DVD publish request",
-		dvdPublishRequestSchema); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func EncodeDVDPublishResponse(response DVDPublishResponseV1) ([]byte, error) {
-	return encodeOperationResponse(response.Kind, response.Success, response.Failure,
-		"DVD publish response", MaxDVDPublishResponseBytes, dvdPublishResponseSchema)
-}
-
 func EncodeBlurayIdentifyRequest(request BlurayIdentifyRequestV1) ([]byte, error) {
 	data, err := json.Marshal(request)
 	if err != nil {
@@ -87,48 +53,6 @@ func EncodeBlurayIdentifyResponse(response BlurayIdentifyResponseV1) ([]byte, er
 		"Blu-ray identification response",
 		MaxBlurayIdentifyResponseBytes,
 		blurayIdentifyResponseSchema,
-	)
-}
-
-func EncodeBlurayRemuxRequest(request BlurayRemuxRequestV1) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("encode Blu-ray remux request: %w", err)
-	}
-	if err := validateMessage(
-		data, MaxBlurayRemuxRequestBytes, "Blu-ray remux request", blurayRemuxRequestSchema,
-	); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func EncodeBlurayRemuxResponse(response BlurayRemuxResponseV1) ([]byte, error) {
-	return encodeOperationResponse(
-		response.Kind, response.Success, response.Failure,
-		"Blu-ray remux response", MaxBlurayRemuxResponseBytes, blurayRemuxResponseSchema,
-	)
-}
-
-func EncodeBlurayPublishRequest(request BlurayPublishRequestV1) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("encode Blu-ray publish request: %w", err)
-	}
-	if err := validateMessage(
-		data, MaxBlurayPublishRequestBytes, "Blu-ray publish request",
-		blurayPublishRequestSchema,
-	); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func EncodeBlurayPublishResponse(response BlurayPublishResponseV1) ([]byte, error) {
-	return encodeOperationResponse(
-		response.Kind, response.Success, response.Failure,
-		"Blu-ray publish response", MaxBlurayPublishResponseBytes,
-		blurayPublishResponseSchema,
 	)
 }
 
@@ -178,85 +102,6 @@ func EncodeProbeResponse(response ProbeResponseV1) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
-}
-
-func EncodeStageJoinRequest(request StageJoinRequestV1) ([]byte, error) {
-	return encodeJoinRequest(request, "stage join request")
-}
-
-func EncodePublishRequest(request PublishRequestV1) ([]byte, error) {
-	return encodeJoinRequest(request, "publish request")
-}
-
-func EncodeDiscardRequest(request DiscardRequestV1) ([]byte, error) {
-	return encodeJoinRequest(request, "discard request")
-}
-
-func EncodeInspectJoinRequest(request InspectJoinRequestV1) ([]byte, error) {
-	return encodeJoinRequest(request, "inspect join request")
-}
-
-func EncodeStageJoinResponse(response StageJoinResponseV1) ([]byte, error) {
-	return encodeJoinResponse(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		"stage join response",
-	)
-}
-
-func EncodePublishResponse(response PublishResponseV1) ([]byte, error) {
-	return encodeJoinResponse(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		"publish response",
-	)
-}
-
-func EncodeDiscardResponse(response DiscardResponseV1) ([]byte, error) {
-	return encodeJoinResponse(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		"discard response",
-	)
-}
-
-func EncodeInspectJoinResponse(response InspectJoinResponseV1) ([]byte, error) {
-	return encodeJoinResponse(
-		response.Kind,
-		response.Success,
-		response.Failure,
-		"inspect join response",
-	)
-}
-
-func encodeJoinRequest(request any, name string) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("encode %s: %w", name, err)
-	}
-	if err := validateMessage(
-		data,
-		MaxJoinRequestBytes,
-		name,
-		joinRequestSchema,
-	); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func encodeJoinResponse[S any, F any](
-	kind ProbeResponseKind,
-	success *S,
-	failure *F,
-	name string,
-) ([]byte, error) {
-	return encodeOperationResponse(
-		kind, success, failure, name, MaxJoinResponseBytes, joinResponseSchema,
-	)
 }
 
 func encodeOperationResponse[S any, F any](

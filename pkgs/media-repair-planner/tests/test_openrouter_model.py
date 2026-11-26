@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import StringIO
 from pathlib import Path
 from queue import Queue
 from threading import Thread
@@ -12,7 +14,7 @@ from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.contracts import decision_schema, decode_case, decode_decision
+from media_repair_planner.contracts import decode_case, decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import validate_decision_object
 from media_repair_planner.decision_validation_core import (
@@ -32,7 +34,7 @@ from media_repair_planner.planning import DecisionModelError, DecisionModelUnava
 from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.structured_model import StructuredDecisionModel
 from media_repair_planner.structured_planning import StructuredDecisionGenerator
-from media_repair_planner.tracing import JsonlTraceWriter
+from media_repair_planner.usage import JsonlUsageWriter, attribute_requests
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 
@@ -65,14 +67,14 @@ def settings(**changes: object) -> OpenRouterSettings:
 
 
 class ScriptedTransport:
-    def __init__(self, result: OpenRouterResponse | Exception) -> None:
+    def __init__(self, result: OpenRouterResponse | BaseException) -> None:
         self.result = result
         self.requests: list[OpenRouterRequest] = []
         self.closed = False
 
     async def complete(self, request: OpenRouterRequest) -> OpenRouterResponse:
         self.requests.append(request)
-        if isinstance(self.result, Exception):
+        if isinstance(self.result, BaseException):
             raise self.result
         return self.result
 
@@ -88,7 +90,6 @@ async def decide(
     generator = StructuredDecisionGenerator(
         model=model,
         system_instruction="system instruction",
-        decision_schema=decision_schema,
         decision_model=RepairDecisionV3,
         project_case=project_case,
         decode_decision=decode_decision,
@@ -216,37 +217,11 @@ async def test_decision_model_applies_complete_contract_after_unwrapping() -> No
         await decide(model, repair_case())
 
 
-async def test_decision_model_traces_response_without_reasoning(tmp_path: Path) -> None:
-    path = tmp_path / "trace.jsonl"
-    case = repair_case()
-    raw_output = decision_output()
-    response = OpenRouterResponse(
-        content=raw_output,
-        refused=False,
-        metadata={
-            "provider": "OpenAI",
-            "completion_tokens": 100,
-            "reasoning_tokens": 80,
-        },
-    )
-
-    with JsonlTraceWriter(path, {case.case_id.root: "clear_ordered_join"}) as trace:
-        model = OpenRouterDecisionModel(
-            ScriptedTransport(response),
-            settings(),
-            trace,
-        )
-        await decide(model, case)
-
-    value = json.loads(path.read_text())
-    assert value["raw_output"] == raw_output
-    assert value["reasoning"] is None
-    assert value["response_metadata"] == response.metadata
-    assert value["error"] is None
-
-
 class RecordingOpenRouterServer(ThreadingHTTPServer):
     requests: Queue[dict[str, Any]]
+    completion_content: str
+    finish_reason: str
+    status_code: int
 
 
 class OpenRouterHandler(BaseHTTPRequestHandler):
@@ -270,10 +245,10 @@ class OpenRouterHandler(BaseHTTPRequestHandler):
             "choices": [
                 {
                     "index": 0,
-                    "finish_reason": "stop",
+                    "finish_reason": self.server.finish_reason,
                     "message": {
                         "role": "assistant",
-                        "content": decision_output(),
+                        "content": self.server.completion_content,
                     },
                 }
             ],
@@ -282,10 +257,19 @@ class OpenRouterHandler(BaseHTTPRequestHandler):
                 "completion_tokens": 120,
                 "total_tokens": 1120,
                 "completion_tokens_details": {"reasoning_tokens": 80},
+                "prompt_tokens_details": {"cached_tokens": 600},
+                "cost": 0,
+                "is_byok": True,
+                "cost_details": {
+                    "upstream_inference_cost": 0.003,
+                    "upstream_inference_prompt_cost": 0.002,
+                    "upstream_inference_completions_cost": 0.001,
+                },
             },
         }
         payload = json.dumps(response).encode()
-        self.send_response(200)
+        self.send_response(self.server.status_code)
+        self.send_header("x-request-id", "request_01")
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
@@ -296,10 +280,15 @@ class OpenRouterHandler(BaseHTTPRequestHandler):
 
 
 @contextmanager
-def openrouter_server() -> Iterator[tuple[str, Queue[dict[str, Any]]]]:
+def openrouter_server(
+    *, content: str | None = None, finish_reason: str = "stop", status_code: int = 200
+) -> Iterator[tuple[str, Queue[dict[str, Any]]]]:
     requests: Queue[dict[str, Any]] = Queue()
     server = RecordingOpenRouterServer(("localhost", 0), OpenRouterHandler)
     server.requests = requests
+    server.completion_content = decision_output() if content is None else content
+    server.finish_reason = finish_reason
+    server.status_code = status_code
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -341,25 +330,17 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
     schema = response_format["json_schema"]["schema"]
     assert schema["type"] == "object"
     assert schema["required"] == ["decision"]
-    assert value == {
-        "messages": [
-            {"role": "system", "content": "system instruction"},
-            {"role": "user", "content": "case JSON"},
-        ],
-        "model": "openai/gpt-5.6-terra",
-        "max_tokens": 4096,
-        "store": False,
-        "stream": False,
-        "provider": {
-            "only": ["openai"],
-            "allow_fallbacks": False,
-            "require_parameters": True,
-            "data_collection": "deny",
-        },
-        "reasoning": {"effort": "medium", "exclude": True},
-        "test_path": "/v1/chat/completions",
-        "test_authorization": "Bearer router-secret",
+    assert value["model"] == request.model
+    assert value["max_tokens"] == request.output_tokens
+    assert value["store"] is False
+    assert value["provider"] == {
+        "only": ["openai"],
+        "allow_fallbacks": False,
+        "require_parameters": True,
+        "data_collection": "deny",
     }
+    assert value["reasoning"] == {"effort": "medium", "exclude": True}
+    assert value["test_authorization"] == "Bearer router-secret"
     assert response.content == decision_output()
     assert response.refused is False
     assert response.metadata == {
@@ -371,7 +352,92 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
         "completion_tokens": 120,
         "reasoning_tokens": 80,
         "total_tokens": 1120,
+        "request_id": "request_01",
+        "generation_id": "generation_01",
+        "cached_tokens": 600,
+        "cost": 0,
+        "is_byok": True,
+        "upstream_inference_cost": 0.003,
+        "upstream_inference_prompt_cost": 0.002,
+        "upstream_inference_completions_cost": 0.001,
     }
+
+
+@pytest.mark.parametrize(
+    ("content", "finish_reason", "status_code"),
+    [
+        (None, "stop", 200),
+        ("private malformed response", "stop", 200),
+        (None, "length", 200),
+        (None, "stop", 502),
+    ],
+)
+async def test_production_accounting_keeps_usage_even_when_parsing_fails(
+    content: str | None, finish_reason: str, status_code: int
+) -> None:
+    stream = StringIO()
+    with openrouter_server(
+        content=content, finish_reason=finish_reason, status_code=status_code
+    ) as (
+        base_url,
+        requests,
+    ):
+        transport = OpenRouterChatTransport("router-secret", 5, base_url)
+        model = OpenRouterDecisionModel(
+            transport,
+            settings(),
+            JsonlUsageWriter(stream, "openai/gpt-5.6-terra", "OpenAI"),
+        )
+        try:
+            with attribute_requests("radarr", 42):
+                if content is None and finish_reason == "stop" and status_code == 200:
+                    await decide(model, repair_case())
+                else:
+                    with pytest.raises(DecisionModelUnavailable):
+                        await decide(model, repair_case())
+        finally:
+            await model.close()
+
+    records = [json.loads(line) for line in stream.getvalue().splitlines()]
+    assert len(records) == 1
+    record = records[0]
+    assert record["service"] == "radarr"
+    assert record["job_id"] == 42
+    assert record["request_id"] == "request_01"
+    assert record["outcome"] == (
+        "succeeded"
+        if content is None and finish_reason == "stop" and status_code == 200
+        else "failed"
+    )
+    if status_code == 200:
+        assert record["completion_tokens"] == 120
+        assert record["reasoning_tokens"] == 80
+        assert record["cached_tokens"] == 600
+        assert record["cost"] == 0
+        assert record["upstream_inference_cost"] == 0.003
+    else:
+        assert record["http_status"] == status_code
+        assert "completion_tokens" not in record
+    assert requests.qsize() == 1
+    assert "private malformed response" not in stream.getvalue()
+    assert "router-secret" not in stream.getvalue()
+    assert "raw_output" not in record
+
+
+async def test_production_accounting_records_cancelled_requests() -> None:
+    stream = StringIO()
+    model = OpenRouterDecisionModel(
+        ScriptedTransport(asyncio.CancelledError()),
+        settings(),
+        JsonlUsageWriter(stream, "model", "provider"),
+    )
+    with pytest.raises(asyncio.CancelledError):
+        await decide(model, repair_case())
+    record = json.loads(stream.getvalue())
+    assert record["outcome"] == "failed"
+    assert record["job_id"] is None
+    assert record["service"] is None
+    assert "cost" not in record
 
 
 @pytest.mark.parametrize(

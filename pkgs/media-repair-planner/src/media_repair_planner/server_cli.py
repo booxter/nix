@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import socket
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import NoReturn, Protocol
 
 import uvicorn
@@ -25,6 +25,7 @@ from .model_runtime import (
 )
 from .planning import Planner
 from .structured_model import StructuredDecisionModel
+from .usage import JsonlUsageWriter
 
 
 class Arguments(ModelArguments):
@@ -34,13 +35,6 @@ class Arguments(ModelArguments):
 
 class ServerRunner(Protocol):
     async def serve(self, app: FastAPI, socket_fd: int) -> None: ...
-
-
-class UvicornServer(Protocol):
-    async def serve(self) -> None: ...
-
-
-UvicornServerFactory = Callable[[uvicorn.Config], UvicornServer]
 
 
 class ServerConfigurationError(ValueError):
@@ -77,9 +71,6 @@ def validate_socket(socket_fd: int) -> None:
 
 
 class UvicornServerRunner:
-    def __init__(self, server_factory: UvicornServerFactory = uvicorn.Server) -> None:
-        self._server_factory = server_factory
-
     async def serve(self, app: FastAPI, socket_fd: int) -> None:
         validate_socket(socket_fd)
         configuration = uvicorn.Config(
@@ -92,7 +83,7 @@ class UvicornServerRunner:
             timeout_graceful_shutdown=30,
             workers=1,
         )
-        await self._server_factory(configuration).serve()
+        await uvicorn.Server(configuration).serve()
 
 
 async def _serve(
@@ -104,7 +95,10 @@ async def _serve(
     limits = ApiLimits(planning_timeout_seconds=arguments.planning_timeout_seconds)
     model: StructuredDecisionModel | None = None
     try:
-        model = model_factory(settings, None)
+        model = model_factory(
+            settings,
+            JsonlUsageWriter(sys.stderr, settings.model, settings.provider),
+        )
         radarr_planner = Planner(model)
         lidarr_planner = LidarrPlanner(model)
         app = create_app(

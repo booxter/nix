@@ -11,7 +11,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/telemetry"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
-	"github.com/booxter/nix-config/media-repair/worker/joinstate"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"github.com/booxter/nix-config/media-repair/worker/mediajoin"
 	"go.opentelemetry.io/otel/attribute"
@@ -84,20 +83,20 @@ func (failure *Failure) Unwrap() error {
 
 type Executor struct {
 	inputs    InputFiles
-	artifacts mediafile.RecoverableStagedArtifacts
+	artifacts mediafile.StagedArtifacts
 	joiner    mediajoin.Joiner
 	prober    MediaProber
 }
 
 var (
-	_ InputFiles                           = (*mediafile.RootSet)(nil)
-	_ mediafile.RecoverableStagedArtifacts = (*mediafile.RootSet)(nil)
-	_ MediaProber                          = (*ffprobe.Runner)(nil)
+	_ InputFiles                = (*mediafile.RootSet)(nil)
+	_ mediafile.StagedArtifacts = (*mediafile.RootSet)(nil)
+	_ MediaProber               = (*ffprobe.Runner)(nil)
 )
 
 func NewExecutor(
 	inputs InputFiles,
-	artifacts mediafile.RecoverableStagedArtifacts,
+	artifacts mediafile.StagedArtifacts,
 	joiner mediajoin.Joiner,
 	prober MediaProber,
 ) (*Executor, error) {
@@ -118,52 +117,33 @@ func NewExecutor(
 	}, nil
 }
 
-func (executor *Executor) StageOrRecover(
-	ctx context.Context,
-	execution joinstate.Execution,
-) (Result, error) {
-	if err := validateExecution(ctx, executor, execution); err != nil {
-		return Result{}, err
-	}
-	completed, err := mediafile.PrepareStage(
-		executor.artifacts,
-		execution.Specification.RootID,
-		execution.ArtifactID,
-		execution.Specification.OutputContainer,
-	)
-	if err != nil {
-		return Result{}, failureFor(err, mediajoin.Diagnostics{})
-	}
-	if completed != nil {
-		return executor.recoverCompleted(ctx, execution, completed)
-	}
-	return executor.Stage(ctx, execution)
-}
-
 func (executor *Executor) Stage(
 	ctx context.Context,
-	execution joinstate.Execution,
+	spec Specification,
 ) (result Result, returnedErr error) {
-	if err := validateExecution(ctx, executor, execution); err != nil {
-		return Result{}, err
+	if err := ctx.Err(); err != nil {
+		return Result{}, failureFor(err, mediajoin.Diagnostics{})
+	}
+	if executor == nil || spec.ArtifactID == "" {
+		return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
 	}
 
-	parts, sourceBytes, err := executor.openParts(execution.Specification)
+	parts, sourceBytes, err := executor.openParts(spec)
 	if err != nil {
 		return Result{}, err
 	}
 	defer closeFiles(parts)
-	if sourceBytes != execution.Specification.ExpectedSourceBytes {
+	if sourceBytes != spec.ExpectedSourceBytes {
 		return Result{}, &Failure{Reason: workercontracts.StageJoinSourceSizeMismatch}
 	}
 
 	// Normalized parts and the joined output coexist until validation finishes.
 	phase, span := telemetry.StartPhase(ctx, "prepare staging", attribute.Int64("source_bytes", sourceBytes))
 	artifact, err := executor.artifacts.CreateStaged(
-		execution.Specification.RootID,
-		execution.ArtifactID,
-		execution.Specification.OutputContainer,
-		2*execution.Specification.ExpectedSourceBytes,
+		spec.RootID,
+		spec.ArtifactID,
+		spec.OutputContainer,
+		2*spec.ExpectedSourceBytes,
 	)
 	telemetry.EndPhase(phase, span, err)
 	if err != nil {
@@ -187,9 +167,9 @@ func (executor *Executor) Stage(
 		ctx,
 		parts,
 		artifact.File(),
-		execution.Specification.OutputContainer,
+		spec.OutputContainer,
 	)
-	if err := executor.verifyParts(parts, execution.Specification.Parts); err != nil {
+	if err := executor.verifyParts(parts, spec.Parts); err != nil {
 		return Result{}, err
 	}
 	if joinErr != nil {
@@ -229,85 +209,8 @@ func (executor *Executor) Stage(
 	}, nil
 }
 
-func (executor *Executor) recoverCompleted(
-	ctx context.Context,
-	execution joinstate.Execution,
-	artifact mediafile.CompletedArtifact,
-) (Result, error) {
-	fingerprintBefore, sizeBefore, initialErr := artifact.Snapshot()
-	var evidence controller.ProbeEvidence
-	var probeErr error
-	if initialErr == nil && sizeBefore > 0 {
-		evidence, probeErr = executor.prober.ProbeFile(ctx, artifact.File())
-	}
-	fingerprintAfter, sizeAfter, finalErr := artifact.Snapshot()
-	closeErr := artifact.Close()
-
-	var recoveryErr error
-	switch {
-	case initialErr != nil:
-		recoveryErr = initialErr
-	case sizeBefore <= 0:
-		recoveryErr = &Failure{Reason: workercontracts.StageJoinInvalidOutput}
-	case probeErr != nil:
-		recoveryErr = failureFor(probeErr, mediajoin.Diagnostics{})
-	case finalErr != nil:
-		recoveryErr = finalErr
-	case fingerprintBefore != fingerprintAfter || sizeBefore != sizeAfter:
-		recoveryErr = &Failure{Reason: workercontracts.StageJoinInvalidOutput}
-	case closeErr != nil:
-		recoveryErr = closeErr
-	case ctx.Err() != nil:
-		recoveryErr = ctx.Err()
-	}
-	if recoveryErr == nil {
-		return Result{
-			Fingerprint: fingerprintAfter,
-			SizeBytes:   sizeAfter,
-			Evidence:    evidence,
-		}, nil
-	}
-	if finalErr != nil || fingerprintAfter == "" {
-		return Result{}, failureFor(
-			errors.Join(recoveryErr, closeErr),
-			mediajoin.Diagnostics{},
-		)
-	}
-	removed, removeErr := executor.artifacts.RemoveCompleted(
-		execution.Specification.RootID,
-		execution.ArtifactID,
-		execution.Specification.OutputContainer,
-		fingerprintAfter,
-	)
-	if removeErr != nil || !removed {
-		return Result{}, &Failure{
-			Reason: workercontracts.StageJoinInternalError,
-			cause:  errors.Join(recoveryErr, closeErr, removeErr),
-		}
-	}
-	return Result{}, failureFor(
-		errors.Join(recoveryErr, closeErr),
-		mediajoin.Diagnostics{},
-	)
-}
-
-func validateExecution(
-	ctx context.Context,
-	executor *Executor,
-	execution joinstate.Execution,
-) error {
-	if err := ctx.Err(); err != nil {
-		return failureFor(err, mediajoin.Diagnostics{})
-	}
-	if executor == nil || execution.State != joinstate.Prepared ||
-		execution.ArtifactID == "" {
-		return &Failure{Reason: workercontracts.StageJoinInternalError}
-	}
-	return nil
-}
-
 func (executor *Executor) openParts(
-	specification joinstate.Specification,
+	specification Specification,
 ) ([]*os.File, int64, error) {
 	parts := make([]*os.File, 0, len(specification.Parts))
 	var total int64
@@ -347,7 +250,7 @@ func (executor *Executor) openParts(
 
 func (executor *Executor) verifyParts(
 	parts []*os.File,
-	specifications []joinstate.Part,
+	specifications []Part,
 ) error {
 	if len(parts) != len(specifications) {
 		return &Failure{Reason: workercontracts.StageJoinInternalError}

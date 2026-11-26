@@ -14,7 +14,7 @@ import (
 
 func TestMetricsReportQueueProgressAndOperatorDisable(t *testing.T) {
 	directory := t.TempDir()
-	store, err := jobs.Open(filepath.Join(directory, "jobs.db"))
+	store, err := jobs.Open(filepath.Join(directory, "jobs.db"), repairServices{}.planningInputs)
 	if err != nil {
 		t.Fatal(err)
 	}

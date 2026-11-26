@@ -12,9 +12,9 @@ from .openrouter_model import (
     ReasoningEffort,
 )
 from .structured_model import StructuredDecisionModel
-from .tracing import TraceSink
+from .usage import UsageSink
 
-ModelFactory = Callable[[OpenRouterSettings, TraceSink | None], StructuredDecisionModel]
+ModelFactory = Callable[[OpenRouterSettings, UsageSink | None], StructuredDecisionModel]
 
 
 class ModelArguments(argparse.Namespace):
@@ -53,9 +53,9 @@ def settings_from_arguments(arguments: ModelArguments) -> OpenRouterSettings:
 
 def create_model(
     settings: OpenRouterSettings,
-    trace_sink: TraceSink | None,
+    usage_sink: UsageSink | None,
 ) -> StructuredDecisionModel:
-    return OpenRouterDecisionModel.from_settings(settings, trace_sink)
+    return OpenRouterDecisionModel.from_settings(settings, usage_sink)
 
 
 async def close_model(model: StructuredDecisionModel | None) -> None:

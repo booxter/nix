@@ -11,7 +11,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
-	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/mediaoperation"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
@@ -20,8 +19,7 @@ import (
 )
 
 type Inspector interface {
-	Inspect(context.Context, inspection.Selection) (casebuilder.Assembly, error)
-	InspectAll(context.Context) (inspection.Result, error)
+	Inspect(context.Context, controller.RadarrQueueRecord) (casebuilder.Assembly, error)
 }
 
 type Client interface {
@@ -90,11 +88,7 @@ func (adapter *Adapter) authorize(
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
 
-	currentPlan, err := contracts.UpgradeStoredDecision(plan)
-	if err != nil {
-		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
-	}
-	decision, err := contracts.DecodeDecision(currentPlan)
+	decision, err := contracts.DecodeDecision(plan)
 	if err != nil {
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, err
 	}
@@ -114,7 +108,7 @@ func (adapter *Adapter) authorize(
 	if index < 0 {
 		return casebuilder.Assembly{}, executioncheck.Authorization{}, &repair.BlockedError{Reason: "download is no longer queued"}
 	}
-	fresh, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entries[index].ID})
+	fresh, err := adapter.Inspector.Inspect(ctx, entries[index])
 	if err != nil {
 		return fresh, executioncheck.Authorization{}, repair.RetryableRead(err)
 	}
@@ -129,9 +123,13 @@ func (adapter *Adapter) authorize(
 	}
 
 	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}
-	authorized, reason, _, accepted := executioncheck.Authorize(fresh, decision, policy)
-	if !accepted {
-		return fresh, authorized, &repair.BlockedError{Reason: "decision rejected: " + reason}
+	authorized, reason := executioncheck.Authorize(fresh, decision, policy)
+	if reason != "" {
+		blocked := &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
+		if reason == executioncheck.RuntimeMismatch {
+			blocked.Code = jobs.OutcomeRuntimeMismatch
+		}
+		return fresh, authorized, blocked
 	}
 	if reason, unsafe := executioncheck.ReplacementRejection(fresh, authorized); unsafe {
 		return fresh, authorized, &repair.BlockedError{Reason: string(reason)}
@@ -148,10 +146,7 @@ func (adapter *Adapter) importCommand(
 	authorized executioncheck.Authorization,
 ) (controller.RadarrManualImportCommand, error) {
 	if authorized.ManualImport != nil {
-		return controller.RadarrManualImportCommand{
-			ImportMode: authorized.ManualImport.ImportMode,
-			File:       authorized.ManualImport.File,
-		}, nil
+		return *authorized.ManualImport, nil
 	}
 
 	paths := make(map[controller.FileID]string)

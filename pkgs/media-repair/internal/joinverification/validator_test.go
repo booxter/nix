@@ -1,443 +1,118 @@
 package joinverification
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
-	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
-	"github.com/booxter/nix-config/media-repair/worker/mediaevidence"
 )
 
-const (
-	testCaseID              = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-	testArtifactFingerprint = "sha256:4444444444444444444444444444444444444444444444444444444444444444"
-)
-
-func TestValidateStagedJoinAuthorizesVerifiedArtifact(t *testing.T) {
+func TestValidateOutput(t *testing.T) {
 	t.Parallel()
 
-	authorized, request, response := validStage()
-	validation := ValidateStagedJoin(authorized, request, response)
-	if !validation.Accepted() || validation.Publish == nil || validation.Discard != nil {
-		t.Fatalf("validation = %#v", validation)
-	}
-	if validation.Publish.ExecutionID != request.ExecutionID ||
-		validation.Publish.CaseID != authorized.CaseID ||
-		validation.Publish.CapabilityID != authorized.CapabilityID ||
-		validation.Publish.ArtifactID != response.Success.ArtifactID ||
-		validation.Publish.ArtifactFingerprint != testArtifactFingerprint ||
-		validation.Publish.SizeBytes != response.Success.SizeBytes {
-		t.Fatalf("publication authorization = %#v", validation.Publish)
-	}
-}
-
-func TestValidateStagedJoinAcceptsMP4OutputWithMuxerTimeBase(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, response := validStage()
-	authorized.OutputContainer = controller.OutputContainerMP4
-	request.OutputContainer = workercontracts.OutputContainerMP4
-	evidence := joinedEvidence()
-	evidence.Format.Names = []string{"mov", "mp4", "m4a", "3gp", "3g2", "mj2"}
-	evidence.Streams[0].TimeBase = value(controller.Rational{
-		Numerator: 1, Denominator: 12_800,
-	})
-	response.Success.Evidence = mediaevidence.FromProbe(evidence)
-	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
-		t.Fatalf("validation = %#v", validation)
-	}
-}
-
-func TestValidateStagedJoinAcceptsMuxedAverageFrameRate(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, response := validStage()
-	authorized.ExpectedStreamLayout.Streams[0].Video.AverageRate = controller.Rational{
-		Numerator: 25, Denominator: 1,
-	}
-	evidence := joinedEvidence()
-	evidence.Streams[0].AverageRate = value(controller.Rational{
-		Numerator: 965_825, Denominator: 38_634,
-	})
-	response.Success.Evidence = mediaevidence.FromProbe(evidence)
-	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
-		t.Fatalf("validation = %#v", validation)
-	}
-}
-
-func TestValidateStagedJoinAcceptsAVIOutput(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, response := validStage()
-	authorized.OutputContainer = controller.OutputContainerAVI
-	request.OutputContainer = workercontracts.OutputContainerAVI
-	evidence := joinedEvidence()
-	evidence.Format.Names = []string{"avi"}
-	response.Success.Evidence = mediaevidence.FromProbe(evidence)
-	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
-		t.Fatalf("validation = %#v", validation)
-	}
-}
-
-func TestValidateStagedJoinRequiresAuthorizedRequest(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
+	for _, test := range []struct {
 		name   string
-		mutate func(*workercontracts.StageJoinRequestV1)
+		mutate func(*decisionpolicy.AuthorizedJoin, *controller.ProbeEvidence)
+		want   RejectionReason
 	}{
-		{
-			name: "case",
-			mutate: func(request *workercontracts.StageJoinRequestV1) {
-				request.CaseID = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
-			},
-		},
-		{
-			name: "capability",
-			mutate: func(request *workercontracts.StageJoinRequestV1) {
-				request.CapabilityID = "capability:other"
-			},
-		},
-		{
-			name: "duration",
-			mutate: func(request *workercontracts.StageJoinRequestV1) {
-				request.ExpectedDurationMS++
-			},
-		},
-		{
-			name: "part order",
-			mutate: func(request *workercontracts.StageJoinRequestV1) {
-				request.Parts[0], request.Parts[1] = request.Parts[1], request.Parts[0]
-			},
-		},
-		{
-			name: "fingerprint",
-			mutate: func(request *workercontracts.StageJoinRequestV1) {
-				request.Parts[0].ExpectedFingerprint =
-					"sha256:3333333333333333333333333333333333333333333333333333333333333333"
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			authorized, request, response := validStage()
-			test.mutate(&request)
-			validation := ValidateStagedJoin(authorized, request, response)
-			assertRejectedFor(t, validation, StageRequestNotAuthorized, true)
-		})
-	}
-}
-
-func TestValidateStagedJoinRequiresCorrelatedResponse(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, response := validStage()
-	response.Success.RequestID = "request:other"
-	validation := ValidateStagedJoin(authorized, request, response)
-	assertRejectedFor(t, validation, StageResponseNotCorrelated, true)
-}
-
-func TestValidateStagedJoinRejectsWorkerFailureWithoutArtifactAuthority(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, _ := validStage()
-	response := workercontracts.StageJoinResponseV1{
-		Kind: workercontracts.ProbeResponseFailed,
-		Failure: &workercontracts.StageJoinFailureResponseV1{
-			Operation:     workercontracts.StageJoinV1,
-			Reason:        workercontracts.StageJoinJoinError,
-			RequestID:     request.RequestID,
-			SchemaVersion: workercontracts.RadarrRepairWorkerV1,
-			Status:        workercontracts.Failed,
-		},
-	}
-	validation := ValidateStagedJoin(authorized, request, response)
-	assertRejectedFor(t, validation, StageFailed, false)
-}
-
-func TestValidateStagedJoinRejectsInvalidResponseIdentity(t *testing.T) {
-	t.Parallel()
-
-	authorized, request, response := validStage()
-	response.Success.ArtifactID = ""
-	validation := ValidateStagedJoin(authorized, request, response)
-	assertRejectedFor(t, validation, InvalidStageResponse, false)
-}
-
-func TestValidateStagedJoinRejectsInvalidMediaEvidence(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		reason RejectionReason
-		mutate func(*controller.ProbeEvidence)
-	}{
-		{
-			name:   "reported size",
-			reason: ArtifactSizeMismatch,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				evidence.Format.SizeBytes = value[int64](189)
-			},
-		},
-		{
-			name:   "omitted duration",
-			reason: DurationOutsideTolerance,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				setDuration(evidence, 18_999)
-			},
-		},
-		{
-			name:   "excess duration",
-			reason: DurationOutsideTolerance,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				setDuration(evidence, 21_001)
-			},
-		},
-		{
-			name:   "missing duration",
-			reason: DurationUnavailable,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				evidence.Format.DurationMS = nil
-				for position := range evidence.Streams {
-					evidence.Streams[position].DurationMS = nil
-				}
-			},
-		},
-		{
-			name:   "container",
-			reason: OutputContainerMismatch,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				evidence.Format.Names = []string{"mov", "mp4"}
-			},
-		},
-		{
-			name:   "changed stream",
-			reason: StreamLayoutMismatch,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				evidence.Streams[1].Channels = value[int64](6)
-			},
-		},
-		{
-			name:   "reordered streams",
-			reason: StreamLayoutMismatch,
-			mutate: func(evidence *controller.ProbeEvidence) {
-				evidence.Streams[0].Index = 1
-				evidence.Streams[1].Index = 0
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			authorized, request, response := validStage()
-			evidence := joinedEvidence()
-			test.mutate(&evidence)
-			response.Success.Evidence = mediaevidence.FromProbe(evidence)
-			validation := ValidateStagedJoin(authorized, request, response)
-			assertRejectedFor(t, validation, test.reason, true)
-		})
-	}
-}
-
-func TestValidateStagedJoinAcceptsDurationToleranceBoundaries(t *testing.T) {
-	t.Parallel()
-
-	for _, duration := range []int64{19_000, 21_000} {
-		authorized, request, response := validStage()
-		evidence := joinedEvidence()
-		setDuration(&evidence, duration)
-		response.Success.Evidence = mediaevidence.FromProbe(evidence)
-		if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
-			t.Fatalf("duration %d validation = %#v", duration, validation)
-		}
-	}
-}
-
-func validStage() (
-	decisionpolicy.AuthorizedJoin,
-	workercontracts.StageJoinRequestV1,
-	workercontracts.StageJoinResponseV1,
-) {
-	firstFingerprint := controller.FileFingerprint{
-		Device: 1, Inode: 2, SizeBytes: 100, MTimeNS: 3,
-	}
-	secondFingerprint := controller.FileFingerprint{
-		Device: 1, Inode: 4, SizeBytes: 100, MTimeNS: 5,
-	}
-	authorized := decisionpolicy.AuthorizedJoin{
-		CaseID:       testCaseID,
-		CapabilityID: "capability:join:01",
-		OrderedParts: []decisionpolicy.AuthorizedJoinPart{
-			{FileID: "file:first", Fingerprint: firstFingerprint},
-			{FileID: "file:second", Fingerprint: secondFingerprint},
-		},
-		SourceBytes:         200,
-		ExpectedDurationMS:  20_000,
-		DurationToleranceMS: 1_000,
-		OutputContainer:     controller.OutputContainerMKV,
-		ExpectedStreamLayout: controller.StreamLayout{Streams: []controller.StreamLayoutEntry{
-			videoLayout(), audioLayout(),
+		{name: "valid"},
+		{name: "size", want: ArtifactSizeMismatch, mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Format.SizeBytes = value[int64](189)
 		}},
+		{name: "short", want: DurationOutsideTolerance, mutate: duration(18_999)},
+		{name: "long", want: DurationOutsideTolerance, mutate: duration(21_001)},
+		{name: "lower boundary", mutate: duration(19_000)},
+		{name: "upper boundary", mutate: duration(21_000)},
+		{name: "missing duration", want: DurationUnavailable, mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Format.DurationMS = nil
+			for index := range evidence.Streams {
+				evidence.Streams[index].DurationMS = nil
+			}
+		}},
+		{name: "container", want: OutputContainerMismatch, mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Format.Names = []string{"mp4"}
+		}},
+		{name: "changed stream", want: StreamLayoutMismatch, mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Streams[1].Channels = value[int64](6)
+		}},
+		{name: "reordered streams", want: StreamLayoutMismatch, mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Streams[0].Index = 1
+			evidence.Streams[1].Index = 0
+		}},
+		{name: "MP4 muxer time base", mutate: func(authorized *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			authorized.OutputContainer = controller.OutputContainerMP4
+			evidence.Format.Names = []string{"mov", "mp4"}
+			evidence.Streams[0].TimeBase = value(controller.Rational{Numerator: 1, Denominator: 12_800})
+		}},
+		{name: "muxed average rate", mutate: func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			evidence.Streams[0].AverageRate = value(controller.Rational{Numerator: 965_825, Denominator: 38_634})
+		}},
+		{name: "AVI", mutate: func(authorized *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+			authorized.OutputContainer = controller.OutputContainerAVI
+			evidence.Format.Names = []string{"avi"}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			authorized, evidence := joinedOutput()
+			if test.mutate != nil {
+				test.mutate(&authorized, &evidence)
+			}
+			rejections := ValidateOutput(authorized, evidence, 190)
+			if test.want == "" {
+				if len(rejections) != 0 {
+					t.Fatalf("valid output rejected: %+v", rejections)
+				}
+			} else if !slices.Contains(rejections, Rejection{Reason: test.want}) {
+				t.Fatalf("rejections = %+v, want %s", rejections, test.want)
+			}
+		})
 	}
-	request := workercontracts.StageJoinRequestV1{
-		CapabilityID:        authorized.CapabilityID,
-		CaseID:              authorized.CaseID,
-		DurationToleranceMS: authorized.DurationToleranceMS,
-		ExecutionID:         "execution:join:01",
-		ExpectedDurationMS:  authorized.ExpectedDurationMS,
-		ExpectedSourceBytes: authorized.SourceBytes,
-		ExpectedStreamCount: int64(len(authorized.ExpectedStreamLayout.Streams)),
-		Operation:           workercontracts.StageJoinV1,
-		OutputContainer:     workercontracts.OutputContainerMKV,
-		Parts: []workercontracts.StageJoinPartV1{
-			{
-				ExpectedFingerprint: firstFingerprint.StrictFingerprint(),
-				FileID:              "file:first",
-				PathComponents:      []string{"Movie", "Movie CD1.mkv"},
-			},
-			{
-				ExpectedFingerprint: secondFingerprint.StrictFingerprint(),
-				FileID:              "file:second",
-				PathComponents:      []string{"Movie", "Movie CD2.mkv"},
-			},
-		},
-		RequestID:     "request:join:01",
-		RootID:        "root:downloads",
-		SchemaVersion: workercontracts.RadarrRepairWorkerV1,
-	}
-	evidence := joinedEvidence()
-	response := workercontracts.StageJoinResponseV1{
-		Kind: workercontracts.ProbeResponseSucceeded,
-		Success: &workercontracts.StageJoinSuccessResponseV1{
-			ArtifactFingerprint: testArtifactFingerprint,
-			ArtifactID:          "artifact:join:01",
-			Evidence:            mediaevidence.FromProbe(evidence),
-			Operation:           workercontracts.StageJoinV1,
-			RequestID:           request.RequestID,
-			SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
-			SizeBytes:           *evidence.Format.SizeBytes,
-			Status:              workercontracts.Ok,
-		},
-	}
-	return authorized, request, response
 }
 
-func joinedEvidence() controller.ProbeEvidence {
-	return controller.ProbeEvidence{
-		Format: controller.ProbeFormat{
-			Names:        []string{"matroska", "webm"},
-			StreamCount:  value[int64](2),
-			ProgramCount: value[int64](0),
-			StartTimeMS:  value[int64](0),
-			DurationMS:   value[int64](20_000),
-			SizeBytes:    value[int64](190),
-			ProbeScore:   value[int64](100),
-			Tags:         []controller.ProbeTag{},
+func joinedOutput() (decisionpolicy.AuthorizedJoin, controller.ProbeEvidence) {
+	timeBase := controller.Rational{Numerator: 1, Denominator: 1_000}
+	frameRate := controller.Rational{Numerator: 25, Denominator: 1}
+	layout := controller.StreamLayout{Streams: []controller.StreamLayoutEntry{
+		{
+			Kind: controller.ProbeStreamVideo, CodecName: "h264", TimeBase: timeBase,
+			Video: &controller.VideoStreamLayout{Width: 1_920, Height: 1_080, PixelFormat: "yuv420p", AverageRate: frameRate},
 		},
+		{
+			Kind: controller.ProbeStreamAudio, CodecName: "aac", TimeBase: timeBase,
+			Audio: &controller.AudioStreamLayout{SampleFormat: "fltp", SampleRateHz: 48_000, Channels: 2, ChannelLayout: "stereo"},
+		},
+	}}
+	authorized := decisionpolicy.AuthorizedJoin{
+		ExpectedDurationMS: 20_000, DurationToleranceMS: 1_000,
+		OutputContainer: controller.OutputContainerMKV, ExpectedStreamLayout: layout,
+	}
+	evidence := controller.ProbeEvidence{
+		Format: controller.ProbeFormat{Names: []string{"matroska", "webm"}, DurationMS: value[int64](20_000), SizeBytes: value[int64](190)},
 		Streams: []controller.ProbeStream{
-			videoStream(0, 20_000),
-			audioStream(1, 20_000),
-		},
-		Programs: []controller.ProbeProgram{},
-		Chapters: []controller.ProbeChapter{},
-	}
-}
-
-func videoLayout() controller.StreamLayoutEntry {
-	return controller.StreamLayoutEntry{
-		Kind:      controller.ProbeStreamVideo,
-		CodecName: "h264",
-		Profile:   value("High"),
-		TimeBase:  controller.Rational{Numerator: 1, Denominator: 1_000},
-		Video: &controller.VideoStreamLayout{
-			Width:       1_920,
-			Height:      1_080,
-			PixelFormat: "yuv420p",
-			AverageRate: controller.Rational{Numerator: 24_000, Denominator: 1_001},
+			{
+				Index: 0, Kind: value(controller.ProbeStreamVideo), CodecName: value("h264"), TimeBase: &timeBase,
+				Width: value[int64](1_920), Height: value[int64](1_080), PixelFormat: value("yuv420p"), AverageRate: &frameRate,
+				DurationMS: value[int64](20_000),
+			},
+			{
+				Index: 1, Kind: value(controller.ProbeStreamAudio), CodecName: value("aac"), TimeBase: &timeBase,
+				SampleFormat: value("fltp"), SampleRateHz: value[int64](48_000), Channels: value[int64](2), ChannelLayout: value("stereo"),
+				DurationMS: value[int64](20_000),
+			},
 		},
 	}
+	return authorized, evidence
 }
 
-func audioLayout() controller.StreamLayoutEntry {
-	return controller.StreamLayoutEntry{
-		Kind:      controller.ProbeStreamAudio,
-		CodecName: "aac",
-		Profile:   value("LC"),
-		TimeBase:  controller.Rational{Numerator: 1, Denominator: 1_000},
-		Audio: &controller.AudioStreamLayout{
-			SampleFormat:  "fltp",
-			SampleRateHz:  48_000,
-			Channels:      2,
-			ChannelLayout: "stereo",
-		},
-	}
-}
-
-func videoStream(index int64, duration int64) controller.ProbeStream {
-	layout := videoLayout()
-	return controller.ProbeStream{
-		Index:       index,
-		Kind:        value(layout.Kind),
-		CodecName:   value(layout.CodecName),
-		Profile:     value(*layout.Profile),
-		TimeBase:    value(layout.TimeBase),
-		Width:       value(layout.Video.Width),
-		Height:      value(layout.Video.Height),
-		PixelFormat: value(layout.Video.PixelFormat),
-		AverageRate: value(layout.Video.AverageRate),
-		DurationMS:  value(duration),
-		Tags:        []controller.ProbeTag{},
-	}
-}
-
-func audioStream(index int64, duration int64) controller.ProbeStream {
-	layout := audioLayout()
-	return controller.ProbeStream{
-		Index:         index,
-		Kind:          value(layout.Kind),
-		CodecName:     value(layout.CodecName),
-		Profile:       value(*layout.Profile),
-		TimeBase:      value(layout.TimeBase),
-		SampleFormat:  value(layout.Audio.SampleFormat),
-		SampleRateHz:  value(layout.Audio.SampleRateHz),
-		Channels:      value(layout.Audio.Channels),
-		ChannelLayout: value(layout.Audio.ChannelLayout),
-		DurationMS:    value(duration),
-		Tags:          []controller.ProbeTag{},
-	}
-}
-
-func setDuration(evidence *controller.ProbeEvidence, duration int64) {
-	evidence.Format.DurationMS = value(duration)
-	for position := range evidence.Streams {
-		evidence.Streams[position].DurationMS = value(duration)
-	}
-}
-
-func assertRejectedFor(
-	t *testing.T,
-	validation Validation,
-	reason RejectionReason,
-	discard bool,
-) {
-	t.Helper()
-	if validation.Accepted() || validation.Publish != nil ||
-		(validation.Discard != nil) != discard || !hasReason(validation, reason) {
-		t.Fatalf("validation = %#v", validation)
-	}
-}
-
-func hasReason(validation Validation, reason RejectionReason) bool {
-	for _, rejection := range validation.Rejections {
-		if rejection.Reason == reason {
-			return true
+func duration(milliseconds int64) func(*decisionpolicy.AuthorizedJoin, *controller.ProbeEvidence) {
+	return func(_ *decisionpolicy.AuthorizedJoin, evidence *controller.ProbeEvidence) {
+		evidence.Format.DurationMS = value(milliseconds)
+		for index := range evidence.Streams {
+			evidence.Streams[index].DurationMS = value(milliseconds)
 		}
 	}
-	return false
 }
 
 func value[T any](input T) *T {

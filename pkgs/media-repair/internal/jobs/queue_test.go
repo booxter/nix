@@ -23,7 +23,7 @@ func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
 				t.Fatal(err)
 			}
 			plan := json.RawMessage(`{"action":"join_parts_v1"}`)
-			if err := store.SetPlan(ctx, job.ID, "source", plan, "", time.Now()); err != nil {
+			if err := finishTestPlan(ctx, store, job.ID, "source", plan, time.Now()); err != nil {
 				t.Fatal(err)
 			}
 			attempt, err := store.Start(ctx, job.ID, time.Now())

@@ -9,7 +9,7 @@ from .contracts import (
     encode_case,
     encode_decision,
 )
-from .planning import DecisionModelError, DecisionModelUnavailable, Planner, PlanningOutcome
+from .planning import DecisionModelError, DecisionModelUnavailable, Planner
 from .structured_model import StructuredDecisionModel
 
 __all__ = [
@@ -17,7 +17,6 @@ __all__ = [
     "DecisionModelError",
     "DecisionModelUnavailable",
     "Planner",
-    "PlanningOutcome",
     "RepairCaseV3",
     "RepairDecisionV3",
     "StructuredDecisionModel",

@@ -13,14 +13,9 @@ func TestClassifyRepairCandidatesAcceptsSupportedLifecycleStates(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			record.TrackedDownloadState = state
-			assessment := ClassifyRepairCandidates(
-				[]RadarrQueueRecord{record}, testDownloadSupport{},
-			)[0]
+			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
 			if !assessment.Eligible() {
 				t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
-			}
-			if !reflect.DeepEqual(assessment.Record, record) {
-				t.Fatalf("record changed: %#v", assessment.Record)
 			}
 		})
 	}
@@ -124,9 +119,7 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			test.mutate(&record)
-			assessment := ClassifyRepairCandidates(
-				[]RadarrQueueRecord{record}, testDownloadSupport{},
-			)[0]
+			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
 			if assessment.Eligible() {
 				t.Fatal("record was eligible")
 			}
@@ -148,9 +141,7 @@ func TestClassifyRepairCandidatesRejectsOtherLifecycleStates(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			record.TrackedDownloadState = state
-			assessment := ClassifyRepairCandidates(
-				[]RadarrQueueRecord{record}, testDownloadSupport{},
-			)[0]
+			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
 			want := []CandidateRejectionReason{CandidateUnsupportedQueueState}
 			if !reflect.DeepEqual(assessment.RejectionReasons, want) {
 				t.Fatalf("rejection reasons = %v, want %v", assessment.RejectionReasons, want)
@@ -169,36 +160,9 @@ func TestClassifyRepairCandidatesIgnoresMovieAndMessageEvidence(t *testing.T) {
 		{Title: "first", Messages: []string{}},
 		{Title: "second", Messages: []string{"diagnostic one", "diagnostic two"}},
 	}
-	assessment := ClassifyRepairCandidates(
-		[]RadarrQueueRecord{record}, testDownloadSupport{},
-	)[0]
+	assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
 	if !assessment.Eligible() {
 		t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
-	}
-}
-
-func TestClassifyRepairCandidatesPreservesOrderAndReasons(t *testing.T) {
-	t.Parallel()
-
-	first := eligibleCandidateRecord()
-	first.ID = 1
-	first.Protocol = "usenet"
-	first.StatusMessages = nil
-	second := eligibleCandidateRecord()
-	second.ID = 2
-
-	assessments := ClassifyRepairCandidates(
-		[]RadarrQueueRecord{first, second}, testDownloadSupport{},
-	)
-	if len(assessments) != 2 || assessments[0].Record.ID != 1 || assessments[1].Record.ID != 2 {
-		t.Fatalf("assessment order = %#v", assessments)
-	}
-	want := []CandidateRejectionReason{CandidateUnsupportedSource}
-	if !reflect.DeepEqual(assessments[0].RejectionReasons, want) {
-		t.Fatalf("rejection reasons = %v, want %v", assessments[0].RejectionReasons, want)
-	}
-	if !assessments[1].Eligible() {
-		t.Fatalf("second rejection reasons = %v", assessments[1].RejectionReasons)
 	}
 }
 

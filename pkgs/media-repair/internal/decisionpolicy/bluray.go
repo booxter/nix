@@ -37,17 +37,6 @@ type AuthorizedRemux struct {
 	ExpectedDurationMS int64
 	ExpectedChapters   int64
 	ExpectedTracks     []mkvmerge.Track
-	RuntimeToleranceMS int64
-}
-
-type RemuxValidation struct {
-	Authorized *AuthorizedRemux
-	Rejections []RemuxRejectionReason
-	Runtime    *ManualImportRuntimeAssessment
-}
-
-func (validation RemuxValidation) Accepted() bool {
-	return validation.Authorized != nil && len(validation.Rejections) == 0
 }
 
 // ValidateRemux binds the model's playlist choice to a complete local disc
@@ -55,22 +44,15 @@ func (validation RemuxValidation) Accepted() bool {
 func ValidateRemux(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
-) RemuxValidation {
-	return ValidateRemuxWithPolicy(assembly, decision, RuntimePolicy{})
-}
-
-func ValidateRemuxWithPolicy(
-	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV3,
 	policy RuntimePolicy,
-) RemuxValidation {
+) (*AuthorizedRemux, RemuxRejectionReason) {
 	if decision.Kind != contracts.ActionRemuxBluray || decision.RemuxBluray == nil ||
 		string(decision.RemuxBluray.Action) != string(contracts.ActionRemuxBluray) {
-		return rejectRemux(RemuxWrongDecision)
+		return nil, RemuxWrongDecision
 	}
 	if decision.RemuxBluray.CaseID != assembly.Request.CaseID ||
 		assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
-		return rejectRemux(RemuxCaseMismatch)
+		return nil, RemuxCaseMismatch
 	}
 	capability, found := findCapability(
 		assembly.Request.Capabilities, decision.RemuxBluray.CapabilityID,
@@ -79,14 +61,14 @@ func ValidateRemuxWithPolicy(
 		capability.PlaylistFileID == nil || capability.DurationMS == nil ||
 		capability.ChapterCount == nil || len(capability.ClipFileIDS) == 0 ||
 		len(capability.Tracks) == 0 {
-		return rejectRemux(RemuxCapabilityMissing)
+		return nil, RemuxCapabilityMissing
 	}
 	var playlist *mkvmerge.Candidate
 	for index := range assembly.LocalSnapshot.Observation.BluRayPlaylists {
 		candidate := &assembly.LocalSnapshot.Observation.BluRayPlaylists[index]
 		if string(candidate.PlaylistFileID) == *capability.PlaylistFileID {
 			if playlist != nil {
-				return rejectRemux(RemuxPlaylistMismatch)
+				return nil, RemuxPlaylistMismatch
 			}
 			playlist = candidate
 		}
@@ -97,19 +79,19 @@ func ValidateRemuxWithPolicy(
 		len(playlist.ClipFileIDs) != len(capability.ClipFileIDS) ||
 		!slices.EqualFunc(playlist.ClipFileIDs, capability.ClipFileIDS,
 			func(fileID controller.FileID, offered string) bool { return string(fileID) == offered }) {
-		return rejectRemux(RemuxPlaylistMismatch)
+		return nil, RemuxPlaylistMismatch
 	}
 
 	observation := assembly.LocalSnapshot.Observation
 	if observation.Movie == nil || observation.Movie.RuntimeMinutes == nil ||
 		*observation.Movie.RuntimeMinutes <= 0 {
-		return rejectRemux(RemuxRuntimeMissing)
+		return nil, RemuxRuntimeMissing
 	}
-	runtime := assessManualImportRuntime(
+	_, matches := runtimeMatches(
 		playlist.Details.DurationMS, observation.Movie.RuntimeMinutes, policy,
 	)
-	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
-		return RemuxValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
+	if !matches {
+		return nil, RemuxRuntimeMismatch
 	}
 	files := indexFiles(observation.Inventory)
 	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
@@ -118,12 +100,12 @@ func ValidateRemuxWithPolicy(
 	}
 	playlistFile, ok := availableRemuxFile(files, paths, playlist.PlaylistFileID)
 	if !ok || !mkvmerge.NumberedPlaylist(filepath.Base(paths[playlist.PlaylistFileID])) {
-		return rejectRemux(RemuxFileUnavailable)
+		return nil, RemuxFileUnavailable
 	}
 	playlistPath := paths[playlist.PlaylistFileID]
 	if filepath.Base(filepath.Dir(playlistPath)) != "PLAYLIST" ||
 		filepath.Base(filepath.Dir(filepath.Dir(playlistPath))) != "BDMV" {
-		return rejectRemux(RemuxPlaylistMismatch)
+		return nil, RemuxPlaylistMismatch
 	}
 	streamDirectory := filepath.Join(filepath.Dir(filepath.Dir(playlistPath)), "STREAM")
 	authorized := &AuthorizedRemux{
@@ -134,7 +116,6 @@ func ValidateRemuxWithPolicy(
 		ExpectedDurationMS: playlist.Details.DurationMS,
 		ExpectedChapters:   int64(playlist.Details.Chapters),
 		ExpectedTracks:     append([]mkvmerge.Track(nil), playlist.Details.Tracks...),
-		RuntimeToleranceMS: *runtime.ToleranceMS,
 	}
 	for position, clipID := range playlist.ClipFileIDs {
 		clip, ok := availableRemuxFile(files, paths, clipID)
@@ -143,12 +124,12 @@ func ValidateRemuxWithPolicy(
 			filepath.Dir(path) != streamDirectory ||
 			!mkvmerge.NumberedClip(filepath.Base(path)) ||
 			clip.Fingerprint.SizeBytes > math.MaxInt64-authorized.SourceBytes {
-			return rejectRemux(RemuxFileUnavailable)
+			return nil, RemuxFileUnavailable
 		}
 		authorized.Clips = append(authorized.Clips, clip)
 		authorized.SourceBytes += clip.Fingerprint.SizeBytes
 	}
-	return RemuxValidation{Authorized: authorized, Runtime: runtime}
+	return authorized, ""
 }
 
 func availableRemuxFile(
@@ -178,8 +159,4 @@ func remuxTrackMatches(identified mkvmerge.Track, offered contracts.TrackElement
 		return identified.Language == ""
 	}
 	return identified.Language == *offered.Language
-}
-
-func rejectRemux(reason RemuxRejectionReason) RemuxValidation {
-	return RemuxValidation{Rejections: []RemuxRejectionReason{reason}}
 }

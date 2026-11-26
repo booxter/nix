@@ -3,8 +3,11 @@ package repairradarr
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"slices"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
@@ -23,7 +26,7 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 	}
 
 	observed := repair.Observation{}
-	complete, err := radarr.FinalizationCandidates(ctx, adapter.Client)
+	complete, err := radarr.FinalizationCandidates(ctx, adapter.Client, queue)
 	if err != nil {
 		return repair.Observation{}, err
 	}
@@ -34,9 +37,14 @@ func (adapter *Adapter) Observe(ctx context.Context, _ []jobs.Job) (repair.Obser
 		observed.Queue = append(observed.Queue, jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID})
 		job := jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
 
-		assembly, err := adapter.Inspector.Inspect(ctx, inspection.Selection{QueueID: entry.ID})
+		assembly, err := adapter.Inspector.Inspect(ctx, entry)
 		if err != nil {
 			job.CollectionError = err.Error()
+			job.CollectionOutcome = jobs.OutcomeOther
+			var ineligible *inspection.IneligibleError
+			if errors.As(err, &ineligible) && slices.Contains(ineligible.Reasons, controller.CandidateIncompleteDownload) {
+				job.CollectionOutcome = jobs.OutcomeIncompleteDownload
+			}
 		} else {
 			job.SourceFingerprint = assembly.Request.CaseID
 			job.Evidence, err = json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
@@ -57,13 +65,7 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 		return repair.Decision{}, err
 	}
 
-	options := repair.Guidance(job)
-	prior, err := contracts.UpgradeStoredDecision(options.PriorDecision)
-	if err != nil {
-		return repair.Decision{}, err
-	}
-	options.PriorDecision = prior
-	decision, err := adapter.Planner.Plan(ctx, evidence.Case, options)
+	decision, err := adapter.Planner.Plan(ctx, evidence.Case, repair.Guidance(job))
 	if err != nil {
 		return repair.Decision{}, err
 	}

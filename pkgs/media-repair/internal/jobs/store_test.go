@@ -8,12 +8,14 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "jobs.db")
-	store, err := Open(path)
+	store, err := Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +26,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan := json.RawMessage(`{"action":"join","files":["part1","part2"]}`)
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, plan, "", at); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, plan, at); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, at)
@@ -35,22 +37,30 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatalf("duplicate start: %v", err)
 	}
 	attempt.State, attempt.Reason = Blocked, "incompatible source time bases"
+	attempt.Outcome = OutcomeRuntimeMismatch
 	if err := store.UpdateAttempt(ctx, attempt); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	store, err = Open(path)
+	store, err = Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
 	job, err = store.Get(ctx, job.ID)
-	if err != nil || job.State != Blocked || job.Reason != attempt.Reason {
+	if err != nil || job.State != Blocked || job.Reason != attempt.Reason || job.Outcome != attempt.Outcome {
 		t.Fatalf("job=%+v error=%v", job, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, plan, "retry", at); err != nil {
+	if err := store.RequestAction(ctx, job.ID, Reconsider, "retry", 0, at); err != nil {
+		t.Fatal(err)
+	}
+	job, err = store.Get(ctx, job.ID)
+	if err != nil || job.Outcome != "" {
+		t.Fatalf("outcome after reconsideration = %q, error = %v", job.Outcome, err)
+	}
+	if err := finishTestPlan(ctx, store, job.ID, job.SourceFingerprint, plan, at); err != nil {
 		t.Fatal(err)
 	}
 	retry, err := store.Start(ctx, job.ID, at)
@@ -82,25 +92,26 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 
 func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 	ctx := context.Background()
-	store, err := Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
 	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album", Title: "Album",
-		SourceFingerprint: "first", Evidence: json.RawMessage(`{}`), UpdatedAt: time.Now().UTC()})
+		SourceFingerprint: "first", Evidence: json.RawMessage(`{"source":"first"}`), UpdatedAt: time.Now().UTC()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", json.RawMessage(`{"action":"import"}`), "", job.UpdatedAt); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "first", json.RawMessage(`{"action":"import"}`), job.UpdatedAt); err != nil {
 		t.Fatal(err)
 	}
 	job.SourceFingerprint = "second"
+	job.Evidence = json.RawMessage(`{"source":"second"}`)
 	job, err = store.Observe(ctx, job)
 	if err != nil || job.State != Observed || len(job.Plan) != 0 {
 		t.Fatalf("changed job=%+v error=%v", job, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", json.RawMessage(`{}`), "", job.UpdatedAt); !errors.Is(err, ErrConflict) {
+	if err := finishTestPlan(ctx, store, job.ID, "first", json.RawMessage(`{}`), job.UpdatedAt); !errors.Is(err, ErrConflict) {
 		t.Fatalf("stale plan accepted: %v", err)
 	}
 }
@@ -150,7 +161,7 @@ func TestObservationPreservesActiveAttemptEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan := json.RawMessage(`{"action":"join"}`)
-	if err := store.SetPlan(ctx, job.ID, "first", plan, "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "first", plan, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())
@@ -162,7 +173,7 @@ func TestObservationPreservesActiveAttemptEvidence(t *testing.T) {
 	if err != nil || observed.State != Running || observed.SourceFingerprint != "first" || string(observed.Evidence) != `{"source":"first"}` {
 		t.Fatalf("active evidence changed: %+v, %v", observed, err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "first", plan, "", time.Now()); !errors.Is(err, ErrConflict) {
+	if err := finishTestPlan(ctx, store, job.ID, "first", plan, time.Now()); !errors.Is(err, ErrConflict) {
 		t.Fatalf("replaced an active plan: %v", err)
 	}
 	attempt.State = Failed
@@ -179,11 +190,11 @@ func TestConcurrentStartCreatesOneAttempt(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "jobs.db")
 	first, second := openStore(t, path), openStore(t, path)
-	job, err := first.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := first.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := first.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, first, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	start := make(chan struct{})
@@ -222,11 +233,11 @@ func TestConcurrentStartCreatesOneAttempt(t *testing.T) {
 func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())
@@ -247,9 +258,21 @@ func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	}
 }
 
+func finishTestPlan(ctx context.Context, store *Store, id int64, fingerprint string, plan json.RawMessage, at time.Time) error {
+	job, err := store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	job.SourceFingerprint = fingerprint
+	job.State = Ready
+	job.Plan = plan
+	job.UpdatedAt = at
+	return store.FinishPlanning(ctx, job)
+}
+
 func openStore(t *testing.T, path string) *Store {
 	t.Helper()
-	store, err := Open(path)
+	store, err := Open(path, testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,4 +282,15 @@ func openStore(t *testing.T, path string) *Store {
 		}
 	})
 	return store
+}
+
+func testInputs(_ Service, evidence json.RawMessage) (planning.Inputs, error) {
+	var inputs struct {
+		Files  json.RawMessage `json:"files"`
+		Source string          `json:"source"`
+	}
+	if err := json.Unmarshal(evidence, &inputs); err != nil {
+		return planning.Inputs{}, err
+	}
+	return planning.NewInputs(inputs)
 }

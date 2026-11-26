@@ -29,7 +29,7 @@ func (worker Transformer) joinDVD(
 	staged := make([]dvdstage.Result, 0, len(specs))
 	var sourceBytes int64
 	for index, spec := range specs {
-		part, err := stager.StageOrRecover(ctx, spec)
+		part, err := stager.Stage(ctx, spec)
 		if err != nil {
 			return result, fmt.Errorf("remux DVD title %d: %w", index+1, err)
 		}

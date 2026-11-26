@@ -15,7 +15,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
-	"github.com/booxter/nix-config/media-repair/worker/joinstate"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"github.com/booxter/nix-config/media-repair/worker/mediajoin"
 	"golang.org/x/sys/unix"
@@ -166,12 +165,12 @@ func TestExecutorRejectsChangedInputAndCleansArtifact(t *testing.T) {
 
 	// A second creation of the same artifact succeeds only if the failed
 	// attempt removed its private output.
-	execution.Specification.Parts[0].ExpectedFingerprint = fingerprint(t, firstPath)
+	execution.Parts[0].ExpectedFingerprint = fingerprint(t, firstPath)
 	info, err := os.Stat(firstPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	execution.Specification.ExpectedSourceBytes = info.Size() + fileSize(t, secondPath)
+	execution.ExpectedSourceBytes = info.Size() + fileSize(t, secondPath)
 	retry, err := NewExecutor(rootSet, rootSet, &concatenatingJoiner{}, fixedProber{})
 	if err != nil {
 		t.Fatal(err)
@@ -192,7 +191,7 @@ func TestExecutorReportsSourceSizeAndStorageFailures(t *testing.T) {
 	}
 	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
 	rootSet := newRootSet(t, rootPath)
-	execution.Specification.ExpectedSourceBytes++
+	execution.ExpectedSourceBytes++
 	executor, err := NewExecutor(rootSet, rootSet, &concatenatingJoiner{}, fixedProber{})
 	if err != nil {
 		t.Fatal(err)
@@ -200,7 +199,7 @@ func TestExecutorReportsSourceSizeAndStorageFailures(t *testing.T) {
 	_, err = executor.Stage(context.Background(), execution)
 	assertFailureReason(t, err, workercontracts.StageJoinSourceSizeMismatch)
 
-	execution.Specification.ExpectedSourceBytes--
+	execution.ExpectedSourceBytes--
 	executor, err = NewExecutor(
 		rootSet,
 		failingArtifacts{err: &mediafile.Failure{Kind: mediafile.FailureInsufficientSpace}},
@@ -270,119 +269,6 @@ func TestExecutorCleansArtifactAfterJoinOrProbeFailure(t *testing.T) {
 				t.Fatalf("retry after failed stage: %v", err)
 			}
 		})
-	}
-}
-
-func TestExecutorRecoversCompletedArtifactWithoutJoiningAgain(t *testing.T) {
-	t.Parallel()
-
-	rootPath := t.TempDir()
-	for _, name := range []string{"first.mkv", "second.mkv"} {
-		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
-	rootSet := newRootSet(t, rootPath)
-	joiner := &concatenatingJoiner{}
-	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	staged, err := executor.Stage(context.Background(), execution)
-	if err != nil {
-		t.Fatal(err)
-	}
-	recovered, err := executor.StageOrRecover(context.Background(), execution)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if joiner.calls != 1 {
-		t.Fatalf("join calls = %d, want 1", joiner.calls)
-	}
-	if recovered.Fingerprint != staged.Fingerprint || recovered.SizeBytes != staged.SizeBytes {
-		t.Fatalf("recovered result = %#v, want %#v", recovered, staged)
-	}
-}
-
-func TestExecutorRemovesPartialArtifactBeforeRetry(t *testing.T) {
-	t.Parallel()
-
-	rootPath := t.TempDir()
-	for _, name := range []string{"first.mkv", "second.mkv"} {
-		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
-	rootSet := newRootSet(t, rootPath)
-	partial, err := rootSet.CreateStaged(
-		execution.Specification.RootID,
-		execution.ArtifactID,
-		execution.Specification.OutputContainer,
-		execution.Specification.ExpectedSourceBytes,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := partial.File().WriteString("interrupted"); err != nil {
-		t.Fatal(err)
-	}
-	if err := partial.File().Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	joiner := &concatenatingJoiner{}
-	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := executor.StageOrRecover(context.Background(), execution); err != nil {
-		t.Fatal(err)
-	}
-	if joiner.calls != 1 {
-		t.Fatalf("join calls = %d, want 1", joiner.calls)
-	}
-}
-
-func TestExecutorRemovesCompletedArtifactThatFailsRecoveryProbe(t *testing.T) {
-	t.Parallel()
-
-	rootPath := t.TempDir()
-	for _, name := range []string{"first.mkv", "second.mkv"} {
-		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
-	rootSet := newRootSet(t, rootPath)
-	joiner := &concatenatingJoiner{}
-	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := executor.Stage(context.Background(), execution); err != nil {
-		t.Fatal(err)
-	}
-
-	failing, err := NewExecutor(
-		rootSet,
-		rootSet,
-		joiner,
-		failingProber{err: &ffprobe.Failure{Kind: ffprobe.FailureExecution}},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = failing.StageOrRecover(context.Background(), execution)
-	assertFailureReason(t, err, workercontracts.StageJoinProbeError)
-
-	if _, err := executor.StageOrRecover(context.Background(), execution); err != nil {
-		t.Fatal(err)
-	}
-	if joiner.calls != 2 {
-		t.Fatalf("join calls = %d, want 2", joiner.calls)
 	}
 }
 
@@ -466,63 +352,28 @@ func (artifacts failingArtifacts) CreateStaged(
 	return nil, artifacts.err
 }
 
-func (artifacts failingArtifacts) InspectStaged(
-	string,
-	string,
-	workercontracts.OutputContainer,
-) (mediafile.StagedStatus, mediafile.CompletedArtifact, error) {
-	return mediafile.StagedMissing, nil, nil
-}
-
-func (artifacts failingArtifacts) RemovePartial(
-	string,
-	string,
-	workercontracts.OutputContainer,
-) (bool, error) {
-	return false, artifacts.err
-}
-
-func (artifacts failingArtifacts) RemoveCompleted(
-	string,
-	string,
-	workercontracts.OutputContainer,
-	string,
-) (bool, error) {
-	return false, artifacts.err
-}
-
 func preparedExecution(
 	t *testing.T,
 	rootPath string,
 	orderedNames []string,
-) joinstate.Execution {
+) Specification {
 	t.Helper()
-	parts := make([]joinstate.Part, len(orderedNames))
+	parts := make([]Part, len(orderedNames))
 	var sourceBytes int64
 	for index, name := range orderedNames {
 		path := filepath.Join(rootPath, name)
-		parts[index] = joinstate.Part{
-			FileID:              "file:" + name,
+		parts[index] = Part{
 			PathComponents:      []string{name},
 			ExpectedFingerprint: fingerprint(t, path),
 		}
 		sourceBytes += fileSize(t, path)
 	}
-	return joinstate.Execution{
-		ArtifactID: "artifact:test",
-		State:      joinstate.Prepared,
-		Specification: joinstate.Specification{
-			ExecutionID:         "execution:test",
-			CaseID:              "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			CapabilityID:        "capability:test",
-			RootID:              "downloads",
-			Parts:               parts,
-			OutputContainer:     workercontracts.OutputContainerMKV,
-			ExpectedSourceBytes: sourceBytes,
-			ExpectedDurationMS:  800,
-			DurationToleranceMS: 100,
-			ExpectedStreamCount: 1,
-		},
+	return Specification{
+		ArtifactID:          "artifact:test",
+		RootID:              "downloads",
+		Parts:               parts,
+		OutputContainer:     workercontracts.OutputContainerMKV,
+		ExpectedSourceBytes: sourceBytes,
 	}
 }
 

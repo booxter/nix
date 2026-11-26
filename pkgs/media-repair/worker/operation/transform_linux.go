@@ -23,7 +23,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/dvdremux"
 	"github.com/booxter/nix-config/media-repair/worker/dvdstage"
 	"github.com/booxter/nix-config/media-repair/worker/joinstage"
-	"github.com/booxter/nix-config/media-repair/worker/joinstate"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"github.com/booxter/nix-config/media-repair/worker/mediajoin"
 	"github.com/booxter/nix-config/media-repair/worker/mediaremux"
@@ -89,13 +88,13 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		return mediaoperation.Output{}, err
 	}
 
-	spec := joinstate.Specification{
+	spec := joinstage.Specification{
+		ArtifactID:          request.ID(),
 		RootID:              root,
 		ExpectedSourceBytes: authorized.SourceBytes,
 	}
 	for i, part := range authorized.OrderedParts {
-		spec.Parts = append(spec.Parts, joinstate.Part{
-			FileID:              string(part.FileID),
+		spec.Parts = append(spec.Parts, joinstage.Part{
 			PathComponents:      components[i],
 			ExpectedFingerprint: part.Fingerprint.StrictFingerprint(),
 		})
@@ -110,17 +109,12 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		return mediaoperation.Output{}, err
 	}
 
-	execution := joinstate.Execution{
-		State:         joinstate.Prepared,
-		ArtifactID:    request.ID(),
-		Specification: spec,
-	}
 	var failures error
 	for _, container := range containers {
-		execution.Specification.OutputContainer = container
+		spec.OutputContainer = container
 		authorized.OutputContainer = controller.OutputContainer(container)
 		phase, span := telemetry.StartPhase(ctx, "join output", attribute.String("container", string(container)))
-		result, err := worker.stageJoin(phase, stager, execution, authorized)
+		result, err := worker.stageJoin(phase, stager, spec, authorized)
 		telemetry.EndPhase(phase, span, err)
 		if err != nil {
 			failures = errors.Join(failures, fmt.Errorf("%s join: %w", container, err))
@@ -136,7 +130,7 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 		if err != nil {
 			return mediaoperation.Output{}, err
 		}
-		return worker.output(root, published, result.Fingerprint, result.Evidence)
+		return worker.output(root, published)
 	}
 	return mediaoperation.Output{}, failures
 }
@@ -144,9 +138,9 @@ func (worker Transformer) join(ctx context.Context, request mediaoperation.Trans
 var errJoinOutputRejected = errors.New("joined output rejected")
 
 func (worker Transformer) stageJoin(
-	ctx context.Context, stager *joinstage.Executor, execution joinstate.Execution, authorized decisionpolicy.AuthorizedJoin,
+	ctx context.Context, stager *joinstage.Executor, spec joinstage.Specification, authorized decisionpolicy.AuthorizedJoin,
 ) (joinstage.Result, error) {
-	result, err := stager.Stage(ctx, execution)
+	result, err := stager.Stage(ctx, spec)
 	if err != nil {
 		return joinstage.Result{}, err
 	}
@@ -160,8 +154,7 @@ func (worker Transformer) stageJoin(
 
 	rejection := fmt.Errorf("%w: %v", errJoinOutputRejected, rejected)
 	telemetry.EndPhase(phase, span, rejection)
-	spec := execution.Specification
-	if _, err := worker.Files.RemoveCompleted(spec.RootID, execution.ArtifactID, spec.OutputContainer, result.Fingerprint); err != nil {
+	if _, err := worker.Files.RemoveCompleted(spec.RootID, spec.ArtifactID, spec.OutputContainer, result.Fingerprint); err != nil {
 		return joinstage.Result{}, fmt.Errorf("%v; discard: %w", rejection, err)
 	}
 	return joinstage.Result{}, rejection
@@ -218,7 +211,7 @@ func (worker Transformer) bluray(ctx context.Context, request mediaoperation.Tra
 		return mediaoperation.Output{}, err
 	}
 
-	result, err := stager.StageOrRecover(ctx, spec)
+	result, err := stager.Stage(ctx, spec)
 	if err != nil {
 		return mediaoperation.Output{}, err
 	}
@@ -229,7 +222,7 @@ func (worker Transformer) bluray(ctx context.Context, request mediaoperation.Tra
 		return mediaoperation.Output{}, err
 	}
 
-	return worker.output(root, published, result.Fingerprint, result.Evidence)
+	return worker.output(root, published)
 }
 
 func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transform) (mediaoperation.Output, error) {
@@ -265,7 +258,7 @@ func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transf
 	root := specs[0].RootID
 	var result dvdstage.Result
 	if len(specs) == 1 {
-		result, err = stager.StageOrRecover(ctx, specs[0])
+		result, err = stager.Stage(ctx, specs[0])
 	} else {
 		result, err = worker.joinDVD(ctx, request, stager, specs)
 	}
@@ -288,7 +281,7 @@ func (worker Transformer) dvd(ctx context.Context, request mediaoperation.Transf
 		return mediaoperation.Output{}, err
 	}
 
-	return worker.output(root, published, result.Fingerprint, result.Evidence)
+	return worker.output(root, published)
 }
 
 func (worker Transformer) dvdSpecification(
@@ -359,7 +352,7 @@ func (worker Transformer) resolve(paths []string) (string, [][]string, error) {
 	return "", nil, fmt.Errorf("media inputs must share a configured root")
 }
 
-func (worker Transformer) output(root string, components []string, fingerprint string, evidence controller.ProbeEvidence) (mediaoperation.Output, error) {
+func (worker Transformer) output(root string, components []string) (mediaoperation.Output, error) {
 	path, err := worker.Files.AbsolutePath(root, components)
-	return mediaoperation.Output{Path: path, Fingerprint: fingerprint, Evidence: evidence}, err
+	return mediaoperation.Output{Path: path}, err
 }

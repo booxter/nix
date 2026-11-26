@@ -4,7 +4,6 @@ import json
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
@@ -27,18 +26,17 @@ FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/e
 class ScriptedDecisionModel:
     def __init__(self, steps: Sequence[str | Exception]) -> None:
         self.steps = list(steps)
-        self.calls: list[tuple[str, str, dict[str, Any], str, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, str, str, tuple[DecisionViolation, ...]]] = []
 
     async def decide_json(
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
+        self.calls.append((system_instruction, case_content, case_id, correction))
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step
@@ -81,39 +79,34 @@ async def test_reconsideration_keeps_capability_boundary() -> None:
 
     assert actual == expected
     assert len(model.calls) == 2
-    assert model.calls[1][4][0].code == ViolationCode.UNKNOWN_CAPABILITY
-
-
-async def test_planner_reports_successful_attempt() -> None:
-    model = ScriptedDecisionModel([model_output(repair_decision())])
-
-    outcome = await Planner(model).plan_with_outcome(repair_case())
-
-    assert outcome.attempts == 1
-    assert not outcome.used_fallback
-    assert outcome.attempt_errors == ()
+    assert model.calls[1][3][0].code == ViolationCode.UNKNOWN_CAPABILITY
 
 
 async def test_planner_retries_one_expected_failure() -> None:
     expected = repair_decision()
     model = ScriptedDecisionModel([DecisionModelError("unavailable"), model_output(expected)])
 
-    outcome = await Planner(model).plan_with_outcome(repair_case())
+    decision = await Planner(model).plan(repair_case())
 
-    assert outcome.decision == expected
-    assert outcome.attempt_errors == ("attempt 1: unavailable",)
+    assert decision == expected
     assert len(model.calls) == 2
-    assert model.calls[1][4] == ()
+    assert model.calls[1][3] == ()
 
 
-async def test_planner_does_not_turn_model_unavailability_into_a_decision() -> None:
+async def test_planner_does_not_turn_model_unavailability_into_a_decision(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     model = ScriptedDecisionModel([DecisionModelUnavailable("provider has no credit")])
 
     with pytest.raises(DecisionModelUnavailable, match="provider has no credit"):
         await Planner(model).plan(repair_case())
 
+    assert "planner unavailable case_id=" in caplog.text
+    assert "provider has no credit" in caplog.text
+    assert len(model.calls) == 1
 
-async def test_planner_falls_back_after_attempt_limit() -> None:
+
+async def test_planner_falls_back_after_attempt_limit(caplog: pytest.LogCaptureFixture) -> None:
     model = ScriptedDecisionModel(
         [
             DecisionModelError("first failure"),
@@ -128,40 +121,27 @@ async def test_planner_falls_back_after_attempt_limit() -> None:
     assert len(model.calls) == 2
     assert value["action"] == "no_repair"
     assert value["case_id"] == case.case_id.root
-    assert value["reason"] == "unsafe_to_repair"
+    assert value["reason"] == "planner_failed"
     assert value["evidence_refs"] == []
+    assert f"planner used fallback case_id={case.case_id.root} attempts=2" in caplog.text
+    assert "attempt 1: first failure; attempt 2: second failure" in caplog.text
 
 
-async def test_planner_reports_fallback() -> None:
-    model = ScriptedDecisionModel(
-        [DecisionModelError("first failure"), DecisionModelError("second failure")]
-    )
-
-    outcome = await Planner(model).plan_with_outcome(repair_case())
-
-    assert outcome.attempts == 2
-    assert outcome.used_fallback
-    assert outcome.attempt_errors == (
-        "attempt 1: first failure",
-        "attempt 2: second failure",
-    )
-
-
-async def test_planner_retries_wrong_case_id_then_falls_back() -> None:
+async def test_planner_retries_wrong_case_id_then_falls_back(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     wrong = repair_decision()
     wrong_case_id = "sha256:" + "f" * 64
     wrong.root.case_id.root = wrong_case_id
     model = ScriptedDecisionModel([model_output(wrong), model_output(wrong)])
 
-    outcome = await Planner(model).plan_with_outcome(repair_case())
+    decision = await Planner(model).plan(repair_case())
 
-    assert json.loads(encode_decision(outcome.decision))["action"] == "no_repair"
-    assert outcome.attempt_errors == (
-        "attempt 1: decision case_id does not match the case",
-        "attempt 2: decision case_id does not match the case",
-    )
+    assert json.loads(encode_decision(decision))["action"] == "no_repair"
+    assert "attempt 1: decision case_id does not match the case" in caplog.text
+    assert "attempt 2: decision case_id does not match the case" in caplog.text
     assert len(model.calls) == 2
-    assert model.calls[1][4] == (
+    assert model.calls[1][3] == (
         DecisionViolation(
             code=ViolationCode.CASE_ID_MISMATCH,
             path=("case_id",),
@@ -178,11 +158,11 @@ async def test_planner_passes_model_rejection_to_retry() -> None:
         [DecisionModelError("invalid response", (violation,)), model_output(expected)]
     )
 
-    outcome = await Planner(model).plan_with_outcome(repair_case())
+    decision = await Planner(model).plan(repair_case())
 
-    assert outcome.decision == expected
-    assert model.calls[0][4] == ()
-    assert model.calls[1][4] == (violation,)
+    assert decision == expected
+    assert model.calls[0][3] == ()
+    assert model.calls[1][3] == (violation,)
 
 
 async def test_planner_retries_invalid_structured_output_then_falls_back() -> None:

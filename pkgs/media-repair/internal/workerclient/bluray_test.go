@@ -15,7 +15,7 @@ import (
 func TestClientIdentifiesBluRayPlaylistThroughWorker(t *testing.T) {
 	t.Parallel()
 	requests := make(chan workercontracts.BlurayIdentifyRequestV1, 1)
-	socketPath := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		body, err := io.ReadAll(request.Body)
 		if err != nil {
 			t.Error(err)
@@ -45,8 +45,8 @@ func TestClientIdentifiesBluRayPlaylistThroughWorker(t *testing.T) {
 		}
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write(data)
-	}))
-	client := testClient(t, socketPath, map[string]string{"root:downloads": "/downloads"}, time.Second)
+	})
+	client := testClient(t, handler, map[string]string{"root:downloads": "/downloads"}, time.Second)
 	target := mkvmerge.Target{
 		Path:                "/downloads/Movie/BDMV/PLAYLIST/00000.mpls",
 		ExpectedFingerprint: "sha256:1111111111111111111111111111111111111111111111111111111111111111",

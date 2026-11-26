@@ -10,18 +10,14 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
-	"github.com/booxter/nix-config/media-repair/internal/decisionpolicy"
+
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 func TestRequestManualImport(t *testing.T) {
 	t.Parallel()
 
-	authorized := testAuthorizedManualImport()
-	commandRequest := controller.RadarrManualImportCommand{
-		ImportMode: authorized.ImportMode,
-		File:       authorized.File,
-	}
+	commandRequest := testImportCommand()
 	wantRequest := map[string]any{
 		"name":       "ManualImport",
 		"importMode": "copy",
@@ -194,19 +190,13 @@ func TestClassifyImportCommand(t *testing.T) {
 func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 	t.Parallel()
 
-	authorized := testAuthorizedManualImport()
-	authorized.ImportMode = controller.RadarrImportMode("move")
+	command := testImportCommand()
+	command.ImportMode = controller.RadarrImportMode("move")
 	client, err := New("http://radarr.example", "key", http.DefaultClient)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.RequestManualImport(
-		context.Background(),
-		controller.RadarrManualImportCommand{
-			ImportMode: authorized.ImportMode,
-			File:       authorized.File,
-		},
-	); err == nil {
+	if _, err := client.RequestManualImport(context.Background(), command); err == nil {
 		t.Fatal("incomplete authorization was accepted")
 	}
 	if _, err := client.ReadManualImportCommand(context.Background(), 0); err == nil {
@@ -250,14 +240,8 @@ func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 	}
 }
 
-func testAuthorizedManualImport() decisionpolicy.AuthorizedManualImport {
-	return decisionpolicy.AuthorizedManualImport{
-		CaseID:       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		CapabilityID: "capability:manual",
-		FileID:       "file:movie",
-		ExpectedFingerprint: controller.FileFingerprint{
-			Device: 1, Inode: 2, SizeBytes: 3, MTimeNS: 4,
-		},
+func testImportCommand() controller.RadarrManualImportCommand {
+	return controller.RadarrManualImportCommand{
 		ImportMode: controller.RadarrImportModeCopy,
 		File: controller.RadarrManualImportCommandFile{
 			Path:       "/downloads/Example.Movie.2026/movie.mkv",
@@ -275,6 +259,5 @@ func testAuthorizedManualImport() decisionpolicy.AuthorizedManualImport {
 			DownloadID:   "ABCDEF0123456789",
 			MovieID:      42,
 		},
-		ProbeDurationMS: 7_200_000,
 	}
 }

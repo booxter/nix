@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -18,7 +17,6 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
 	"github.com/booxter/nix-config/media-repair/internal/remuxverification"
-	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 	"github.com/booxter/nix-config/media-repair/worker/mediaremux"
 	"github.com/gowebpki/jcs"
@@ -56,7 +54,7 @@ type Prober interface {
 
 type Executor struct {
 	files      Files
-	artifacts  mediafile.RecoverableStagedArtifacts
+	artifacts  mediafile.StagedArtifacts
 	identifier mkvmerge.Identifier
 	remuxer    mediaremux.Remuxer
 	prober     Prober
@@ -70,14 +68,14 @@ type Result struct {
 }
 
 var (
-	_ Files                                = (*mediafile.RootSet)(nil)
-	_ mediafile.RecoverableStagedArtifacts = (*mediafile.RootSet)(nil)
-	_ Prober                               = (*ffprobe.Runner)(nil)
+	_ Files                     = (*mediafile.RootSet)(nil)
+	_ mediafile.StagedArtifacts = (*mediafile.RootSet)(nil)
+	_ Prober                    = (*ffprobe.Runner)(nil)
 )
 
 func NewExecutor(
 	files Files,
-	artifacts mediafile.RecoverableStagedArtifacts,
+	artifacts mediafile.StagedArtifacts,
 	identifier mkvmerge.Identifier,
 	remuxer mediaremux.Remuxer,
 	prober Prober,
@@ -110,7 +108,7 @@ func ArtifactID(spec Specification) (string, error) {
 	return "artifact:" + hex.EncodeToString(digest.Sum(nil)), nil
 }
 
-func (executor *Executor) StageOrRecover(
+func (executor *Executor) Stage(
 	ctx context.Context,
 	spec Specification,
 ) (Result, error) {
@@ -130,16 +128,6 @@ func (executor *Executor) StageOrRecover(
 	}
 	defer closeFiles(inputs)
 
-	completed, err := mediafile.PrepareStage(
-		executor.artifacts,
-		spec.RootID, artifactID, workercontracts.OutputContainerMKV,
-	)
-	if err != nil {
-		return Result{}, err
-	}
-	if completed != nil {
-		return executor.recover(ctx, spec, artifactID, inputs, completed)
-	}
 	return executor.stage(ctx, spec, artifactID, playlistPath, inputs)
 }
 
@@ -149,99 +137,26 @@ func (executor *Executor) stage(
 	artifactID string,
 	playlistPath string,
 	inputs []*os.File,
-) (result Result, returnedErr error) {
+) (Result, error) {
 	sourceBytes := int64(0)
 	for _, clip := range spec.Clips {
 		sourceBytes += clip.SizeBytes
 	}
-	artifact, err := executor.artifacts.CreateStaged(
-		spec.RootID, artifactID, workercontracts.OutputContainerMKV, sourceBytes,
-	)
+	staged, err := mediafile.StageRemux(ctx, executor.artifacts, spec.RootID, artifactID, sourceBytes,
+		func(output *os.File) (int64, error) {
+			return executor.remuxer.Remux(ctx, playlistPath, output)
+		},
+		func() error { return executor.verifyInputs(spec, inputs) }, executor.prober.ProbeFile,
+		func(evidence controller.ProbeEvidence) error {
+			return remuxverification.ValidateOutput(spec.ExpectedDurationMS,
+				spec.ExpectedChapterCount, spec.ExpectedTracks, evidence)
+		})
 	if err != nil {
-		return Result{}, err
-	}
-	retained := false
-	defer func() {
-		if !retained {
-			if err := artifact.Discard(); err != nil {
-				result = Result{}
-				returnedErr = errors.Join(returnedErr, err)
-			}
-		}
-	}()
-	size, remuxErr := executor.remuxer.Remux(ctx, playlistPath, artifact.File())
-	if err := executor.verifyInputs(spec, inputs); err != nil {
-		return Result{}, err
-	}
-	if remuxErr != nil {
-		return Result{}, remuxErr
-	}
-	evidence, err := executor.prober.ProbeFile(ctx, artifact.File())
-	if err != nil {
-		return Result{}, err
-	}
-	if err := remuxverification.ValidateOutput(
-		spec.ExpectedDurationMS, spec.ExpectedChapterCount, spec.ExpectedTracks, evidence,
-	); err != nil {
-		return Result{}, err
-	}
-	fingerprint, snapshotSize, err := artifact.Snapshot()
-	if err != nil {
-		return Result{}, err
-	}
-	if size <= 0 || size != snapshotSize {
-		return Result{}, fmt.Errorf("Blu-ray remux output size changed")
-	}
-	if err := artifact.Retain(); err != nil {
-		return Result{}, err
-	}
-	retained = true
-	return Result{
-		ArtifactID: artifactID, Fingerprint: fingerprint,
-		SizeBytes: snapshotSize, Evidence: evidence,
-	}, nil
-}
-
-func (executor *Executor) recover(
-	ctx context.Context,
-	spec Specification,
-	artifactID string,
-	inputs []*os.File,
-	artifact mediafile.CompletedArtifact,
-) (Result, error) {
-	defer artifact.Close()
-	before, sizeBefore, err := artifact.Snapshot()
-	if err != nil {
-		return Result{}, err
-	}
-	evidence, err := executor.prober.ProbeFile(ctx, artifact.File())
-	if err != nil {
-		return Result{}, err
-	}
-	if err := remuxverification.ValidateOutput(
-		spec.ExpectedDurationMS, spec.ExpectedChapterCount, spec.ExpectedTracks, evidence,
-	); err != nil {
-		removed, removeErr := executor.artifacts.RemoveCompleted(
-			spec.RootID, artifactID, workercontracts.OutputContainerMKV, before,
-		)
-		if removeErr != nil || !removed {
-			return Result{}, errors.Join(err, removeErr, fmt.Errorf("invalid staged artifact was not removed"))
-		}
-		return Result{}, err
-	}
-	after, sizeAfter, err := artifact.Snapshot()
-	if err != nil {
-		return Result{}, err
-	}
-	if before != after || sizeBefore != sizeAfter || sizeAfter <= 0 {
-		return Result{}, fmt.Errorf("completed Blu-ray artifact changed during probe")
-	}
-	if err := executor.verifyInputs(spec, inputs); err != nil {
 		return Result{}, err
 	}
 	return Result{
-		ArtifactID: artifactID, Fingerprint: after,
-		SizeBytes: sizeAfter, Evidence: evidence,
+		ArtifactID: artifactID, Fingerprint: staged.Fingerprint,
+		SizeBytes: staged.SizeBytes, Evidence: staged.Evidence,
 	}, nil
 }
 

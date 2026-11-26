@@ -33,16 +33,10 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema contracts/v3/repair-decision.schema.json
     check-jsonschema --check-metaschema lidarrcontracts/v3/repair-case.schema.json
     check-jsonschema --check-metaschema lidarrcontracts/v3/repair-decision.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/dvd-identify-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/dvd-identify-response.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/bluray-remux-request.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/bluray-remux-response.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/bluray-publish-request.schema.json
-    check-jsonschema --check-metaschema worker/contracts/v1/bluray-publish-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/media-evidence.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
@@ -68,46 +62,10 @@ stdenvNoCC.mkDerivation {
       worker/contracts/v1/examples/bluray-identify-response-ok.json \
       worker/contracts/v1/examples/bluray-identify-response-failed.json
     check-jsonschema \
-      --base-uri "$worker_schema_base/bluray-remux-request.schema.json" \
-      --schemafile worker/contracts/v1/bluray-remux-request.schema.json \
-      worker/contracts/v1/examples/bluray-remux-request.json
-    check-jsonschema \
-      --base-uri "$worker_schema_base/bluray-remux-response.schema.json" \
-      --schemafile worker/contracts/v1/bluray-remux-response.schema.json \
-      worker/contracts/v1/examples/bluray-remux-response-ok.json \
-      worker/contracts/v1/examples/bluray-remux-response-failed.json
-    check-jsonschema \
-      --base-uri "$worker_schema_base/bluray-publish-request.schema.json" \
-      --schemafile worker/contracts/v1/bluray-publish-request.schema.json \
-      worker/contracts/v1/examples/bluray-publish-request.json
-    check-jsonschema \
-      --base-uri "$worker_schema_base/bluray-publish-response.schema.json" \
-      --schemafile worker/contracts/v1/bluray-publish-response.schema.json \
-      worker/contracts/v1/examples/bluray-publish-response-ok.json \
-      worker/contracts/v1/examples/bluray-publish-response-failed.json
-    check-jsonschema \
       --base-uri "$worker_schema_base/probe-response.schema.json" \
       --schemafile worker/contracts/v1/probe-response.schema.json \
       worker/contracts/v1/examples/probe-response-ok.json \
       worker/contracts/v1/examples/probe-response-failed.json
-    check-jsonschema \
-      --base-uri "$worker_schema_base/join-request.schema.json" \
-      --schemafile worker/contracts/v1/join-request.schema.json \
-      worker/contracts/v1/examples/join-stage-request.json \
-      worker/contracts/v1/examples/join-publish-request.json \
-      worker/contracts/v1/examples/join-discard-request.json \
-      worker/contracts/v1/examples/join-inspect-request.json
-    check-jsonschema \
-      --base-uri "$worker_schema_base/join-response.schema.json" \
-      --schemafile worker/contracts/v1/join-response.schema.json \
-      worker/contracts/v1/examples/join-stage-response-ok.json \
-      worker/contracts/v1/examples/join-stage-response-failed.json \
-      worker/contracts/v1/examples/join-publish-response-ok.json \
-      worker/contracts/v1/examples/join-publish-response-failed.json \
-      worker/contracts/v1/examples/join-discard-response-ok.json \
-      worker/contracts/v1/examples/join-discard-response-failed.json \
-      worker/contracts/v1/examples/join-inspect-response-ok.json \
-      worker/contracts/v1/examples/join-inspect-response-failed.json
 
     expect_invalid() {
       schema="$1"
@@ -133,12 +91,6 @@ stdenvNoCC.mkDerivation {
     done
     for fixture in worker/contract-tests/v1/response-*.json; do
       expect_invalid worker/contracts/v1/probe-response.schema.json "$fixture"
-    done
-    for fixture in worker/contract-tests/v1/join-request-*.json; do
-      expect_invalid worker/contracts/v1/join-request.schema.json "$fixture"
-    done
-    for fixture in worker/contract-tests/v1/join-response-*.json; do
-      expect_invalid worker/contracts/v1/join-response.schema.json "$fixture"
     done
 
     runHook postCheck

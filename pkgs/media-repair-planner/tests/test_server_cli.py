@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
-import uvicorn
 from fastapi import FastAPI
 from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.openrouter_model import OpenRouterSettings
-from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket
+from media_repair_planner.server_cli import main, validate_socket
 from media_repair_planner.structured_model import StructuredModelResponse
-from media_repair_planner.tracing import TraceSink
+from media_repair_planner.usage import UsageSink
 from pydantic import BaseModel
 
 
@@ -24,12 +22,11 @@ class CloseableModel:
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        del system_instruction, case_content, decision_schema, decision_model, case_id, correction
+        del system_instruction, case_content, decision_model, case_id, correction
         raise AssertionError("readiness must not invoke the model")
 
     async def close(self) -> None:
@@ -50,14 +47,6 @@ class RecordingServer:
         async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
             response = await client.get("/ready")
         self.readiness.append(response.json())
-
-
-class FinishedUvicornServer:
-    def __init__(self) -> None:
-        self.served = False
-
-    async def serve(self) -> None:
-        self.served = True
 
 
 def server_arguments(api_key_file: Path) -> list[str]:
@@ -89,9 +78,9 @@ def test_server_builds_app_from_typed_settings_and_closes_model(tmp_path: Path) 
 
     def model_factory(
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None,
+        usage_sink: UsageSink | None,
     ) -> CloseableModel:
-        assert trace_sink is None
+        del usage_sink
         settings_seen.append(settings)
         return model
 
@@ -125,9 +114,9 @@ def test_server_closes_model_after_runner_failure(
 
     def model_factory(
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None,
+        usage_sink: UsageSink | None,
     ) -> CloseableModel:
-        del settings, trace_sink
+        del settings, usage_sink
         return model
 
     result = main(
@@ -156,30 +145,6 @@ def test_accepts_named_unix_listener(tmp_path: Path) -> None:
         listener.listen()
 
         validate_socket(listener.fileno())
-
-
-async def test_uvicorn_runner_uses_only_inherited_socket(tmp_path: Path) -> None:
-    configurations: list[uvicorn.Config] = []
-    server = FinishedUvicornServer()
-
-    def server_factory(configuration: uvicorn.Config) -> FinishedUvicornServer:
-        configurations.append(configuration)
-        return server
-
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
-        listener.bind(str(tmp_path / "planner.sock"))
-        listener.listen()
-        socket_fd = listener.fileno()
-
-        await UvicornServerRunner(server_factory).serve(FastAPI(), socket_fd)
-
-    assert server.served
-    assert len(configurations) == 1
-    configuration = configurations[0]
-    assert configuration.fd == socket_fd
-    assert configuration.interface == "asgi3"
-    assert configuration.proxy_headers is False
-    assert configuration.workers == 1
 
 
 def test_rejects_tcp_listener() -> None:

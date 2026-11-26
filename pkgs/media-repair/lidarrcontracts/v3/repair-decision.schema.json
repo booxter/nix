@@ -109,7 +109,8 @@
             "ambiguous_tracks",
             "incomplete_release",
             "unsupported_repair",
-            "unsafe_to_repair"
+            "unsafe_to_repair",
+            "planner_failed"
           ]
         },
         "schema_version": {

@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"path/filepath"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
@@ -18,12 +17,12 @@ import (
 	workerprobe "github.com/booxter/nix-config/media-repair/worker/probe"
 )
 
-func TestClientProbesThroughUnixSocket(t *testing.T) {
+func TestClientProbesThroughWorker(t *testing.T) {
 	t.Parallel()
 
 	wantEvidence := completeEvidence()
 	requests := make(chan workercontracts.ProbeRequestV1, 1)
-	socketPath := serveUnix(t, http.HandlerFunc(func(
+	handler := http.HandlerFunc(func(
 		writer http.ResponseWriter,
 		request *http.Request,
 	) {
@@ -37,8 +36,8 @@ func TestClientProbesThroughUnixSocket(t *testing.T) {
 			probeRequest.RequestID,
 			wantEvidence,
 		))
-	}))
-	client := testClient(t, socketPath, map[string]string{
+	})
+	client := testClient(t, handler, map[string]string{
 		"root:downloads": "/downloads",
 		"root:movies":    "/downloads/Movies",
 	}, time.Second)
@@ -60,8 +59,7 @@ func TestClientProbesThroughUnixSocket(t *testing.T) {
 	probeRequest := <-requests
 	if probeRequest.RootID != "root:movies" ||
 		!reflect.DeepEqual(probeRequest.PathComponents, []string{"Example", "movie.mkv"}) ||
-		probeRequest.ExpectedFingerprint != target.Fingerprint.StrictFingerprint() ||
-		probeRequest.RequestID != "request:1" {
+		probeRequest.ExpectedFingerprint != target.Fingerprint.StrictFingerprint() {
 		t.Fatalf("request = %#v", probeRequest)
 	}
 }
@@ -82,7 +80,7 @@ func TestClientRetainsTypedMediaProbeFailures(t *testing.T) {
 	for _, test := range tests {
 		t.Run(string(test.workerReason), func(t *testing.T) {
 			t.Parallel()
-			socketPath := serveUnix(t, http.HandlerFunc(func(
+			handler := http.HandlerFunc(func(
 				writer http.ResponseWriter,
 				request *http.Request,
 			) {
@@ -95,8 +93,8 @@ func TestClientRetainsTypedMediaProbeFailures(t *testing.T) {
 					probeRequest.RequestID,
 					test.workerReason,
 				))
-			}))
-			client := testClient(t, socketPath, testRoots(), time.Second)
+			})
+			client := testClient(t, handler, testRoots(), time.Second)
 			outcome, err := client.Probe(context.Background(), testTarget())
 			if err != nil {
 				t.Fatal(err)
@@ -112,7 +110,7 @@ func TestClientRetainsTypedMediaProbeFailures(t *testing.T) {
 func TestClientReturnsTypedWorkerRejection(t *testing.T) {
 	t.Parallel()
 
-	socketPath := serveUnix(t, http.HandlerFunc(func(
+	handler := http.HandlerFunc(func(
 		writer http.ResponseWriter,
 		request *http.Request,
 	) {
@@ -125,8 +123,8 @@ func TestClientReturnsTypedWorkerRejection(t *testing.T) {
 			probeRequest.RequestID,
 			workercontracts.FingerprintMismatch,
 		))
-	}))
-	client := testClient(t, socketPath, testRoots(), time.Second)
+	})
+	client := testClient(t, handler, testRoots(), time.Second)
 
 	_, err := client.Probe(context.Background(), testTarget())
 	assertFailure(t, err, FailureRejected, workercontracts.FingerprintMismatch)
@@ -159,36 +157,10 @@ func TestClientRejectsInvalidResponses(t *testing.T) {
 		kind    FailureKind
 	}{
 		{
-			name: "HTTP status",
-			handler: func(writer http.ResponseWriter, _ *http.Request) {
-				http.Error(writer, "do-not-expose-response", http.StatusServiceUnavailable)
-			},
-			kind: FailureHTTP,
-		},
-		{
-			name: "wrong content type",
-			handler: func(writer http.ResponseWriter, _ *http.Request) {
-				writer.Header().Set("Content-Type", "text/plain")
-				_, _ = writer.Write([]byte("{}"))
-			},
-			kind: FailureInvalidResponse,
-		},
-		{
 			name: "malformed JSON",
 			handler: func(writer http.ResponseWriter, _ *http.Request) {
 				writer.Header().Set("Content-Type", "application/json")
 				_, _ = writer.Write([]byte("{"))
-			},
-			kind: FailureInvalidResponse,
-		},
-		{
-			name: "oversized body",
-			handler: func(writer http.ResponseWriter, _ *http.Request) {
-				writer.Header().Set("Content-Type", "application/json")
-				_, _ = io.WriteString(
-					writer,
-					strings.Repeat("x", workercontracts.MaxProbeResponseBytes+1),
-				)
 			},
 			kind: FailureInvalidResponse,
 		},
@@ -206,70 +178,17 @@ func TestClientRejectsInvalidResponses(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			socketPath := serveUnix(t, test.handler)
-			client := testClient(t, socketPath, testRoots(), time.Second)
+			client := testClient(t, test.handler, testRoots(), time.Second)
 			_, err := client.Probe(context.Background(), testTarget())
 			assertFailure(t, err, test.kind, "")
-			if strings.Contains(fmt.Sprint(err), "do-not-expose-response") {
-				t.Fatalf("error exposes response body: %v", err)
-			}
 		})
-	}
-}
-
-func TestClientClassifiesUnavailableWorkerAndTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("unavailable", func(t *testing.T) {
-		t.Parallel()
-		client := testClient(
-			t,
-			filepath.Join(t.TempDir(), "missing.sock"),
-			testRoots(),
-			time.Second,
-		)
-		_, err := client.Probe(context.Background(), testTarget())
-		assertFailure(t, err, FailureUnavailable, "")
-		if strings.Contains(err.Error(), ".sock") {
-			t.Fatalf("error exposes socket path: %v", err)
-		}
-	})
-
-	t.Run("timeout", func(t *testing.T) {
-		t.Parallel()
-		socketPath := serveUnix(t, http.HandlerFunc(func(
-			_ http.ResponseWriter,
-			request *http.Request,
-		) {
-			<-request.Context().Done()
-		}))
-		client := testClient(t, socketPath, testRoots(), 20*time.Millisecond)
-		_, err := client.Probe(context.Background(), testTarget())
-		assertFailure(t, err, FailureTimeout, "")
-	})
-}
-
-func TestClientHonorsCallerCancellation(t *testing.T) {
-	t.Parallel()
-
-	client := testClient(
-		t,
-		filepath.Join(t.TempDir(), "missing.sock"),
-		testRoots(),
-		time.Second,
-	)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	_, err := client.Probe(ctx, testTarget())
-	if !errors.Is(err, context.Canceled) {
-		t.Fatalf("error = %v", err)
 	}
 }
 
 func TestClientRejectsUnmappedAndInvalidTargets(t *testing.T) {
 	t.Parallel()
 
-	client := testClient(t, "/run/worker.sock", testRoots(), time.Second)
+	client := testClient(t, nil, testRoots(), time.Second)
 	for _, target := range []controller.MediaProbeTarget{
 		{AbsolutePath: "relative/movie.mkv"},
 		{AbsolutePath: "/downloads"},
@@ -284,7 +203,7 @@ func TestClientRejectsUnmappedAndInvalidTargets(t *testing.T) {
 func TestClientResolvesPublishedPath(t *testing.T) {
 	t.Parallel()
 
-	client := testClient(t, "/run/worker.sock", map[string]string{
+	client := testClient(t, nil, map[string]string{
 		"root:downloads": "/downloads",
 		"root:movies":    "/downloads/Movies",
 	}, time.Second)
@@ -300,7 +219,7 @@ func TestClientResolvesPublishedPath(t *testing.T) {
 func TestClientRejectsInvalidPublishedPaths(t *testing.T) {
 	t.Parallel()
 
-	client := testClient(t, "/run/worker.sock", map[string]string{
+	client := testClient(t, nil, map[string]string{
 		"root:downloads": "/downloads",
 		"root:movies":    "/downloads/Movies",
 	}, time.Second)
@@ -332,57 +251,55 @@ func TestNewRejectsInvalidConfiguration(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		socket  string
 		roots   map[string]string
 		timeout time.Duration
 	}{
-		{name: "relative socket", socket: "worker.sock", roots: testRoots(), timeout: time.Second},
-		{name: "no roots", socket: "/run/worker.sock", timeout: time.Second},
+		{name: "no roots", timeout: time.Second},
 		{
-			name: "invalid root ID", socket: "/run/worker.sock",
+			name:  "invalid root ID",
 			roots: map[string]string{"INVALID ROOT": "/downloads"}, timeout: time.Second,
 		},
 		{
-			name: "relative root", socket: "/run/worker.sock",
+			name:  "relative root",
 			roots: map[string]string{"root:downloads": "downloads"}, timeout: time.Second,
 		},
 		{
-			name: "duplicate root path", socket: "/run/worker.sock",
+			name: "duplicate root path",
 			roots: map[string]string{
 				"root:first": "/downloads", "root:second": "/downloads",
 			},
 			timeout: time.Second,
 		},
 		{
-			name: "zero timeout", socket: "/run/worker.sock",
+			name:  "zero timeout",
 			roots: testRoots(), timeout: 0,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			if _, err := New(test.socket, test.roots, test.timeout, time.Minute); err == nil {
+			if _, err := newClient(test.roots, test.timeout, time.Minute); err == nil {
 				t.Fatal("invalid configuration was accepted")
 			}
 		})
 	}
-	if _, err := New("/run/worker.sock", testRoots(), time.Second, 0); err == nil {
+	if _, err := newClient(testRoots(), time.Second, 0); err == nil {
 		t.Fatal("zero stage timeout was accepted")
 	}
 }
 
 func testClient(
 	t *testing.T,
-	socketPath string,
+	handler http.Handler,
 	roots map[string]string,
 	timeout time.Duration,
 ) *Client {
 	t.Helper()
-	client, err := New(socketPath, roots, timeout, time.Minute)
+	client, err := newClient(roots, timeout, time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(client.Close)
+	client.runner = handlerRunner{handler}
 	return client
 }
 
@@ -399,27 +316,14 @@ func testTarget() controller.MediaProbeTarget {
 	}
 }
 
-func serveUnix(t *testing.T, handler http.Handler) string {
-	t.Helper()
-	socketPath := filepath.Join(t.TempDir(), "worker.sock")
-	listener, err := net.Listen("unix", socketPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	server := &http.Server{Handler: handler}
-	done := make(chan error, 1)
-	go func() {
-		done <- server.Serve(listener)
-	}()
-	t.Cleanup(func() {
-		if err := server.Close(); err != nil {
-			t.Errorf("close server: %v", err)
-		}
-		if err := <-done; err != nil && !errors.Is(err, http.ErrServerClosed) {
-			t.Errorf("serve worker test requests: %v", err)
-		}
-	})
-	return socketPath
+type handlerRunner struct{ handler http.Handler }
+
+func (runner handlerRunner) Run(ctx context.Context, operation string, payload []byte, _ int) ([]byte, error) {
+	request := httptest.NewRequestWithContext(ctx, http.MethodPost, operation, strings.NewReader(string(payload)))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	runner.handler.ServeHTTP(response, request)
+	return response.Body.Bytes(), nil
 }
 
 func readProbeRequest(request *http.Request) (workercontracts.ProbeRequestV1, error) {

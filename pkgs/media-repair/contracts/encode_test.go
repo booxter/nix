@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"bytes"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -57,21 +57,21 @@ func TestCaseIdentityChangesWithPlanningEvidence(t *testing.T) {
 	}
 }
 
-func TestSameCaseIdentityIgnoresObservationFields(t *testing.T) {
+func TestCaseIdentityChangesWithFileSize(t *testing.T) {
 	t.Parallel()
-	left := exampleCase(t)
-	right := left
-	right.ObservedAt = right.ObservedAt.Add(time.Hour)
-	right.CaseID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	same, err := SameCaseIdentity(left, right)
-	if err != nil || !same {
-		t.Fatalf("same = %t, error = %v", same, err)
+
+	repairCase := exampleCase(t)
+	before, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
 	}
-	right.Files = append([]FileElement(nil), left.Files...)
-	right.Files[0].SizeBytes++
-	same, err = SameCaseIdentity(left, right)
-	if err != nil || same {
-		t.Fatalf("changed evidence: same = %t, error = %v", same, err)
+	repairCase.Files[0].SizeBytes++
+	after, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after == before {
+		t.Fatal("case ID did not change with file size")
 	}
 }
 
@@ -122,23 +122,6 @@ func TestEncodeCaseValidatesIdentityAndSchema(t *testing.T) {
 	}
 }
 
-func TestCanonicalCaseIdentityUsesJCSStringEncoding(t *testing.T) {
-	t.Parallel()
-
-	repairCase := exampleCase(t)
-	repairCase.Radarr.Movie.Title = "A < B & Caf\u00e9"
-	canonical, err := canonicalCaseIdentity(repairCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if bytes.Contains(canonical, []byte(`\u003c`)) || bytes.Contains(canonical, []byte(`\u0026`)) {
-		t.Fatalf("canonical JSON retained Go HTML escapes: %s", canonical)
-	}
-	if !bytes.Contains(canonical, []byte(`"title":"A < B & Café"`)) {
-		t.Fatalf("canonical JSON does not contain the JCS string encoding: %s", canonical)
-	}
-}
-
 func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 	t.Parallel()
 
@@ -155,6 +138,11 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			var joinOrder []string
+			if decision.Kind == ActionJoinParts {
+				slices.Reverse(decision.JoinParts.OrderedFileIDS)
+				joinOrder = slices.Clone(decision.JoinParts.OrderedFileIDS)
+			}
 			encoded, err := EncodeDecision(decision)
 			if err != nil {
 				t.Fatal(err)
@@ -163,12 +151,11 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			reencoded, err := EncodeDecision(roundTripped)
-			if err != nil {
-				t.Fatal(err)
+			if !reflect.DeepEqual(roundTripped, decision) {
+				t.Fatalf("round trip = %#v, want %#v", roundTripped, decision)
 			}
-			if !bytes.Equal(reencoded, encoded) {
-				t.Fatalf("second encoding differs:\n got: %s\nwant: %s", reencoded, encoded)
+			if joinOrder != nil && !slices.Equal(roundTripped.JoinParts.OrderedFileIDS, joinOrder) {
+				t.Fatalf("join order = %v, want %v", roundTripped.JoinParts.OrderedFileIDS, joinOrder)
 			}
 		})
 	}
@@ -203,27 +190,19 @@ func TestEncodeDecisionRejectsInconsistentUnion(t *testing.T) {
 	}
 }
 
-func TestDVDDecisionKeepsOrderAndUpgradesStoredTitle(t *testing.T) {
+func TestDVDDecisionKeepsTitleOrder(t *testing.T) {
 	t.Parallel()
-	old := []byte(`{
-		"schema_version":"radarr-repair/v3",
-		"case_id":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		"action":"remux_dvd_v1",
-		"capability_id":"capability:disc1",
-		"evidence_refs":["capability:disc1"],
-		"explanation":"Remux the movie title."
-	}`)
-	upgraded, err := UpgradeStoredDecision(old)
-	if err != nil {
-		t.Fatal(err)
-	}
-	decision, err := DecodeDecision(upgraded)
-	if err != nil || !slices.Equal(decision.RemuxDVD.OrderedTitleIDS, []string{"capability:disc1"}) {
-		t.Fatalf("upgraded DVD decision: %+v, %v", decision, err)
+	decision := RepairDecisionV3{
+		Kind: ActionRemuxDVD,
+		RemuxDVD: &RemuxDVDDecision{
+			Action: "remux_dvd_v2", SchemaVersion: RadarrRepairV3,
+			CaseID:       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			EvidenceRefs: []string{"capability:disc1"}, Explanation: "Remux the movie titles.",
+		},
 	}
 
 	order := []string{"capability:disc2", "capability:disc1"}
-	decision.RemuxDVD.OrderedTitleIDS = order
+	decision.RemuxDVD.OrderedTitleIDS = slices.Clone(order)
 	encoded, err := EncodeDecision(decision)
 	if err != nil {
 		t.Fatal(err)
@@ -231,6 +210,9 @@ func TestDVDDecisionKeepsOrderAndUpgradesStoredTitle(t *testing.T) {
 	decoded, err := DecodeDecision(encoded)
 	if err != nil || !slices.Equal(decoded.RemuxDVD.OrderedTitleIDS, order) {
 		t.Fatalf("DVD selection changed on round trip: %+v, %v", decoded, err)
+	}
+	if !reflect.DeepEqual(decoded, decision) {
+		t.Fatalf("DVD decision round trip = %#v, want %#v", decoded, decision)
 	}
 	decision.RemuxDVD.OrderedTitleIDS = []string{"capability:disc1", "capability:disc1"}
 	if _, err := EncodeDecision(decision); err == nil {

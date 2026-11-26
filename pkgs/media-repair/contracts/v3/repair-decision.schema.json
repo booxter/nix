@@ -134,7 +134,8 @@
             "missing_import_metadata",
             "insufficient_evidence",
             "unsupported_repair",
-            "unsafe_to_repair"
+            "unsafe_to_repair",
+            "planner_failed"
           ]
         },
         "schema_version": {

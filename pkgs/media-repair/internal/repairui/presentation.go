@@ -10,6 +10,40 @@ import (
 
 const plannerFallback = "The planner could not produce a valid decision within its attempt limit."
 
+func classifyOutcome(job jobs.Job, plan decision) jobs.Outcome {
+	code := job.Outcome
+	if code == "" {
+		code = legacyOutcome(job, plan)
+	}
+	// Planning history can restore a fallback produced by an older planner.
+	if code == jobs.OutcomeAlreadyReviewed && plan.Explanation == plannerFallback {
+		return jobs.OutcomePlannerFailed
+	}
+	if plan.Reason == string(jobs.OutcomePlannerFailed) &&
+		(code == "" || code == jobs.OutcomeOther || code == jobs.OutcomeAlreadyReviewed) {
+		return jobs.OutcomePlannerFailed
+	}
+	return code
+}
+
+// Jobs written before outcome codes were introduced only have human-readable reasons.
+func legacyOutcome(job jobs.Job, plan decision) jobs.Outcome {
+	switch {
+	case strings.Contains(job.Reason, "current Lidarr evidence does not match") || strings.Contains(job.Reason, "Lidarr import bindings changed"):
+		return jobs.OutcomeEvidenceChanged
+	case plan.Explanation == plannerFallback:
+		return jobs.OutcomePlannerFailed
+	case strings.Contains(job.Reason, "repair interrupted before import") || strings.Contains(job.Reason, "terminated signal received") || strings.Contains(job.Reason, "context canceled"):
+		return jobs.OutcomeInterrupted
+	case job.Reason == "decision rejected: runtime_mismatch":
+		return jobs.OutcomeRuntimeMismatch
+	case strings.Contains(job.Reason, "these inputs were already planned"):
+		return jobs.OutcomeAlreadyReviewed
+	default:
+		return ""
+	}
+}
+
 func present(job jobs.Job) item {
 	view := item{
 		Job:     job,
@@ -17,48 +51,47 @@ func present(job jobs.Job) item {
 		CanAct:  job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
 	}
 	_ = json.Unmarshal(job.Plan, &view.Decision)
-	view.Attention = attentionFor(job, view.Decision)
+	result := classifyOutcome(job, view.Decision)
+	view.Attention = attentionFor(job, view.Decision, result)
 
 	switch {
 	case job.State == jobs.Imported || job.State == jobs.Removed || job.State == jobs.Running || job.State == jobs.Importing:
-		view.Group = "review"
 		view.Status = stateLabel(job.State)
 		view.Explanation = job.Reason
 	case job.PendingAction == jobs.Delete:
-		view.Group, view.Status = "removal", "Removal requested"
+		view.Status = "Removal requested"
 		view.Explanation = job.Reason
 		view.NextStep = "Removal will be retried when possible."
 	case job.CollectionError != "":
-		presentCollectionError(&view, job.CollectionError)
+		presentCollectionError(&view, job.CollectionOutcome, job.CollectionError)
 		if job.PendingAction == jobs.Reconsider {
 			view.NextStep += " Reconsideration will wait until this is resolved."
 		}
 	case job.PendingAction == jobs.Reconsider:
-		view.Group, view.Status = "planner", "Reconsideration queued"
+		view.Status = "Reconsideration queued"
 		view.Explanation = job.Reason
 		view.NextStep = "The planner will try again."
 	case job.State != jobs.Blocked:
-		view.Group = "review"
 		view.Status = stateLabel(job.State)
 		view.Explanation = job.Reason
-	case strings.Contains(job.Reason, "current Lidarr evidence does not match") || strings.Contains(job.Reason, "Lidarr import bindings changed"):
-		view.Group, view.Status = "changed", "Evidence changed"
+	case result == jobs.OutcomeEvidenceChanged:
+		view.Status = "Evidence changed"
 		view.Explanation = "The current Lidarr evidence no longer matches the planned repair."
 		view.NextStep = "Request reconsideration to review the current evidence."
-	case view.Decision.Explanation == plannerFallback:
-		view.Group, view.Status = "planner", "Planner failed"
+	case result == jobs.OutcomePlannerFailed:
+		view.Status = "Planner failed"
 		view.Explanation = "The previous planning attempt ended without a usable decision."
 		view.NextStep = "Request reconsideration to try again."
-	case strings.Contains(job.Reason, "these inputs were already planned"):
-		view.Group, view.Status = "review", "Already reviewed"
+	case result == jobs.OutcomeAlreadyReviewed:
+		view.Status = "Already reviewed"
 		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review these inputs again."
 	case view.Decision.Action == "no_repair":
-		view.Group, view.Status = "decision", "No automatic repair chosen"
+		view.Status = "No automatic repair chosen"
 		view.Explanation = view.Decision.Explanation
 		view.NextStep = "Review the decision or request reconsideration."
 	default:
-		view.Group, view.Status = "review", "Blocked"
+		view.Status = "Blocked"
 		view.Explanation = job.Reason
 	}
 
@@ -68,7 +101,7 @@ func present(job jobs.Job) item {
 		case "runtime":
 			view.Explanation = "The proposed import exceeds the allowed runtime difference."
 		case "retry":
-			if view.Decision.Explanation == plannerFallback {
+			if result == jobs.OutcomePlannerFailed {
 				view.Explanation = "The previous planning attempt ended without a usable decision."
 			} else {
 				view.Explanation = "The repair was interrupted before an import was submitted."
@@ -111,24 +144,40 @@ func subject(job jobs.Job) string {
 	return job.Title
 }
 
-func presentCollectionError(view *item, message string) {
-	switch {
-	case strings.Contains(message, "incomplete_download"):
-		view.Group, view.Status = "waiting", "Waiting for download"
+func presentCollectionError(view *item, code jobs.Outcome, message string) {
+	if code == "" {
+		code = legacyCollectionOutcome(message)
+	}
+	switch code {
+	case jobs.OutcomeIncompleteDownload:
+		view.Status = "Waiting for download"
 		view.Explanation = "Radarr still reports the download as incomplete."
 		view.NextStep = "Wait for the download to finish."
-	case strings.Contains(message, "not eligible for repair"):
-		view.Group, view.Status = "waiting", "Queue not ready"
+	case jobs.OutcomeQueueNotReady:
+		view.Status = "Queue not ready"
 		view.Explanation = "The Lidarr queue entry is not eligible for repair yet."
 		view.NextStep = "Wait for the queue entry to become eligible for repair."
-	case strings.Contains(message, "invalid_cue_sheet"):
-		view.Group, view.Status = "inspection", "Files need attention"
+	case jobs.OutcomeInvalidCueSheet:
+		view.Status = "Files need attention"
 		view.Explanation = "Repairr could not read the cue sheet to identify and split the tracks."
 		view.NextStep = "Fix the cue sheet and try again."
 	default:
-		view.Group, view.Status = "inspection", "Could not inspect"
+		view.Status = "Could not inspect"
 		view.Explanation = "Repairr could not inspect this download."
 		view.NextStep = "Review the inspection error and try again."
+	}
+}
+
+func legacyCollectionOutcome(message string) jobs.Outcome {
+	switch {
+	case strings.Contains(message, "incomplete_download"):
+		return jobs.OutcomeIncompleteDownload
+	case strings.Contains(message, "not eligible for repair"):
+		return jobs.OutcomeQueueNotReady
+	case strings.Contains(message, "invalid_cue_sheet"):
+		return jobs.OutcomeInvalidCueSheet
+	default:
+		return jobs.OutcomeOther
 	}
 }
 
@@ -146,6 +195,8 @@ func stateLabel(state jobs.State) string {
 		return "Imported"
 	case jobs.Failed:
 		return "Failed"
+	case jobs.Blocked:
+		return "Blocked"
 	case jobs.Removed:
 		return "Removed"
 	case jobs.Removing:

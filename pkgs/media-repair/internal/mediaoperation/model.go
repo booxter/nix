@@ -21,7 +21,5 @@ func (request Transform) ID() string {
 }
 
 type Output struct {
-	Path        string
-	Fingerprint string
-	Evidence    controller.ProbeEvidence
+	Path string
 }

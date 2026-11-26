@@ -16,7 +16,6 @@ const (
 )
 
 type CandidateAssessment struct {
-	Record           RadarrQueueRecord
 	RejectionReasons []CandidateRejectionReason
 }
 
@@ -43,22 +42,11 @@ var eligibleQueueStates = [...]candidateQueueState{
 	},
 }
 
-func ClassifyRepairCandidates(
-	records []RadarrQueueRecord,
-	downloads DownloadSupport,
-) []CandidateAssessment {
-	assessments := make([]CandidateAssessment, len(records))
-	for index, record := range records {
-		assessments[index] = classifyRepairCandidate(record, downloads)
-	}
-	return assessments
-}
-
-func classifyRepairCandidate(
+func ClassifyRepairCandidate(
 	record RadarrQueueRecord,
 	downloads DownloadSupport,
 ) CandidateAssessment {
-	assessment := CandidateAssessment{Record: record}
+	var assessment CandidateAssessment
 	addReason := func(reason CandidateRejectionReason) {
 		for _, existing := range assessment.RejectionReasons {
 			if existing == reason {

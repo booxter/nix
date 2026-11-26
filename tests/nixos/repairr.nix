@@ -2,11 +2,23 @@
 let
   inherit (pkgs) lib;
   mediaRoot = "/var/lib/repairr-test-media";
-  emptyQueue = builtins.toJSON {
-    page = 1;
-    pageSize = 250;
-    records = [ ];
-    totalRecords = 0;
+  queue =
+    records:
+    builtins.toJSON {
+      page = 1;
+      pageSize = 250;
+      inherit records;
+      totalRecords = builtins.length records;
+    };
+  album = {
+    id = 42;
+    title = "Unfinished album download";
+    downloadId = "SABnzbd_nzo_album";
+    protocol = "usenet";
+    downloadClient = "SABnzbd";
+    status = "downloading";
+    size = 200;
+    sizeleft = 100;
   };
 in
 pkgs.testers.runNixOSTest {
@@ -76,30 +88,33 @@ pkgs.testers.runNixOSTest {
               port = 8686;
             }
           ];
-          locations."/".extraConfig = ''
+          locations."= /api/v1/queue".extraConfig = ''
             default_type application/json;
-            return 200 '${emptyQueue}';
+            return 200 '${queue [ album ]}';
+          '';
+          locations."= /api/v3/queue".extraConfig = ''
+            default_type application/json;
+            return 200 '${queue [ ]}';
           '';
         };
       };
-      environment.systemPackages = [
-        pkgs.curl
-        pkgs.jq
-      ];
+      environment.systemPackages = [ pkgs.curl ];
     };
   };
   testScript = ''
     machine.start()
     machine.wait_for_unit("repairr.service")
-    machine.wait_until_succeeds("curl --fail http://127.0.0.1:8790/health")
-    page = machine.succeed("curl --fail http://127.0.0.1:8790/lidarr")
-    assert "Repairr" in page
+    activity = "curl --fail --silent 'http://127.0.0.1:8790/activity?service=lidarr'"
+    machine.wait_until_succeeds(activity + " | grep -F 'Unfinished album download'")
+    assert "Queue not ready" in machine.succeed(activity)
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
 
-    # A daemon restart must leave the operator inbox available.
+    # With the queue offline, the restarted daemon can only show the stored job.
+    machine.succeed("systemctl stop nginx.service")
     machine.succeed("systemctl restart repairr.service")
     machine.wait_until_succeeds("curl --fail http://127.0.0.1:8790/health")
-    assert "Repairr" in machine.succeed("curl --fail http://127.0.0.1:8790/lidarr")
+    page = machine.succeed(activity)
+    assert "Unfinished album download" in page and "Queue not ready" in page
     machine.fail("systemctl is-active radarr-repair-controller.timer")
     machine.fail("systemctl is-active lidarr-repair-controller.timer")
     machine.fail("systemctl is-active media-repair-worker.service")

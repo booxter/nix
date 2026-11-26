@@ -2,19 +2,18 @@ package repairlidarr
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
-	"reflect"
+	"errors"
 	"slices"
 	"sort"
-	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repair.Observation, error) {
@@ -29,7 +28,7 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 	}
 
 	observed := repair.Observation{}
-	complete, err := lidarr.FinalizationCandidates(ctx, adapter.Client)
+	complete, err := lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
 	if err != nil {
 		return repair.Observation{}, err
 	}
@@ -64,25 +63,16 @@ func (adapter *Adapter) Observe(ctx context.Context, previous []jobs.Job) (repai
 		evidence, err := adapter.Inspector.Inspect(ctx, entry, record)
 		if err != nil {
 			job.CollectionError = err.Error()
+			job.CollectionOutcome = jobs.OutcomeOther
+			var rejection *materialize.Rejection
+			switch {
+			case errors.Is(err, lidarrrepair.ErrQueueNotReady):
+				job.CollectionOutcome = jobs.OutcomeQueueNotReady
+			case errors.As(err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet:
+				job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
+			}
 		} else {
 			job.SourceFingerprint = evidence.Case.CaseID
-			job.PlanningFingerprint, err = planningFingerprint(evidence.Case)
-			if err != nil {
-				return repair.Observation{}, err
-			}
-			if record != nil {
-				priorCase, decodeErr := lidarrcontracts.DecodeCase(record.Case)
-				if decodeErr != nil {
-					return repair.Observation{}, decodeErr
-				}
-				if prior.PlanningFingerprint == "" {
-					job.PreviousPlanningFingerprint, err = planningFingerprint(priorCase)
-					if err != nil {
-						return repair.Observation{}, err
-					}
-				}
-				job.PlanningChange = planningChange(priorCase, evidence.Case)
-			}
 			job.Evidence, err = encodeEvidence(evidence)
 			if err != nil {
 				return repair.Observation{}, err
@@ -113,32 +103,16 @@ func planningCaseInputs(repairCase lidarrcontracts.Case) planningInputs {
 	return inputs
 }
 
-func planningFingerprint(repairCase lidarrcontracts.Case) (string, error) {
-	inputs := planningCaseInputs(repairCase)
-	data, err := json.Marshal(inputs)
+func (adapter *Adapter) PlanningInputs(data json.RawMessage) (planning.Inputs, error) {
+	var record lidarrrepair.Record
+	if err := json.Unmarshal(data, &record); err != nil {
+		return planning.Inputs{}, err
+	}
+	repairCase, err := lidarrcontracts.DecodeCase(record.Case)
 	if err != nil {
-		return "", fmt.Errorf("encode Lidarr planning inputs: %w", err)
+		return planning.Inputs{}, err
 	}
-	digest := sha256.Sum256(data)
-	return fmt.Sprintf("sha256:%x", digest), nil
-}
-
-func planningChange(previous, current lidarrcontracts.Case) string {
-	before, after := planningCaseInputs(previous), planningCaseInputs(current)
-	var changes []string
-	if !reflect.DeepEqual(before.Artifacts, after.Artifacts) {
-		changes = append(changes, "audio files")
-	}
-	if before.Album != after.Album {
-		changes = append(changes, "target album")
-	}
-	if !reflect.DeepEqual(before.Releases, after.Releases) {
-		changes = append(changes, "release catalog")
-	}
-	if !reflect.DeepEqual(before.Tracks, after.Tracks) {
-		changes = append(changes, "track catalog/status")
-	}
-	return strings.Join(changes, ", ")
+	return planning.NewInputs(planningCaseInputs(repairCase))
 }
 
 func encodeEvidence(evidence lidarrrepair.Evidence) (json.RawMessage, error) {

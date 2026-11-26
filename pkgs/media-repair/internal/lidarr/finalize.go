@@ -8,7 +8,6 @@ import (
 )
 
 type FinalizationReader interface {
-	ReadQueue(context.Context) ([]QueueRecord, error)
 	AlbumIdentityReader
 	ReadAlbum(context.Context, int64) (Album, error)
 	ReadReleaseTracks(context.Context, int64, int64) ([]Track, error)
@@ -37,13 +36,14 @@ func ReadFinalizationEntries(
 func FinalizationCandidates(
 	ctx context.Context,
 	reader FinalizationReader,
+	records []QueueRecord,
 ) ([]queuefinalize.Entry, error) {
 	if reader == nil {
 		return nil, fmt.Errorf("Lidarr finalization reader is required")
 	}
-	records, err := readFinalizationQueue(ctx, reader)
+	records, err := recoverFinalizationIdentities(ctx, reader, records)
 	if err != nil {
-		return nil, fmt.Errorf("read Lidarr queue for finalization: %w", err)
+		return nil, fmt.Errorf("recover Lidarr queue identities for finalization: %w", err)
 	}
 	complete := make(map[int64]bool)
 	checked := make(map[int64]bool)
@@ -75,6 +75,15 @@ func readFinalizationQueue(
 	if err != nil {
 		return nil, err
 	}
+	return recoverFinalizationIdentities(ctx, reader, records)
+}
+
+func recoverFinalizationIdentities(
+	ctx context.Context,
+	reader AlbumIdentityReader,
+	records []QueueRecord,
+) ([]QueueRecord, error) {
+	records = append([]QueueRecord(nil), records...)
 	for index, record := range records {
 		if record.AlbumID != nil && record.ArtistID != nil {
 			continue

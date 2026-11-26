@@ -15,11 +15,10 @@ func TestValidateJoinAuthorizesSelectedSubsetInPlannerOrder(t *testing.T) {
 	assembly := joinAssembly()
 	decision := joinDecision(assembly.Request.CaseID, "file:second", "file:first")
 
-	validation := ValidateJoin(assembly, decision)
-	if !validation.Accepted() || validation.Authorized == nil {
-		t.Fatalf("validation = %#v", validation)
+	authorized, reason := ValidateJoin(assembly, decision)
+	if reason != "" || authorized == nil {
+		t.Fatalf("authorization = %#v, reason = %q", authorized, reason)
 	}
-	authorized := validation.Authorized
 	wantOrder := []controller.FileID{"file:second", "file:first"}
 	gotOrder := make([]controller.FileID, len(authorized.OrderedParts))
 	for position, part := range authorized.OrderedParts {
@@ -99,8 +98,8 @@ func TestValidateJoinRejectsSelectionsOutsideGrantedAuthority(t *testing.T) {
 			decision := joinDecision(assembly.Request.CaseID, "file:first", "file:second")
 			test.mutate(&assembly, &decision)
 
-			validation := ValidateJoin(assembly, decision)
-			assertRejected(t, validation, test.reason)
+			authorized, reason := ValidateJoin(assembly, decision)
+			assertRejected(t, authorized, reason, test.reason)
 		})
 	}
 }
@@ -143,11 +142,11 @@ func TestValidateJoinRequiresSelectedLocalEvidence(t *testing.T) {
 			t.Parallel()
 			assembly := joinAssembly()
 			test.mutate(&assembly)
-			validation := ValidateJoin(
+			authorized, reason := ValidateJoin(
 				assembly,
 				joinDecision(assembly.Request.CaseID, "file:first", "file:second"),
 			)
-			assertRejected(t, validation, test.reason)
+			assertRejected(t, authorized, reason, test.reason)
 		})
 	}
 }
@@ -159,41 +158,39 @@ func TestValidateJoinRejectsTechnicallyIncompatibleSelection(t *testing.T) {
 	assembly.LocalSnapshot.Observation.Probes[1].Outcome = controller.SuccessfulMediaProbe(
 		joinProbe(20_000, 200, "hevc"),
 	)
-	validation := ValidateJoin(
+	authorized, reason := ValidateJoin(
 		assembly,
 		joinDecision(assembly.Request.CaseID, "file:first", "file:second"),
 	)
 
-	assertRejected(t, validation, JoinTechnicalChecksRejected)
-	if validation.Feasibility == nil ||
-		validation.Feasibility.Streams.Compatibility != controller.StreamsIncompatible {
-		t.Fatalf("feasibility = %#v", validation.Feasibility)
-	}
+	assertRejected(t, authorized, reason, JoinTechnicalChecksRejected)
 }
 
 func TestValidateJoinRejectsAnotherDecisionVariant(t *testing.T) {
 	t.Parallel()
 
-	validation := ValidateJoin(joinAssembly(), contracts.RepairDecisionV3{
+	authorized, reason := ValidateJoin(joinAssembly(), contracts.RepairDecisionV3{
 		Kind: contracts.ActionNoRepair,
 		NoRepair: &contracts.NoRepairDecision{
 			Action: contracts.NoRepair,
 		},
 	})
-	assertRejected(t, validation, JoinWrongDecisionAction)
+	assertRejected(t, authorized, reason, JoinWrongDecisionAction)
 }
 
-func assertRejected(t *testing.T, validation JoinValidation, reason JoinRejectionReason) {
+func TestValidateJoinReportsFirstRejection(t *testing.T) {
+	assembly := joinAssembly()
+	decision := joinDecision("different", "missing", "missing")
+	decision.JoinParts.CapabilityID = "missing"
+	authorized, reason := ValidateJoin(assembly, decision)
+	assertRejected(t, authorized, reason, JoinCaseMismatch)
+}
+
+func assertRejected(t *testing.T, authorized *AuthorizedJoin, reason, want JoinRejectionReason) {
 	t.Helper()
-	if validation.Accepted() || validation.Authorized != nil {
-		t.Fatalf("decision was authorized: %#v", validation)
+	if authorized != nil || reason != want {
+		t.Fatalf("authorization = %#v, reason = %q, want %q", authorized, reason, want)
 	}
-	for _, rejection := range validation.Rejections {
-		if rejection.Reason == reason {
-			return
-		}
-	}
-	t.Fatalf("rejections = %#v, want %q", validation.Rejections, reason)
 }
 
 func joinAssembly() casebuilder.Assembly {

@@ -2,6 +2,7 @@ package workercontracts
 
 import (
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -39,8 +40,12 @@ func TestProbeResponseExamplesDecodeAndRoundTrip(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := DecodeProbeResponse(encoded); err != nil {
+			decoded, err := DecodeProbeResponse(encoded)
+			if err != nil {
 				t.Fatalf("decode round trip: %v", err)
+			}
+			if !reflect.DeepEqual(decoded, response) {
+				t.Fatalf("round trip = %#v, want %#v", decoded, response)
 			}
 		})
 	}
@@ -119,11 +124,17 @@ func TestEncodeProbeResponseRejectsOversizedModel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response.Success.Evidence.Format.Names = []string{
-		strings.Repeat("x", MaxProbeResponseBytes),
+	chapter := ChapterElement{Tags: []TagElement{}}
+	response.Success.Evidence.Chapters = []ChapterElement{chapter}
+	if _, err := EncodeProbeResponse(response); err != nil {
+		t.Fatalf("valid chapter rejected: %v", err)
 	}
-	if _, err := EncodeProbeResponse(response); err == nil {
-		t.Fatal("oversized generated model was encoded")
+	response.Success.Evidence.Chapters = make([]ChapterElement, 50_000)
+	for index := range response.Success.Evidence.Chapters {
+		response.Success.Evidence.Chapters[index] = chapter
+	}
+	if _, err := EncodeProbeResponse(response); err == nil || !strings.Contains(err.Error(), "limit is") {
+		t.Fatalf("oversized generated model error = %v", err)
 	}
 }
 
@@ -219,7 +230,12 @@ func TestDecodeProbeResponseRejectsTrailingJSON(t *testing.T) {
 func TestDecodeProbeResponseRejectsOversizedDocument(t *testing.T) {
 	t.Parallel()
 
-	if _, err := DecodeProbeResponse(make([]byte, MaxProbeResponseBytes+1)); err == nil {
-		t.Fatal("oversized probe response was accepted")
+	valid := readFixture(t, "v1/examples/probe-response-failed.json")
+	data := append(valid, []byte(strings.Repeat(" ", MaxProbeResponseBytes-len(valid)))...)
+	if _, err := DecodeProbeResponse(data); err != nil {
+		t.Fatalf("probe response at byte limit rejected: %v", err)
+	}
+	if _, err := DecodeProbeResponse(append(data, ' ')); err == nil || !strings.Contains(err.Error(), "limit is") {
+		t.Fatalf("oversized probe response error = %v", err)
 	}
 }

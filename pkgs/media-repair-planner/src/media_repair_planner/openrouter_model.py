@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol, cast
+from typing import Literal, Protocol
 
-from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from openai import APIStatusError, AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
@@ -15,10 +16,11 @@ from .openai_structured_output import (
     decision_envelope_model,
     unwrap_openai_decision,
 )
+from .openrouter_usage import response_metadata
 from .planning_core import DecisionModelError, DecisionModelUnavailable
 from .structured_decision import diagnostic, structured_prompt
 from .structured_model import StructuredModelResponse
-from .tracing import MetadataValue, ModelTrace, TraceSink
+from .usage import MetadataValue, ModelUsage, UsageSink
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1"
 ReasoningEffort = Literal[
@@ -87,6 +89,13 @@ class OpenRouterResponse:
     metadata: dict[str, MetadataValue]
 
 
+class OpenRouterResponseError(Exception):
+    def __init__(self, cause: Exception, metadata: dict[str, MetadataValue]) -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+        self.metadata = metadata
+
+
 class OpenRouterTransport(Protocol):
     async def complete(self, request: OpenRouterRequest) -> OpenRouterResponse: ...
 
@@ -126,7 +135,7 @@ class OpenRouterChatTransport:
             {"role": "system", "content": request.system_content},
             {"role": "user", "content": request.case_content},
         ]
-        completion = await self._client.chat.completions.parse(
+        response = await self._client.chat.completions.with_raw_response.parse(
             messages=messages,
             model=request.model,
             max_tokens=request.output_tokens,
@@ -145,30 +154,17 @@ class OpenRouterChatTransport:
                 },
             },
         )
-        if len(completion.choices) != 1:
-            raise ValueError("OpenRouter returned an unexpected number of choices")
+        # Capture billing before the SDK validates structured output. Truncated
+        # or malformed decisions can still consume paid tokens.
+        metadata = response_metadata(response.content, response.request_id)
+        try:
+            completion = response.parse()
+            if len(completion.choices) != 1:
+                raise ValueError("OpenRouter returned an unexpected number of choices")
+        except Exception as error:
+            metadata["error_type"] = type(error).__name__
+            raise OpenRouterResponseError(error, metadata) from error
         choice = completion.choices[0]
-        metadata: dict[str, MetadataValue] = {
-            "model": completion.model,
-            "finish_reason": choice.finish_reason,
-        }
-        provider = cast(object, getattr(completion, "provider", None))
-        if isinstance(provider, str):
-            metadata["provider"] = provider
-        if completion.system_fingerprint is not None:
-            metadata["system_fingerprint"] = completion.system_fingerprint
-        usage = completion.usage
-        if usage is not None:
-            metadata.update(
-                {
-                    "prompt_tokens": usage.prompt_tokens,
-                    "completion_tokens": usage.completion_tokens,
-                    "total_tokens": usage.total_tokens,
-                }
-            )
-            details = usage.completion_tokens_details
-            if details is not None and details.reasoning_tokens is not None:
-                metadata["reasoning_tokens"] = details.reasoning_tokens
         return OpenRouterResponse(
             content=choice.message.content,
             refused=choice.message.refusal is not None,
@@ -184,42 +180,40 @@ class OpenRouterDecisionModel:
         self,
         transport: OpenRouterTransport,
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None = None,
+        usage_sink: UsageSink | None = None,
     ) -> None:
         self._transport = transport
         self._settings = settings
-        self._trace_sink = trace_sink
+        self._usage_sink = usage_sink
 
     @classmethod
     def from_settings(
         cls,
         settings: OpenRouterSettings,
-        trace_sink: TraceSink | None = None,
+        usage_sink: UsageSink | None = None,
     ) -> OpenRouterDecisionModel:
         transport = OpenRouterChatTransport(
             api_key=_api_key(settings.api_key_file),
             timeout_seconds=settings.timeout_seconds,
         )
-        return cls(transport, settings, trace_sink)
+        return cls(transport, settings, usage_sink)
 
     async def close(self) -> None:
         await self._transport.close()
 
-    def _trace(
+    def _record_usage(
         self,
         case_id: str,
-        response: OpenRouterResponse | None,
-        error: str | None,
+        metadata: dict[str, MetadataValue],
+        failed: bool,
     ) -> None:
-        if self._trace_sink is None:
+        if self._usage_sink is None:
             return
-        self._trace_sink.record(
-            ModelTrace(
+        self._usage_sink.record(
+            ModelUsage(
                 case_id=case_id,
-                raw_output=None if response is None else response.content,
-                reasoning=None,
-                response_metadata={} if response is None else response.metadata,
-                error=error,
+                response_metadata=metadata,
+                failed=failed,
             )
         )
 
@@ -247,9 +241,19 @@ class OpenRouterDecisionModel:
         )
         try:
             response = await self._transport.complete(request)
+        except asyncio.CancelledError:
+            self._record_usage(case_id, {}, failed=True)
+            raise
+        except OpenRouterResponseError as error:
+            detail = diagnostic(error.cause)
+            self._record_usage(case_id, error.metadata, failed=True)
+            raise DecisionModelUnavailable("OpenRouter request failed: " + detail) from error
         except Exception as error:
             detail = diagnostic(error)
-            self._trace(case_id, None, "request failed: " + detail)
+            metadata: dict[str, MetadataValue] = {"error_type": type(error).__name__}
+            if isinstance(error, APIStatusError):
+                metadata.update(request_id=error.request_id, http_status=error.status_code)
+            self._record_usage(case_id, metadata, failed=True)
             raise DecisionModelUnavailable("OpenRouter request failed: " + detail) from error
         if response.content is None:
             detail = (
@@ -257,12 +261,12 @@ class OpenRouterDecisionModel:
                 if response.refused
                 else "OpenRouter response did not contain text"
             )
-            self._trace(case_id, response, detail)
+            self._record_usage(case_id, response.metadata, failed=True)
             raise DecisionModelError(detail)
         try:
             decision_output = unwrap_openai_decision(response.content)
         except OpenAIStructuredOutputError as error:
-            self._trace(case_id, response, str(error))
+            self._record_usage(case_id, response.metadata, failed=True)
             raise DecisionModelError("OpenRouter " + str(error)) from error
         return decision_output, response
 
@@ -270,12 +274,11 @@ class OpenRouterDecisionModel:
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        del decision_schema
+
         decision_output, response = await self._generate(
             system_instruction,
             case_content,
@@ -286,5 +289,5 @@ class OpenRouterDecisionModel:
         return StructuredModelResponse(
             decision_output,
             "OpenRouter",
-            lambda error: self._trace(case_id, response, error),
+            lambda error: self._record_usage(case_id, response.metadata, failed=error is not None),
         )

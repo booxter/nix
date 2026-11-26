@@ -80,20 +80,3 @@ func ClassifyReplacement(
 	}
 	return ReplacementAllowed
 }
-
-// AllReplacementsSuperseded requires every manual-import candidate to carry a
-// conclusive Radarr downgrade result. Empty and mixed observations stay active.
-func AllReplacementsSuperseded(
-	movie *RadarrMovie,
-	manualImports []RadarrManualImport,
-) bool {
-	if movie == nil || !movie.HasFile || len(manualImports) == 0 {
-		return false
-	}
-	for _, manualImport := range manualImports {
-		if ClassifyReplacement(movie, manualImport) != ReplacementSuperseded {
-			return false
-		}
-	}
-	return true
-}

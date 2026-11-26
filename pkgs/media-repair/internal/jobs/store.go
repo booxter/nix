@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -22,6 +26,20 @@ const (
 
 type State string
 
+type Outcome string
+
+const (
+	OutcomeEvidenceChanged    Outcome = "evidence_changed"
+	OutcomePlannerFailed      Outcome = "planner_failed"
+	OutcomeOther              Outcome = "other"
+	OutcomeInterrupted        Outcome = "interrupted"
+	OutcomeRuntimeMismatch    Outcome = "runtime_mismatch"
+	OutcomeAlreadyReviewed    Outcome = "already_reviewed"
+	OutcomeIncompleteDownload Outcome = "incomplete_download"
+	OutcomeQueueNotReady      Outcome = "queue_not_ready"
+	OutcomeInvalidCueSheet    Outcome = "invalid_cue_sheet"
+)
+
 const (
 	Observed  State = "observed"
 	Ready     State = "ready"
@@ -35,29 +53,32 @@ const (
 )
 
 type Job struct {
-	ID                          int64   `gorm:"primaryKey"`
-	Service                     Service `gorm:"uniqueIndex:queue_identity"`
-	QueueID                     int64   `gorm:"uniqueIndex:queue_identity"`
-	DownloadID                  string  `gorm:"uniqueIndex:queue_identity"`
-	Title                       string
-	SourceFingerprint           string
-	PlanningFingerprint         string
-	PreviousPlanningFingerprint string `gorm:"-"`
-	PlanningChange              string `gorm:"-"`
-	StableSince                 time.Time
-	Evidence                    json.RawMessage `gorm:"serializer:json"`
-	CollectionError             string
-	Plan                        json.RawMessage `gorm:"serializer:json"`
-	Guidance                    string
-	RuntimeToleranceMS          int64
-	RetryAt                     time.Time
-	PlanningAttempts            int
-	PendingAction               string
-	Revision                    int64
-	InQueue                     bool
-	State                       State
-	Reason                      string
-	UpdatedAt                   time.Time `gorm:"autoUpdateTime:false"`
+	ID         int64   `gorm:"primaryKey"`
+	Service    Service `gorm:"uniqueIndex:queue_identity"`
+	QueueID    int64   `gorm:"uniqueIndex:queue_identity"`
+	DownloadID string  `gorm:"uniqueIndex:queue_identity"`
+	Title      string
+	// SourceFingerprint identifies the observed case used to authorize execution.
+	// PlanningFingerprint ignores assessment noise so an unchanged planning
+	// question can reuse its previous result.
+	SourceFingerprint   string
+	PlanningFingerprint string
+	StableSince         time.Time
+	Evidence            json.RawMessage `gorm:"serializer:json"`
+	CollectionError     string
+	CollectionOutcome   Outcome
+	Plan                json.RawMessage `gorm:"serializer:json"`
+	Guidance            string
+	RuntimeToleranceMS  int64
+	RetryAt             time.Time
+	PlanningAttempts    int
+	PendingAction       string
+	Revision            int64
+	InQueue             bool
+	State               State
+	Reason              string
+	Outcome             Outcome
+	UpdatedAt           time.Time `gorm:"autoUpdateTime:false"`
 }
 
 type Attempt struct {
@@ -73,14 +94,23 @@ type Attempt struct {
 	ImportTerminalAt time.Time
 	ImportReceipt    json.RawMessage `gorm:"serializer:json"`
 	Reason           string
+	Outcome          Outcome
 	StartedAt        time.Time
 	UpdatedAt        time.Time `gorm:"autoUpdateTime:false"`
 }
 
-type Store struct{ db *gorm.DB }
+type InputProjection func(Service, json.RawMessage) (planning.Inputs, error)
+
+type Store struct {
+	db      *gorm.DB
+	project InputProjection
+}
 
 // Open expects its parent directory to be private and on local storage.
-func Open(path string) (*Store, error) {
+func Open(path string, project InputProjection) (*Store, error) {
+	if project == nil {
+		return nil, fmt.Errorf("planning input projection is required")
+	}
 	location := url.URL{Scheme: "file", Path: filepath.Clean(path)}
 	location.RawQuery = url.Values{
 		"_journal_mode": {"WAL"},
@@ -105,7 +135,7 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{db: db}, nil
+	return &Store{db: db, project: project}, nil
 }
 
 func (store *Store) Close() error {
@@ -123,6 +153,13 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		err := tx.Where(&identity, "Service", "QueueID", "DownloadID").First(&job).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			job = observed
+			if observed.Evidence != nil {
+				inputs, err := store.planningInputs(observed)
+				if err != nil {
+					return err
+				}
+				job.PlanningFingerprint = inputs.Fingerprint()
+			}
 			job.ID = 0
 			job.State = Observed
 			job.StableSince = observed.UpdatedAt
@@ -137,25 +174,29 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
 		job.CollectionError = observed.CollectionError
+		job.CollectionOutcome = observed.CollectionOutcome
 		if !active(job.State) && observed.Evidence != nil {
-			changed, err := observePlanning(tx, &job, observed)
+			changed, changes, err := store.observePlanning(tx, &job, observed)
 			if err != nil {
 				return err
 			}
 			if changed && job.State != Imported && job.State != Removed {
 				job.Plan = nil
 				job.State = Observed
-				job.Reason = observed.PlanningChange
+				job.Reason = strings.Join(changes, ", ")
+				job.Outcome = ""
 				job.StableSince = observed.UpdatedAt
 				job.RetryAt = time.Time{}
 				job.PlanningAttempts = 0
 				if err := restorePlanning(tx, &job); err != nil {
 					return err
 				}
+				slog.InfoContext(ctx, "planning inputs changed", "service", job.Service,
+					"job", job.ID, "changes", strings.Join(changes, ", "))
 			}
 			// A ready plan belongs to its original full evidence. Import execution
 			// revalidates it; assessment noise must not silently replace that case.
-			if job.State != Ready || changed || observed.PlanningFingerprint == "" {
+			if job.State != Ready || changed {
 				job.SourceFingerprint = observed.SourceFingerprint
 				job.Evidence = observed.Evidence
 			}
@@ -176,29 +217,6 @@ func (store *Store) List(ctx context.Context, service Service) ([]Job, error) {
 	var jobs []Job
 	err := store.db.WithContext(ctx).Where(&Job{Service: service}).Order("id").Find(&jobs).Error
 	return jobs, err
-}
-
-// A model response may arrive after the source files changed.
-func (store *Store) SetPlan(ctx context.Context, id int64, fingerprint string, plan json.RawMessage, guidance string, at time.Time) error {
-	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var job Job
-		if err := tx.First(&job, id).Error; err != nil {
-			return err
-		}
-		if job.SourceFingerprint != fingerprint || active(job.State) || job.State == Imported || job.State == Removed {
-			return ErrConflict
-		}
-
-		job.Plan = plan
-		job.Guidance = guidance
-		job.UpdatedAt = at
-		job.State = Ready
-		job.Reason = ""
-		if err := rememberPlanning(tx, job); err != nil {
-			return err
-		}
-		return tx.Save(&job).Error
-	})
 }
 
 func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt, error) {
@@ -231,6 +249,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 
 		job.State = Running
 		job.Reason = ""
+		job.Outcome = ""
 		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		return tx.Save(&job).Error
@@ -261,6 +280,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 
 		previous.State = attempt.State
 		previous.Reason = attempt.Reason
+		previous.Outcome = attempt.Outcome
 		previous.UpdatedAt = attempt.UpdatedAt
 		previous.OutputPath = attempt.OutputPath
 		previous.ImportReceipt = attempt.ImportReceipt
@@ -279,6 +299,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		}
 		job.State = attempt.State
 		job.Reason = attempt.Reason
+		job.Outcome = attempt.Outcome
 		job.UpdatedAt = attempt.UpdatedAt
 		if !retryAt.IsZero() {
 			job.State = Ready

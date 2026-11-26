@@ -22,12 +22,6 @@ const (
 	JoinTechnicalChecksRejected JoinRejectionReason = "technical_checks_rejected"
 )
 
-type JoinRejection struct {
-	Reason       JoinRejectionReason
-	PartPosition *int
-	FileID       controller.FileID
-}
-
 type AuthorizedJoinPart struct {
 	FileID      controller.FileID
 	Fingerprint controller.FileFingerprint
@@ -44,40 +38,29 @@ type AuthorizedJoin struct {
 	ExpectedStreamLayout controller.StreamLayout
 }
 
-type JoinValidation struct {
-	Authorized  *AuthorizedJoin
-	Rejections  []JoinRejection
-	Feasibility *controller.JoinFeasibilityAssessment
-}
-
-func (validation JoinValidation) Accepted() bool {
-	return validation.Authorized != nil && len(validation.Rejections) == 0
-}
-
 func ValidateJoin(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
-) JoinValidation {
-	validation := JoinValidation{Rejections: make([]JoinRejection, 0)}
+) (*AuthorizedJoin, JoinRejectionReason) {
 	if decision.Kind != contracts.ActionJoinParts || decision.JoinParts == nil ||
 		string(decision.JoinParts.Action) != string(contracts.ActionJoinParts) {
-		return rejected(validation, JoinWrongDecisionAction, nil, "")
+		return nil, JoinWrongDecisionAction
 	}
 	join := decision.JoinParts
 	if join.CaseID != assembly.Request.CaseID ||
 		assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
-		validation = rejected(validation, JoinCaseMismatch, nil, "")
+		return nil, JoinCaseMismatch
 	}
 
 	capability, found := findCapability(assembly.Request.Capabilities, join.CapabilityID)
 	if !found {
-		return rejected(validation, JoinCapabilityNotFound, nil, "")
+		return nil, JoinCapabilityNotFound
 	}
 	if capability.Action != contracts.CapabilityActionJoinParts {
-		return rejected(validation, JoinCapabilityWrongAction, nil, "")
+		return nil, JoinCapabilityWrongAction
 	}
 	if len(join.OrderedFileIDS) < 2 {
-		validation = rejected(validation, JoinTooFewSelectedFiles, nil, "")
+		return nil, JoinTooFewSelectedFiles
 	}
 
 	offered := make(map[string]struct{}, len(capability.CandidateFileIDS))
@@ -88,34 +71,29 @@ func ValidateJoin(
 	probes := indexProbes(assembly.LocalSnapshot.Observation.Probes)
 	seen := make(map[string]struct{}, len(join.OrderedFileIDS))
 	parts := make([]controller.JoinPartEvidence, 0, len(join.OrderedFileIDS))
-	for position, selectedID := range join.OrderedFileIDS {
+	for _, selectedID := range join.OrderedFileIDS {
 		fileID := controller.FileID(selectedID)
 		if _, duplicate := seen[selectedID]; duplicate {
-			validation = rejected(validation, JoinDuplicateSelectedFile, &position, fileID)
-			continue
+			return nil, JoinDuplicateSelectedFile
 		}
 		seen[selectedID] = struct{}{}
 		if _, allowed := offered[selectedID]; !allowed {
-			validation = rejected(validation, JoinFileNotOffered, &position, fileID)
-			continue
+			return nil, JoinFileNotOffered
 		}
 		file, found := files[fileID]
 		if !found {
-			validation = rejected(validation, JoinFileNotInSnapshot, &position, fileID)
-			continue
+			return nil, JoinFileNotInSnapshot
 		}
 		assessment := controller.ClassifyMediaFiles(
 			controller.FileInventory{Files: []controller.InventoryFile{file}},
 		)[0]
 		if !assessment.ProbeCandidate() ||
 			!controller.SupportsJoinPartsPath(file.PathComponents) {
-			validation = rejected(validation, JoinFileNotActionable, &position, fileID)
-			continue
+			return nil, JoinFileNotActionable
 		}
 		probe, found := probes[fileID]
 		if !found || probe.Status != controller.MediaProbeSucceeded || probe.Evidence == nil {
-			validation = rejected(validation, JoinProbeUnavailable, &position, fileID)
-			continue
+			return nil, JoinProbeUnavailable
 		}
 		parts = append(parts, controller.JoinPartEvidence{
 			FileID:      fileID,
@@ -124,14 +102,9 @@ func ValidateJoin(
 			Probe:       probe.Evidence,
 		})
 	}
-	if len(validation.Rejections) != 0 {
-		return validation
-	}
-
 	feasibility := controller.AssessJoinFeasibility(parts)
-	validation.Feasibility = &feasibility
 	if !feasibility.Eligible() {
-		return rejected(validation, JoinTechnicalChecksRejected, nil, "")
+		return nil, JoinTechnicalChecksRejected
 	}
 
 	orderedParts := make([]AuthorizedJoinPart, len(parts))
@@ -141,7 +114,7 @@ func ValidateJoin(
 			Fingerprint: part.Fingerprint,
 		}
 	}
-	validation.Authorized = &AuthorizedJoin{
+	return &AuthorizedJoin{
 		CaseID:               assembly.Request.CaseID,
 		CapabilityID:         capability.CapabilityID,
 		OrderedParts:         orderedParts,
@@ -150,8 +123,7 @@ func ValidateJoin(
 		DurationToleranceMS:  *feasibility.Duration.ToleranceMS,
 		OutputContainer:      *feasibility.OutputContainer.Container,
 		ExpectedStreamLayout: feasibility.Streams.Layout.Clone(),
-	}
-	return validation
+	}, ""
 }
 
 func findCapability(capabilities []contracts.Capability, capabilityID string) (contracts.Capability, bool) {
@@ -177,16 +149,4 @@ func indexProbes(probes []casebuilder.FileProbe) map[controller.FileID]controlle
 		indexed[probe.FileID] = probe.Outcome
 	}
 	return indexed
-}
-
-func rejected(
-	validation JoinValidation,
-	reason JoinRejectionReason,
-	position *int,
-	fileID controller.FileID,
-) JoinValidation {
-	validation.Rejections = append(validation.Rejections, JoinRejection{
-		Reason: reason, PartPosition: position, FileID: fileID,
-	})
-	return validation
 }

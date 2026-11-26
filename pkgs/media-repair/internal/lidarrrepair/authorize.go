@@ -30,6 +30,14 @@ type AuthorizedImport struct {
 	Tracks       []AuthorizedTrack
 }
 
+type EvidenceChangedError struct {
+	Reason string
+}
+
+func (failure *EvidenceChangedError) Error() string {
+	return failure.Reason
+}
+
 func AuthorizeImport(
 	planned Record,
 	current Evidence,
@@ -49,16 +57,16 @@ func AuthorizeImport(
 		planned.SourceKind != current.SourceKind || planned.SourcePath != current.SourcePath ||
 		planned.SourceFingerprint != current.SourceFingerprint ||
 		planned.WorkspaceRoot != current.WorkspaceRoot {
-		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr evidence does not match the planned case")
+		return AuthorizedImport{}, false, &EvidenceChangedError{Reason: "current Lidarr evidence does not match the planned case"}
 	}
 	if !reflect.DeepEqual(planned.Bindings, current.Bindings) {
-		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr import bindings changed after planning")
+		return AuthorizedImport{}, false, &EvidenceChangedError{Reason: "current Lidarr import bindings changed after planning"}
 	}
 	validate := ValidateDecision
 	if current.Recovered {
 		validate = validateDecisionSelection
 	} else if plannedCase.CaseID != current.Case.CaseID {
-		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr evidence does not match the planned case")
+		return AuthorizedImport{}, false, &EvidenceChangedError{Reason: "current Lidarr evidence does not match the planned case"}
 	}
 	if err := validate(current.Case, decision); err != nil {
 		return AuthorizedImport{}, false, fmt.Errorf("revalidate planned Lidarr repair: %w", err)

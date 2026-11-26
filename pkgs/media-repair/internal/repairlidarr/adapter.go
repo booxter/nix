@@ -3,6 +3,7 @@ package repairlidarr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -45,7 +46,12 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 	}
 	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, current)
 	if err != nil {
-		return repair.PreparedImport{}, &repair.BlockedError{Reason: err.Error()}
+		blocked := &repair.BlockedError{Reason: err.Error()}
+		var changed *lidarrrepair.EvidenceChangedError
+		if errors.As(err, &changed) {
+			blocked.Code = jobs.OutcomeEvidenceChanged
+		}
+		return repair.PreparedImport{}, blocked
 	}
 	if !accepted {
 		return repair.PreparedImport{}, &repair.BlockedError{Reason: "no missing-track import authorized"}

@@ -35,7 +35,7 @@ func TestJoinPublishesValidatedOutputAndPreservesSources(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if filepath.Ext(output.Path) != test.want || output.Fingerprint == "" {
+			if filepath.Ext(output.Path) != test.want {
 				t.Fatalf("published output = %q, want %s", output.Path, test.want)
 			}
 			if _, err := os.Stat(output.Path); err != nil {

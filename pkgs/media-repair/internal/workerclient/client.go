@@ -1,14 +1,8 @@
 package workerclient
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"mime"
-	"net"
-	"net/http"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -21,33 +15,21 @@ import (
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
-const workerURL = "http://worker"
-
 type FailureKind uint8
 
 const (
-	FailureUnavailable FailureKind = iota + 1
-	FailureTimeout
-	FailureHTTP
-	FailureInvalidResponse
+	FailureInvalidResponse FailureKind = iota + 1
 	FailureRejected
 )
 
 type Failure struct {
-	Kind       FailureKind
-	Reason     workercontracts.Reason
-	StatusCode int
-	cause      error
+	Kind   FailureKind
+	Reason workercontracts.Reason
+	cause  error
 }
 
 func (failure *Failure) Error() string {
 	switch failure.Kind {
-	case FailureUnavailable:
-		return "media probe worker is unavailable"
-	case FailureTimeout:
-		return "media probe worker timed out"
-	case FailureHTTP:
-		return fmt.Sprintf("media probe worker returned HTTP status %d", failure.StatusCode)
 	case FailureInvalidResponse:
 		return "media probe worker returned an invalid response"
 	case FailureRejected:
@@ -68,8 +50,6 @@ type mediaRoot struct {
 
 type Client struct {
 	runner         RequestRunner
-	httpClient     *http.Client
-	transport      *http.Transport
 	roots          []mediaRoot
 	requestTimeout time.Duration
 	stageTimeout   time.Duration
@@ -77,34 +57,6 @@ type Client struct {
 }
 
 var _ controller.MediaProbeReader = (*Client)(nil)
-
-func New(
-	socketPath string,
-	rootPaths map[string]string,
-	requestTimeout time.Duration,
-	stageTimeout time.Duration,
-) (*Client, error) {
-	if socketPath == "" || strings.ContainsRune(socketPath, '\x00') ||
-		!filepath.IsAbs(socketPath) || filepath.Clean(socketPath) != socketPath {
-		return nil, fmt.Errorf("worker socket must be an absolute clean path")
-	}
-	client, err := newClient(rootPaths, requestTimeout, stageTimeout)
-	if err != nil {
-		return nil, err
-	}
-	dialer := &net.Dialer{}
-	client.transport = &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, "unix", socketPath)
-		},
-		DisableCompression: true, MaxIdleConns: 2, MaxIdleConnsPerHost: 2,
-		IdleConnTimeout: 30 * time.Second,
-	}
-	client.httpClient = &http.Client{Transport: client.transport,
-		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
-	}
-	return client, nil
-}
 
 func newClient(rootPaths map[string]string, requestTimeout, stageTimeout time.Duration) (*Client, error) {
 	if requestTimeout <= 0 {
@@ -155,12 +107,6 @@ func newClient(rootPaths map[string]string, requestTimeout, stageTimeout time.Du
 		requestTimeout: requestTimeout,
 		stageTimeout:   max(requestTimeout, stageTimeout),
 	}, nil
-}
-
-func (client *Client) Close() {
-	if client != nil && client.transport != nil {
-		client.transport.CloseIdleConnections()
-	}
 }
 
 func (client *Client) Probe(
@@ -248,7 +194,7 @@ func (client *Client) ResolvePublishedPath(
 }
 
 func (client *Client) configured() bool {
-	return client != nil && (client.httpClient != nil || client.runner != nil) && client.requestTimeout > 0
+	return client != nil && client.runner != nil && client.requestTimeout > 0
 }
 
 func (client *Client) nextID() string {
@@ -273,39 +219,7 @@ func (client *Client) postWithTimeout(
 ) ([]byte, error) {
 	requestContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	if client.runner != nil {
-		return client.runner.Run(requestContext, path, payload, responseLimit)
-	}
-	request, err := http.NewRequestWithContext(
-		requestContext,
-		http.MethodPost,
-		workerURL+path,
-		bytes.NewReader(payload),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("construct worker HTTP request: %w", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	response, err := client.httpClient.Do(request)
-	if err != nil {
-		return nil, client.requestFailure(ctx, requestContext, err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return nil, &Failure{Kind: FailureHTTP, StatusCode: response.StatusCode}
-	}
-	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || mediaType != "application/json" {
-		return nil, &Failure{Kind: FailureInvalidResponse, cause: err}
-	}
-	data, err := io.ReadAll(io.LimitReader(response.Body, int64(responseLimit)+1))
-	if err != nil {
-		return nil, client.requestFailure(ctx, requestContext, err)
-	}
-	if len(data) > responseLimit {
-		return nil, &Failure{Kind: FailureInvalidResponse}
-	}
-	return data, nil
+	return client.runner.Run(requestContext, path, payload, responseLimit)
 }
 
 func retainedProbeFailure(reason workercontracts.Reason) (controller.MediaProbeReason, bool) {
@@ -343,18 +257,17 @@ func (client *Client) resolve(absolutePath string) (string, []string, error) {
 	return "", nil, fmt.Errorf("media path is outside configured roots")
 }
 
-func (client *Client) requestFailure(
-	callerContext context.Context,
-	requestContext context.Context,
-	cause error,
-) error {
-	if err := callerContext.Err(); err != nil {
-		return err
+func relativeToRoot(root, absolutePath string) (string, bool) {
+	if absolutePath == "" || strings.ContainsRune(absolutePath, '\x00') ||
+		!filepath.IsAbs(absolutePath) || filepath.Clean(absolutePath) != absolutePath {
+		return "", false
 	}
-	if errors.Is(requestContext.Err(), context.DeadlineExceeded) {
-		return &Failure{Kind: FailureTimeout, cause: cause}
+	relative, err := filepath.Rel(root, absolutePath)
+	if err != nil || relative == "." || relative == ".." ||
+		strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return "", false
 	}
-	return &Failure{Kind: FailureUnavailable, cause: cause}
+	return relative, true
 }
 
 func validateRootID(rootID string) error {

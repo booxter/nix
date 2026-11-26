@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
-	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
@@ -40,16 +39,11 @@ func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
 	}
 	artifacts[0].ArtifactID = "artifact:" + fingerprint
 	bindings[0].ArtifactID = artifacts[0].ArtifactID
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
-		t.Fatal(err)
+	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err == nil {
+		t.Fatal("content-addressed artifact ID was accepted as a case artifact ID")
 	}
-	artifacts[0].ArtifactID = materialize.ArtifactID(
-		artifacts[0].RelativePath, artifacts[0].Fingerprint,
-	)
+	artifacts[0].ArtifactID = "artifact:1"
 	bindings[0].ArtifactID = artifacts[0].ArtifactID
-	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
-		t.Fatal(err)
-	}
 
 	if err := os.WriteFile(path, []byte("alterx track"), 0o640); err != nil {
 		t.Fatal(err)

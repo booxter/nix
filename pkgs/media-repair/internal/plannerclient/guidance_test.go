@@ -17,6 +17,7 @@ func TestFirstPlanAcceptsOperatorGuidance(t *testing.T) {
 
 	socket := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		var input struct {
+			JobID                      int64           `json:"job_id"`
 			PriorDecision              json.RawMessage `json:"prior_decision"`
 			Guidance                   string          `json:"operator_guidance"`
 			MaximumRuntimeDifferenceMS int64           `json:"maximum_runtime_difference_ms"`
@@ -25,7 +26,7 @@ func TestFirstPlanAcceptsOperatorGuidance(t *testing.T) {
 			http.Error(writer, "invalid request", http.StatusBadRequest)
 			return
 		}
-		if input.Guidance != guidance || input.MaximumRuntimeDifferenceMS != 1_800_000 || len(input.PriorDecision) != 0 {
+		if input.JobID != 42 || input.Guidance != guidance || input.MaximumRuntimeDifferenceMS != 1_800_000 || len(input.PriorDecision) != 0 {
 			http.Error(writer, "missing first-plan guidance", http.StatusUnprocessableEntity)
 			return
 		}
@@ -34,6 +35,7 @@ func TestFirstPlanAcceptsOperatorGuidance(t *testing.T) {
 	client := testClient(t, socket, time.Second)
 
 	_, err := client.Plan(context.Background(), repairCase, planning.Options{
+		JobID:                      42,
 		Guidance:                   guidance,
 		MaximumRuntimeDifferenceMS: 1_800_000,
 	})

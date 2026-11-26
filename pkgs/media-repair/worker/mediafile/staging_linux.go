@@ -49,22 +49,6 @@ type StagedArtifacts interface {
 	) (StagedArtifact, error)
 }
 
-type RecoverableStagedArtifacts interface {
-	StagedArtifacts
-	InspectStaged(
-		string,
-		string,
-		workercontracts.OutputContainer,
-	) (StagedStatus, CompletedArtifact, error)
-	RemovePartial(string, string, workercontracts.OutputContainer) (bool, error)
-	RemoveCompleted(
-		string,
-		string,
-		workercontracts.OutputContainer,
-		string,
-	) (bool, error)
-}
-
 type stagedArtifact struct {
 	file          *os.File
 	directory     *os.File
@@ -78,7 +62,7 @@ type completedArtifact struct {
 	closed bool
 }
 
-var _ RecoverableStagedArtifacts = (*RootSet)(nil)
+var _ StagedArtifacts = (*RootSet)(nil)
 
 func (rootSet *RootSet) CreateStaged(
 	rootID string,
@@ -273,32 +257,6 @@ func (rootSet *RootSet) InspectStaged(
 		return StagedPartial, nil, nil
 	}
 	return StagedMissing, nil, nil
-}
-
-func (rootSet *RootSet) RemovePartial(
-	rootID string,
-	artifactID string,
-	container workercontracts.OutputContainer,
-) (bool, error) {
-	status, completed, err := rootSet.InspectStaged(rootID, artifactID, container)
-	if completed != nil {
-		_ = completed.Close()
-	}
-	if err != nil {
-		return false, err
-	}
-	if status != StagedPartial {
-		return false, nil
-	}
-	extension, err := stagedExtension(container)
-	if err != nil {
-		return false, err
-	}
-	return rootSet.removeStagedName(
-		rootID,
-		partialStagedName(stagedName(artifactID, extension)),
-		"",
-	)
 }
 
 func (rootSet *RootSet) RemoveCompleted(

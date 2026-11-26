@@ -74,18 +74,25 @@ func TestUncertainSubmissionIsReconciledAfterRestartWithoutResubmission(t *testi
 		t.Fatal("lost submission error")
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	// A new engine has no in-memory knowledge of whether POST reached Servarr.
-	restarted := &Engine{Store: engine.Store, Adapter: adapter, Now: engine.Now}
-	if err := restarted.Run(ctx, job.ID); err != nil {
+	// Servarr can remove the queue entry before Repairr sees import history.
+	if err := engine.Store.ReconcileQueue(ctx, job.Service, nil, engine.Now()); err != nil {
+		t.Fatal(err)
+	}
+	service := &waitingService{fakeAdapter: *adapter}
+	restarted := Scheduler{
+		Store: engine.Store, Name: job.Service, Service: service, Now: engine.Now,
+		Disabled: func() (bool, error) { return true, nil },
+	}
+	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	adapter.status.Receipt = json.RawMessage(`{"file_id":42}`)
-	if err := restarted.Run(ctx, job.ID); err != nil {
+	service.status.Receipt = json.RawMessage(`{"file_id":42}`)
+	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Imported)
-	if adapter.submissions != 1 {
+	if service.submissions != 1 {
 		t.Fatal("repeated uncertain POST")
 	}
 }
@@ -136,7 +143,13 @@ func TestHistoryOutageDoesNotMakeImportRetryable(t *testing.T) {
 		t.Fatal("lost history error")
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	if err := engine.Store.SetPlan(ctx, job.ID, job.SourceFingerprint, job.Plan, "retry", engine.Now()); !errors.Is(err, jobs.ErrConflict) {
+	planned, err := engine.Store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planned.State = jobs.Ready
+	planned.UpdatedAt = engine.Now()
+	if err := engine.Store.FinishPlanning(ctx, planned); !errors.Is(err, jobs.ErrConflict) {
 		t.Fatalf("uncertain import became retryable: %v", err)
 	}
 	adapter.checkError = nil
@@ -189,7 +202,7 @@ func (adapter *fakeAdapter) CheckImport(_ context.Context, _ jobs.Attempt) (Impo
 
 func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	t.Helper()
-	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"))
+	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,11 +212,14 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 		}
 	})
 	ctx := context.Background()
-	job, err := store.Observe(ctx, jobs.Job{Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source"})
+	job, err := store.Observe(ctx, jobs.Job{Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source", Evidence: json.RawMessage(`{"files":"source"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, job.SourceFingerprint, json.RawMessage(`{"action":"join"}`), "", time.Now()); err != nil {
+	job.State = jobs.Ready
+	job.Plan = json.RawMessage(`{"action":"join"}`)
+	job.UpdatedAt = time.Now()
+	if err := store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
 	adapter := &fakeAdapter{store: store, jobID: job.ID}

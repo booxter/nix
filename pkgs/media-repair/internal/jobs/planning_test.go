@@ -35,11 +35,11 @@ func TestNewGuidanceInvalidatesAnInflightPlan(t *testing.T) {
 func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album"})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, DownloadID: "album", Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
@@ -69,11 +69,11 @@ func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 func TestMissingQueueItemKeepsImportRecoveryEvidence(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 1, Evidence: json.RawMessage(`{"source":"album"}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SetPlan(ctx, job.ID, "", json.RawMessage(`{}`), "", time.Now()); err != nil {
+	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	attempt, err := store.Start(ctx, job.ID, time.Now())

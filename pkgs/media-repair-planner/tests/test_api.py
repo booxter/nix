@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 from collections.abc import AsyncIterator
+from io import StringIO
 from pathlib import Path
 
 import httpx
@@ -13,6 +14,7 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.planning_core import PlanningContext
+from media_repair_planner.usage import JsonlUsageWriter, ModelUsage
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
@@ -84,6 +86,34 @@ async def test_plans_a_valid_case() -> None:
     assert len(planner.cases) == 1
 
 
+async def test_usage_is_attributed_to_the_current_job() -> None:
+    stream = StringIO()
+    writer = JsonlUsageWriter(stream, "model", "provider")
+
+    class ReportingPlanner(StaticPlanner):
+        async def plan(
+            self, repair_case: RepairCaseV3, context: PlanningContext | None = None
+        ) -> RepairDecisionV3:
+            writer.record(ModelUsage(repair_case.case_id.root, {}, failed=False))
+            return await super().plan(repair_case, context)
+
+    async with client_for(ReportingPlanner()) as client:
+        response = await client.post(
+            "/radarr/plan", json={"repair_case": json.loads(CASE_BYTES), "job_id": 42}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            "/radarr/plan", content=REQUEST_BYTES, headers={"Content-Type": "application/json"}
+        )
+        assert response.status_code == 200
+
+    first, second = [json.loads(line) for line in stream.getvalue().splitlines()]
+    assert first["service"] == second["service"] == "radarr"
+    assert first["job_id"] == 42
+    assert second["job_id"] is None
+    assert first["attempt_id"] != second["attempt_id"]
+
+
 @pytest.mark.parametrize("include_prior", [False, True])
 async def test_operator_guidance_reaches_planner(include_prior: bool) -> None:
     planner = StaticPlanner()
@@ -104,7 +134,13 @@ async def test_operator_guidance_reaches_planner(include_prior: bool) -> None:
     assert decode_decision(response.content) == DECISION
     context = planner.contexts[0]
     assert context is not None
-    assert guidance in context.user_content
+    content = json.loads(context.user_content)
+    assert content["prior_decision"] == payload.get("prior_decision")
+    assert content["operator_guidance"] == {
+        "text": guidance,
+        "authority": "policy_override",
+        "media_evidence": False,
+    }
 
 
 async def test_runtime_override_without_prior_plan_reaches_planner() -> None:

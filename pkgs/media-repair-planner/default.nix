@@ -1,6 +1,5 @@
 {
   contracts,
-  jq,
   lib,
   pydanticModels,
   python3Packages,
@@ -29,19 +28,6 @@ python3Packages.buildPythonApplication {
       src/media_repair_planner/schemas/lidarr-repair-case.schema.json
     cp ${contracts}/share/lidarr-repair/contracts/v3/repair-decision.schema.json \
       src/media_repair_planner/schemas/lidarr-repair-decision.schema.json
-    mkdir -p src/media_repair_planner/evaluations/v3/cases
-    cp ${contracts}/share/radarr-repair/contracts/v3/examples/repair-case-*.json \
-      src/media_repair_planner/evaluations/v3/cases/
-    cp corpus-review/*/*.json \
-      src/media_repair_planner/evaluations/v3/cases/
-    for case in src/media_repair_planner/evaluations/v3/cases/*.json; do
-      jq \
-        '.schema_version = "radarr-repair/v3"
-        | .radarr.failure.status_message_count = (.radarr.failure.status_messages | length)
-        | .radarr.failure.status_messages |= map(.message_count = (.messages | length))' \
-        "$case" > "$case.migrated"
-      mv "$case.migrated" "$case"
-    done
   '';
 
   build-system = [ python3Packages.setuptools ];
@@ -53,8 +39,6 @@ python3Packages.buildPythonApplication {
     pydantic
     uvicorn
   ];
-
-  nativeBuildInputs = [ jq ];
 
   nativeCheckInputs = with python3Packages; [
     httpx
@@ -75,8 +59,6 @@ python3Packages.buildPythonApplication {
       ${contracts}/share/radarr-repair/contracts/v3/examples/repair-case-joinable.json
     "$out/bin/media-repair-planner" validate-decision \
       ${contracts}/share/radarr-repair/contracts/v3/examples/repair-decision-join.json
-    "$out/bin/media-repair-planner-evaluate-radarr" --help >/dev/null
-    "$out/bin/media-repair-planner-evaluate-lidarr" --help >/dev/null
     "$out/bin/media-repair-planner-serve" --help >/dev/null
   '';
 

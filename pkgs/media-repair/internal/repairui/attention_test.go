@@ -24,6 +24,9 @@ func TestAttentionClassification(t *testing.T) {
 		{"runtime without evidence", jobs.Job{Service: jobs.Radarr, Reason: "decision rejected: runtime_mismatch"}, decision{}, "", 0},
 		{"retry without evidence", jobs.Job{}, decision{Explanation: plannerFallback}, "", 0},
 		{"release", jobs.Job{Service: jobs.Lidarr, Evidence: lidarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_release"}, "release", 1},
+		{"restored release", jobs.Job{Service: jobs.Lidarr, Evidence: lidarrEvidence, Outcome: jobs.OutcomeAlreadyReviewed}, decision{Action: "no_repair", Reason: "ambiguous_release"}, "release", 1},
+		{"restored fallback", jobs.Job{Evidence: lidarrEvidence, Outcome: jobs.OutcomeAlreadyReviewed}, decision{Action: "no_repair", Explanation: plannerFallback}, "retry", 0},
+		{"coded fallback", jobs.Job{Evidence: lidarrEvidence, Outcome: jobs.OutcomeOther}, decision{Action: "no_repair", Reason: "planner_failed", Explanation: "Different wording"}, "retry", 0},
 		{"tracks", jobs.Job{Service: jobs.Lidarr, Evidence: lidarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_tracks"}, "guidance", 0},
 		{"files", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_file_selection"}, "file", 2},
 		{"parts", jobs.Job{Service: jobs.Radarr, Evidence: radarrEvidence}, decision{Action: "no_repair", Reason: "ambiguous_part_order"}, "guidance", 0},
@@ -42,7 +45,7 @@ func TestAttentionClassification(t *testing.T) {
 			if test.job.State == "" {
 				test.job.State = jobs.Blocked
 			}
-			got := attentionFor(test.job, test.plan)
+			got := attentionFor(test.job, test.plan, classifyOutcome(test.job, test.plan))
 			if test.kind == "" {
 				if got != nil {
 					t.Fatalf("unexpected attention: %+v", got)
@@ -68,7 +71,7 @@ func TestInboxDoesNotOfferInstructionsForUnavailableOperations(t *testing.T) {
 		{Action: "no_repair", Reason: "insufficient_evidence", MissingEvidence: []string{"movie_runtime"}},
 	} {
 		job := jobs.Job{Service: jobs.Radarr, State: jobs.Blocked, InQueue: true, Evidence: evidence}
-		if got := attentionFor(job, plan); got != nil {
+		if got := attentionFor(job, plan, classifyOutcome(job, plan)); got != nil {
 			t.Fatalf("offered impossible action for %+v: %+v", plan, got)
 		}
 	}

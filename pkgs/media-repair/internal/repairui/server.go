@@ -46,7 +46,6 @@ type item struct {
 	Status      string
 	Explanation string
 	NextStep    string
-	Group       string
 	Attention   *attention
 	CSRF        string
 }

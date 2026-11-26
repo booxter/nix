@@ -21,7 +21,6 @@ type AuthorizedDVD struct {
 	ExpectedChapters   int
 	ExpectedTracks     []dvdvideo.Track
 	SourceBytes        int64
-	RuntimeToleranceMS int64
 }
 
 type AuthorizedDVDSelection struct {
@@ -30,47 +29,29 @@ type AuthorizedDVDSelection struct {
 	RuntimeToleranceMS int64
 }
 
-type DVDValidation struct {
-	Authorized *AuthorizedDVDSelection
-	Rejections []RemuxRejectionReason
-	Runtime    *ManualImportRuntimeAssessment
-}
-
-func (validation DVDValidation) Accepted() bool {
-	return validation.Authorized != nil && len(validation.Rejections) == 0
-}
-
-func rejectDVD(reason RemuxRejectionReason) DVDValidation {
-	return DVDValidation{Rejections: []RemuxRejectionReason{reason}}
-}
-
 // ValidateDVD binds the chosen title to every file in its inventoried VIDEO_TS
 // tree and checks its duration against Radarr's movie runtime.
-func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisionV3) DVDValidation {
-	return ValidateDVDWithPolicy(assembly, decision, RuntimePolicy{})
-}
-
-func ValidateDVDWithPolicy(
+func ValidateDVD(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV3,
 	policy RuntimePolicy,
-) DVDValidation {
+) (*AuthorizedDVDSelection, RemuxRejectionReason) {
 	if decision.Kind != contracts.ActionRemuxDVD || decision.RemuxDVD == nil ||
 		string(decision.RemuxDVD.Action) != string(contracts.ActionRemuxDVD) {
-		return rejectDVD(RemuxWrongDecision)
+		return nil, RemuxWrongDecision
 	}
 	if decision.RemuxDVD.CaseID != assembly.Request.CaseID ||
 		assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
-		return rejectDVD(RemuxCaseMismatch)
+		return nil, RemuxCaseMismatch
 	}
 	ids := decision.RemuxDVD.OrderedTitleIDS
 	if len(ids) == 0 || len(ids) > 128 {
-		return rejectDVD(RemuxCapabilityMissing)
+		return nil, RemuxCapabilityMissing
 	}
 	observation := assembly.LocalSnapshot.Observation
 	if observation.Movie == nil || observation.Movie.RuntimeMinutes == nil ||
 		*observation.Movie.RuntimeMinutes <= 0 {
-		return rejectDVD(RemuxRuntimeMissing)
+		return nil, RemuxRuntimeMissing
 	}
 	files := indexFiles(observation.Inventory)
 	paths := make(map[controller.FileID]string, len(observation.Inventory.Paths))
@@ -83,30 +64,27 @@ func ValidateDVDWithPolicy(
 	var total int64
 	for _, id := range ids {
 		if seen[id] {
-			return rejectDVD(RemuxPlaylistMismatch)
+			return nil, RemuxPlaylistMismatch
 		}
 		seen[id] = true
 		title, reason := authorizeDVDTitle(assembly, files, paths, id)
 		if reason != "" {
-			return rejectDVD(reason)
+			return nil, reason
 		}
 		if title.ExpectedDurationMS <= 0 || title.ExpectedDurationMS > math.MaxInt64-total {
-			return rejectDVD(RemuxPlaylistMismatch)
+			return nil, RemuxPlaylistMismatch
 		}
 		total += title.ExpectedDurationMS
 		selected = append(selected, title)
 	}
-	runtime := assessManualImportRuntime(total, observation.Movie.RuntimeMinutes, policy)
-	if runtime.DifferenceMS == nil || *runtime.DifferenceMS > *runtime.ToleranceMS {
-		return DVDValidation{Rejections: []RemuxRejectionReason{RemuxRuntimeMismatch}, Runtime: runtime}
+	tolerance, matches := runtimeMatches(total, observation.Movie.RuntimeMinutes, policy)
+	if !matches {
+		return nil, RemuxRuntimeMismatch
 	}
-	for index := range selected {
-		selected[index].RuntimeToleranceMS = *runtime.ToleranceMS
-	}
-	return DVDValidation{Authorized: &AuthorizedDVDSelection{
-		Titles: selected, MovieRuntimeMS: *runtime.MovieRuntimeMS,
-		RuntimeToleranceMS: *runtime.ToleranceMS,
-	}, Runtime: runtime}
+	return &AuthorizedDVDSelection{
+		Titles: selected, MovieRuntimeMS: int64(*observation.Movie.RuntimeMinutes) * 60 * 1_000,
+		RuntimeToleranceMS: tolerance,
+	}, ""
 }
 
 func authorizeDVDTitle(

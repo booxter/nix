@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
@@ -13,7 +11,6 @@ from media_repair_planner.api import (
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
-from media_repair_planner.evaluation_runtime import EvaluationSettings
 from media_repair_planner.lidarr_case_models import LidarrRepairCaseV3
 from media_repair_planner.lidarr_contracts import (
     ContractError,
@@ -22,20 +19,12 @@ from media_repair_planner.lidarr_contracts import (
     encode_decision,
 )
 from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV3
-from media_repair_planner.lidarr_evaluation import (
-    CorpusCase,
-    LidarrEvaluationDataError,
-    evaluate_outcome,
-    load_cases,
-    run_evaluation,
-)
-from media_repair_planner.lidarr_evaluation_cli import main as evaluation_main
 from media_repair_planner.lidarr_planning import LidarrPlanner
 from media_repair_planner.lidarr_validation import (
     validate_decision_for_case,
     validate_decision_object,
 )
-from media_repair_planner.planning_core import PlanningContext, PlanningOutcome
+from media_repair_planner.planning_core import PlanningContext
 from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
 
@@ -179,19 +168,18 @@ def model_decision_value(**changes: object) -> dict[str, object]:
 class ScriptedModel:
     def __init__(self, outputs: list[str | Exception]) -> None:
         self.outputs = outputs
-        self.calls: list[tuple[str, str, dict[str, Any], str, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, str, str, tuple[DecisionViolation, ...]]] = []
 
     async def decide_json(
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
         assert decision_model is LidarrRepairDecisionV3
-        self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
+        self.calls.append((system_instruction, case_content, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
             raise output
@@ -203,12 +191,11 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
     model = ScriptedModel([json.dumps(model_decision_value())])
     case = repair_case()
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(case)
+    decision = await LidarrPlanner(model).plan(case)
 
-    assert outcome.decision == expected
-    assert outcome.attempts == 1
-    assert not outcome.used_fallback
-    assert model.calls[0][3] == CASE_ID
+    assert decision == expected
+    assert len(model.calls) == 1
+    assert model.calls[0][2] == CASE_ID
 
 
 async def test_lidarr_planner_returns_partial_mapping() -> None:
@@ -227,11 +214,10 @@ async def test_lidarr_planner_returns_partial_mapping() -> None:
         ]
     )
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert outcome.decision == expected
-    assert outcome.attempts == 1
-    assert not outcome.used_fallback
+    assert decision == expected
+    assert len(model.calls) == 1
 
 
 async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None:
@@ -245,13 +231,13 @@ async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None
     )
     model = ScriptedModel([invalid, invalid])
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert outcome.used_fallback
-    assert outcome.decision.root.action == "no_repair"
-    assert outcome.decision.root.case_id.root == CASE_ID
-    assert len(model.calls[1][4]) == 2
-    assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][4])
+    assert decision.root.action == "no_repair"
+    assert decision.root.case_id.root == CASE_ID
+    assert len(model.calls) == 2
+    assert len(model.calls[1][3]) == 2
+    assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][3])
 
 
 async def test_lidarr_planner_logs_bounded_fallback_evidence(
@@ -286,10 +272,11 @@ async def test_lidarr_planner_logs_bounded_fallback_evidence(
 async def test_lidarr_planner_corrects_malformed_output() -> None:
     model = ScriptedModel(["not JSON", json.dumps(model_decision_value())])
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    decision = await LidarrPlanner(model).plan(repair_case())
 
-    assert not outcome.used_fallback
-    assert model.calls[1][4][0].code == ViolationCode.INVALID_JSON
+    assert decision == repair_decision()
+    assert len(model.calls) == 2
+    assert model.calls[1][3][0].code == ViolationCode.INVALID_JSON
 
 
 def test_lidarr_semantic_validation_rejects_unoffered_values() -> None:
@@ -429,136 +416,10 @@ async def test_lidarr_planning_with_guidance(include_prior: bool) -> None:
     assert decode_decision(response.content) == repair_decision()
     context = planner.contexts[0]
     assert context is not None
-    assert guidance in context.user_content
-
-
-def write_lidarr_case(directory: Path, value: dict[str, object] | None = None) -> Path:
-    path = directory / ("a" * 64 + ".json")
-    path.write_text(json.dumps(value or case_value()), encoding="utf-8")
-    return path
-
-
-def lidarr_evaluation_settings(case: str | None = None) -> EvaluationSettings:
-    return EvaluationSettings(
-        model="openai/gpt-5.6-sol",
-        provider="OpenAI",
-        output_tokens=4096,
-        reasoning_effort="high",
-        timeout_seconds=30,
-        runs=1,
-        case=case,
-    )
-
-
-def test_lidarr_review_corpus_loads_contract_cases(tmp_path: Path) -> None:
-    write_lidarr_case(tmp_path)
-
-    corpus = load_cases(tmp_path)
-
-    assert len(corpus) == 1
-    assert corpus[0].name == "a" * 64
-    assert corpus[0].repair_case.case_id.root == CASE_ID
-
-
-def test_lidarr_review_corpus_rejects_bad_identity(tmp_path: Path) -> None:
-    value = case_value()
-    value["case_id"] = "sha256:" + "b" * 64
-    write_lidarr_case(tmp_path, value)
-
-    with pytest.raises(LidarrEvaluationDataError, match="does not match"):
-        load_cases(tmp_path)
-
-
-async def test_lidarr_review_runs_structured_planner(tmp_path: Path) -> None:
-    write_lidarr_case(tmp_path)
-    model = ScriptedModel([json.dumps(model_decision_value())])
-
-    report = await run_evaluation(
-        LidarrPlanner(model),
-        lidarr_evaluation_settings(),
-        load_cases(tmp_path),
-    )
-
-    assert report.passed
-    assert report.results[0].artist == "Artist"
-    assert report.results[0].album == "Album"
-    assert report.results[0].decision["action"] == "import_missing_tracks_v1"
-
-
-async def test_lidarr_review_rejects_unknown_case(tmp_path: Path) -> None:
-    write_lidarr_case(tmp_path)
-
-    with pytest.raises(LidarrEvaluationDataError, match="unknown Lidarr evaluation case"):
-        await run_evaluation(
-            LidarrPlanner(ScriptedModel([])),
-            lidarr_evaluation_settings(case="b" * 64),
-            load_cases(tmp_path),
-        )
-
-
-def test_lidarr_review_marks_fallback_as_failed() -> None:
-    corpus_case = CorpusCase(name="a" * 64, repair_case=repair_case())
-    result = evaluate_outcome(
-        corpus_case,
-        1,
-        PlanningOutcome(
-            decision=decode_decision(
-                json.dumps(
-                    {
-                        "schema_version": "lidarr-repair/v3",
-                        "case_id": CASE_ID,
-                        "action": "no_repair",
-                        "reason": "unsafe_to_repair",
-                        "evidence_refs": [],
-                        "explanation": "The planner exhausted its attempts.",
-                    }
-                ).encode()
-            ),
-            attempts=2,
-            used_fallback=True,
-            attempt_errors=("attempt 1: invalid", "attempt 2: invalid"),
-        ),
-    )
-
-    assert not result.passed
-    assert result.violations == ["planner exhausted its attempts"]
-
-
-def test_lidarr_review_cli_writes_openrouter_report(tmp_path: Path) -> None:
-    write_lidarr_case(tmp_path)
-    output = tmp_path / "report.json"
-    trace = tmp_path / "trace.jsonl"
-
-    def model_factory(settings: object, trace_sink: object) -> ScriptedModel:
-        del settings, trace_sink
-        return ScriptedModel([json.dumps(model_decision_value())])
-
-    result = evaluation_main(
-        [
-            "--model",
-            "openai/gpt-5.6-sol",
-            "--openrouter-provider",
-            "OpenAI",
-            "--openrouter-api-key-file",
-            str(tmp_path / "api-key"),
-            "--output-tokens",
-            "4096",
-            "--reasoning",
-            "high",
-            "--timeout-seconds",
-            "30",
-            "--case-directory",
-            str(tmp_path),
-            "--trace-output",
-            str(trace),
-            "--output",
-            str(output),
-        ],
-        model_factory=model_factory,
-    )
-
-    report = json.loads(output.read_bytes())
-    assert result == 0
-    assert report["schema_version"] == "lidarr-repair-review-report/v1"
-    assert report["results"][0]["decision"]["action"] == "import_missing_tracks_v1"
-    assert trace.stat().st_mode & 0o777 == 0o600
+    content = json.loads(context.user_content)
+    assert content["prior_decision"] == payload.get("prior_decision")
+    assert content["operator_guidance"] == {
+        "text": guidance,
+        "authority": "policy_override",
+        "media_evidence": False,
+    }

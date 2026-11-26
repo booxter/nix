@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
-	"github.com/booxter/nix-config/media-repair/internal/controller"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
@@ -58,33 +57,11 @@ func (failure *Failure) Unwrap() error {
 	return failure.cause
 }
 
-func (failure *Failure) PlanningFailure() planningrunner.Failure {
-	if failure == nil {
-		return planningrunner.Failure{Kind: planningrunner.FailureUnexpected}
-	}
-	switch failure.Kind {
-	case FailureUnavailable:
-		return planningrunner.Failure{Kind: planningrunner.FailureUnavailable}
-	case FailureTimeout:
-		return planningrunner.Failure{Kind: planningrunner.FailureTimeout}
-	case FailureHTTP:
-		return planningrunner.Failure{
-			Kind: planningrunner.FailureHTTP, StatusCode: failure.StatusCode,
-		}
-	case FailureInvalidResponse:
-		return planningrunner.Failure{Kind: planningrunner.FailureInvalidResult}
-	default:
-		return planningrunner.Failure{Kind: planningrunner.FailureUnexpected}
-	}
-}
-
 type Client struct {
 	httpClient     *http.Client
 	transport      *http.Transport
 	requestTimeout time.Duration
 }
-
-var _ controller.Planner = (*Client)(nil)
 
 func New(socketPath string, requestTimeout time.Duration) (*Client, error) {
 	if socketPath == "" || strings.ContainsRune(socketPath, '\x00') ||

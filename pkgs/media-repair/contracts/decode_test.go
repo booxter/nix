@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -42,8 +43,12 @@ func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := DecodeCase(encoded); err != nil {
+	decoded, err := DecodeCase(encoded)
+	if err != nil {
 		t.Fatalf("decode round trip: %v", err)
+	}
+	if !reflect.DeepEqual(decoded, repairCase) {
+		t.Fatalf("round trip = %#v, want %#v", decoded, repairCase)
 	}
 }
 

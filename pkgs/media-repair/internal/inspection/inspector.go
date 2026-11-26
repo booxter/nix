@@ -11,11 +11,9 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
-	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 type RadarrReader interface {
-	controller.RadarrQueueReader
 	controller.RadarrMovieReader
 	controller.RadarrHistoryReader
 	controller.RadarrManualImportReader
@@ -41,66 +39,20 @@ type Dependencies struct {
 	CollectionTimeout time.Duration
 }
 
-type Selection struct {
-	// QueueID zero selects the only completed unimported download that is safe to
-	// inspect. An explicit ID is required when more than one record qualifies.
+type IneligibleError struct {
 	QueueID int64
+	Reasons []controller.CandidateRejectionReason
 }
 
-type RejectionReason string
-
-const (
-	RejectionInvalidEvidence   RejectionReason = "invalid_case_evidence"
-	RejectionUnsupportedSource RejectionReason = "unsupported_source"
-)
-
-type Rejection struct {
-	QueueID int64
-	Reason  RejectionReason
+func (failure *IneligibleError) Error() string {
+	return fmt.Sprintf("Radarr queue record %d is ineligible: %v", failure.QueueID, failure.Reasons)
 }
-
-type Result struct {
-	Assemblies []casebuilder.Assembly
-	Rejections []Rejection
-	Queue      []controller.RadarrQueueRecord
-}
-
-type CandidateUnavailableReason string
-
-const (
-	CandidateMissing    CandidateUnavailableReason = "missing"
-	CandidateIneligible CandidateUnavailableReason = "ineligible"
-)
-
-type CandidateUnavailableError struct {
-	QueueID          int64
-	Reason           CandidateUnavailableReason
-	RejectionReasons []controller.CandidateRejectionReason
-}
-
-func (failure *CandidateUnavailableError) Error() string {
-	if failure.Reason == CandidateIneligible {
-		return fmt.Sprintf(
-			"Radarr queue record %d is ineligible: %v",
-			failure.QueueID,
-			failure.RejectionReasons,
-		)
-	}
-	return fmt.Sprintf("Radarr queue record %d was not found", failure.QueueID)
-}
-
-type assembleFunc func(casebuilder.Observation) (casebuilder.Assembly, error)
 
 type Inspector struct {
 	dependencies Dependencies
-	assemble     assembleFunc
 }
 
 func New(dependencies Dependencies) (*Inspector, error) {
-	return newInspector(dependencies, casebuilder.Assemble)
-}
-
-func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector, error) {
 	switch {
 	case dependencies.Clock == nil:
 		return nil, fmt.Errorf("inspection clock is required")
@@ -114,106 +66,29 @@ func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector,
 		return nil, fmt.Errorf("media probe reader is required")
 	case dependencies.CollectionTimeout <= 0:
 		return nil, fmt.Errorf("collection timeout must be positive")
-	case assemble == nil:
-		return nil, fmt.Errorf("case assembler is required")
 	default:
-		return &Inspector{dependencies: dependencies, assemble: assemble}, nil
+		return &Inspector{dependencies: dependencies}, nil
 	}
 }
 
 func (inspector *Inspector) Inspect(
 	ctx context.Context,
-	selection Selection,
+	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
-	if inspector == nil || inspector.assemble == nil {
+	if inspector == nil || inspector.dependencies.Clock == nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inspector is not configured")
 	}
 	if err := ctx.Err(); err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	if selection.QueueID < 0 {
-		return casebuilder.Assembly{}, fmt.Errorf("queue ID must not be negative")
-	}
 	collectionContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
 	defer cancel()
 
-	records, err := inspector.dependencies.Radarr.ReadQueue(collectionContext)
-	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read Radarr queue: %w", err)
-	}
-	record, err := selectCandidate(records, selection, inspector.dependencies.Downloads)
-	if err != nil {
-		return casebuilder.Assembly{}, err
+	assessment := controller.ClassifyRepairCandidate(record, inspector.dependencies.Downloads)
+	if !assessment.Eligible() {
+		return casebuilder.Assembly{}, &IneligibleError{QueueID: record.ID, Reasons: assessment.RejectionReasons}
 	}
 	return inspector.inspectRecord(ctx, collectionContext, record)
-}
-
-func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
-	if inspector == nil || inspector.assemble == nil {
-		return Result{}, fmt.Errorf("inspector is not configured")
-	}
-	if err := ctx.Err(); err != nil {
-		return Result{}, err
-	}
-	queueContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
-	records, err := inspector.dependencies.Radarr.ReadQueue(queueContext)
-	cancel()
-	if err != nil {
-		return Result{}, fmt.Errorf("read Radarr queue: %w", err)
-	}
-	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(
-		records,
-		inspector.dependencies.Downloads,
-	))
-	if len(eligible) == 0 {
-		return Result{
-			Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{},
-			Queue: append([]controller.RadarrQueueRecord(nil), records...),
-		}, nil
-	}
-
-	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
-	rejections := make([]Rejection, 0)
-	var inspectionErrors []error
-	for _, record := range eligible {
-		if err := ctx.Err(); err != nil {
-			inspectionErrors = append(inspectionErrors, err)
-			break
-		}
-		collectionContext, collectionCancel := context.WithTimeout(
-			ctx,
-			inspector.dependencies.CollectionTimeout,
-		)
-		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
-		collectionCancel()
-		if inspectErr != nil {
-			if materialize.IsUnsupportedSource(inspectErr) {
-				rejections = append(rejections, Rejection{
-					QueueID: record.ID,
-					Reason:  RejectionUnsupportedSource,
-				})
-				continue
-			}
-			var invalidEvidence *casebuilder.InvalidEvidenceError
-			if errors.As(inspectErr, &invalidEvidence) {
-				rejections = append(rejections, Rejection{
-					QueueID: record.ID,
-					Reason:  RejectionInvalidEvidence,
-				})
-				continue
-			}
-			inspectionErrors = append(
-				inspectionErrors,
-				fmt.Errorf("inspect Radarr queue record %d: %w", record.ID, inspectErr),
-			)
-			continue
-		}
-		assemblies = append(assemblies, assembly)
-	}
-	return Result{
-		Assemblies: assemblies, Rejections: rejections,
-		Queue: append([]controller.RadarrQueueRecord(nil), records...),
-	}, errors.Join(inspectionErrors...)
 }
 
 func (inspector *Inspector) inspectRecord(
@@ -327,7 +202,7 @@ func (inspector *Inspector) inspectRecord(
 		}
 	}
 
-	assembly, err := inspector.assemble(casebuilder.Observation{
+	assembly, err := casebuilder.Assemble(casebuilder.Observation{
 		ObservedAt:      inspector.dependencies.Clock.Now(),
 		Correlation:     correlation,
 		Movie:           movie,
@@ -342,61 +217,6 @@ func (inspector *Inspector) inspectRecord(
 		return casebuilder.Assembly{}, fmt.Errorf("assemble repair case: %w", err)
 	}
 	return assembly, nil
-}
-
-func eligibleCandidates(
-	assessments []controller.CandidateAssessment,
-) []controller.RadarrQueueRecord {
-	eligible := make([]controller.RadarrQueueRecord, 0, len(assessments))
-	for _, assessment := range assessments {
-		if assessment.Eligible() {
-			eligible = append(eligible, assessment.Record)
-		}
-	}
-	return eligible
-}
-
-func selectCandidate(
-	records []controller.RadarrQueueRecord,
-	selection Selection,
-	downloads controller.DownloadSupport,
-) (controller.RadarrQueueRecord, error) {
-	assessments := controller.ClassifyRepairCandidates(records, downloads)
-	if selection.QueueID != 0 {
-		for _, assessment := range assessments {
-			if assessment.Record.ID != selection.QueueID {
-				continue
-			}
-			if !assessment.Eligible() {
-				return controller.RadarrQueueRecord{}, &CandidateUnavailableError{
-					QueueID: selection.QueueID, Reason: CandidateIneligible,
-					RejectionReasons: append(
-						[]controller.CandidateRejectionReason(nil),
-						assessment.RejectionReasons...,
-					),
-				}
-			}
-			return assessment.Record, nil
-		}
-		return controller.RadarrQueueRecord{}, &CandidateUnavailableError{
-			QueueID: selection.QueueID, Reason: CandidateMissing,
-		}
-	}
-
-	eligible := eligibleCandidates(assessments)
-	switch len(eligible) {
-	case 0:
-		return controller.RadarrQueueRecord{}, fmt.Errorf(
-			"Radarr queue has no completed unimported downloads eligible for inspection",
-		)
-	case 1:
-		return eligible[0], nil
-	default:
-		return controller.RadarrQueueRecord{}, fmt.Errorf(
-			"Radarr queue has %d completed unimported downloads eligible for inspection; select a queue ID",
-			len(eligible),
-		)
-	}
 }
 
 func (inspector *Inspector) collectProbes(
