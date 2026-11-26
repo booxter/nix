@@ -30,10 +30,7 @@ in
       package = pkgs.darwin.linux-builder-vz;
       # Both backends name their incompatible data disks nixos.qcow2.
       workingDirectory = "/var/lib/linux-builder-vz";
-      systems = [
-        "aarch64-linux"
-        "x86_64-linux"
-      ];
+      systems = [ "aarch64-linux" ];
       supportedFeatures = [
         "benchmark"
         "big-parallel"
