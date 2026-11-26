@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.contracts import decision_schema, decode_case, decode_decision
+from media_repair_planner.contracts import decode_case, decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import validate_decision_object
 from media_repair_planner.decision_validation_core import (
@@ -90,7 +90,6 @@ async def decide(
     generator = StructuredDecisionGenerator(
         model=model,
         system_instruction="system instruction",
-        decision_schema=decision_schema,
         decision_model=RepairDecisionV3,
         project_case=project_case,
         decode_decision=decode_decision,

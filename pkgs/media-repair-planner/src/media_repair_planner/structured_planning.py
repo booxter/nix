@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel
 
 from .decision_validation_core import DecisionViolation
+from .json_contract import ContractError
 from .planning_core import DecisionModelError, PlanningContext
 from .structured_decision import StructuredDecisionError, decode_structured_output
 from .structured_model import StructuredDecisionModel
@@ -29,7 +30,6 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
         *,
         model: StructuredDecisionModel,
         system_instruction: str,
-        decision_schema: Callable[[], dict[str, Any]],
         decision_model: type[BaseModel],
         project_case: Callable[[CaseT], DecisionProjection[DecisionT]],
         decode_decision: Callable[[bytes], DecisionT],
@@ -38,7 +38,6 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
     ) -> None:
         self._model = model
         self._system_instruction = system_instruction
-        self._decision_schema = decision_schema
         self._decision_model = decision_model
         self._project_case = project_case
         self._decode_decision = decode_decision
@@ -60,7 +59,6 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
         response = await self._model.decide_json(
             system_instruction,
             case_content,
-            self._decision_schema(),
             self._decision_model,
             self._case_id(repair_case),
             projection.project_correction(correction),
@@ -71,6 +69,10 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
                 self._decode_decision,
                 self._validate_decision_object,
             )
+            restored = projection.restore_decision(decision)
+        except ContractError as error:
+            response.finish(str(error))
+            raise DecisionModelError(f"decision contract failed: {error}") from error
         except StructuredDecisionError as error:
             response.finish(str(error))
             raise DecisionModelError(
@@ -78,4 +80,4 @@ class StructuredDecisionGenerator[CaseT, DecisionT]:
                 error.violations,
             ) from error
         response.finish(None)
-        return projection.restore_decision(decision)
+        return restored

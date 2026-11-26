@@ -4,7 +4,7 @@ import asyncio
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Literal, Protocol
 
 from openai import APIStatusError, AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
@@ -274,12 +274,11 @@ class OpenRouterDecisionModel:
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        del decision_schema
+
         decision_output, response = await self._generate(
             system_instruction,
             case_content,

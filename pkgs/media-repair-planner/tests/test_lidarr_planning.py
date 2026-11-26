@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 
 import httpx
 import pytest
@@ -169,19 +168,18 @@ def model_decision_value(**changes: object) -> dict[str, object]:
 class ScriptedModel:
     def __init__(self, outputs: list[str | Exception]) -> None:
         self.outputs = outputs
-        self.calls: list[tuple[str, str, dict[str, Any], str, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, str, str, tuple[DecisionViolation, ...]]] = []
 
     async def decide_json(
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
         assert decision_model is LidarrRepairDecisionV3
-        self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
+        self.calls.append((system_instruction, case_content, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
             raise output
@@ -197,7 +195,7 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
 
     assert decision == expected
     assert len(model.calls) == 1
-    assert model.calls[0][3] == CASE_ID
+    assert model.calls[0][2] == CASE_ID
 
 
 async def test_lidarr_planner_returns_partial_mapping() -> None:
@@ -238,8 +236,8 @@ async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None
     assert decision.root.action == "no_repair"
     assert decision.root.case_id.root == CASE_ID
     assert len(model.calls) == 2
-    assert len(model.calls[1][4]) == 2
-    assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][4])
+    assert len(model.calls[1][3]) == 2
+    assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][3])
 
 
 async def test_lidarr_planner_logs_bounded_fallback_evidence(
@@ -278,7 +276,7 @@ async def test_lidarr_planner_corrects_malformed_output() -> None:
 
     assert decision == repair_decision()
     assert len(model.calls) == 2
-    assert model.calls[1][4][0].code == ViolationCode.INVALID_JSON
+    assert model.calls[1][3][0].code == ViolationCode.INVALID_JSON
 
 
 def test_lidarr_semantic_validation_rejects_unoffered_values() -> None:

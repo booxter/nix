@@ -4,7 +4,6 @@ import json
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
@@ -27,18 +26,17 @@ FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/e
 class ScriptedDecisionModel:
     def __init__(self, steps: Sequence[str | Exception]) -> None:
         self.steps = list(steps)
-        self.calls: list[tuple[str, str, dict[str, Any], str, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, str, str, tuple[DecisionViolation, ...]]] = []
 
     async def decide_json(
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
+        self.calls.append((system_instruction, case_content, case_id, correction))
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step
@@ -81,7 +79,7 @@ async def test_reconsideration_keeps_capability_boundary() -> None:
 
     assert actual == expected
     assert len(model.calls) == 2
-    assert model.calls[1][4][0].code == ViolationCode.UNKNOWN_CAPABILITY
+    assert model.calls[1][3][0].code == ViolationCode.UNKNOWN_CAPABILITY
 
 
 async def test_planner_retries_one_expected_failure() -> None:
@@ -92,7 +90,7 @@ async def test_planner_retries_one_expected_failure() -> None:
 
     assert decision == expected
     assert len(model.calls) == 2
-    assert model.calls[1][4] == ()
+    assert model.calls[1][3] == ()
 
 
 async def test_planner_does_not_turn_model_unavailability_into_a_decision(
@@ -143,7 +141,7 @@ async def test_planner_retries_wrong_case_id_then_falls_back(
     assert "attempt 1: decision case_id does not match the case" in caplog.text
     assert "attempt 2: decision case_id does not match the case" in caplog.text
     assert len(model.calls) == 2
-    assert model.calls[1][4] == (
+    assert model.calls[1][3] == (
         DecisionViolation(
             code=ViolationCode.CASE_ID_MISMATCH,
             path=("case_id",),
@@ -163,8 +161,8 @@ async def test_planner_passes_model_rejection_to_retry() -> None:
     decision = await Planner(model).plan(repair_case())
 
     assert decision == expected
-    assert model.calls[0][4] == ()
-    assert model.calls[1][4] == (violation,)
+    assert model.calls[0][3] == ()
+    assert model.calls[1][3] == (violation,)
 
 
 async def test_planner_retries_invalid_structured_output_then_falls_back() -> None:

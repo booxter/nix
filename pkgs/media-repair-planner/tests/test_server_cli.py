@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
@@ -24,12 +23,11 @@ class CloseableModel:
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> StructuredModelResponse:
-        del system_instruction, case_content, decision_schema, decision_model, case_id, correction
+        del system_instruction, case_content, decision_model, case_id, correction
         raise AssertionError("readiness must not invoke the model")
 
     async def close(self) -> None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel
 
@@ -33,7 +33,6 @@ class StructuredDecisionModel(Protocol):
         self,
         system_instruction: str,
         case_content: str,
-        decision_schema: dict[str, Any],
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),

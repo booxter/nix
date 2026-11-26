@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .decision_validation_core import DecisionViolation, describe_violations
-from .json_contract import ContractError
 
 ATTEMPT_LIMIT = 2
 ATTEMPT_ERROR_LIMIT = 512
@@ -53,15 +52,11 @@ class ContractPlanner[CaseT, DecisionT]:
     def __init__(
         self,
         generator: DecisionGenerator[CaseT, DecisionT],
-        roundtrip_case: Callable[[CaseT], CaseT],
-        roundtrip_decision: Callable[[DecisionT], DecisionT],
         validate_decision: Callable[[CaseT, DecisionT], tuple[DecisionViolation, ...]],
         fallback: Callable[[CaseT], DecisionT],
         case_id: Callable[[CaseT], str],
     ) -> None:
         self._generator = generator
-        self._roundtrip_case = roundtrip_case
-        self._roundtrip_decision = roundtrip_decision
         self._validate_decision = validate_decision
         self._fallback = fallback
         self._case_id = case_id
@@ -86,18 +81,17 @@ class ContractPlanner[CaseT, DecisionT]:
         repair_case: CaseT,
         context: PlanningContext | None,
     ) -> DecisionT:
-        validated_case = self._roundtrip_case(repair_case)
         correction: tuple[DecisionViolation, ...] = ()
         attempt_errors: list[str] = []
         for attempt in range(1, ATTEMPT_LIMIT + 1):
-            decision, correction, error = await self._attempt(validated_case, correction, context)
+            decision, correction, error = await self._attempt(repair_case, correction, context)
             if decision is not None:
                 return decision
             if error is None:
                 raise RuntimeError("planning attempt failed without an error")
             attempt_errors.append(_attempt_error(attempt, error))
 
-        decision = self._fallback(validated_case)
+        decision = self._fallback(repair_case)
         LOGGER.warning(
             "planner used fallback case_id=%s attempts=%d errors=%s",
             self._case_id(repair_case),
@@ -113,10 +107,7 @@ class ContractPlanner[CaseT, DecisionT]:
         context: PlanningContext | None,
     ) -> tuple[DecisionT | None, tuple[DecisionViolation, ...], str | None]:
         try:
-            proposed = await self._generator.generate(repair_case, correction, context)
-            decision = self._roundtrip_decision(proposed)
-        except ContractError as error:
-            return None, (), f"decision contract failed: {error}"
+            decision = await self._generator.generate(repair_case, correction, context)
         except DecisionModelUnavailable:
             # The controller owns retry backoff. A provider outage is not a
             # decision about whether the media can be repaired safely.
