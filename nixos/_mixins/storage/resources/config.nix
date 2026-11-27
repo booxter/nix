@@ -115,6 +115,11 @@ in
 
     (lib.mkIf (remoteClaims != { }) {
       boot.supportedFilesystems = [ "nfs" ];
+      # Looking up a nested export can create an expirable NFS mount before
+      # systemd runs mount.nfs. Keep it mounted so idle expiry cannot remove
+      # writable paths from running services' mount namespaces.
+      boot.kernelModules = [ "nfs" ];
+      boot.kernel.sysctl."fs.nfs.nfs_mountpoint_timeout" = 0;
       # Keep routes to hard-mounted NFS shares available across DHCP restarts.
       networking.dhcpcd.extraConfig = "persistent";
     })
