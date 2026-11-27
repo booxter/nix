@@ -23,12 +23,13 @@ type jobSummary struct {
 }
 
 type attemptResponse struct {
-	Number    int64                  `json:"number"`
-	State     jobs.State             `json:"state"`
-	Reason    string                 `json:"reason,omitempty"`
-	CommandID int64                  `json:"commandId,omitempty"`
-	Receipt   *servarr.ImportReceipt `json:"receipt,omitempty"`
-	Question  *planning.Question     `json:"question,omitempty"`
+	Number     int64                  `json:"number"`
+	State      jobs.State             `json:"state"`
+	ReasonCode jobs.Outcome           `json:"reasonCode,omitempty"`
+	Reason     string                 `json:"reason,omitempty"`
+	CommandID  int64                  `json:"commandId,omitempty"`
+	Receipt    *servarr.ImportReceipt `json:"receipt,omitempty"`
+	Question   *planning.Question     `json:"question,omitempty"`
 }
 
 type jobDetail struct {
@@ -86,7 +87,8 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, attempt := range attempts {
 		detail.Attempts = append(detail.Attempts, attemptResponse{
-			Number: attempt.Number, State: attempt.State, Reason: attempt.Reason,
+			Number: attempt.Number, State: attempt.State,
+			ReasonCode: attempt.Outcome, Reason: attempt.Reason,
 			CommandID: attempt.CommandID, Receipt: attempt.ImportReceipt, Question: attempt.Question,
 		})
 	}

@@ -368,7 +368,9 @@ with subtest("a runtime override after restart imports the file the operator cho
     (selected,) = command["files"]
     assert selected["path"] == chosen, command
     confirm_from_history(fileChoice, job, chosen, attempt_number=2)
-    assert read_job(fileChoice, job)["attempts"][0]["question"] == question
+    blocked, imported = read_job(fileChoice, job)["attempts"]
+    assert blocked["reasonCode"] == "runtime_mismatch" and blocked["question"] == question, blocked
+    assert "reasonCode" not in imported, imported
     fileChoice.shutdown()
 
 with subtest("an interrupted preparation waits for the operator before it tries again"):
