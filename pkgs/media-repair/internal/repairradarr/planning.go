@@ -48,13 +48,21 @@ func encodeCase(assembly casebuilder.Assembly) (jobs.InspectedCase, error) {
 	return jobs.InspectedCase{Fingerprint: assembly.Request.CaseID, Evidence: data}, err
 }
 
-func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {
+func readPlanningCase(data json.RawMessage) (contracts.RepairCaseV3, error) {
 	var evidence Evidence
-	if err := json.Unmarshal(job.Evidence, &evidence); err != nil {
+	if err := json.Unmarshal(data, &evidence); err != nil {
+		return contracts.RepairCaseV3{}, err
+	}
+	return evidence.Case, nil
+}
+
+func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {
+	repairCase, err := readPlanningCase(job.Evidence)
+	if err != nil {
 		return repair.Decision{}, err
 	}
 
-	decision, err := adapter.Planner.PlanRadarr(ctx, evidence.Case, repair.Guidance(job))
+	decision, err := adapter.Planner.PlanRadarr(ctx, repairCase, repair.Guidance(job))
 	if err != nil {
 		return repair.Decision{}, err
 	}
@@ -62,7 +70,7 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	data, err := contracts.EncodeDecision(decision)
 	if stop := decision.NoRepair; stop != nil {
 		code := string(stop.Reason)
-		question := Question(evidence.Case, code, stop.MissingEvidence)
+		question := Question(repairCase, code, stop.MissingEvidence)
 		return repair.PlannerStop(data, code, stop.Explanation, question), err
 	}
 	return repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}, err

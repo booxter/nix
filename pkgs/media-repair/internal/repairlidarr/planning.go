@@ -77,12 +77,16 @@ func planningCaseInputs(repairCase lidarrcontracts.Case) planningInputs {
 	return inputs
 }
 
-func (adapter *Adapter) PlanningInputs(data json.RawMessage) (planning.Inputs, error) {
+func readPlanningCase(data json.RawMessage) (lidarrcontracts.Case, error) {
 	var record lidarrrepair.Record
 	if err := json.Unmarshal(data, &record); err != nil {
-		return planning.Inputs{}, err
+		return lidarrcontracts.Case{}, err
 	}
-	repairCase, err := lidarrcontracts.DecodeCase(record.Case)
+	return lidarrcontracts.DecodeCase(record.Case)
+}
+
+func (adapter *Adapter) PlanningInputs(data json.RawMessage) (planning.Inputs, error) {
+	repairCase, err := readPlanningCase(data)
 	if err != nil {
 		return planning.Inputs{}, err
 	}
@@ -112,11 +116,7 @@ func encodeEvidence(evidence lidarrrepair.Evidence) (jobs.InspectedCase, error) 
 }
 
 func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {
-	var record lidarrrepair.Record
-	if err := json.Unmarshal(job.Evidence, &record); err != nil {
-		return repair.Decision{}, err
-	}
-	repairCase, err := lidarrcontracts.DecodeCase(record.Case)
+	repairCase, err := readPlanningCase(job.Evidence)
 	if err != nil {
 		return repair.Decision{}, err
 	}
