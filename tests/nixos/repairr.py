@@ -2,10 +2,12 @@
 # The NixOS test driver supplies machine and subtest.
 import json
 import shlex
+from pathlib import PurePosixPath
 
 REPAIRR = "http://127.0.0.1:8790"
-ALBUMS = f"{REPAIRR}/api/jobs?service=lidarr&view=activity"
-VIDEO = "/var/lib/repairr-test-media/Example.Movie.2026/movie.mkv"
+UNFINISHED_ALBUM = f"{REPAIRR}/api/jobs?service=lidarr&view=activity&q=Unfinished"
+MEDIA = PurePosixPath("/var/lib/repairr-test-media")
+VIDEO = str(MEDIA / "Example.Movie.2026/movie.mkv")
 
 
 def read_json(url):
@@ -22,7 +24,7 @@ machine.start()
 machine.wait_for_unit("repairr.service")
 
 with subtest("an unfinished album appears in the operator activity page"):
-    album = wait_for_job(ALBUMS)
+    album = wait_for_job(UNFINISHED_ALBUM)
     assert (
         album["title"] == "Unfinished album download" and album["reasonCode"] == "queue_not_ready"
     ), album
@@ -52,12 +54,39 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
     assert receipt["DroppedPath"] == VIDEO and receipt["MovieID"] == 42, receipt
     assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
 
+with subtest("Lidarr reads the staged tracks and Repairr waits for both history records"):
+    album_job = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=importing")
+    album_url = f"{REPAIRR}/api/jobs/{album_job['id']}"
+    # The fixture has copied both files, but has published only the first in history.
+    machine.wait_until_succeeds("test -e /run/lidarr-fixture/command-checked", timeout=60)
+    (pending,) = read_json(album_url)["attempts"]
+    assert pending["state"] == "importing" and "receipt" not in pending, pending
+
+    (command,) = read_json("http://127.0.0.1:8687/fixture/imports")
+    paths = [PurePosixPath(file["path"]) for file in command["files"]]
+    assert sorted(path.name for path in paths) == ["01.flac", "02.flac"], command
+    for path in paths:
+        assert path.is_relative_to(MEDIA / ".media-repair/workspaces"), path
+        machine.succeed(
+            f"cmp {MEDIA}/Example.Album/{path.name} /run/lidarr-fixture/library/{path.name}"
+        )
+
+    machine.succeed("touch /run/lidarr-fixture/publish-second-track")
+    imported = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=imported")
+    assert imported["id"] == album_job["id"], imported
+    (album_attempt,) = read_json(album_url)["attempts"]
+    assert sorted((row["track_id"], row["history_id"]) for row in album_attempt["receipt"]) == [
+        (11, 92),
+        (12, 91),
+    ], album_attempt
+
 with subtest("the service user can reopen saved jobs with the media services offline"):
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
     machine.succeed("systemctl stop nginx.service", "systemctl restart repairr.service")
     machine.wait_until_succeeds(f"curl -fsS {REPAIRR}/health")
-    assert read_json(ALBUMS) == [album]
+    assert read_json(UNFINISHED_ALBUM) == [album]
     assert read_json(detail)["attempts"] == [attempt]
+    assert read_json(album_url)["attempts"] == [album_attempt]
 
 machine.fail("systemctl is-active radarr-repair-controller.timer")
 machine.fail("systemctl is-active lidarr-repair-controller.timer")

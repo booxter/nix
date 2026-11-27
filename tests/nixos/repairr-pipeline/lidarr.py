@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import sys
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -39,6 +40,16 @@ QUEUE_ENTRY = {
     "status": "completed",
     "trackedDownloadStatus": "warning",
     "outputPath": str(DOWNLOAD),
+}
+UNFINISHED = {
+    "id": 43,
+    "title": "Unfinished album download",
+    "downloadId": "SABnzbd_nzo_unfinished_album",
+    "protocol": "usenet",
+    "downloadClient": "SABnzbd",
+    "status": "downloading",
+    "size": 200,
+    "sizeleft": 100,
 }
 TRACKS = [
     {
@@ -83,10 +94,10 @@ class AlbumImport:
 
     def queue(self):
         if self.commands:
-            return page([])
+            return page([UNFINISHED])
         if Path("/run/lidarr-fixture/downloading").exists():
-            return page([{**QUEUE_ENTRY, "status": "downloading"}])
-        return page([QUEUE_ENTRY])
+            return page([{**QUEUE_ENTRY, "status": "downloading"}, UNFINISHED])
+        return page([QUEUE_ENTRY, UNFINISHED])
 
     def manual_imports(self, folder):
         self.workspace = Path(folder)
@@ -108,6 +119,12 @@ class AlbumImport:
         return files
 
     def submit(self, command):
+        # Reading each submitted path exercises Lidarr's access to the staged tracks.
+        library = Path("/run/lidarr-fixture/library")
+        library.mkdir(exist_ok=True)
+        for entry in command["files"]:
+            source = Path(entry["path"])
+            shutil.copyfile(source, library / source.name)
         self.commands.append(command)
         self.imported_at = datetime.now(UTC).isoformat()
 
@@ -191,4 +208,4 @@ class Lidarr(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-HTTPServer(("127.0.0.1", 7878), Lidarr).serve_forever()
+HTTPServer(("127.0.0.1", int(sys.argv[2])), Lidarr).serve_forever()

@@ -64,19 +64,17 @@ let
       ExecStart = "${lib.getExe pkgs.repairr} --config /etc/repairr.json";
     };
   };
-  ffmpeg = lib.getExe' pkgs.ffmpeg-headless "ffmpeg";
   movieNode = node (import ./repairr-pipeline/movie-fixture.nix { inherit pkgs video; });
-  albumNode = node {
-    preStart = ''
-      # On srvarr, storage provisioning creates the helper's workspace base.
-      mkdir -p ${downloads}/.media-repair ${album}
-      ${ffmpeg} -v error -y -f lavfi -i sine=frequency=440:duration=1 ${album}/01.flac
-      ${ffmpeg} -v error -y -f lavfi -i sine=frequency=880:duration=1 ${album}/02.flac
-    '';
-    serviceConfig = {
-      RuntimeDirectory = "lidarr-fixture";
-      ExecStart = "${lib.getExe pkgs.python3} ${./repairr-pipeline/lidarr.py} ${album}";
-    };
+  albumNode = {
+    imports = [
+      (node (
+        import ./repairr-pipeline/album-fixture.nix {
+          inherit pkgs album;
+          port = 7878;
+        }
+      ))
+    ];
+    systemd.tmpfiles.rules = [ "d ${downloads}/.media-repair 0750 root root -" ];
   };
 in
 pkgs.testers.runNixOSTest {
