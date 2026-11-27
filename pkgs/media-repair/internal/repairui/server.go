@@ -23,8 +23,8 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js
-var localTimeScript string
+//go:embed local-time.js answer.js
+var scripts embed.FS
 
 type Config struct {
 	Store     *jobs.Store
@@ -41,15 +41,20 @@ type Handler struct {
 }
 
 type item struct {
+	review
 	Job         jobs.Job
-	Decision    decision
 	CanAct      bool
 	Subject     string
 	Status      string
 	Explanation string
 	NextStep    string
-	Attention   *planning.Question
 	CSRF        string
+}
+
+type review struct {
+	Decision  decision
+	Outcome   jobs.Outcome
+	Attention *planning.Question
 }
 
 type decision struct {
@@ -114,14 +119,13 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /jobs/{id}", app.detail)
 	router.HandleFunc("GET /jobs/{id}/remove", app.detail)
 	router.HandleFunc("POST /jobs/{id}/{action}", app.action)
+	router.HandleFunc("GET /api/jobs/{id}/question", app.question)
+	router.HandleFunc("POST /api/jobs/{id}/answer", app.answer)
 	router.HandleFunc("GET /assets/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = w.Write([]byte(Style))
 	})
-	router.HandleFunc("GET /assets/local-time.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
-		_, _ = w.Write([]byte(localTimeScript))
-	})
+	router.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServerFS(scripts)))
 	router.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -198,8 +202,9 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
-	job, ok := app.readJob(w, r)
+	job, ok := app.readJob(r)
 	if !ok {
+		http.NotFound(w, r)
 		return
 	}
 	attempts, err := app.config.Store.Attempts(r.Context(), job.ID)
@@ -221,20 +226,14 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (app *Handler) readJob(w http.ResponseWriter, r *http.Request) (jobs.Job, bool) {
+func (app *Handler) readJob(r *http.Request) (jobs.Job, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		http.NotFound(w, r)
 		return jobs.Job{}, false
 	}
 
 	job, err := app.config.Store.Get(r.Context(), id)
-	if err != nil {
-		http.NotFound(w, r)
-		return jobs.Job{}, false
-	}
-
-	return job, true
+	return job, err == nil
 }
 
 func (app *Handler) render(w http.ResponseWriter, view page) {
@@ -244,10 +243,14 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 		return
 	}
 
+	app.setCSRFCookie(w)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = output.WriteTo(w)
+}
+
+func (app *Handler) setCSRFCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name: "repairr_csrf", Value: app.csrf, Path: "/",
 		Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode,
 	})
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = output.WriteTo(w)
 }

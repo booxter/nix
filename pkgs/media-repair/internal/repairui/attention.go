@@ -11,6 +11,15 @@ import (
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
 
+// The inbox and the API must offer the same question, including for jobs
+// that stopped during execution or were saved by an older daemon.
+func reviewFor(job jobs.Job) review {
+	var plan decision
+	_ = json.Unmarshal(job.Plan, &plan)
+	outcome := classifyOutcome(job, plan)
+	return review{Decision: plan, Outcome: outcome, Attention: attentionFor(job, plan, outcome)}
+}
+
 // Execution can stop for a retry or runtime override after planning has finished.
 // Otherwise the inbox shows the question saved by the planning step.
 func attentionFor(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Question {

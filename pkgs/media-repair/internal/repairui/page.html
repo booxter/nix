@@ -6,6 +6,7 @@
   <title>{{.Title}}</title>
   <link rel="stylesheet" href="/assets/style.css">
   <script src="/assets/local-time.js" defer></script>
+  <script src="/assets/answer.js" defer></script>
 </head>
 <body>
   <header>
@@ -159,7 +160,7 @@
 </html>
 
 {{define "response-form"}}
-<form class="response-form" method="post" action="/jobs/{{.Job.ID}}/respond">
+<form class="response-form" method="post" action="/api/jobs/{{.Job.ID}}/answer">
   <input type="hidden" name="csrf_token" value="{{.CSRF}}">
   <input type="hidden" name="revision" value="{{.Job.Revision}}">
   <input type="hidden" name="fingerprint" value="{{.Job.SourceFingerprint}}">
@@ -167,7 +168,7 @@
   {{if .Attention.Context}}<details class="evidence-context"><summary>Files and media information</summary><ul>{{range .Attention.Context}}<li>{{.}}</li>{{end}}</ul></details>{{end}}
   {{if .Attention.Choices}}
   <label for="selection-{{.Job.ID}}">Your choice</label>
-  <select id="selection-{{.Job.ID}}" name="selection" required>
+  <select id="selection-{{.Job.ID}}" name="choice" required>
     <option value="" selected disabled>Choose…</option>
     {{range .Attention.Choices}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
   </select>
@@ -187,5 +188,7 @@
   </fieldset>
   {{end}}
   <button type="submit">{{.Attention.Button}}</button>
+  <p role="alert" hidden></p>
+  <noscript>Enable JavaScript to submit an answer.</noscript>
 </form>
 {{end}}

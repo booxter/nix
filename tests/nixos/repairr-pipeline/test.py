@@ -5,9 +5,6 @@ import json
 import re
 import shlex
 from pathlib import PurePosixPath
-from urllib.parse import urlencode
-
-from lxml.html import fromstring
 
 COMPLETED_QUEUE_ID = 101
 UNFINISHED_QUEUE_ID = 102
@@ -59,18 +56,17 @@ def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
 
 
 def choice_request(vm, job_url, options, selected):
-    # Use the form and cookie from the restarted daemon, just as an operator
-    # would after reopening the job. Hidden fields identify this case revision.
+    # Keep the original request so a second submission answers the old revision.
+    api = REPAIRR + "/api" + job_url.removeprefix(REPAIRR)
     cookies = "/tmp/repairr-operator.cookies"
-    page = vm.succeed(f"curl -fsS -c {cookies} {job_url}")
-    (form,) = fromstring(page, base_url=job_url).forms
-    choices = {
-        option.text_content(): option.get("value")
-        for option in form.xpath('.//select[@name="selection"]/option')
-        if option.get("value")
-    }
+    current = json.loads(vm.succeed(f"curl -fsS -c {cookies} {api}/question"))
+    choices = {choice["label"]: choice["value"] for choice in current["question"]["choices"]}
     assert set(choices) == set(options), choices
-    form.fields["selection"] = choices[selected]
+    answer = {
+        "revision": current["revision"],
+        "fingerprint": current["fingerprint"],
+        "choice": choices[selected],
+    }
     return shlex.join(
         [
             "curl",
@@ -83,9 +79,11 @@ def choice_request(vm, job_url, options, selected):
             cookies,
             "-H",
             "Sec-Fetch-Site: same-origin",
-            "--data",
-            urlencode(form.form_values()),
-            form.action,
+            "-H",
+            "X-CSRF-Token: " + current["csrfToken"],
+            "--json",
+            json.dumps(answer),
+            api + "/answer",
         ]
     )
 
@@ -234,7 +232,7 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     wait_for_text(fileChoice, job, question)
     assert submitted_imports(fileChoice) == []
     answer = choice_request(fileChoice, job, ["movie.mkv", "theatrical.mkv"], "theatrical.mkv")
-    assert fileChoice.succeed(answer) == "303"
+    assert fileChoice.succeed(answer) == "204"
 
     chosen = str(PurePosixPath(VIDEO).with_name("theatrical.mkv"))
     wait_for_text(fileChoice, job, "Import command #1")
@@ -281,13 +279,16 @@ with subtest("the operator's edition selects the release and tracks imported int
     releaseChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     releaseChoice.succeed("systemctl start repairr.service")
     job = wait_for_job(releaseChoice, f"{REPAIRR}/lidarr", "Example Artist")
-    wait_for_text(releaseChoice, job, "Which release should these tracks be imported into?")
+    question = "Which release should these tracks be imported into?"
+    wait_for_text(releaseChoice, job, question)
     assert submitted_imports(releaseChoice) == []
 
+    releaseChoice.succeed("systemctl restart repairr.service")
+    wait_for_text(releaseChoice, job, question)
     original = "Example Album — CD (release 81)"
     reissue = "Example Album Reissue — CD (release 82)"
     answer = choice_request(releaseChoice, job, [original, reissue], reissue)
-    assert releaseChoice.succeed(answer) == "303"
+    assert releaseChoice.succeed(answer) == "204"
     # A second open tab still has the previous revision of the question.
     assert releaseChoice.succeed(answer) == "409"
     releaseChoice.succeed("touch /run/lidarr-fixture/publish-second-track")

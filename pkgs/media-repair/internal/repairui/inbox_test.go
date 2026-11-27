@@ -1,18 +1,18 @@
 package repairui
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
-	"golang.org/x/net/html"
 )
 
 const releaseEvidence = `{"case":{"releases":[{"release_id":12,"title":"Album","format":"CD","labels":["Label"]}],"capabilities":[{"action":"import_missing_tracks_v1","capability_id":"cap","release_id":12}]}}`
@@ -78,82 +78,41 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	}
 }
 
-func attributes(node *html.Node) map[string]string {
-	values := make(map[string]string, len(node.Attr))
-	for _, attr := range node.Attr {
-		values[attr.Key] = attr.Val
-	}
-	return values
-}
-
-// Include the hidden fields from the page and the first offered choice.
-func answerFields(form *html.Node) url.Values {
-	values := url.Values{}
-	for field := range form.Descendants() {
-		attrs := attributes(field)
-		name := attrs["name"]
-		if _, disabled := attrs["disabled"]; disabled || name == "" {
-			continue
-		}
-		switch field.Data {
-		case "input":
-			if attrs["type"] == "hidden" {
-				values.Set(name, attrs["value"])
-			}
-		case "select":
-			for option := range field.ChildNodes() {
-				choice := attributes(option)
-				if _, disabled := choice["disabled"]; option.Data == "option" && !disabled {
-					values.Set(name, choice["value"])
-					break
-				}
-			}
-		}
-	}
-	return values
-}
-
-func inboxRequest(t *testing.T, fixture *fixture, answer url.Values) *http.Request {
+func (fixture *fixture) answerRequest(t *testing.T, jobID int64, answer answerRequest) *http.Request {
 	t.Helper()
-	page := fixture.get("/")
-	if page.Code != http.StatusOK {
-		t.Fatalf("inbox: %d %s", page.Code, page.Body.String())
+	path := fmt.Sprintf("/api/jobs/%d", jobID)
+	response := fixture.get(path + "/question")
+	var current questionResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &current); err != nil || current.Question == nil {
+		t.Fatalf("get question: %d %s", response.Code, response.Body)
 	}
-	document, err := html.Parse(page.Body)
+	answer.Revision, answer.Fingerprint = &current.Revision, &current.Fingerprint
+	body, err := json.Marshal(answer)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for form := range document.Descendants() {
-		formAttrs := attributes(form)
-		if form.Data != "form" || !strings.EqualFold(formAttrs["method"], "post") {
-			continue
-		}
-		values := answerFields(form)
-		for name := range answer {
-			values.Set(name, answer.Get(name))
-		}
-		request := httptest.NewRequest(http.MethodPost, formAttrs["action"], strings.NewReader(values.Encode()))
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		request.Header.Set("Origin", "https://repairr.home.arpa")
-		for _, cookie := range page.Result().Cookies() {
-			request.AddCookie(cookie)
-		}
-		return request
+
+	request := httptest.NewRequest(http.MethodPost, path+"/answer", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Origin", "https://repairr.home.arpa")
+	request.Header.Set("X-CSRF-Token", current.CSRFToken)
+	for _, cookie := range response.Result().Cookies() {
+		request.AddCookie(cookie)
 	}
-	t.Fatal("inbox has no answer form")
-	return nil
+	return request
 }
 
 func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 	fixture := newFixture(t)
 	job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
 	note := "Keep the original track order."
-	request := inboxRequest(t, fixture, url.Values{"guidance": {note}})
-	duplicate := inboxRequest(t, fixture, nil)
+	answer := answerRequest{Choice: "12", Guidance: note}
+	request := fixture.answerRequest(t, job.ID, answer)
+	duplicate := fixture.answerRequest(t, job.ID, answer)
 	response := httptest.NewRecorder()
 	fixture.handler.ServeHTTP(response, request)
-	if response.Code != http.StatusSeeOther || !strings.HasPrefix(response.Header().Get("Location"), "/?submitted=") {
-		t.Fatalf("answer did not return to inbox: %d %s", response.Code, response.Body.String())
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("submit answer: %d %s", response.Code, response.Body)
 	}
 	current, err := fixture.store.Get(context.Background(), job.ID)
 	if err != nil || current.PendingAction != jobs.Reconsider || current.State != jobs.Observed ||
@@ -171,25 +130,31 @@ func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 }
 
 func TestInboxRejectsUnavailableChoicesAndStaleEvidence(t *testing.T) {
-	for _, scenario := range []string{"unknown choice", "new evidence", "cross-site"} {
+	for _, scenario := range []string{"unknown choice", "new evidence", "cross-site", "missing token", "missing cookie"} {
 		t.Run(scenario, func(t *testing.T) {
 			fixture := newFixture(t)
 			job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-			answer := url.Values{}
+			answer := answerRequest{Choice: "12"}
 			want := http.StatusConflict
 			if scenario == "unknown choice" {
-				answer.Set("selection", "999")
+				answer.Choice = "999"
 				want = http.StatusBadRequest
 			}
-			request := inboxRequest(t, fixture, answer)
-			if scenario == "new evidence" {
+			request := fixture.answerRequest(t, job.ID, answer)
+			switch scenario {
+			case "new evidence":
 				job.SourceFingerprint = "case-b"
 				if _, err := fixture.store.Observe(context.Background(), job); err != nil {
 					t.Fatal(err)
 				}
-			}
-			if scenario == "cross-site" {
+			case "cross-site":
 				request.Header.Set("Origin", "https://other.invalid")
+				want = http.StatusForbidden
+			case "missing token":
+				request.Header.Del("X-CSRF-Token")
+				want = http.StatusForbidden
+			case "missing cookie":
+				request.Header.Del("Cookie")
 				want = http.StatusForbidden
 			}
 			response := httptest.NewRecorder()
@@ -237,21 +202,22 @@ func TestRuntimeQuestionAndRetryKeepTheChosenFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	note := "I accept the shorter edition."
-	answer := url.Values{"guidance": {note}, "runtime_minutes": {"20"}, "override_runtime_difference": {""}}
+	answer := answerRequest{Guidance: note}
 	submit := func(want int) {
 		t.Helper()
 		response := httptest.NewRecorder()
-		fixture.handler.ServeHTTP(response, inboxRequest(t, fixture, answer))
+		fixture.handler.ServeHTTP(response, fixture.answerRequest(t, job.ID, answer))
 		if response.Code != want {
 			t.Fatalf("answer returned %d, want %d: %s", response.Code, want, response.Body)
 		}
 	}
 	submit(http.StatusBadRequest)
-	answer.Set("override_runtime_difference", "on")
-	answer.Set("guidance", "")
+	minutes := int64(20)
+	answer.RuntimeMinutes = &minutes
+	answer.Guidance = ""
 	submit(http.StatusBadRequest)
-	answer.Set("guidance", note)
-	submit(http.StatusSeeOther)
+	answer.Guidance = note
+	submit(http.StatusNoContent)
 
 	job, err = fixture.store.Get(ctx, job.ID)
 	if err != nil {
@@ -265,8 +231,8 @@ func TestRuntimeQuestionAndRetryKeepTheChosenFile(t *testing.T) {
 	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	answer = nil
-	submit(http.StatusSeeOther)
+	answer = answerRequest{}
+	submit(http.StatusNoContent)
 	retried, err := fixture.store.Get(ctx, job.ID)
 	if err != nil || retried.Answer != want {
 		t.Fatalf("retry lost the operator answer: %+v, %v", retried.Answer, err)

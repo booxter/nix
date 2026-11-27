@@ -26,15 +26,20 @@ const (
 )
 
 type Question struct {
-	Kind                          QuestionKind
-	Title, Text, Hint, Button     string
-	Choices                       []Choice
-	Context                       []string
-	AllowRuntime, RequireGuidance bool
+	Kind            QuestionKind `json:"kind"`
+	Title           string       `json:"title"`
+	Text            string       `json:"text"`
+	Hint            string       `json:"hint,omitempty"`
+	Button          string       `json:"button"`
+	Choices         []Choice     `json:"choices,omitempty"`
+	Context         []string     `json:"context,omitempty"`
+	AllowRuntime    bool         `json:"allowRuntime,omitempty"`
+	RequireGuidance bool         `json:"requireGuidance,omitempty"`
 }
 
 type Choice struct {
-	Value, Label string
+	Value string `json:"value"`
+	Label string `json:"label"`
 }
 
 func RequestGuidance(title, text string) *Question {

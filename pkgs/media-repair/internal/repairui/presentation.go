@@ -47,13 +47,11 @@ func legacyOutcome(job jobs.Job, plan decision) jobs.Outcome {
 
 func present(job jobs.Job) item {
 	view := item{
+		review:  reviewFor(job),
 		Job:     job,
 		Subject: subject(job),
 		CanAct:  job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
 	}
-	_ = json.Unmarshal(job.Plan, &view.Decision)
-	result := classifyOutcome(job, view.Decision)
-	view.Attention = attentionFor(job, view.Decision, result)
 
 	switch {
 	case job.State == jobs.Imported || job.State == jobs.Removed || job.State == jobs.Running || job.State == jobs.Importing:
@@ -75,15 +73,15 @@ func present(job jobs.Job) item {
 	case job.State != jobs.Blocked:
 		view.Status = stateLabel(job.State)
 		view.Explanation = job.Reason
-	case result == jobs.OutcomeEvidenceChanged:
+	case view.Outcome == jobs.OutcomeEvidenceChanged:
 		view.Status = "Evidence changed"
 		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review the current evidence."
-	case result == jobs.OutcomePlannerFailed:
+	case view.Outcome == jobs.OutcomePlannerFailed:
 		view.Status = "Planner failed"
 		view.Explanation = "The previous planning attempt ended without a usable decision."
 		view.NextStep = "Request reconsideration to try again."
-	case result == jobs.OutcomeAlreadyReviewed:
+	case view.Outcome == jobs.OutcomeAlreadyReviewed:
 		view.Status = "Already reviewed"
 		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review these inputs again."
@@ -102,7 +100,7 @@ func present(job jobs.Job) item {
 		case planning.AcceptRuntime:
 			view.Explanation = "The proposed import exceeds the allowed runtime difference."
 		case planning.Retry:
-			if result == jobs.OutcomePlannerFailed {
+			if view.Outcome == jobs.OutcomePlannerFailed {
 				view.Explanation = "The previous planning attempt ended without a usable decision."
 			} else {
 				view.Explanation = "The repair was interrupted before an import was submitted."

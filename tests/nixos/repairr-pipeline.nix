@@ -107,6 +107,5 @@ pkgs.testers.runNixOSTest {
     };
     unfinishedAlbum = albumNode;
   };
-  extraPythonPackages = ps: [ ps.lxml ];
   testScript = builtins.readFile ./repairr-pipeline/test.py;
 }
