@@ -20,6 +20,14 @@ def wait_for_job(listing):
     return json.loads(machine.wait_until_succeeds(command, timeout=60))
 
 
+def check_imported_files_page(job_id, files):
+    page = machine.succeed(f"curl -fsS {REPAIRR}/jobs/{job_id}")
+    assert f"Imported files ({len(files)})" in page, page
+    assert "Source path" in page and "Library path" in page, page
+    for file in files:
+        assert file["droppedPath"] in page and file["importedPath"] in page, file
+
+
 machine.start()
 machine.wait_for_unit("repairr.service")
 
@@ -53,6 +61,7 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
     (movie_file,) = attempt["receipt"]["files"]
     assert movie_file["droppedPath"] == VIDEO and movie_file["movieId"] == 42, movie_file
     assert movie_file["historyId"] == 51 and movie_file["movieFileId"] == 8, movie_file
+    check_imported_files_page(movie["id"], [movie_file])
 
 with subtest("Lidarr reads the staged tracks and Repairr waits for both history records"):
     album_job = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=importing")
@@ -80,6 +89,7 @@ with subtest("Lidarr reads the staged tracks and Repairr waits for both history 
         (11, 92),
         (12, 91),
     ], album_attempt
+    check_imported_files_page(album_job["id"], tracks)
 
 with subtest("the service user can reopen saved jobs with the media services offline"):
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"

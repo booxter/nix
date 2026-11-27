@@ -87,7 +87,21 @@
         <p>{{.Reason}}</p>
         {{if .CommandID}}<p>Import command #{{.CommandID}}</p>{{end}}
         {{if .OutputPath}}<p><code>{{.OutputPath}}</code></p>{{end}}
-        {{if .ImportReceipt}}<details><summary>Import confirmation</summary><pre>{{printf "%s" (json .ImportReceipt)}}</pre></details>{{end}}
+        {{with .ImportReceipt}}
+        <details>
+          <summary>Imported files ({{len .Files}})</summary>
+          <ul class="imported-files">
+            {{range .Files}}
+            <li>
+              <dl>
+                <dt>Source path</dt><dd><code>{{.DroppedPath}}</code></dd>
+                <dt>Library path</dt><dd><code>{{.ImportedPath}}</code></dd>
+              </dl>
+            </li>
+            {{end}}
+          </ul>
+        </details>
+        {{end}}
       </section>
       {{end}}
       <p><a class="button" href="{{.QueueURL}}">Open {{$entry.Job.Service}} queue</a></p>

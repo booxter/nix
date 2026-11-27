@@ -30,6 +30,8 @@ td small { display: block; margin-top: 3px; max-width: 46ch; }
 dl { display: grid; grid-template-columns: 150px 1fr; gap: 7px 14px; margin: 24px 0; }
 dt { color: var(--muted); }
 dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.imported-files { list-style: none; padding: 0; }
+.imported-files dl { margin: 12px 0; }
 code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b8c5cc; }
 .decision, .remove-confirmation, .nudge { max-width: 78ch; margin: 24px 0; padding: 18px; background: #15191a; }
 .decision { border-left: 3px solid #4b8f76; }
