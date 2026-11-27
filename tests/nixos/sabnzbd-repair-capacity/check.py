@@ -4,22 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-from sabnzbd_test import api, wait_for
-
-
-def download(nzb: Path):
-    added = api("addlocalfile", name=str(nzb), pp=1)
-    assert added["status"], added
-    job_id = added["nzo_ids"][0]
-
-    def finished():
-        snapshot = api("history", nzo_ids=job_id)["history"]
-        slot = next(iter(snapshot["slots"]), None)
-        if slot and slot["status"] in ("Completed", "Failed") and snapshot["ppslots"] == 0:
-            return slot
-        return None
-
-    return wait_for(finished, f"{nzb.stem} to finish", timeout=60)
+from sabnzbd_test import download
 
 
 def main() -> None:
