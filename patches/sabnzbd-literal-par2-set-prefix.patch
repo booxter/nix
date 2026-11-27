@@ -1,0 +1,22 @@
+diff --git a/sabnzbd/newsunpack.py b/sabnzbd/newsunpack.py
+--- a/sabnzbd/newsunpack.py
++++ b/sabnzbd/newsunpack.py
+@@ -22,6 +22,7 @@
+ import os
+ import sys
+ import json
++import glob
+ import re
+ import subprocess
+ import logging
+@@ -1278,7 +1279,9 @@ def par2cmdline_verify(
+ 
+     # Append the wildcard for this set
+     parfolder = os.path.split(parfile)[0]
+-    if len(nzo.extrapars) == 1 or len(globber(parfolder, setname + "*")) < 2:
++    # Python's fnmatch treats brackets as character classes. PAR2 treats
++    # them literally, so escape the prefix only for the Python lookup.
++    if len(nzo.extrapars) == 1 or len(globber(parfolder, glob.escape(setname) + "*")) < 2:
+         # Support bizarre naming conventions
+         wildcard = "*"
+     else:
