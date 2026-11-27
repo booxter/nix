@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"syscall"
 	"time"
-
-	"github.com/booxter/nix-config/media-repair/internal/jobs"
 )
 
 type preparationRetry struct {
@@ -24,11 +22,7 @@ type ImportGracePeriod struct {
 	Now      func() time.Time
 }
 
-func (grace ImportGracePeriod) Ready(job jobs.Job) bool {
-	return grace.CheckImportState(job.TrackedDownloadState, job.StableSince) == nil
-}
-
-// Authorization checks the live queue again because its state can change after a poll.
+// The scheduler checks the last observation. Authorization checks again with the live queue state.
 func (grace ImportGracePeriod) CheckImportState(state string, stableSince time.Time) error {
 	if state == "importPending" {
 		deadline := stableSince.Add(grace.Duration)

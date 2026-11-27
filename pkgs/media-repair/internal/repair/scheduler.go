@@ -34,7 +34,6 @@ type Service interface {
 	Observe(context.Context, []jobs.Job) (Observation, error)
 	PlanningInputs(json.RawMessage) (planning.Inputs, error)
 	Plan(context.Context, jobs.Job) (Decision, error)
-	Ready(jobs.Job) bool
 	Remove(context.Context, jobs.Job) error
 }
 
@@ -150,7 +149,12 @@ func (scheduler *Scheduler) advanceJob(ctx context.Context, engine Engine, job j
 	if job.State == jobs.Observed {
 		return scheduler.plan(ctx, job)
 	}
-	if job.State == jobs.Ready && !disabled && scheduler.Service.Ready(job) {
+	if job.State == jobs.Ready && !disabled {
+		// Give the media service one queue interval to finish a pending import.
+		grace := ImportGracePeriod{Duration: scheduler.Interval, Now: scheduler.Now}
+		if grace.CheckImportState(job.TrackedDownloadState, job.StableSince) != nil {
+			return nil
+		}
 		return engine.Run(ctx, job.ID)
 	}
 

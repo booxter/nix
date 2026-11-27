@@ -273,7 +273,10 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 		}
 	})
 	ctx := context.Background()
-	job, err := store.Observe(ctx, jobs.Job{Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source", Evidence: json.RawMessage(`{"files":"source"}`)})
+	job, err := store.Observe(ctx, jobs.Job{
+		Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source",
+		Evidence: json.RawMessage(`{"files":"source"}`), UpdatedAt: time.Now().UTC(),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

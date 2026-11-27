@@ -55,6 +55,35 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 	}
 }
 
+func TestSchedulerWaitsForPendingImport(t *testing.T) {
+	engine, adapter, job := fixture(t)
+	ctx := t.Context()
+	job.TrackedDownloadState = "importPending"
+	if _, err := engine.Store.Observe(ctx, job); err != nil {
+		t.Fatal(err)
+	}
+
+	const interval = 15 * time.Minute
+	deadline := job.StableSince.Add(interval)
+	now := deadline.Add(-time.Second)
+	service := &waitingService{fakeAdapter: *adapter}
+	scheduler := Scheduler{
+		Store: engine.Store, Service: service, Name: job.Service, Interval: interval,
+		Now: func() time.Time { return now }, Disabled: func() (bool, error) { return false, nil },
+	}
+	if err := scheduler.advance(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if attempts, err := engine.Store.Attempts(ctx, job.ID); err != nil || len(attempts) != 0 {
+		t.Fatalf("expected no repair attempts during grace period, got %v, %v", attempts, err)
+	}
+
+	now = deadline
+	if err := scheduler.advance(ctx); err != nil || service.submissions != 1 {
+		t.Fatalf("expected one import at deadline, got %d, %v", service.submissions, err)
+	}
+}
+
 func TestPendingImportFoundDuringAuthorizationRetriesAtGraceDeadline(t *testing.T) {
 	engine, adapter, job := fixture(t)
 	ctx := t.Context()
@@ -188,10 +217,6 @@ func (service *waitingService) Plan(ctx context.Context, _ jobs.Job) (Decision, 
 	close(service.planning)
 	<-ctx.Done()
 	return Decision{}, ctx.Err()
-}
-
-func (service *waitingService) Ready(jobs.Job) bool {
-	return true
 }
 
 func (service *waitingService) Remove(_ context.Context, job jobs.Job) error {
