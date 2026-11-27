@@ -1,4 +1,5 @@
-/* global document, FormData, fetch, window */
+/* global FormData, fetch, window */
+import { element } from "./dom.js";
 
 function bindAction(form, job) {
   form.addEventListener("submit", async (event) => {
@@ -44,17 +45,7 @@ function bindAction(form, job) {
   });
 }
 
-// append() treats strings from the API as text, including file names and planner replies.
-function element(tag, attributes, ...children) {
-  const node = document.createElement(tag);
-  for (const [name, value] of Object.entries(attributes)) {
-    node.setAttribute(name, value);
-  }
-  node.append(...children);
-  return node;
-}
-
-function actionForm(job, action, ...controls) {
+export function actionForm(job, action, ...controls) {
   const form = element("form", {
     method: "post", action: "/api/jobs/" + job.id + "/" + action,
     "data-return-to": action === "answer" ? "/?submitted=1" : "/jobs/" + job.id,
@@ -64,13 +55,13 @@ function actionForm(job, action, ...controls) {
   return form;
 }
 
-function guidance(label, job, required = false) {
+export function guidance(label, job, required = false) {
   const input = element("textarea", { name: "guidance", maxlength: 2000 }, job.guidance || "");
   input.required = required;
   return element("label", {}, label, input);
 }
 
-function runtimeLimit(required, initialValue = "") {
+export function runtimeLimit(required, initialValue = "") {
   const minutes = element("input", {
     name: "runtime_minutes", type: "number", min: 1, max: 60, value: initialValue,
   });
@@ -83,7 +74,7 @@ function runtimeLimit(required, initialValue = "") {
     element("label", {}, "Maximum difference in minutes", minutes));
 }
 
-function answerForm(job) {
+export function answerForm(job) {
   const question = job.question;
   const controls = [element("h4", {}, question.text)];
   if (question.context?.length) {

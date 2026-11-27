@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Title}}</title>
   <link rel="stylesheet" href="/assets/style.css">
-  <script src="/assets/local-time.js" defer></script>
-  <script src="/assets/actions.js" defer></script>
 </head>
 <body>
   <header>
@@ -25,7 +23,7 @@
       <p role="status">Loading item details…</p>
       <noscript>Enable JavaScript to view this item.</noscript>
     </article>
-    <script src="/assets/job.js" defer></script>
+    <script src="/assets/job.js" type="module"></script>
     {{else}}
     {{if .Inbox}}
     <p class="view-description">These downloads are still in the queue and need your answer or a retry. Answer here to send them back for processing.</p>
@@ -64,7 +62,7 @@
         </table>
       </div>{{end}}
     </section>
-    <script src="/assets/listing.js" defer></script>
+    <script src="/assets/listing.js" type="module"></script>
     {{end}}
   </main>
 </body>

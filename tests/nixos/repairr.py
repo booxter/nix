@@ -94,7 +94,8 @@ with subtest("Repairr restarts with a saved movie plan and a saved album plan"):
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
     assert (
-        album["title"] == "Unfinished album download" and album["reasonCode"] == "incomplete_download"
+        album["title"] == "Unfinished album download"
+        and album["reasonCode"] == "incomplete_download"
     ), album
     assert set(album["findings"]) == {
         "incomplete_download",

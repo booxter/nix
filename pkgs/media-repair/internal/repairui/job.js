@@ -1,4 +1,6 @@
-/* global document, window, URL, fetch, element, actionForm, guidance, runtimeLimit, answerForm, timestamp */
+/* global document, window, URL, fetch */
+import { actionForm, answerForm, guidance, runtimeLimit } from "./actions.js";
+import { element, timestamp } from "./dom.js";
 
 function row(list, label, value) {
   if (value) list.append(element("dt", {}, label), element("dd", {}, value));

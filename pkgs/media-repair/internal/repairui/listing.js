@@ -1,4 +1,6 @@
-/* global document, window, URL, fetch, element, timestamp, answerForm */
+/* global document, window, URL, fetch */
+import { answerForm } from "./actions.js";
+import { element, timestamp } from "./dom.js";
 
 function jobLink(job, label) {
   return element("a", { href: "/jobs/" + job.id }, label);

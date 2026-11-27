@@ -23,7 +23,7 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js actions.js job.js listing.js
+//go:embed dom.js actions.js job.js listing.js
 var scripts embed.FS
 
 type Config struct {
