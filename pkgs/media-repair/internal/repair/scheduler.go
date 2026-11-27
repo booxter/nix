@@ -248,6 +248,7 @@ func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
 		job.Reason = fmt.Sprintf("planning: %v", err)
 		job.RetryAt = job.UpdatedAt.Add(planningDelay(job.PlanningAttempts))
 	} else {
+		job.RetryAt = time.Time{}
 		job.Plan = decision.Data
 		job.PlanResult = &decision.Result
 		job.Reason = decision.Explanation

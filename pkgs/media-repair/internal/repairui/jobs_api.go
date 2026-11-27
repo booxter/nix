@@ -3,6 +3,7 @@ package repairui
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
@@ -35,7 +36,24 @@ type attemptResponse struct {
 type jobDetail struct {
 	jobSummary
 	jobResponse
+	RetryAt  time.Time         `json:"retryAt,omitzero"`
 	Attempts []attemptResponse `json:"attempts"`
+}
+
+// Older jobs kept the planning deadline after a successful retry. A ready
+// job waiting to retry preparation still has the failure reason.
+func pendingRetryAt(job jobs.Job) time.Time {
+	switch job.State {
+	case jobs.Observed, jobs.Ready:
+		if job.InQueue && job.Reason != "" && job.InspectionProblem() == "" {
+			return job.RetryAt
+		}
+	case jobs.Blocked:
+		if job.PendingAction == jobs.Delete {
+			return job.RetryAt
+		}
+	}
+	return time.Time{}
 }
 
 func summarize(entry item) jobSummary {
@@ -83,6 +101,7 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	entry := present(job)
 	detail := jobDetail{
 		jobSummary: summarize(entry), jobResponse: app.jobActions(job, entry.review),
+		RetryAt:  pendingRetryAt(job),
 		Attempts: make([]attemptResponse, 0, len(attempts)),
 	}
 	for _, attempt := range attempts {

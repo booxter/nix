@@ -2,6 +2,7 @@
 # The NixOS test driver supplies machine and subtest.
 import json
 import shlex
+from datetime import datetime
 from pathlib import PurePosixPath
 
 REPAIRR = "http://127.0.0.1:8790"
@@ -33,11 +34,14 @@ machine.wait_for_unit("repairr.service")
 
 with subtest("both apps wait and retry when the planner returns"):
     waiting_jobs = {}
+    deadlines = []
     for service, port in [("radarr", 7878), ("lidarr", 8687)]:
         job = wait_for_job(f"{REPAIRR}/api/jobs?service={service}&state=observed&q=503")
         assert "503" in job["reason"], job
         waiting_jobs[service] = job["id"]
-        assert read_json(f"{REPAIRR}/api/jobs/{job['id']}")["attempts"] == []
+        detail = read_json(f"{REPAIRR}/api/jobs/{job['id']}")
+        assert detail["attempts"] == [], detail
+        deadlines.append(detail["retryAt"])
         assert read_json(f"http://127.0.0.1:{port}/fixture/imports") == []
 
     # Give the scheduler time to run with a healthy planner before the retry is due.
@@ -46,7 +50,9 @@ with subtest("both apps wait and retry when the planner returns"):
         detail = read_json(f"{REPAIRR}/api/jobs/{job_id}")
         assert detail["state"] == "observed" and detail["attempts"] == [], detail
 
-    machine.succeed("date -s '+6 minutes'")
+    # One guest clock serves both jobs. Advance to the later of their deadlines.
+    last_retry = max(deadlines, key=datetime.fromisoformat)
+    machine.succeed(shlex.join(["date", "-s", last_retry]))
 
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
@@ -75,7 +81,9 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
     (command,) = read_json("http://127.0.0.1:7878/fixture/imports")
     (source,) = command["files"]
     assert command["name"] == "ManualImport" and source["path"] == VIDEO, command
-    (attempt,) = read_json(detail)["attempts"]
+    completed = read_json(detail)
+    assert "retryAt" not in completed, completed
+    (attempt,) = completed["attempts"]
     (movie_file,) = attempt["receipt"]["files"]
     assert movie_file["droppedPath"] == VIDEO and movie_file["movieId"] == 42, movie_file
     assert movie_file["historyId"] == 51 and movie_file["movieFileId"] == 8, movie_file

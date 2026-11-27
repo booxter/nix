@@ -109,6 +109,7 @@ func (store *Store) StartRemoval(ctx context.Context, id int64, at time.Time) (J
 		}
 
 		job.State = Removing
+		job.RetryAt = time.Time{}
 		job.UpdatedAt = at
 		return tx.Save(&job).Error
 	})

@@ -131,8 +131,13 @@ def retry_after_queue_outage(vm, job, service):
 
     # Passing the retry deadline with the planner offline proves that
     # recovery uses the original decision without operator intervention.
-    vm.succeed("systemctl stop scripted-planner.service", f"rm {outage}", "date -s '+2 minutes'")
-    wait_for_json(vm, job, '.state == "importing" and .attempts[1].commandId == 1')
+    vm.succeed(
+        "systemctl stop scripted-planner.service",
+        f"rm {outage}",
+        shlex.join(["date", "-s", waiting["retryAt"]]),
+    )
+    importing = wait_for_json(vm, job, '.state == "importing" and .attempts[1].commandId == 1')
+    assert "retryAt" not in importing, importing
 
 
 def submitted_removals(vm):
@@ -289,7 +294,7 @@ with subtest("a failed removal cannot delete a replacement on retry"):
         replaced, job, f".fingerprint != {json.dumps(current_case['fingerprint'])}"
     )
     assert changed["pendingAction"] == "delete", changed
-    replaced.succeed(f"rm {FIXTURE}/reject-removal", "date -s '+6 minutes'")
+    replaced.succeed(f"rm {FIXTURE}/reject-removal", shlex.join(["date", "-s", changed["retryAt"]]))
     assert find_job(replaced, "radarr", "Example Movie", view="inbox") == job
     assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID]
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
@@ -299,6 +304,7 @@ with subtest("a failed removal cannot delete a replacement on retry"):
 
     fresh = read_job(replaced, job)
     assert fresh["pendingAction"] == "confirm_removal", fresh
+    assert "retryAt" not in fresh, fresh
     assert fresh["fingerprint"] != current_case["fingerprint"]
     assert replaced.succeed(action_request(job + "/remove", fresh["csrfToken"], fresh)) == "204"
     assert find_job(replaced, "radarr", "Example Movie", state="removed", view="history") == job
