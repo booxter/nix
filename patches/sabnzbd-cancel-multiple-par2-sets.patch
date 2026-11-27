@@ -1,0 +1,17 @@
+diff --git a/sabnzbd/postproc.py b/sabnzbd/postproc.py
+--- a/sabnzbd/postproc.py
++++ b/sabnzbd/postproc.py
+@@ -842,8 +842,13 @@ def parring(nzo: NzbObject) -> tuple[bool, bool]:
+             if not verified.get(setname, False):
+                 logging.info("Running verification and repair on set %s", setname)
+                 need_re_add, res = par2_repair(nzo, setname)
++
++                # Cancellation must stop the job before another set or a requeue.
++                if not nzo.pp_active:
++                    return True, False
++
+                 re_add = re_add or need_re_add
+                 verified[setname] = res
+ 
+                 # Update the general repair-state
+                 par_error = par_error or not res
