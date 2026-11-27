@@ -25,6 +25,40 @@ const (
 	testFileThreeID  = controller.FileID("file:3333333333333333333333333333333333333333333333333333333333333333")
 )
 
+func TestSavedPlanAfterRadarrBlocksImport(t *testing.T) {
+	assemble := func(observation Observation) Assembly {
+		t.Helper()
+		result, err := Assemble(observation)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	pending := testObservation()
+	pending.Correlation.Radarr.TrackedDownloadState = "importPending"
+	planned := assemble(pending)
+	blocked := assemble(testObservation())
+	current, ok := blocked.ForSavedPlan(planned)
+	if !ok || current.Request.CaseID != planned.Request.CaseID || current.LocalSnapshot.CaseID != planned.Request.CaseID ||
+		current.LocalSnapshot.Observation.Correlation.Radarr.TrackedDownloadState != "importBlocked" {
+		t.Fatal("expected the saved plan to remain usable with the live blocked queue record")
+	}
+	if _, ok := planned.ForSavedPlan(blocked); ok {
+		t.Fatal("accepted the reverse queue transition")
+	}
+
+	replaced := testObservation()
+	replaced.Inventory.Files[0].Fingerprint.Inode++
+	if _, ok := assemble(replaced).ForSavedPlan(planned); ok {
+		t.Fatal("accepted a replacement file")
+	}
+	otherMovie := testObservation()
+	otherMovie.Movie.TMDBID++
+	if _, ok := assemble(otherMovie).ForSavedPlan(planned); ok {
+		t.Fatal("accepted a different movie")
+	}
+}
+
 func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 	t.Parallel()
 

@@ -42,7 +42,8 @@ func (adapter *Adapter) authorize(ctx context.Context, job jobs.Job, plan json.R
 	if err := adapter.CheckImportState(string(queue.TrackedDownloadState), job.StableSince); err != nil {
 		return authorizedRepair{}, err
 	}
-	if queue.DownloadID != job.DownloadID || !casebuilder.SameCaseState(planned.Assembly(), fresh) {
+	fresh, matches := fresh.ForSavedPlan(planned.Assembly())
+	if queue.DownloadID != job.DownloadID || !matches {
 		return authorizedRepair{}, &repair.BlockedError{Reason: "source or queue identity changed; collect a new plan"}
 	}
 
