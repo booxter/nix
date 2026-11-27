@@ -30,6 +30,62 @@
       "system": "aarch64-darwin"
     },
     {
+      "attr": "jellyfin-plugin-language-tags",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-letterboxd",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-lrclib",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-meilisearch",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-polyglot",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-porndb",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-tvdb",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "jellyfin-plugin-webhook",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "nico-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

@@ -7,6 +7,7 @@
 }:
 let
   sharedPackages = import ../pkgs plainPkgs;
+  jellyfinPlugins = import ../nixos/beast/pkgs/jellyfin-plugins { inherit pkgs; };
 in
 lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
   ismc = plainPkgs.callPackage ../darwin/_mixins/thermal-accounting/pkgs/ismc { };
@@ -25,3 +26,15 @@ lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
     plainPkgs.callPackage ../nixos/_mixins/paperless/pkgs/prometheus-paperless-exporter
       { };
 }
+// lib.optionalAttrs (lib.hasSuffix "-linux" system) (
+  lib.mapAttrs' (
+    name: plugin:
+    lib.nameValuePair "jellyfin-plugin-${name}" (
+      # Track upstream releases independently of our assembly revision.
+      plugin.overrideAttrs {
+        version = plugin.upstreamVersion;
+        __intentionallyOverridingVersion = true;
+      }
+    )
+  ) jellyfinPlugins
+)

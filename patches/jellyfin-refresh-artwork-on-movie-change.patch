@@ -1,5 +1,5 @@
 diff --git a/MediaBrowser.Providers/Manager/MetadataService.cs b/MediaBrowser.Providers/Manager/MetadataService.cs
-index e9cb46e..16ca296 100644
+index 05c5423..85e92b7 100644
 --- a/MediaBrowser.Providers/Manager/MetadataService.cs
 +++ b/MediaBrowser.Providers/Manager/MetadataService.cs
 @@ -12,6 +12,7 @@ using Jellyfin.Extensions;
@@ -22,10 +22,10 @@ index e9cb46e..16ca296 100644
              updateType |= beforeSaveResult;
  
              if (isFirstRefresh)
-@@ -195,7 +199,18 @@ namespace MediaBrowser.Providers.Manager
-             // Next run remote image providers, but only if local image providers didn't throw an exception
-             if (!localImagesFailed && refreshOptions.ImageRefreshMode > MetadataRefreshMode.ValidationOnly)
+@@ -199,7 +203,18 @@ namespace MediaBrowser.Providers.Manager
+             else if (refreshOptions.ImageRefreshMode > MetadataRefreshMode.ValidationOnly)
              {
+                 // Next run remote image providers, now that local image providers didn't throw
 -                var providers = GetNonLocalImageProviders(item, allImageProviders, refreshOptions).ToList();
 +                var imageProviderOptions = refreshOptions;
 +                if (movieFileChanged && refreshOptions.ImageRefreshMode == MetadataRefreshMode.Default)

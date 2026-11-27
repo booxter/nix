@@ -11,6 +11,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postBuild
   '';
 
+  doCheck = true;
   checkPhase = ''
     runHook preCheck
     pnpm test

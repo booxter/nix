@@ -332,11 +332,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1795383789,
-        "narHash": "sha256-QgD5Uttb3lV3jFTEci3iDSnqf4nL8fZDIYXzmT1M5ZI=",
+        "lastModified": 1795732224,
+        "narHash": "sha256-euW8bunVBMBj2aLq3DCPcphh+fvQEnd5ukR2U6UI/F0=",
         "owner": "booxter",
         "repo": "jellarr",
-        "rev": "316379ad3f497e30a638556b4332faab1868c1c4",
+        "rev": "72b73c503814e0eb40ac2d93b438a4cd9dd561a4",
         "type": "github"
       },
       "original": {
@@ -522,19 +522,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-jellyfin": {
-      "locked": {
-        "lastModified": 1795370043,
-        "narHash": "sha256-RThZ6/XvhVczW74iClJaGo9+fXjvfm5mvvzTy6hrcYU=",
-        "rev": "0dc498bfe49baeb18b0f9891e800b53bb2603193",
-        "type": "tarball",
-        "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.15079.0dc498bfe49b/nixexprs.tar.zst"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.15079.0dc498bfe49b/nixexprs.tar.zst"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -678,7 +665,6 @@
         "nix-index-database": "nix-index-database",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-jellyfin": "nixpkgs-jellyfin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
         "nur": "nur",

@@ -11,12 +11,6 @@ let
     "polyglot"
   ];
   enabledPlugins = lib.filterAttrs (plugin: _: builtins.elem plugin requiredPlugins) registry.plugins;
-  enabledRepositoryIds = lib.unique (
-    map (plugin: plugin.repository) (builtins.attrValues enabledPlugins)
-  );
-  enabledRepositories = lib.filterAttrs (
-    repository: _: builtins.elem repository enabledRepositoryIds
-  ) registry.repositories;
   unknownPlugins = builtins.filter (
     plugin: !builtins.hasAttr plugin registry.plugins
   ) requiredPlugins;
@@ -30,7 +24,6 @@ in
   ];
 
   host.jellyfinDeclarativeConfig = {
-    system.pluginRepositories = builtins.attrValues enabledRepositories;
-    plugins = map (plugin: removeAttrs plugin [ "repository" ]) (builtins.attrValues enabledPlugins);
+    plugins = builtins.attrValues enabledPlugins;
   };
 }
