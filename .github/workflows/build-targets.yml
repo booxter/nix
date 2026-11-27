@@ -529,7 +529,7 @@ jobs:
                 per_page: 100,
               });
               const changedPaths = files.map((file) => file.filename).sort();
-              return changedPaths.length === 1 && changedPaths[0] === "flake.lock";
+              return changedPaths.length === 1 && changedPaths[0] === ".tack/pins.lock.json";
             };
 
             const enableAutoMerge = async () => {

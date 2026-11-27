@@ -54,7 +54,7 @@ let
   flake = builtins.getFlake (builtins.getEnv "OCI_IMAGE_REPO_ROOT");
   pin = builtins.fromJSON (builtins.readFile (builtins.getEnv "OCI_IMAGE_PIN_JSON"));
 in
-flake.inputs.nixpkgs.lib.generators.toPretty { } pin
+flake.lib.inputs.nixpkgs.lib.generators.toPretty { } pin
 """
 
 

@@ -87,7 +87,8 @@ in
   nix-homebrew = {
     enable = true;
     # nix-homebrew derives the default version from its own lock file.
-    package = inputs.nix-homebrew.inputs.brew-src // {
+    package = {
+      outPath = inputs.brew-src;
       name = "brew-${brewVersion}";
       version = brewVersion;
     };

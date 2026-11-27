@@ -1,0 +1,92 @@
+[shorturls]
+gh = "github:{path}"
+
+[all_follow]
+nixpkgs = "nixpkgs"
+nix-darwin = "nix-darwin"
+nur = "nur"
+flake-parts = "flake-parts"
+systems = "systems"
+
+[inputs.nixpkgs]
+url = "gh:NixOS/nixpkgs/release-26.11"
+
+[inputs.nixpkgs-unstable]
+url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
+
+[inputs.nixos-hardware]
+url = "gh:NixOS/nixos-hardware/master"
+
+[inputs.nix-darwin]
+url = "gh:nix-darwin/nix-darwin/master"
+
+# TODO(26.11): Drop the fork module once upstream reconciles GUI agents.
+[inputs.nix-darwin-launchd]
+url = "gh:booxter/nix-darwin/56814e3905de59744e112a2a8ecc7958a2d1edb5"
+type = "fetch"
+
+[inputs.nix-darwin-vm]
+url = "gh:booxter/nix-darwin-vm"
+
+# Follow upstream's weekly database snapshots through pin updates.
+[inputs.nix-index-database]
+url = "gh:nix-community/nix-index-database"
+
+[inputs.sops-nix]
+url = "gh:Mic92/sops-nix"
+
+[inputs.nix-homebrew]
+url = "gh:zhaofengli/nix-homebrew"
+follows = { brew-src = "brew-src" }
+
+# Remove this override once nix-homebrew supports manifest_sha256.
+[inputs.brew-src]
+url = "gh:Homebrew/brew/7.0.15"
+type = "fetch"
+
+[inputs.homebrew-core]
+url = "gh:homebrew/homebrew-core"
+type = "fetch"
+
+[inputs.homebrew-cask]
+url = "gh:homebrew/homebrew-cask"
+type = "fetch"
+
+[inputs.cocoa-way-homebrew-tap]
+url = "gh:J-x-Z/homebrew-tap"
+type = "fetch"
+
+[inputs.home-manager]
+url = "gh:nix-community/home-manager/master"
+
+[inputs.stylix]
+url = "gh:nix-community/stylix/master"
+
+[inputs.spicetify-nix]
+url = "gh:Gerg-L/spicetify-nix"
+
+[inputs.nixvim]
+url = "gh:nix-community/nixvim/main"
+
+[inputs.nur]
+url = "gh:nix-community/NUR"
+
+# Keep Proxmox's nixpkgs-stable and patched nixpkgs-libvncserver pins.
+[inputs.proxmox-nixos]
+url = "gh:SaumonNet/proxmox-nixos/main"
+
+[inputs.disko]
+url = "gh:nix-community/disko/latest"
+
+# TODO: switch to venkyr77/jellarr once diff is contributed upstream.
+[inputs.jellarr]
+url = "gh:booxter/jellarr/my-fork-plus-fix-plugin-404"
+
+[inputs.vpnconfinement]
+url = "gh:Maroka-chan/VPN-Confinement"
+
+[inputs.lolek]
+url = "gh:dziaineka/lolek"
+
+[inputs.motion-captcha-bot]
+url = "gh:FrostBy/motion-captcha-bot"

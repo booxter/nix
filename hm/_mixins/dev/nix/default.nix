@@ -32,5 +32,6 @@ lib.mkIf config.host.hm.env.roles.developer {
     nixpkgs-reviewFull
     nr
     nurl
+    tack
   ];
 }

@@ -3,6 +3,12 @@
 This repo provides flake apps and scripts as the primary interfaces. The
 `Makefile` is a convenience wrapper for a few host build commands.
 
+Inputs are pinned with [Tack](https://github.com/manic-systems/tack) in
+`.tack/pins.toml`. Use `nix run .#tack -- update` to update them, or pass an input
+name to update a single pin. Developer environments also provide `tack` directly.
+GitHub inputs use the `gh:` shorturl. Shared dependencies follow the rules in
+`[all_follow]`; Proxmox keeps its own tested nixpkgs pins.
+
 ## Build and Deploy
 
 ```sh

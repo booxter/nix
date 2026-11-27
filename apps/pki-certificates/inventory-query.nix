@@ -13,6 +13,6 @@ let
 in
 import ../../common/_mixins/internal-pki/inventory.nix {
   inherit configurations;
-  inherit (flake.inputs.nixpkgs) lib;
+  inherit (flake.lib.inputs.nixpkgs) lib;
   repoRoot = repo;
 }
