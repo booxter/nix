@@ -2,8 +2,10 @@ package repairlidarr
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"sort"
 	"strings"
@@ -54,13 +56,11 @@ func (adapter *Adapter) inspectJob(ctx context.Context, entry lidarr.QueueRecord
 			job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
 		}
 	default:
-		evidence := result.Case
-		job.SourceFingerprint = evidence.Case.CaseID
-		data, err := encodeEvidence(*evidence)
+		current, err := encodeEvidence(*result.Case)
 		if err != nil {
 			return err
 		}
-		job.Evidence = data
+		job.SourceFingerprint, job.Evidence = current.Fingerprint, current.Evidence
 	}
 	return nil
 }
@@ -95,13 +95,13 @@ func (adapter *Adapter) PlanningInputs(data json.RawMessage) (planning.Inputs, e
 	return planning.NewInputs(planningCaseInputs(repairCase))
 }
 
-func encodeEvidence(evidence lidarrrepair.Evidence) (json.RawMessage, error) {
+func encodeEvidence(evidence lidarrrepair.Evidence) (jobs.InspectedCase, error) {
 	data, err := lidarrcontracts.EncodeCase(evidence.Case)
 	if err != nil {
-		return nil, err
+		return jobs.InspectedCase{}, err
 	}
 
-	return json.Marshal(lidarrrepair.Record{
+	record, err := json.Marshal(lidarrrepair.Record{
 		QueueID:           evidence.Queue.ID,
 		SourceKind:        evidence.SourceKind,
 		SourcePath:        evidence.SourcePath,
@@ -110,6 +110,11 @@ func encodeEvidence(evidence lidarrrepair.Evidence) (json.RawMessage, error) {
 		Case:              data,
 		Bindings:          evidence.Bindings,
 	})
+	// The planner sees the prepared tracks. Identical tracks can come
+	// from a replacement archive or a different download directory.
+	source := strings.Join([]string{evidence.Case.CaseID, evidence.SourcePath, evidence.SourceFingerprint}, "\x00")
+	fingerprint := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(source)))
+	return jobs.InspectedCase{Fingerprint: fingerprint, Evidence: record}, err
 }
 
 func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {

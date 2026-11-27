@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
@@ -47,15 +48,18 @@ func (adapter *Adapter) inspectJob(ctx context.Context, entry controller.RadarrQ
 			job.CollectionOutcome = jobs.OutcomeIncompleteDownload
 		}
 	default:
-		assembly := result.Case
-		job.SourceFingerprint = assembly.Request.CaseID
-		data, err := json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
+		current, err := encodeCase(*result.Case)
 		if err != nil {
 			return err
 		}
-		job.Evidence = data
+		job.SourceFingerprint, job.Evidence = current.Fingerprint, current.Evidence
 	}
 	return nil
+}
+
+func encodeCase(assembly casebuilder.Assembly) (jobs.InspectedCase, error) {
+	data, err := json.Marshal(Evidence{Case: assembly.Request, Snapshot: assembly.LocalSnapshot})
+	return jobs.InspectedCase{Fingerprint: assembly.Request.CaseID, Evidence: data}, err
 }
 
 func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision, error) {

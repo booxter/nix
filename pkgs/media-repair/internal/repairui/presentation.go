@@ -60,6 +60,9 @@ func present(job jobs.Job) item {
 		view.Status = "Removal requested"
 		view.Explanation = job.Reason
 		view.NextStep = "Removal will be retried when possible."
+	case job.PendingAction == jobs.ConfirmRemoval:
+		view.Status = "Confirm removal again"
+		view.Explanation = job.Reason
 	case job.CollectionError != "":
 		presentCollectionError(&view, job.CollectionOutcome, job.CollectionError)
 		if job.PendingAction == jobs.Reconsider {

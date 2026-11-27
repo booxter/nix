@@ -168,7 +168,7 @@ func (scheduler *Scheduler) requestCompletedRemovals(ctx context.Context, comple
 		}
 		// Automatic cleanup shares the durable action path with UI removal.
 		// An active repair wins the transaction and cannot be removed here.
-		err := scheduler.Store.RequestRemoval(ctx, job, scheduler.Now())
+		err := scheduler.Store.RequestCleanup(ctx, job, scheduler.Now())
 		if err != nil && !errors.Is(err, jobs.ErrConflict) {
 			return err
 		}

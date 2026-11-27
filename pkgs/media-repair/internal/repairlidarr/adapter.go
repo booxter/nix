@@ -48,7 +48,7 @@ func (adapter *Adapter) authorize(
 	}
 	planned.Decision = plan
 
-	queue, err := adapter.findQueue(ctx, job)
+	queue, err := adapter.findQueue(ctx, job.QueueKey())
 	if err != nil {
 		return lidarrrepair.AuthorizedImport{}, err
 	}
@@ -94,7 +94,7 @@ func (adapter *Adapter) prepareImport(
 	}, err
 }
 
-func (adapter *Adapter) findQueue(ctx context.Context, job jobs.Job) (lidarr.QueueRecord, error) {
+func (adapter *Adapter) findQueue(ctx context.Context, key jobs.QueueKey) (lidarr.QueueRecord, error) {
 	queue, err := adapter.Client.ReadQueue(ctx)
 	if err != nil {
 		return lidarr.QueueRecord{}, err
@@ -104,7 +104,7 @@ func (adapter *Adapter) findQueue(ctx context.Context, job jobs.Job) (lidarr.Que
 	for index, entry := range queue {
 		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
 	}
-	index, err := jobs.MatchQueue(job.QueueKey(), keys)
+	index, err := jobs.MatchQueue(key, keys)
 	if err != nil {
 		return lidarr.QueueRecord{}, &repair.BlockedError{Reason: err.Error()}
 	}

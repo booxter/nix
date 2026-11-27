@@ -73,12 +73,15 @@ type Job struct {
 	RetryAt             time.Time
 	PlanningAttempts    int
 	PendingAction       string
-	Revision            int64
-	InQueue             bool
-	State               State
-	Reason              string
-	Outcome             Outcome
-	UpdatedAt           time.Time `gorm:"autoUpdateTime:false"`
+	// A queued deletion pins the fingerprint approved by the operator. An
+	// empty value means queue-only removal. Older requests have no value.
+	RemovalFingerprint *string
+	Revision           int64
+	InQueue            bool
+	State              State
+	Reason             string
+	Outcome            Outcome
+	UpdatedAt          time.Time `gorm:"autoUpdateTime:false"`
 }
 
 type Attempt struct {
@@ -180,7 +183,10 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			if err != nil {
 				return err
 			}
-			if changed && job.State != Imported && job.State != Removed {
+			// A poll may refresh the visible case during removal. Keep the
+			// retry deadline or the outstanding confirmation until it is resolved.
+			removalPending := job.PendingAction == Delete || job.PendingAction == ConfirmRemoval
+			if changed && job.State != Imported && job.State != Removed && !removalPending {
 				job.Plan = nil
 				job.PlanResult = nil
 				job.State = Observed

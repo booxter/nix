@@ -9,25 +9,22 @@ import (
 )
 
 const (
-	Reconsider = "reconsider"
-	Delete     = "delete"
+	Reconsider     = "reconsider"
+	Delete         = "delete"
+	ConfirmRemoval = "confirm_removal"
 )
 
 func (job Job) AcceptsActions() bool {
 	return job.InQueue && !active(job.State) && job.State != Removed
 }
 
-func (store *Store) RequestRemoval(ctx context.Context, expected Job, at time.Time) error {
-	return store.requestAction(ctx, expected, Delete, planning.Answer{}, at)
-}
-
 func (store *Store) RequestReconsideration(ctx context.Context, expected Job, answer planning.Answer, at time.Time) error {
-	return store.requestAction(ctx, expected, Reconsider, answer, at)
+	return store.requestAction(ctx, expected, Reconsider, answer, nil, at)
 }
 
 // Observation and repair continue while a request is being handled. Check
 // the case again in the transaction that queues the action.
-func (store *Store) requestAction(ctx context.Context, expected Job, action string, answer planning.Answer, at time.Time) error {
+func (store *Store) requestAction(ctx context.Context, expected Job, action string, answer planning.Answer, removalFingerprint *string, at time.Time) error {
 	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var job Job
 		if err := tx.First(&job, expected.ID).Error; err != nil {
@@ -46,6 +43,7 @@ func (store *Store) requestAction(ctx context.Context, expected Job, action stri
 
 		job.Revision++
 		job.PendingAction = action
+		job.RemovalFingerprint = removalFingerprint
 		job.Reason = ""
 		job.Outcome = ""
 		job.RetryAt = time.Time{}
@@ -93,51 +91,6 @@ func (store *Store) FinishPlanning(ctx context.Context, planned Job) error {
 	})
 }
 
-func (store *Store) FinishRemoval(ctx context.Context, requested Job, failure error, at time.Time) error {
-	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var job Job
-		if err := tx.First(&job, requested.ID).Error; err != nil {
-			return err
-		}
-		if job.Revision != requested.Revision || job.PendingAction != Delete {
-			return ErrConflict
-		}
-
-		job.UpdatedAt = at
-		job.Outcome = OutcomeOther
-		if failure == nil {
-			job.State = Removed
-			job.InQueue = false
-			job.PendingAction = ""
-			job.Reason = "queue removal completed"
-		} else {
-			job.State = Blocked
-			job.Reason = failure.Error()
-			job.RetryAt = at.Add(5 * time.Minute)
-		}
-
-		return tx.Save(&job).Error
-	})
-}
-
-func (store *Store) StartRemoval(ctx context.Context, id int64, at time.Time) (Job, error) {
-	var job Job
-	err := store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&job, id).Error; err != nil {
-			return err
-		}
-		if job.PendingAction != Delete || job.State == Running || job.State == Importing {
-			return ErrConflict
-		}
-
-		job.State = Removing
-		job.UpdatedAt = at
-		return tx.Save(&job).Error
-	})
-
-	return job, err
-}
-
 func (store *Store) ReconcileQueue(ctx context.Context, service Service, present []QueueKey, at time.Time) error {
 	return store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var jobs []Job
@@ -176,7 +129,9 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 
 			job.InQueue = false
 			job.UpdatedAt = at
-			if !active(job.State) && job.State != Imported {
+			// The removal worker confirms an absent row even if the previous
+			// DELETE failed or its response was lost.
+			if !active(job.State) && job.State != Imported && job.PendingAction != Delete {
 				// Queue presence is independent of a completed repair outcome.
 				// Keep failures actionable if the same download returns later.
 				if job.State != Blocked && job.State != Failed {
@@ -185,6 +140,7 @@ func (store *Store) ReconcileQueue(ctx context.Context, service Service, present
 					job.Outcome = OutcomeOther
 				}
 				job.PendingAction = ""
+				job.RemovalFingerprint = nil
 			}
 			if err := tx.Save(&job).Error; err != nil {
 				return err

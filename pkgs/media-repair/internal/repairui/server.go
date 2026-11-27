@@ -175,17 +175,18 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 		for _, job := range listed {
 			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
 			entry := present(job)
+			needsOperator := entry.Attention != nil || job.PendingAction == jobs.ConfirmRemoval
 			entry.CSRF = app.csrf
 			if !historical {
 				view.ActivityCount++
-				if entry.Attention != nil {
+				if needsOperator {
 					view.InboxCount++
 				}
 			}
 			if historical != view.History || view.State != "" && string(job.State) != view.State {
 				continue
 			}
-			if view.Inbox && entry.Attention == nil {
+			if view.Inbox && !needsOperator {
 				continue
 			}
 			searchable := strings.Join([]string{

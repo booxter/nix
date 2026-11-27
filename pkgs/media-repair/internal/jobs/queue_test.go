@@ -104,6 +104,33 @@ func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	}
 }
 
+func TestMissingQueueEntryStillCompletesPendingRemoval(t *testing.T) {
+	ctx := context.Background()
+	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
+	now := time.Now().UTC()
+	job, err := store.Observe(ctx, Job{Service: Radarr, QueueID: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RequestRemoval(ctx, job, now); err != nil {
+		t.Fatal(err)
+	}
+	requested, err := store.StartRemoval(ctx, job.ID, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.FinishRemoval(ctx, requested, errors.New("lost response"), now); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.ReconcileQueue(ctx, Radarr, nil, now); err != nil {
+		t.Fatal(err)
+	}
+	due, err := store.DueRemovals(ctx, Radarr, now.Add(time.Hour))
+	if err != nil || len(due) != 1 || due[0] != job.ID {
+		t.Fatalf("removal no longer scheduled for confirmation: %v, %v", due, err)
+	}
+}
+
 func TestQueueReconciliationDoesNotMergeAlbumJobs(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))

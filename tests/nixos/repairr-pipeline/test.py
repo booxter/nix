@@ -99,6 +99,18 @@ def submitted_imports(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/imports"))
 
 
+def submitted_removals(vm):
+    return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/removals"))
+
+
+def replace_file(vm, path):
+    original = vm.succeed(f"stat -c '%i %s %Y' {path}").split()
+    vm.succeed(f"cp -p {path} {path}.new && mv -T {path}.new {path}")
+    replacement = vm.succeed(f"stat -c '%i %s %Y' {path}").split()
+    assert original[0] != replacement[0] and original[1:] == replacement[1:]
+    return replacement
+
+
 def import_receipt(vm, job_url):
     wait_for_text(vm, job_url, "Attempt 1 · imported")
     detail = vm.succeed(f"curl -fsS {job_url}")
@@ -188,10 +200,7 @@ with subtest("a same-size replacement blocks the saved plan before Radarr receiv
     original_case = read_job(replaced, api)
     assert original_case["actions"]["remove"], original_case
     # A new inode with identical bytes and timestamps isolates the identity change.
-    original = replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split()
-    replaced.succeed(f"cp -p {VIDEO} {VIDEO}.new && mv -T {VIDEO}.new {VIDEO}")
-    replacement = replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split()
-    assert original[0] != replacement[0] and original[1:] == replacement[1:]
+    replacement = replace_file(replaced, VIDEO)
     replaced.succeed(f"rm {PAUSE}")
     wait_for_movie(replaced, "blocked", "selected file changed after planning")
     assert submitted_imports(replaced) == []
@@ -214,8 +223,34 @@ with subtest("a removal confirmation belongs to the file the operator reviewed")
         row["id"] for row in json.loads(replaced.succeed(queue))["records"]
     ]
 
+with subtest("a failed removal cannot delete a replacement on retry"):
+    replaced.succeed(f"touch {FIXTURE}/reject-removal")
     assert replaced.succeed(action_request(api + "/remove", token, current_case)) == "204"
+    wait_for_text(replaced, job, "<dt>Internal state</dt><dd>blocked</dd>")
+    assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID]
+
+    # Restart to observe the replacement before the retry. The latest case
+    # now differs from the approval saved alongside the failed request.
+    replaced.succeed("systemctl stop repairr.service")
+    replacement = replace_file(replaced, VIDEO)
+    replaced.succeed("systemctl start repairr.service")
+    replaced.wait_until_succeeds(
+        f"curl -fsS {api} | grep -Fv -- {shlex.quote(current_case['fingerprint'])}", timeout=60
+    )
+    wait_for_text(replaced, job, "Removal requested")
+    replaced.succeed(f"rm {FIXTURE}/reject-removal", "date -s '+6 minutes'")
+    wait_for_text(replaced, f"{REPAIRR}/radarr", "Confirm removal again")
+    assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID]
+    assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
+    assert COMPLETED_QUEUE_ID in [
+        row["id"] for row in json.loads(replaced.succeed(queue))["records"]
+    ]
+
+    fresh = read_job(replaced, api)
+    assert fresh["fingerprint"] != current_case["fingerprint"]
+    assert replaced.succeed(action_request(api + "/remove", fresh["csrfToken"], fresh)) == "204"
     wait_for_text(replaced, job, "queue removal completed")
+    assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID, COMPLETED_QUEUE_ID]
     assert [row["id"] for row in json.loads(replaced.succeed(queue))["records"]] == [
         UNFINISHED_QUEUE_ID
     ]
@@ -356,3 +391,16 @@ with subtest("a completed library album is declined without an operator question
     inbox = unfinishedAlbum.succeed(f"curl -fsS {REPAIRR}/lidarr")
     assert "Example Album" not in inbox
     assert submitted_imports(unfinishedAlbum) == []
+
+with subtest("Lidarr rechecks the download even when the prepared tracks have identical bytes"):
+    api = job_api(job)
+    reviewed = read_job(unfinishedAlbum, api)
+    track = "/var/lib/repairr-pipeline/Example.Album/01.flac"
+    replacement = replace_file(unfinishedAlbum, track)
+    assert (
+        unfinishedAlbum.succeed(action_request(api + "/remove", reviewed["csrfToken"], reviewed))
+        == "204"
+    )
+    wait_for_text(unfinishedAlbum, f"{REPAIRR}/lidarr", "Confirm removal again")
+    assert read_job(unfinishedAlbum, api)["fingerprint"] != reviewed["fingerprint"]
+    assert unfinishedAlbum.succeed(f"stat -c '%i %s %Y' {track}").split() == replacement

@@ -3,6 +3,7 @@ package lidarrrepair
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -41,8 +42,9 @@ type Evidence struct {
 }
 
 type EvidenceCollector struct {
-	lidarr Lidarr
-	worker Worker
+	lidarr      Lidarr
+	worker      Worker
+	workspaceMu sync.Mutex
 
 	now func() time.Time
 }
@@ -54,6 +56,11 @@ func NewEvidenceCollector(client Lidarr, worker Worker) *EvidenceCollector {
 // Even when the files come from a saved workspace, ask Lidarr which tracks
 // are missing today and how it would import each file.
 func (inspection albumInspection) collectEvidence(ctx context.Context, queue lidarr.QueueRecord) (Evidence, error) {
+	// The removal worker can inspect while the scheduler polls. Keep the
+	// prepared workspace intact until Lidarr has finished assessing its files.
+	inspection.workspaceMu.Lock()
+	defer inspection.workspaceMu.Unlock()
+
 	workspace, err := inspection.prepareWorkspace(ctx, queue)
 	if err != nil {
 		return Evidence{}, err

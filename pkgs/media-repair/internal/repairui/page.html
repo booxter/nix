@@ -125,10 +125,10 @@
     <div class="action-inbox">
       {{range .Items}}
         <article class="action-item">
-          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Attention.Title}}</span></div>
+          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Status}}</span></div>
           <h3><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></h3>
           <p class="case-explanation">{{.Explanation}}</p>
-          {{template "response-form" .}}
+          {{if .Attention}}{{template "response-form" .}}{{end}}
           <div class="item-links"><a href="/jobs/{{.Job.ID}}">Details</a><a href="/jobs/{{.Job.ID}}/remove">Remove from queue…</a></div>
           {{if ne .Subject .Job.Title}}<details class="release-name"><summary>Download name</summary><p>{{.Job.Title}}</p></details>{{end}}
         </article>

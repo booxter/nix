@@ -15,6 +15,7 @@ COMPLETED_ID = "SABnzbd_nzo_complete"
 UNFINISHED_ID = "SABnzbd_nzo_incomplete"
 MOVIE = {"id": 42, "tmdbId": 123456, "title": "Example Movie", "year": 2026}
 IMPORTS: list[dict] = []
+REMOVALS: list[int] = []
 QUEUED = {"id": 1, "name": "ManualImport", "status": "queued"}
 
 
@@ -127,6 +128,8 @@ def import_history() -> dict[str, object]:
 
 
 def response_for(path: str, query: dict[str, list[str]]) -> object | None:
+    if path == "/fixture/removals":
+        return REMOVALS
     if path == "/fixture/imports":
         return IMPORTS
     if path == "/api/v1/queue":
@@ -164,6 +167,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self) -> None:
         if urlsplit(self.path).path != "/api/v3/queue/101":
             self.send_error(404)
+            return
+        REMOVALS.append(101)
+        if (FIXTURE / "reject-removal").exists():
+            self.send_error(409, "fixture rejected removal")
             return
         (FIXTURE / "removed").touch()
         self.send_json({})
