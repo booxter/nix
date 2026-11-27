@@ -65,6 +65,7 @@ type Job struct {
 	PlanningFingerprint string
 	StableSince         time.Time
 	Evidence            json.RawMessage `gorm:"serializer:json"`
+	Findings            []string        `gorm:"serializer:json"`
 	CollectionError     string
 	CollectionOutcome   Outcome
 	Plan                json.RawMessage  `gorm:"serializer:json"`
@@ -82,6 +83,15 @@ type Job struct {
 	Reason             string
 	Outcome            Outcome
 	UpdatedAt          time.Time `gorm:"autoUpdateTime:false"`
+}
+
+// Older jobs only have a text explanation. Keep it available until the next
+// poll replaces it with fresh findings or a successful inspection.
+func (job Job) InspectionProblem() string {
+	if len(job.Findings) > 0 {
+		return strings.Join(job.Findings, ", ")
+	}
+	return job.CollectionError
 }
 
 type Attempt struct {
@@ -176,6 +186,7 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		job.Title = observed.Title
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
+		job.Findings = observed.Findings
 		job.CollectionError = observed.CollectionError
 		job.CollectionOutcome = observed.CollectionOutcome
 		if !active(job.State) && observed.Evidence != nil {

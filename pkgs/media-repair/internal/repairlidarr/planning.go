@@ -21,7 +21,7 @@ import (
 )
 
 func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.Observation, error) {
-	return repair.QueuePoll[lidarr.QueueRecord]{
+	return repair.QueuePoll[lidarr.QueueRecord, lidarrrepair.Evidence]{
 		ReadQueue: adapter.Client.ReadQueue,
 		FindComplete: func(ctx context.Context, queue []lidarr.QueueRecord) ([]queuefinalize.Entry, error) {
 			return lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
@@ -29,40 +29,34 @@ func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.O
 		NewJob: func(entry lidarr.QueueRecord) jobs.Job {
 			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
 		},
-		Inspect: adapter.inspectJob,
+		Inspect:    adapter.inspectAlbum,
+		StopReason: albumStopReason,
+		EncodeCase: encodeEvidence,
 	}.Observe(ctx, saved)
 }
 
 // The previous album inspection can supply files already prepared in the workspace.
-func (adapter *Adapter) inspectJob(ctx context.Context, entry lidarr.QueueRecord, saved json.RawMessage, job *jobs.Job) error {
+func (adapter *Adapter) inspectAlbum(ctx context.Context, entry lidarr.QueueRecord, saved json.RawMessage) lidarrrepair.CollectionResult {
 	var record *lidarrrepair.Record
 	if len(saved) != 0 {
 		record = &lidarrrepair.Record{}
 		if err := json.Unmarshal(saved, record); err != nil {
-			return err
+			return lidarrrepair.CollectionResult{Err: fmt.Errorf("read saved album case: %w", err)}
 		}
 	}
 
-	result := adapter.Inspector.Inspect(ctx, entry, record)
-	switch {
-	case len(result.Findings) > 0:
-		job.CollectionError = strings.Join(result.Findings, ", ")
-		job.CollectionOutcome = jobs.OutcomeQueueNotReady
-	case result.Err != nil:
-		job.CollectionError = result.Err.Error()
-		job.CollectionOutcome = jobs.OutcomeOther
-		var rejection *materialize.Rejection
-		if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
-			job.CollectionOutcome = jobs.OutcomeInvalidCueSheet
-		}
-	default:
-		current, err := encodeEvidence(*result.Case)
-		if err != nil {
-			return err
-		}
-		job.SourceFingerprint, job.Evidence = current.Fingerprint, current.Evidence
+	return adapter.Inspector.Inspect(ctx, entry, record)
+}
+
+func albumStopReason(result lidarrrepair.CollectionResult) jobs.Outcome {
+	if len(result.Findings) > 0 {
+		return jobs.OutcomeQueueNotReady
 	}
-	return nil
+	var rejection *materialize.Rejection
+	if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
+		return jobs.OutcomeInvalidCueSheet
+	}
+	return jobs.OutcomeOther
 }
 
 type planningInputs struct {

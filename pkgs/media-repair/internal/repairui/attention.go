@@ -32,7 +32,7 @@ func reviewFor(job jobs.Job) review {
 // Execution can stop for a retry or runtime override after planning has finished.
 // Otherwise the inbox shows the question saved by the planning step.
 func attentionFor(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Question {
-	if !job.InQueue || job.PendingAction != "" || job.CollectionError != "" ||
+	if !job.InQueue || job.PendingAction != "" || job.CollectionError != "" || len(job.Findings) > 0 ||
 		(job.State != jobs.Blocked && job.State != jobs.Failed) || outcome == jobs.OutcomeEvidenceChanged {
 		return nil
 	}

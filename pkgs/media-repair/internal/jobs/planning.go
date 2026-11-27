@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/planning"
@@ -31,7 +32,8 @@ func (store *Store) requestAction(ctx context.Context, expected Job, action stri
 			return err
 		}
 		if job.Revision != expected.Revision || job.SourceFingerprint != expected.SourceFingerprint ||
-			job.State != expected.State || job.PendingAction != expected.PendingAction || job.CollectionError != expected.CollectionError {
+			job.State != expected.State || job.PendingAction != expected.PendingAction ||
+			job.CollectionError != expected.CollectionError || !slices.Equal(job.Findings, expected.Findings) {
 			return ErrConflict
 		}
 		if !job.AcceptsActions() {

@@ -92,6 +92,7 @@ func (store *Store) replaceRemovalCase(job *Job, current InspectedCase, at time.
 	job.StableSince = at
 	job.PlanningAttempts = 0
 	job.CollectionError, job.CollectionOutcome = "", ""
+	job.Findings = nil
 	job.Plan, job.PlanResult = nil, nil
 	job.SelectedFileID, job.SelectedReleaseID = "", 0
 	return nil

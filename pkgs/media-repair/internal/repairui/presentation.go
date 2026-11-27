@@ -63,8 +63,8 @@ func present(job jobs.Job) item {
 	case job.PendingAction == jobs.ConfirmRemoval:
 		view.Status = "Confirm removal again"
 		view.Explanation = job.Reason
-	case job.CollectionError != "":
-		presentCollectionError(&view, job.CollectionOutcome, job.CollectionError)
+	case job.CollectionError != "" || len(job.Findings) > 0:
+		presentCollectionError(&view, job.CollectionOutcome, job.InspectionProblem())
 		if job.PendingAction == jobs.Reconsider {
 			view.NextStep += " Reconsideration will wait until this is resolved."
 		}

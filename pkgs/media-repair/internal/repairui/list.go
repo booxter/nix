@@ -87,7 +87,7 @@ func (filter listFilter) matches(entry item, history, inbox bool) bool {
 		return true
 	}
 	searchable := strings.Join([]string{
-		entry.Subject, entry.Job.Title, entry.Status, entry.Explanation, entry.Job.Reason, entry.Job.CollectionError,
+		entry.Subject, entry.Job.Title, entry.Status, entry.Explanation, entry.Job.Reason, entry.Job.InspectionProblem(),
 	}, " ")
 	return strings.Contains(strings.ToLower(searchable), strings.ToLower(filter.Query))
 }

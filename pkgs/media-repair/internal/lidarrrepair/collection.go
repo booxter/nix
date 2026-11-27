@@ -21,9 +21,12 @@ var collection = pipeline.CollectionFlow[
 	lidarr.QueueRecord,
 	Evidence,
 ]{
-	Resolve:    albumInspection.recoverQueueIdentity,
-	Validators: pipeline.Validators[lidarr.QueueRecord]{queueFindings},
-	Collect:    albumInspection.collectEvidence,
+	Resolve: albumInspection.recoverQueueIdentity,
+	Validators: pipeline.Validators[lidarr.QueueRecord]{
+		downloadFindings,
+		albumIdentityFindings,
+	},
+	Collect: albumInspection.collectEvidence,
 }
 
 type CollectionResult = pipeline.Result[Evidence]
@@ -43,7 +46,7 @@ func (inspection albumInspection) recoverQueueIdentity(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (lidarr.QueueRecord, error) {
-	if !downloadReady(queue) {
+	if len(downloadFindings(queue)) > 0 {
 		return queue, nil
 	}
 
@@ -54,14 +57,30 @@ func (inspection albumInspection) recoverQueueIdentity(
 	return recovered, nil
 }
 
-func queueFindings(queue lidarr.QueueRecord) []string {
-	if queue.AlbumID == nil || queue.ArtistID == nil || !downloadReady(queue) {
-		return []string{"Lidarr queue item is not eligible for repair"}
+func albumIdentityFindings(queue lidarr.QueueRecord) []string {
+	var findings []string
+	if queue.AlbumID == nil {
+		findings = append(findings, "missing_album_id")
 	}
-	return nil
+	if queue.ArtistID == nil {
+		findings = append(findings, "missing_artist_id")
+	}
+	return findings
 }
 
-func downloadReady(queue lidarr.QueueRecord) bool {
-	return queue.OutputPath != "" && queue.DownloadID != "" &&
-		queue.Status == "completed" && queue.TrackedDownloadStatus == "warning"
+func downloadFindings(queue lidarr.QueueRecord) []string {
+	var findings []string
+	if queue.OutputPath == "" {
+		findings = append(findings, "missing_output_path")
+	}
+	if queue.DownloadID == "" {
+		findings = append(findings, "missing_download_id")
+	}
+	if queue.Status != "completed" {
+		findings = append(findings, "incomplete_download")
+	}
+	if queue.TrackedDownloadStatus != "warning" {
+		findings = append(findings, "unsupported_queue_state")
+	}
+	return findings
 }

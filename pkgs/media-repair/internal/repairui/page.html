@@ -40,7 +40,7 @@
           <dt>Job / queue</dt><dd>#{{$entry.Job.ID}} / #{{$entry.Job.QueueID}}</dd>
           <dt>Last checked</dt><dd><time datetime="{{$entry.Job.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</time></dd>
           <dt>Internal state</dt><dd>{{$entry.Job.State}}</dd>
-          {{if $entry.Job.CollectionError}}<dt>Inspection error</dt><dd>{{$entry.Job.CollectionError}}</dd>{{end}}
+          {{with $entry.Job.InspectionProblem}}<dt>Inspection problem</dt><dd>{{.}}</dd>{{end}}
           {{if $entry.Job.Reason}}<dt>Recorded reason</dt><dd>{{$entry.Job.Reason}}</dd>{{end}}
           {{if $entry.Decision.Action}}<dt>Last planner action</dt><dd>{{$entry.Decision.Action}} · {{$entry.Decision.Reason}}</dd>
           <dt>Last explanation</dt><dd>{{$entry.Decision.Explanation}}</dd>{{end}}

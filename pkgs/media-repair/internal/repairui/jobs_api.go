@@ -15,6 +15,7 @@ type jobSummary struct {
 	State           jobs.State   `json:"state"`
 	ReasonCode      jobs.Outcome `json:"reasonCode,omitempty"`
 	Reason          string       `json:"reason,omitempty"`
+	Findings        []string     `json:"findings,omitempty"`
 	InspectionError string       `json:"inspectionError,omitempty"`
 	PendingAction   string       `json:"pendingAction,omitempty"`
 }
@@ -38,7 +39,7 @@ func summarize(entry item) jobSummary {
 	return jobSummary{
 		ID: job.ID, Service: job.Service, Title: job.Title, Subject: entry.Subject,
 		State: job.State, ReasonCode: entry.Outcome, Reason: job.Reason,
-		InspectionError: job.CollectionError, PendingAction: job.PendingAction,
+		Findings: job.Findings, InspectionError: job.InspectionProblem(), PendingAction: job.PendingAction,
 	}
 }
 

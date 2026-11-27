@@ -12,6 +12,7 @@ func (store *Store) DueRepairs(ctx context.Context, service Service, now time.Ti
 	err := store.db.WithContext(ctx).Where("service = ?", service).
 		Where(`state IN ? OR (
 			in_queue AND state IN ? AND COALESCE(collection_error, '') = ''
+			AND COALESCE(json_array_length(findings), 0) = 0
 			AND COALESCE(pending_action, '') <> ? AND (retry_at IS NULL OR retry_at <= ?)
 			AND (state = ? OR length(evidence) > 0)
 		)`, []State{Running, Importing}, []State{Observed, Ready}, Delete, now.UTC(), Ready).

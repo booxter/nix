@@ -116,6 +116,40 @@ func TestChangedSourcesInvalidateUnusedPlans(t *testing.T) {
 	}
 }
 
+func TestInspectionFindingsHoldAReadyPlanUntilTheDownloadIsReadyAgain(t *testing.T) {
+	ctx := context.Background()
+	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
+	at := time.Now().UTC()
+	album := Job{Service: Lidarr, QueueID: 42, DownloadID: "album", UpdatedAt: at}
+	ready := album
+	ready.SourceFingerprint = "original"
+	ready.Evidence = json.RawMessage(`{"source":"original"}`)
+	saved, err := store.Observe(ctx, ready)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := finishTestPlan(ctx, store, saved.ID, ready.SourceFingerprint, json.RawMessage(`{"action":"import"}`), at); err != nil {
+		t.Fatal(err)
+	}
+
+	album.Findings = []string{"incomplete_download"}
+	if _, err := store.Observe(ctx, album); err != nil {
+		t.Fatal(err)
+	}
+	due, err := store.DueRepairs(ctx, Lidarr, at)
+	if err != nil || len(due) != 0 {
+		t.Fatalf("incomplete download was scheduled: %v, %v", due, err)
+	}
+
+	if _, err := store.Observe(ctx, ready); err != nil {
+		t.Fatal(err)
+	}
+	due, err = store.DueRepairs(ctx, Lidarr, at)
+	if err != nil || len(due) != 1 || due[0].ID != saved.ID || due[0].State != Ready {
+		t.Fatalf("ready plan did not resume: %v, %v", due, err)
+	}
+}
+
 func TestQueueIdentityIncludesServiceAndEmptyDownloadID(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))

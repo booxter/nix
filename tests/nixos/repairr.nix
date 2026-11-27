@@ -113,6 +113,10 @@ pkgs.testers.runNixOSTest {
     machine.wait_until_succeeds(listing + " | jq -e 'length == 1'")
     (album,) = json.loads(machine.succeed(listing))
     assert album["title"] == "Unfinished album download" and album["reasonCode"] == "queue_not_ready", album
+    assert set(album["findings"]) == {
+        "incomplete_download", "unsupported_queue_state", "missing_output_path",
+        "missing_album_id", "missing_artist_id",
+    }, album
 
     # The operator page gives the reason in plain language.
     page = machine.succeed("curl -fsS 'http://127.0.0.1:8790/activity?service=lidarr'")

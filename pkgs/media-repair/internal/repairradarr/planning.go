@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"slices"
-	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
@@ -21,7 +20,7 @@ type Planner interface {
 }
 
 func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.Observation, error) {
-	return repair.QueuePoll[controller.RadarrQueueRecord]{
+	return repair.QueuePoll[controller.RadarrQueueRecord, casebuilder.Assembly]{
 		ReadQueue: adapter.Client.ReadQueue,
 		FindComplete: func(ctx context.Context, queue []controller.RadarrQueueRecord) ([]queuefinalize.Entry, error) {
 			return radarr.FinalizationCandidates(ctx, adapter.Client, queue)
@@ -29,32 +28,19 @@ func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.O
 		NewJob: func(entry controller.RadarrQueueRecord) jobs.Job {
 			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
 		},
-		Inspect: adapter.inspectJob,
+		Inspect: func(ctx context.Context, entry controller.RadarrQueueRecord, _ json.RawMessage) CollectionResult {
+			return adapter.Inspector.Inspect(ctx, entry)
+		},
+		StopReason: movieStopReason,
+		EncodeCase: encodeCase,
 	}.Observe(ctx, saved)
 }
 
-// Keep skipped entries visible in the inbox. Only a collected case has
-// evidence that the scheduler can send to the planner.
-func (adapter *Adapter) inspectJob(ctx context.Context, entry controller.RadarrQueueRecord, _ json.RawMessage, job *jobs.Job) error {
-	result := adapter.Inspector.Inspect(ctx, entry)
-	switch {
-	case result.Err != nil:
-		job.CollectionError = result.Err.Error()
-		job.CollectionOutcome = jobs.OutcomeOther
-	case len(result.Findings) > 0:
-		job.CollectionError = strings.Join(result.Findings, ", ")
-		job.CollectionOutcome = jobs.OutcomeOther
-		if slices.Contains(result.Findings, string(controller.CandidateIncompleteDownload)) {
-			job.CollectionOutcome = jobs.OutcomeIncompleteDownload
-		}
-	default:
-		current, err := encodeCase(*result.Case)
-		if err != nil {
-			return err
-		}
-		job.SourceFingerprint, job.Evidence = current.Fingerprint, current.Evidence
+func movieStopReason(result CollectionResult) jobs.Outcome {
+	if slices.Contains(result.Findings, string(controller.CandidateIncompleteDownload)) {
+		return jobs.OutcomeIncompleteDownload
 	}
-	return nil
+	return jobs.OutcomeOther
 }
 
 func encodeCase(assembly casebuilder.Assembly) (jobs.InspectedCase, error) {

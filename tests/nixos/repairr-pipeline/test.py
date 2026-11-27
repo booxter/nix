@@ -146,14 +146,17 @@ with subtest("the planner case keeps the local path and download-client ID priva
     assert "SABnzbd_nzo_complete" not in planner_input
 
 with subtest("the unfinished download reports problems from both Radarr and SABnzbd"):
+    job = plan_with_repairs_paused(machine)
     unfinished = reports[UNFINISHED_QUEUE_ID]
     # Radarr still lists the download as active, and SABnzbd has no history for it.
     expected = {"incomplete_download", "unsupported_queue_state", "download_not_found"}
     assert set(unfinished["findings"]) == expected, unfinished
     assert "case" not in unfinished, unfinished
+    unfinished_job = read_job(machine, find_job(machine, "radarr", "Unfinished Movie"))
+    assert set(unfinished_job["findings"]) == expected, unfinished_job
+    assert unfinished_job["fingerprint"] == "" and unfinished_job["attempts"] == [], unfinished_job
 
 with subtest("the selected file is confirmed only when Radarr reports a new import"):
-    job = plan_with_repairs_paused(machine)
     assert submitted_imports(machine) == []
     machine.succeed(f"rm {PAUSE}")
     wait_for_json(machine, job, '.state == "importing" and .attempts[0].commandId == 1')
@@ -378,6 +381,10 @@ with subtest("an album that resumes downloading blocks the saved plan before imp
     assert submitted_imports(unfinishedAlbum) == []
 
 with subtest("a completed library album is declined without an operator question"):
+    # A fresh poll records what is currently preventing inspection.
+    unfinishedAlbum.succeed("systemctl restart repairr.service")
+    wait_for_json(unfinishedAlbum, job, '.findings == ["incomplete_download"]')
+
     # Pause automatic cleanup so the declined job stays visible in activity.
     unfinishedAlbum.succeed(
         "systemctl stop repairr.service",
@@ -386,6 +393,7 @@ with subtest("a completed library album is declined without an operator question
         "systemctl start repairr.service",
     )
     declined = wait_for_json(unfinishedAlbum, job, '.reasonCode == "no_repair_needed"')
+    assert "findings" not in declined and "inspectionError" not in declined, declined
     assert not declined["actions"]["answer"] and "question" not in declined, declined
     assert read_job(unfinishedAlbum, f"{REPAIRR}/api/jobs?service=lidarr&view=inbox") == []
     assert submitted_imports(unfinishedAlbum) == []
