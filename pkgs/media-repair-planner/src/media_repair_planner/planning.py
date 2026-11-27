@@ -14,8 +14,8 @@ from .decision_validation import validate_decision_for_case, validate_decision_o
 from .planning_core import ContractPlanner
 from .planning_core import DecisionModelError as DecisionModelError
 from .planning_core import DecisionModelUnavailable as DecisionModelUnavailable
-from .prompt import SYSTEM_INSTRUCTION
 from .radarr_projection import project_case
+from .radarr_prompt import SYSTEM_INSTRUCTION
 from .structured_model import StructuredDecisionModel
 from .structured_planning import StructuredDecisionGenerator
 

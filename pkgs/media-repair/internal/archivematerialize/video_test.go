@@ -2,6 +2,7 @@ package archivematerialize
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,10 +14,8 @@ import (
 )
 
 type fakeWorker struct {
-	root     string
-	result   materialize.Success
-	tarCalls int
-	rarCalls int
+	root      string
+	rarResult materialize.Success
 }
 
 func (worker *fakeWorker) MaterializeTarVideo(
@@ -25,8 +24,7 @@ func (worker *fakeWorker) MaterializeTarVideo(
 	fileidentity.Snapshot,
 	string,
 ) (materialize.Success, error) {
-	worker.tarCalls++
-	return worker.result, nil
+	return materialize.Success{}, errors.New("fixture has no TAR archive")
 }
 
 func (worker *fakeWorker) MaterializeRARVideo(
@@ -35,8 +33,7 @@ func (worker *fakeWorker) MaterializeRARVideo(
 	fileidentity.Snapshot,
 	string,
 ) (materialize.Success, error) {
-	worker.rarCalls++
-	return worker.result, nil
+	return worker.rarResult, nil
 }
 
 func (worker *fakeWorker) ResolvePublishedPath(_ string, components []string) (string, error) {
@@ -55,7 +52,7 @@ func TestMaterializeVideoArchive(t *testing.T) {
 	if err := os.WriteFile(artifactPath, []byte("video"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	worker := &fakeWorker{root: root, result: materialize.Success{
+	worker := &fakeWorker{root: root, rarResult: materialize.Success{
 		Operation: materialize.OperationMaterializeRARVideo,
 		RootID:    "downloads", WorkspaceComponents: workspace,
 		Artifacts: []materialize.Artifact{{
@@ -80,11 +77,16 @@ func TestMaterializeVideoArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !found || worker.rarCalls != 1 || worker.tarCalls != 0 ||
-		len(source.Inventory.Files) != 1 || len(source.Probes) != 1 ||
-		source.Inventory.Files[0].PathComponents[1] != "movie.mkv" ||
-		source.Inventory.Files[0].DownloadFile == nil {
-		t.Fatalf("source = %#v, worker = %#v", source, worker)
+	if !found || source.Root != filepath.Join(root, filepath.Join(workspace...)) {
+		t.Fatalf("expected extracted workspace, got %q (found = %v)", source.Root, found)
+	}
+	if len(source.Inventory.Files) != 1 || len(source.ExistingProbes) != 1 {
+		t.Fatalf("expected one extracted file with a probe, got %#v", source)
+	}
+	file := source.Inventory.Files[0]
+	if filepath.Join(file.PathComponents...) != "Movie/movie.mkv" || file.DownloadFile == nil ||
+		source.ExistingProbes[0].FileID != file.ID {
+		t.Fatalf("expected a probe for the extracted movie, got %#v", source)
 	}
 }
 

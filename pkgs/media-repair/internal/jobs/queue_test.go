@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
@@ -57,7 +59,7 @@ func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
 			if _, err := store.Start(ctx, job.ID, time.Now()); !errors.Is(err, ErrConflict) {
 				t.Fatalf("returned failure allowed an automatic retry: %v", err)
 			}
-			if err := store.RequestAction(ctx, job.ID, Reconsider, "try again", 0, time.Now()); err != nil {
+			if err := store.RequestReconsideration(ctx, returned, planning.Answer{Guidance: "try again"}, time.Now()); err != nil {
 				t.Fatalf("returned failure cannot be reconsidered: %v", err)
 			}
 		})
@@ -67,11 +69,11 @@ func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
 func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	ctx := context.Background()
 	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
-	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 10, DownloadID: "download", Guidance: "keep guidance"})
+	job, err := store.Observe(ctx, Job{Service: Lidarr, QueueID: 10, DownloadID: "download", Answer: planning.Answer{Guidance: "keep guidance"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
+	if err := store.RequestRemoval(ctx, job, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	present := []QueueKey{{QueueID: 20, DownloadID: "download"}}
@@ -97,8 +99,35 @@ func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	if err != nil || !reappeared.InQueue || reappeared.State != Blocked {
 		t.Fatalf("present download stayed removed: %+v, %v", reappeared, err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
+	if err := store.RequestRemoval(ctx, reappeared, time.Now()); err != nil {
 		t.Fatalf("cannot retry deletion: %v", err)
+	}
+}
+
+func TestMissingQueueEntryStillCompletesPendingRemoval(t *testing.T) {
+	ctx := context.Background()
+	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
+	now := time.Now().UTC()
+	job, err := store.Observe(ctx, Job{Service: Radarr, QueueID: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RequestRemoval(ctx, job, now); err != nil {
+		t.Fatal(err)
+	}
+	requested, err := store.StartRemoval(ctx, job.ID, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.FinishRemoval(ctx, requested, errors.New("lost response"), now); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.ReconcileQueue(ctx, Radarr, nil, now); err != nil {
+		t.Fatal(err)
+	}
+	due, err := store.DueRemovals(ctx, Radarr, now.Add(time.Hour))
+	if err != nil || len(due) != 1 || due[0] != job.ID {
+		t.Fatalf("removal no longer scheduled for confirmation: %v, %v", due, err)
 	}
 }
 

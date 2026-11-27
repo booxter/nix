@@ -17,11 +17,6 @@ import (
 
 const opaqueIDDomain = "radarr-repair-opaque-id-v1\x00"
 
-type FileProbe struct {
-	FileID  controller.FileID
-	Outcome controller.MediaProbeOutcome
-}
-
 type Observation struct {
 	ObservedAt      time.Time
 	Correlation     controller.DownloadCorrelation
@@ -29,7 +24,7 @@ type Observation struct {
 	History         []controller.RadarrHistoryEvent
 	ManualImports   []controller.RadarrManualImport
 	Inventory       controller.FileInventory
-	Probes          []FileProbe
+	Probes          []controller.FileProbe
 	BluRayPlaylists []mkvmerge.Candidate
 	DVDTitles       []dvdvideo.Candidate
 }
@@ -282,7 +277,7 @@ func indexInventory(
 	return indexedFiles, paths, nil
 }
 
-func indexProbes(probes []FileProbe) (map[controller.FileID]controller.MediaProbeOutcome, error) {
+func indexProbes(probes []controller.FileProbe) (map[controller.FileID]controller.MediaProbeOutcome, error) {
 	indexed := make(map[controller.FileID]controller.MediaProbeOutcome, len(probes))
 	for _, probe := range probes {
 		if probe.FileID == "" {

@@ -15,96 +15,33 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
-type PathResolver interface {
-	ResolvePublishedPath(string, []string) (string, error)
-}
-
 const (
 	maximumAssessmentIDs = 32
 	maximumQueueMessages = 256
 	maximumReleaseNames  = 64
 )
 
-func Assemble(
+// Match Lidarr's import suggestions to the prepared files by path. Each file
+// gets one ID that both the planner and the import executor can refer to.
+func assembleAlbum(
 	observedAt time.Time,
 	queue lidarr.QueueRecord,
-	album lidarr.Album,
-	tracks []lidarr.Track,
-	materialized materialize.Success,
-	manualImports []lidarr.ManualImport,
-	resolver PathResolver,
+	workspace albumWorkspace,
+	facts albumFacts,
 ) (lidarrcontracts.Case, []ImportBinding, error) {
-	if queue.AlbumID == nil || queue.ArtistID == nil || album.ID != *queue.AlbumID ||
-		album.ArtistID != *queue.ArtistID || len(materialized.Artifacts) == 0 || resolver == nil {
-		return lidarrcontracts.Case{}, nil, fmt.Errorf("Lidarr repair evidence is incomplete")
-	}
-	importsByPath := make(map[string]lidarr.ManualImport, len(manualImports))
-	for _, item := range manualImports {
+	importsByPath := make(map[string]lidarr.ManualImport, len(facts.imports))
+	for _, item := range facts.imports {
 		importsByPath[item.Path] = item
 	}
-
-	artifacts := make([]lidarrcontracts.Artifact, 0, len(materialized.Artifacts))
-	assessments := make([]lidarrcontracts.Assessment, 0, len(materialized.Artifacts))
-	bindings := make([]ImportBinding, 0, len(materialized.Artifacts))
-	artifactIDs := make([]string, 0, len(materialized.Artifacts))
-	for index, artifact := range materialized.Artifacts {
-		absolutePath, err := resolver.ResolvePublishedPath(
-			materialized.RootID, artifact.PathComponents,
-		)
-		if err != nil {
-			return lidarrcontracts.Case{}, nil, fmt.Errorf("resolve materialized artifact: %w", err)
-		}
-		item, found := importsByPath[absolutePath]
-		if !found {
-			return lidarrcontracts.Case{}, nil, fmt.Errorf(
-				"Lidarr did not assess materialized artifact %q", artifact.ArtifactID,
-			)
-		}
-		artifactID := caseArtifactID(index)
-		artifacts = append(artifacts, contractArtifact(artifact, artifactID))
-		assessments = append(assessments, contractAssessment(artifactID, item))
-		bindings = append(bindings, bindingFromImport(artifactID, item, queue.DownloadID))
-		artifactIDs = append(artifactIDs, artifactID)
-	}
-	return assembleCase(
-		observedAt, queue, album, tracks, artifacts, assessments, bindings, artifactIDs,
-	)
-}
-
-func AssembleStored(
-	observedAt time.Time,
-	queue lidarr.QueueRecord,
-	album lidarr.Album,
-	tracks []lidarr.Track,
-	workspaceRoot string,
-	artifacts []lidarrcontracts.Artifact,
-	manualImports []lidarr.ManualImport,
-) (lidarrcontracts.Case, []ImportBinding, error) {
-	if workspaceRoot == "" || !filepath.IsAbs(workspaceRoot) ||
-		filepath.Clean(workspaceRoot) != workspaceRoot || len(artifacts) == 0 {
-		return lidarrcontracts.Case{}, nil, fmt.Errorf("stored Lidarr repair evidence is incomplete")
-	}
-	importsByPath := make(map[string]lidarr.ManualImport, len(manualImports))
-	for _, item := range manualImports {
-		importsByPath[item.Path] = item
-	}
-	assessments := make([]lidarrcontracts.Assessment, 0, len(artifacts))
-	bindings := make([]ImportBinding, 0, len(artifacts))
-	artifactIDs := make([]string, 0, len(artifacts))
-	for _, artifact := range artifacts {
-		relativePath := filepath.FromSlash(artifact.RelativePath)
-		if relativePath == "." || filepath.IsAbs(relativePath) ||
-			filepath.Clean(relativePath) != relativePath || relativePath == ".." ||
-			strings.HasPrefix(relativePath, ".."+string(filepath.Separator)) {
-			return lidarrcontracts.Case{}, nil, fmt.Errorf(
-				"stored Lidarr artifact %q has an unsafe path", artifact.ArtifactID,
-			)
-		}
-		path := filepath.Join(workspaceRoot, relativePath)
+	assessments := make([]lidarrcontracts.Assessment, 0, len(workspace.files))
+	bindings := make([]ImportBinding, 0, len(workspace.files))
+	artifactIDs := make([]string, 0, len(workspace.files))
+	for _, artifact := range workspace.files {
+		path := filepath.Join(workspace.root, filepath.FromSlash(artifact.RelativePath))
 		item, found := importsByPath[path]
 		if !found {
 			return lidarrcontracts.Case{}, nil, fmt.Errorf(
-				"Lidarr did not reassess stored artifact %q", artifact.ArtifactID,
+				"Lidarr did not assess workspace file %q", artifact.RelativePath,
 			)
 		}
 		assessments = append(assessments, contractAssessment(artifact.ArtifactID, item))
@@ -112,14 +49,7 @@ func AssembleStored(
 		artifactIDs = append(artifactIDs, artifact.ArtifactID)
 	}
 	return assembleCase(
-		observedAt,
-		queue,
-		album,
-		tracks,
-		append([]lidarrcontracts.Artifact(nil), artifacts...),
-		assessments,
-		bindings,
-		artifactIDs,
+		observedAt, queue, facts.album, facts.tracks, workspace.files, assessments, bindings, artifactIDs,
 	)
 }
 
@@ -436,14 +366,4 @@ func optionalText(value string) *string {
 		return nil
 	}
 	return &value
-}
-
-func workspaceRoot(resolver PathResolver, materialized materialize.Success) (string, error) {
-	root, err := resolver.ResolvePublishedPath(
-		materialized.RootID, materialized.WorkspaceComponents,
-	)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Clean(root), nil
 }

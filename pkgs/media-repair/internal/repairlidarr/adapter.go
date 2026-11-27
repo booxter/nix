@@ -10,6 +10,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 type Client interface {
@@ -19,44 +20,72 @@ type Client interface {
 }
 
 type Inspector interface {
-	Inspect(context.Context, lidarr.QueueRecord, *lidarrrepair.Record) (lidarrrepair.Evidence, error)
+	Inspect(context.Context, lidarr.QueueRecord, *lidarrrepair.Record) lidarrrepair.CollectionResult
 }
 
 type Adapter struct {
+	repair.ImportGracePeriod
 	Client    Client
 	Inspector Inspector
 	Planner   lidarrrepair.Planner
 }
 
-func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.Attempt) (repair.PreparedImport, error) {
+func (adapter *Adapter) ImportSteps() repair.ImportFlow {
+	return repair.ImportSteps[lidarrrepair.AuthorizedImport]{
+		Authorize:     adapter.authorize,
+		PrepareImport: adapter.prepareImport,
+	}
+}
+
+// Recheck the saved track selections against the files and library state
+// Lidarr sees now. Only matching tracks may go into the import request.
+func (adapter *Adapter) authorize(
+	ctx context.Context,
+	job jobs.Job,
+	plan json.RawMessage,
+) (lidarrrepair.AuthorizedImport, error) {
 	var planned lidarrrepair.Record
 	if err := json.Unmarshal(job.Evidence, &planned); err != nil {
-		return repair.PreparedImport{}, err
+		return lidarrrepair.AuthorizedImport{}, err
 	}
-	planned.Decision = attempt.Plan
+	planned.Decision = plan
 
-	queue, err := adapter.findQueue(ctx, job)
+	queue, err := adapter.findQueue(ctx, job.QueueKey())
 	if err != nil {
-		return repair.PreparedImport{}, err
+		return lidarrrepair.AuthorizedImport{}, err
 	}
 
-	current, err := adapter.Inspector.Inspect(ctx, queue, &planned)
-	if err != nil {
-		return repair.PreparedImport{}, err
+	result := adapter.Inspector.Inspect(ctx, queue, &planned)
+	if result.Err != nil {
+		return lidarrrepair.AuthorizedImport{}, result.Err
 	}
-	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, current)
+	if err := repair.CheckEligibility(result.Findings); err != nil {
+		return lidarrrepair.AuthorizedImport{}, err
+	}
+	if err := adapter.CheckImportState(queue.TrackedDownloadState, job.StableSince); err != nil {
+		return lidarrrepair.AuthorizedImport{}, err
+	}
+
+	authorized, accepted, err := lidarrrepair.AuthorizeImport(planned, *result.Case)
 	if err != nil {
 		blocked := &repair.BlockedError{Reason: err.Error()}
 		var changed *lidarrrepair.EvidenceChangedError
 		if errors.As(err, &changed) {
 			blocked.Code = jobs.OutcomeEvidenceChanged
 		}
-		return repair.PreparedImport{}, blocked
+		return lidarrrepair.AuthorizedImport{}, blocked
 	}
 	if !accepted {
-		return repair.PreparedImport{}, &repair.BlockedError{Reason: "no missing-track import authorized"}
+		return lidarrrepair.AuthorizedImport{}, &repair.BlockedError{Reason: "no missing-track import authorized"}
 	}
+	return authorized, nil
+}
 
+func (adapter *Adapter) prepareImport(
+	ctx context.Context,
+	_ jobs.Attempt,
+	authorized lidarrrepair.AuthorizedImport,
+) (repair.PreparedImport, error) {
 	history, err := adapter.Client.ReadImportedTracks(ctx, authorized.AlbumID, "")
 	if err != nil {
 		return repair.PreparedImport{}, err
@@ -64,31 +93,16 @@ func (adapter *Adapter) Repair(ctx context.Context, job jobs.Job, attempt jobs.A
 
 	request, err := json.Marshal(importCommand(authorized))
 	return repair.PreparedImport{
-		OutputPath:      current.WorkspaceRoot,
+		OutputPath:      authorized.WorkspaceRoot,
 		Request:         request,
-		HistoryIDBefore: lidarr.HighestImportedTrackHistoryID(history),
+		HistoryIDBefore: servarr.HighestHistoryID(history),
 	}, err
 }
 
-func (adapter *Adapter) findQueue(ctx context.Context, job jobs.Job) (lidarr.QueueRecord, error) {
-	queue, err := adapter.Client.ReadQueue(ctx)
-	if err != nil {
-		return lidarr.QueueRecord{}, err
-	}
-
-	keys := make([]jobs.QueueKey, len(queue))
-	for index, entry := range queue {
-		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
-	}
-	index, err := jobs.MatchQueue(job.QueueKey(), keys)
-	if err != nil {
-		return lidarr.QueueRecord{}, &repair.BlockedError{Reason: err.Error()}
-	}
-	if index >= 0 {
-		return queue[index], nil
-	}
-
-	return lidarr.QueueRecord{}, &repair.BlockedError{Reason: "queue item disappeared or changed download identity"}
+func (adapter *Adapter) findQueue(ctx context.Context, key jobs.QueueKey) (lidarr.QueueRecord, error) {
+	return repair.ReadQueueEntry(ctx, key, adapter.Client.ReadQueue, func(entry lidarr.QueueRecord) jobs.QueueKey {
+		return jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
+	})
 }
 
 func importCommand(authorized lidarrrepair.AuthorizedImport) lidarr.ManualImportCommand {
@@ -119,23 +133,29 @@ func (adapter *Adapter) Submit(ctx context.Context, data json.RawMessage) (int64
 	return command.ID, err
 }
 
-func (adapter *Adapter) CheckImport(ctx context.Context, attempt jobs.Attempt) (repair.ImportStatus, error) {
+func (adapter *Adapter) ConfirmationSteps() repair.ConfirmationSteps {
+	return repair.ConfirmationSteps{
+		FindImportedFiles: adapter.findImportedFiles,
+		ReadCommandStatus: adapter.Client.ReadManualImportCommand,
+	}
+}
+
+// An album receipt is complete only when history includes every selected track.
+func (adapter *Adapter) findImportedFiles(ctx context.Context, attempt jobs.Attempt) ([]servarr.ImportedFile, error) {
 	var request lidarr.ManualImportCommand
 	if err := json.Unmarshal(attempt.ImportRequest, &request); err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 	if len(request.Files) == 0 {
-		return repair.ImportStatus{}, fmt.Errorf("stored import has no selected tracks")
+		return nil, fmt.Errorf("stored import has no selected tracks")
 	}
 
 	history, err := adapter.Client.ReadImportedTracks(ctx, request.Files[0].AlbumID, "")
 	if err != nil {
-		return repair.ImportStatus{}, err
+		return nil, err
 	}
 
-	// A completed Lidarr command is not proof that every selected track made
-	// it into the library. Match each file against history after our request.
-	confirmed := make([]lidarr.ImportedTrack, 0, len(request.Files))
+	confirmed := make([]servarr.ImportedFile, 0, len(request.Files))
 	for _, file := range request.Files {
 		imported, found := lidarr.FindImportedTrack(history, lidarr.ImportedTrackMatch{
 			TrackID:        file.TrackID,
@@ -143,22 +163,10 @@ func (adapter *Adapter) CheckImport(ctx context.Context, attempt jobs.Attempt) (
 			AfterHistoryID: attempt.HistoryIDBefore,
 			NotBefore:      attempt.ImportStartedAt,
 		})
-		if found {
-			confirmed = append(confirmed, imported)
+		if !found {
+			return nil, nil
 		}
+		confirmed = append(confirmed, imported)
 	}
-	if len(confirmed) == len(request.Files) {
-		receipt, err := json.Marshal(confirmed)
-		return repair.ImportStatus{Receipt: receipt}, err
-	}
-
-	if attempt.CommandID == 0 {
-		return repair.ImportStatus{}, nil
-	}
-	command, err := adapter.Client.ReadManualImportCommand(ctx, attempt.CommandID)
-	if err != nil {
-		return repair.ImportStatus{}, err
-	}
-
-	return repair.CommandStatus(command, false)
+	return confirmed, nil
 }

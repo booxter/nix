@@ -40,3 +40,11 @@ type FileInventory struct {
 	Files []InventoryFile
 	Paths []FilePathMapping
 }
+
+// VideoSource identifies the download or extracted archive that will be
+// inspected for import. Archive extraction also supplies probes for its files.
+type VideoSource struct {
+	Root           string
+	Inventory      FileInventory
+	ExistingProbes []FileProbe
+}

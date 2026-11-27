@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	starrRadarr "golift.io/starr/radarr"
 )
 
@@ -20,18 +20,16 @@ type ImportedFileMatch struct {
 	AfterHistoryID int64
 }
 
-var _ controller.RadarrImportedFileReader = (*Client)(nil)
-
 func (client *Client) ReadImportedFiles(
 	ctx context.Context,
 	movieID int64,
 	downloadID string,
-) ([]controller.RadarrImportedFile, error) {
+) ([]servarr.ImportedFile, error) {
 	records, err := client.readHistoryRecords(ctx, movieID, downloadID)
 	if err != nil {
 		return nil, err
 	}
-	imports := make([]controller.RadarrImportedFile, 0)
+	imports := make([]servarr.ImportedFile, 0)
 	for index, record := range records {
 		if record.EventType != importedHistoryEvent {
 			continue
@@ -45,23 +43,12 @@ func (client *Client) ReadImportedFiles(
 	return imports, nil
 }
 
-// HighestImportedFileHistoryID captures the history boundary before a request.
-func HighestImportedFileHistoryID(imports []controller.RadarrImportedFile) int64 {
-	var highest int64
-	for _, imported := range imports {
-		if imported.HistoryID > highest {
-			highest = imported.HistoryID
-		}
-	}
-	return highest
-}
-
 // FindImportedFile ignores exact matches that existed before the request.
 func FindImportedFile(
-	imports []controller.RadarrImportedFile,
+	imports []servarr.ImportedFile,
 	match ImportedFileMatch,
-) (controller.RadarrImportedFile, bool) {
-	var selected controller.RadarrImportedFile
+) (servarr.ImportedFile, bool) {
+	var selected servarr.ImportedFile
 	found := false
 	for _, imported := range imports {
 		if imported.MovieID != match.MovieID || imported.DownloadID != match.DownloadID ||
@@ -77,21 +64,21 @@ func FindImportedFile(
 	return selected, found
 }
 
-func mapImportedFile(record *starrRadarr.HistoryRecord) (controller.RadarrImportedFile, error) {
+func mapImportedFile(record *starrRadarr.HistoryRecord) (servarr.ImportedFile, error) {
 	movieFileID, err := strconv.ParseInt(record.Data.FileID, 10, 64)
 	if err != nil || movieFileID <= 0 {
-		return controller.RadarrImportedFile{}, fmt.Errorf(
+		return servarr.ImportedFile{}, fmt.Errorf(
 			"movie file ID %q is invalid",
 			record.Data.FileID,
 		)
 	}
 	if !validHistoryPath(record.Data.DroppedPath) {
-		return controller.RadarrImportedFile{}, fmt.Errorf("dropped path is invalid")
+		return servarr.ImportedFile{}, fmt.Errorf("dropped path is invalid")
 	}
 	if !validHistoryPath(record.Data.ImportedPath) {
-		return controller.RadarrImportedFile{}, fmt.Errorf("imported path is invalid")
+		return servarr.ImportedFile{}, fmt.Errorf("imported path is invalid")
 	}
-	return controller.RadarrImportedFile{
+	return servarr.ImportedFile{
 		HistoryID: record.ID, MovieFileID: movieFileID, MovieID: record.MovieID,
 		DownloadID: record.DownloadID, OccurredAt: record.Date.UTC(),
 		DroppedPath: record.Data.DroppedPath, ImportedPath: record.Data.ImportedPath,

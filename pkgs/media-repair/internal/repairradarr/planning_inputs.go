@@ -22,14 +22,15 @@ type planningInputs struct {
 }
 
 func (adapter *Adapter) PlanningInputs(data json.RawMessage) (planning.Inputs, error) {
-	var evidence Evidence
-	if err := json.Unmarshal(data, &evidence); err != nil {
+	repairCase, err := readPlanningCase(data)
+	if err != nil {
 		return planning.Inputs{}, err
 	}
-	if _, err := contracts.EncodeCase(evidence.Case); err != nil {
+	// EncodeCase also checks that the saved case ID matches the evidence.
+	if _, err := contracts.EncodeCase(repairCase); err != nil {
 		return planning.Inputs{}, err
 	}
-	return planning.NewInputs(planningCaseInputs(evidence.Case))
+	return planning.NewInputs(planningCaseInputs(repairCase))
 }
 
 func planningCaseInputs(repairCase contracts.RepairCaseV3) planningInputs {

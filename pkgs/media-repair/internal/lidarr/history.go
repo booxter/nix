@@ -20,17 +20,6 @@ const (
 	trackFileImportedEvent = "trackFileImported"
 )
 
-type ImportedTrack struct {
-	HistoryID    int64     `json:"history_id"`
-	AlbumID      int64     `json:"album_id"`
-	ArtistID     int64     `json:"artist_id"`
-	TrackID      int64     `json:"track_id"`
-	DownloadID   string    `json:"download_id"`
-	DroppedPath  string    `json:"dropped_path"`
-	ImportedPath string    `json:"imported_path"`
-	OccurredAt   time.Time `json:"occurred_at"`
-}
-
 type AlbumIdentity struct {
 	AlbumID  int64
 	ArtistID int64
@@ -147,12 +136,12 @@ func (client *Client) ReadImportedTracks(
 	ctx context.Context,
 	albumID int64,
 	downloadID string,
-) ([]ImportedTrack, error) {
+) ([]servarr.ImportedFile, error) {
 	if albumID <= 0 || downloadID != strings.TrimSpace(downloadID) ||
 		strings.ContainsRune(downloadID, '\x00') {
 		return nil, fmt.Errorf("Lidarr imported-track history query is invalid")
 	}
-	var imports []ImportedTrack
+	var imports []servarr.ImportedFile
 	seen := make(map[int64]struct{})
 	expectedTotal := -1
 	for page := 1; page <= maximumHistoryPages; page++ {
@@ -198,7 +187,7 @@ func (client *Client) ReadImportedTracks(
 				record.Data.DroppedPath == "" || record.Data.ImportedPath == "" {
 				return nil, fmt.Errorf("Lidarr imported-track history record %d is incomplete", record.ID)
 			}
-			imports = append(imports, ImportedTrack{
+			imports = append(imports, servarr.ImportedFile{
 				HistoryID: record.ID, AlbumID: record.AlbumID, ArtistID: record.ArtistID,
 				TrackID: record.TrackID, DownloadID: record.DownloadID,
 				DroppedPath: record.Data.DroppedPath, ImportedPath: record.Data.ImportedPath,
@@ -216,16 +205,6 @@ func (client *Client) ReadImportedTracks(
 	return nil, fmt.Errorf("Lidarr history exceeds %d records", maximumHistoryRecords)
 }
 
-func HighestImportedTrackHistoryID(imports []ImportedTrack) int64 {
-	var highest int64
-	for _, imported := range imports {
-		if imported.HistoryID > highest {
-			highest = imported.HistoryID
-		}
-	}
-	return highest
-}
-
 type ImportedTrackMatch struct {
 	TrackID        int64
 	DownloadID     string
@@ -234,7 +213,7 @@ type ImportedTrackMatch struct {
 	NotBefore      time.Time
 }
 
-func FindImportedTrack(imports []ImportedTrack, match ImportedTrackMatch) (ImportedTrack, bool) {
+func FindImportedTrack(imports []servarr.ImportedFile, match ImportedTrackMatch) (servarr.ImportedFile, bool) {
 	for _, imported := range imports {
 		if imported.HistoryID > match.AfterHistoryID && imported.TrackID == match.TrackID &&
 			(match.DownloadID == "" || imported.DownloadID == match.DownloadID) &&
@@ -243,5 +222,5 @@ func FindImportedTrack(imports []ImportedTrack, match ImportedTrackMatch) (Impor
 			return imported, true
 		}
 	}
-	return ImportedTrack{}, false
+	return servarr.ImportedFile{}, false
 }

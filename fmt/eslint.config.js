@@ -17,4 +17,8 @@ module.exports = [
       "no-unused-vars": "error",
     },
   },
+  {
+    files: ["pkgs/media-repair/internal/repairui/*.js"],
+    languageOptions: { sourceType: "module" },
+  },
 ];

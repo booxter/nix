@@ -2,24 +2,29 @@
 let
   inherit (pkgs) lib;
   mediaRoot = "/var/lib/repairr-test-media";
-  queue =
-    records:
-    builtins.toJSON {
-      page = 1;
-      pageSize = 250;
-      inherit records;
-      totalRecords = builtins.length records;
-    };
-  album = {
-    id = 42;
-    title = "Unfinished album download";
-    downloadId = "SABnzbd_nzo_album";
-    protocol = "usenet";
-    downloadClient = "SABnzbd";
-    status = "downloading";
-    size = 200;
-    sizeleft = 100;
+  album = "${mediaRoot}/Example.Album";
+  albumFixture = import ./repairr-pipeline/album-fixture.nix {
+    inherit pkgs album;
+    port = 8687;
   };
+  movieFixture = import ./repairr-pipeline/movie-fixture.nix {
+    inherit pkgs;
+    video = "${mediaRoot}/Example.Movie.2026/movie.mkv";
+  };
+  radarrURL = "http://127.0.0.1:7878";
+  lidarrURL = "http://127.0.0.1:8687";
+  # The first queue poll should see both fixtures ready to serve.
+  pendingImportFixture = url: {
+    environment.TRACKED_DOWNLOAD_STATE = "importPending";
+    serviceConfig.UMask = "0027";
+    postStart = "${pkgs.curl}/bin/curl -fsS --retry-connrefused --retry 10 ${url}/fixture/imports";
+  };
+  loopback = port: [
+    {
+      addr = "127.0.0.1";
+      inherit port;
+    }
+  ];
 in
 pkgs.testers.runNixOSTest {
   name = "repairr";
@@ -70,53 +75,74 @@ pkgs.testers.runNixOSTest {
       sops.secrets."radarr/apiKey" = { };
       sops.secrets."lidarr/apiKey" = { };
       sops.secrets."sabnzbd/apiKey" = { };
-      services.radarr.settings.server.port = 7878;
+      services.radarr.settings.server.port = 7879;
       services.lidarr.settings.server.port = 8686;
       users.groups.media = { };
-      systemd.tmpfiles.rules = [ "d ${mediaRoot} 0750 media-repair-worker media -" ];
-      systemd.services.repairr.after = [ "nginx.service" ];
+      users.users.lidarr-fixture = {
+        isSystemUser = true;
+        group = "media";
+      };
+      # As on srvarr, Repairr can read the downloads and owns the workspace.
+      systemd.tmpfiles.rules = [
+        "d ${mediaRoot} 2750 root media -"
+        "d ${album} 2750 lidarr-fixture media -"
+        "d ${mediaRoot}/.media-repair 2750 media-repair-worker media -"
+        # The test restores the planner after both apps report their first failure.
+        "f /run/repairr-planner-unavailable - - - -"
+      ];
+      systemd.services.radarr-fixture = lib.mkMerge [
+        movieFixture
+        (pendingImportFixture radarrURL)
+      ];
+      systemd.services.lidarr-fixture = lib.mkMerge [
+        albumFixture
+        (pendingImportFixture lidarrURL)
+        { serviceConfig.User = "lidarr-fixture"; }
+      ];
+      systemd.services.repairr = {
+        requires = [
+          "radarr-fixture.service"
+          "lidarr-fixture.service"
+        ];
+        after = [
+          "radarr-fixture.service"
+          "lidarr-fixture.service"
+          "nginx.service"
+        ];
+      };
+      # Use the module's planner socket, service user and sandbox with a local decision.
+      systemd.services.media-repair-planner.serviceConfig.ExecStart =
+        lib.mkForce "${lib.getExe pkgs.python3} ${./repairr-pipeline/planner.py}";
       services.nginx = {
         enable = true;
-        virtualHosts.servarr-test = {
-          listen = [
-            {
-              addr = "127.0.0.1";
-              port = 7878;
-            }
-            {
-              addr = "127.0.0.1";
-              port = 8686;
-            }
-          ];
-          locations."= /api/v1/queue".extraConfig = ''
-            default_type application/json;
-            return 200 '${queue [ album ]}';
-          '';
-          locations."= /api/v3/queue".extraConfig = ''
-            default_type application/json;
-            return 200 '${queue [ ]}';
-          '';
+        virtualHosts.lidarr = {
+          listen = loopback 8686;
+          locations."/api/v1/" = {
+            proxyPass = lidarrURL;
+            extraConfig = ''if ($http_x_api_key != "test-lidarr-key") { return 403; }'';
+          };
+        };
+        virtualHosts.radarr = {
+          listen = loopback 7879;
+          locations."/api/v3/" = {
+            proxyPass = radarrURL;
+            extraConfig = ''if ($http_x_api_key != "test-radarr-key") { return 403; }'';
+          };
+        };
+        virtualHosts.sabnzbd = {
+          listen = loopback 8080;
+          locations."= /api" = {
+            proxyPass = radarrURL;
+            extraConfig = ''if ($arg_apikey != "test-sabnzbd-key") { return 403; }'';
+          };
         };
       };
-      environment.systemPackages = [ pkgs.curl ];
+      environment.systemPackages = [
+        pkgs.chromium
+        pkgs.curl
+        pkgs.jq
+      ];
     };
   };
-  testScript = ''
-    machine.start()
-    machine.wait_for_unit("repairr.service")
-    activity = "curl --fail --silent 'http://127.0.0.1:8790/activity?service=lidarr'"
-    machine.wait_until_succeeds(activity + " | grep -F 'Unfinished album download'")
-    assert "Queue not ready" in machine.succeed(activity)
-    assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
-
-    # With the queue offline, the restarted daemon can only show the stored job.
-    machine.succeed("systemctl stop nginx.service")
-    machine.succeed("systemctl restart repairr.service")
-    machine.wait_until_succeeds("curl --fail http://127.0.0.1:8790/health")
-    page = machine.succeed(activity)
-    assert "Unfinished album download" in page and "Queue not ready" in page
-    machine.fail("systemctl is-active radarr-repair-controller.timer")
-    machine.fail("systemctl is-active lidarr-repair-controller.timer")
-    machine.fail("systemctl is-active media-repair-worker.service")
-  '';
+  testScript = builtins.readFile ./repairr.py;
 }

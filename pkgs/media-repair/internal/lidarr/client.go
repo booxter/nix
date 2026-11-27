@@ -33,6 +33,7 @@ type QueueRecord struct {
 	EstimatedCompletionTime       *time.Time
 	Status                        QueueStatus
 	TrackedDownloadStatus         TrackedDownloadStatus
+	TrackedDownloadState          string
 	StatusMessages                []StatusMessage
 	ErrorMessage                  string
 	DownloadID                    string
@@ -88,7 +89,13 @@ func (client *Client) FinalizeQueue(ctx context.Context, queueID int64, removeFr
 type queueRecord struct {
 	page   int
 	index  int
-	record *starrLidarr.QueueRecord
+	record *apiQueueRecord
+}
+
+// starr's Lidarr queue record omits the import state returned by /queue.
+type apiQueueRecord struct {
+	starrLidarr.QueueRecord
+	TrackedDownloadState string `json:"trackedDownloadState"`
 }
 
 func (client *Client) readQueuePage(
@@ -101,16 +108,19 @@ func (client *Client) readQueuePage(
 	}
 	request.Set("includeUnknownArtistItems", "true")
 	request.Set("includeArtist", "false")
-	response, err := client.api.GetQueuePageContext(ctx, request)
-	if err != nil {
+	var response struct {
+		Page         int               `json:"page"`
+		PageSize     int               `json:"pageSize"`
+		TotalRecords int               `json:"totalRecords"`
+		Records      []*apiQueueRecord `json:"records"`
+	}
+	pageRequest := starr.Request{URI: starrLidarr.APIver + "/queue", Query: request.Params()}
+	if err := client.api.GetInto(ctx, pageRequest, &response); err != nil {
 		return servarr.QueuePage[queueRecord]{}, servarr.NormalizeRequestError(
 			"Lidarr",
 			fmt.Sprintf("read Lidarr queue page %d", page),
 			err,
 		)
-	}
-	if response == nil {
-		return servarr.QueuePage[queueRecord]{}, fmt.Errorf("Lidarr queue page %d is nil", page)
 	}
 	records := make([]queueRecord, len(response.Records))
 	for index, record := range response.Records {
@@ -124,7 +134,7 @@ func (client *Client) readQueuePage(
 	}, nil
 }
 
-func mapQueueRecord(record *starrLidarr.QueueRecord) (QueueRecord, error) {
+func mapQueueRecord(record *apiQueueRecord) (QueueRecord, error) {
 	if record == nil {
 		return QueueRecord{}, fmt.Errorf("record is null")
 	}
@@ -154,6 +164,7 @@ func mapQueueRecord(record *starrLidarr.QueueRecord) (QueueRecord, error) {
 		TimeRemaining:                 record.Timeleft,
 		Status:                        QueueStatus(record.Status),
 		TrackedDownloadStatus:         TrackedDownloadStatus(record.TrackedDownloadStatus),
+		TrackedDownloadState:          record.TrackedDownloadState,
 		StatusMessages:                messages,
 		ErrorMessage:                  record.ErrorMessage,
 		DownloadID:                    record.DownloadID,

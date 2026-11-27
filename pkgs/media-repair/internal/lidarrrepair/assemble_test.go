@@ -2,11 +2,12 @@ package lidarrrepair
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
-	"github.com/booxter/nix-config/media-repair/worker/materialize"
+	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 )
 
 func TestAssembleNormalizesExternalLists(t *testing.T) {
@@ -36,19 +37,22 @@ func TestAssembleNormalizesExternalLists(t *testing.T) {
 		ID: 5, AlbumID: albumID, ReleaseID: 4, ArtistID: artistID,
 		AbsoluteTrackNumber: 1, TrackNumber: "1", MediumNumber: 1, Title: "Track",
 	}}
-	materialized := testMaterialization(
-		materialize.OperationMaterializeDirectory,
-		"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-	)
+	workspace := albumWorkspace{
+		root: "/album",
+		files: []lidarrcontracts.Artifact{{
+			ArtifactID: "artifact:1", RelativePath: "01.flac", SizeBytes: 100,
+			Fingerprint: "sha256:" + strings.Repeat("b", 64), Formats: []string{"flac"},
+			Tags: []lidarrcontracts.Tag{}, Streams: []lidarrcontracts.Stream{},
+		}},
+	}
 	imports := []lidarr.ManualImport{{
-		Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
+		Path: "/album/01.flac",
 		Name: "01.flac", SizeBytes: 100, ArtistID: artistID, AlbumID: albumID,
 		AlbumReleaseID: 4,
 		AudioTags:      &lidarr.AudioTags{TrackNumbers: []int{0, 1, 1}},
 	}}
-	repairCase, _, err := Assemble(
-		time.Unix(1, 0), queue, album, tracks, materialized, imports, &fakeWorker{},
-	)
+	facts := albumFacts{album: album, tracks: tracks, imports: imports}
+	repairCase, _, err := assembleAlbum(time.Unix(1, 0), queue, workspace, facts)
 	if err != nil {
 		t.Fatal(err)
 	}

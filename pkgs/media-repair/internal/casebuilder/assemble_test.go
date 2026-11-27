@@ -25,6 +25,40 @@ const (
 	testFileThreeID  = controller.FileID("file:3333333333333333333333333333333333333333333333333333333333333333")
 )
 
+func TestSavedPlanAfterRadarrBlocksImport(t *testing.T) {
+	assemble := func(observation Observation) Assembly {
+		t.Helper()
+		result, err := Assemble(observation)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	pending := testObservation()
+	pending.Correlation.Radarr.TrackedDownloadState = "importPending"
+	planned := assemble(pending)
+	blocked := assemble(testObservation())
+	current, ok := blocked.ForSavedPlan(planned)
+	if !ok || current.Request.CaseID != planned.Request.CaseID || current.LocalSnapshot.CaseID != planned.Request.CaseID ||
+		current.LocalSnapshot.Observation.Correlation.Radarr.TrackedDownloadState != "importBlocked" {
+		t.Fatal("expected the saved plan to remain usable with the live blocked queue record")
+	}
+	if _, ok := planned.ForSavedPlan(blocked); ok {
+		t.Fatal("accepted the reverse queue transition")
+	}
+
+	replaced := testObservation()
+	replaced.Inventory.Files[0].Fingerprint.Inode++
+	if _, ok := assemble(replaced).ForSavedPlan(planned); ok {
+		t.Fatal("accepted a replacement file")
+	}
+	otherMovie := testObservation()
+	otherMovie.Movie.TMDBID++
+	if _, ok := assemble(otherMovie).ForSavedPlan(planned); ok {
+		t.Fatal("accepted a different movie")
+	}
+}
+
 func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 	t.Parallel()
 
@@ -291,7 +325,7 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 		{
 			name: "extra probe",
 			mutate: func(observation *Observation) {
-				observation.Probes = append(observation.Probes, FileProbe{
+				observation.Probes = append(observation.Probes, controller.FileProbe{
 					FileID: "file:3333333333333333333333333333333333333333333333333333333333333333",
 				})
 			},
@@ -561,7 +595,7 @@ func TestAssembleKeepsUsableCandidatesWhenAnotherProbeFails(t *testing.T) {
 	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
 		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/Broken.mkv",
 	})
-	observation.Probes = append(observation.Probes, FileProbe{
+	observation.Probes = append(observation.Probes, controller.FileProbe{
 		FileID: extra.ID,
 		Outcome: controller.FailedMediaProbe(
 			controller.MediaProbeUnsupportedFormat,
@@ -632,7 +666,7 @@ func TestAssembleRetainsEvidenceOnlyFiles(t *testing.T) {
 	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
 		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/README.txt",
 	})
-	observation.Probes = append(observation.Probes, FileProbe{
+	observation.Probes = append(observation.Probes, controller.FileProbe{
 		FileID: extra.ID,
 		Outcome: controller.UncollectedMediaProbe(
 			controller.MediaProbeNotCandidate,
@@ -895,7 +929,7 @@ func testObservation() Observation {
 			},
 		},
 		Inventory: controller.FileInventory{Files: files, Paths: paths},
-		Probes: []FileProbe{
+		Probes: []controller.FileProbe{
 			{
 				FileID: testFileOneID,
 				Outcome: controller.SuccessfulMediaProbe(

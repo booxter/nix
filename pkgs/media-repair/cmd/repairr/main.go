@@ -29,13 +29,14 @@ import (
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
 	path := flag.String("config", "", "Repairr JSON configuration file")
+	scanOnce := flag.Bool("collect-radarr", false, "scan the Radarr queue once and write one JSON report per entry")
 	flag.Parse()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	configuration, err := readConfig(*path)
 	if err == nil {
-		err = run(ctx, configuration)
+		err = run(ctx, configuration, *scanOnce)
 	}
 	if err != nil {
 		slog.Error("Repairr stopped", "error", err)
@@ -43,7 +44,8 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, configuration config) error {
+// run starts the selected mode. Only the long-running daemon needs the planner and job database.
+func run(ctx context.Context, configuration config, scanOnce bool) error {
 	if configuration.TraceEndpoint != "" {
 		provider, err := telemetry.NewProvider(ctx, "repairr", configuration.TraceEndpoint)
 		if err != nil {
@@ -68,12 +70,6 @@ func run(ctx context.Context, configuration config) error {
 		},
 	}
 
-	planner, err := plannerclient.New(configuration.PlannerSocket,
-		time.Duration(limits.PlanningSeconds+limits.ResponseGraceSeconds)*time.Second)
-	if err != nil {
-		return err
-	}
-	defer planner.Close()
 	media, err := workerclient.NewProcess(configuration.Helper, configuration.Roots,
 		time.Duration(limits.ProbeSeconds)*time.Second,
 		time.Duration(limits.MediaSeconds)*time.Second,
@@ -82,13 +78,23 @@ func run(ctx context.Context, configuration config) error {
 		return err
 	}
 
-	radarr, lidarr, err := configuration.services(httpClient, planner, media)
+	radarrClient, inspector, err := configuration.radarrInspection(httpClient, media)
 	if err != nil {
 		return err
 	}
-	services := repairServices{
-		jobs.Radarr: radarr,
-		jobs.Lidarr: lidarr,
+	if scanOnce {
+		return writeRadarrQueueReport(ctx, radarrClient, inspector, os.Stdout)
+	}
+
+	planner, err := plannerclient.New(configuration.PlannerSocket,
+		time.Duration(limits.PlanningSeconds+limits.ResponseGraceSeconds)*time.Second)
+	if err != nil {
+		return err
+	}
+	defer planner.Close()
+	services, err := configuration.newRepairServices(httpClient, radarrClient, inspector, planner, media)
+	if err != nil {
+		return err
 	}
 	store, err := jobs.Open(configuration.Database, services.planningInputs)
 	if err != nil {
@@ -109,6 +115,7 @@ func (services repairServices) planningInputs(service jobs.Service, evidence jso
 	return adapter.PlanningInputs(evidence)
 }
 
+// serve runs the repair workers and their web UI together and waits for them to shut down.
 func serve(ctx context.Context, configuration config, store *jobs.Store, services map[jobs.Service]repair.Service) error {
 	wakes := map[jobs.Service]chan struct{}{
 		jobs.Radarr: make(chan struct{}, 1),
@@ -188,6 +195,7 @@ func serve(ctx context.Context, configuration config, store *jobs.Store, service
 	return err
 }
 
+// repairsDisabled allows repairs only when the disable file is known to be absent.
 func repairsDisabled(path string) (bool, error) {
 	_, err := os.Lstat(path)
 	if errors.Is(err, os.ErrNotExist) {

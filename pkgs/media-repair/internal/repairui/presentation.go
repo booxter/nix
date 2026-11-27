@@ -6,11 +6,17 @@ import (
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 const plannerFallback = "The planner could not produce a valid decision within its attempt limit."
 
 func classifyOutcome(job jobs.Job, plan decision) jobs.Outcome {
+	// Planning history restores the retry deadline along with the failure.
+	if job.State == jobs.Observed && !job.PendingRetryAt().IsZero() {
+		return jobs.OutcomePlannerRetryScheduled
+	}
+
 	code := job.Outcome
 	if code == "" {
 		code = legacyOutcome(job, plan)
@@ -46,13 +52,10 @@ func legacyOutcome(job jobs.Job, plan decision) jobs.Outcome {
 
 func present(job jobs.Job) item {
 	view := item{
+		review:  reviewFor(job),
 		Job:     job,
 		Subject: subject(job),
-		CanAct:  job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
 	}
-	_ = json.Unmarshal(job.Plan, &view.Decision)
-	result := classifyOutcome(job, view.Decision)
-	view.Attention = attentionFor(job, view.Decision, result)
 
 	switch {
 	case job.State == jobs.Imported || job.State == jobs.Removed || job.State == jobs.Running || job.State == jobs.Importing:
@@ -62,11 +65,17 @@ func present(job jobs.Job) item {
 		view.Status = "Removal requested"
 		view.Explanation = job.Reason
 		view.NextStep = "Removal will be retried when possible."
-	case job.CollectionError != "":
-		presentCollectionError(&view, job.CollectionOutcome, job.CollectionError)
+	case job.PendingAction == jobs.ConfirmRemoval:
+		view.Status = "Confirm removal again"
+		view.Explanation = job.Reason
+	case job.CollectionError != "" || len(job.Findings) > 0:
+		presentCollectionError(&view, job.CollectionOutcome, job.InspectionProblem())
 		if job.PendingAction == jobs.Reconsider {
 			view.NextStep += " Reconsideration will wait until this is resolved."
 		}
+	case view.Outcome == jobs.OutcomePlannerRetryScheduled:
+		view.Status = "Planner retry scheduled"
+		view.Explanation = job.Reason
 	case job.PendingAction == jobs.Reconsider:
 		view.Status = "Reconsideration queued"
 		view.Explanation = job.Reason
@@ -74,19 +83,22 @@ func present(job jobs.Job) item {
 	case job.State != jobs.Blocked:
 		view.Status = stateLabel(job.State)
 		view.Explanation = job.Reason
-	case result == jobs.OutcomeEvidenceChanged:
+	case view.Outcome == jobs.OutcomeEvidenceChanged:
 		view.Status = "Evidence changed"
-		view.Explanation = "The current Lidarr evidence no longer matches the planned repair."
+		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review the current evidence."
-	case result == jobs.OutcomePlannerFailed:
+	case view.Outcome == jobs.OutcomePlannerFailed:
 		view.Status = "Planner failed"
 		view.Explanation = "The previous planning attempt ended without a usable decision."
 		view.NextStep = "Request reconsideration to try again."
-	case result == jobs.OutcomeAlreadyReviewed:
+	case view.Outcome == jobs.OutcomeAlreadyReviewed:
 		view.Status = "Already reviewed"
 		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review these inputs again."
 	case view.Decision.Action == "no_repair":
+		if view.Outcome == "" || view.Outcome == jobs.OutcomeOther {
+			view.Outcome = jobs.Outcome(view.Decision.Reason)
+		}
 		view.Status = "No automatic repair chosen"
 		view.Explanation = view.Decision.Explanation
 		view.NextStep = "Review the decision or request reconsideration."
@@ -98,10 +110,10 @@ func present(job jobs.Job) item {
 	if view.Attention != nil {
 		view.Status = view.Attention.Title
 		switch view.Attention.Kind {
-		case "runtime":
+		case planning.AcceptRuntime:
 			view.Explanation = "The proposed import exceeds the allowed runtime difference."
-		case "retry":
-			if result == jobs.OutcomePlannerFailed {
+		case planning.Retry:
+			if view.Outcome == jobs.OutcomePlannerFailed {
 				view.Explanation = "The previous planning attempt ended without a usable decision."
 			} else {
 				view.Explanation = "The repair was interrupted before an import was submitted."
@@ -148,14 +160,15 @@ func presentCollectionError(view *item, code jobs.Outcome, message string) {
 	if code == "" {
 		code = legacyCollectionOutcome(message)
 	}
+	view.Outcome = code
 	switch code {
 	case jobs.OutcomeIncompleteDownload:
 		view.Status = "Waiting for download"
-		view.Explanation = "Radarr still reports the download as incomplete."
+		view.Explanation = "The download is still incomplete."
 		view.NextStep = "Wait for the download to finish."
 	case jobs.OutcomeQueueNotReady:
 		view.Status = "Queue not ready"
-		view.Explanation = "The Lidarr queue entry is not eligible for repair yet."
+		view.Explanation = "The queue entry is not eligible for repair yet."
 		view.NextStep = "Wait for the queue entry to become eligible for repair."
 	case jobs.OutcomeInvalidCueSheet:
 		view.Status = "Files need attention"

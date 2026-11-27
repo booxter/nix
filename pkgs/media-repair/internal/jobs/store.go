@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -29,15 +30,17 @@ type State string
 type Outcome string
 
 const (
-	OutcomeEvidenceChanged    Outcome = "evidence_changed"
-	OutcomePlannerFailed      Outcome = "planner_failed"
-	OutcomeOther              Outcome = "other"
-	OutcomeInterrupted        Outcome = "interrupted"
-	OutcomeRuntimeMismatch    Outcome = "runtime_mismatch"
-	OutcomeAlreadyReviewed    Outcome = "already_reviewed"
-	OutcomeIncompleteDownload Outcome = "incomplete_download"
-	OutcomeQueueNotReady      Outcome = "queue_not_ready"
-	OutcomeInvalidCueSheet    Outcome = "invalid_cue_sheet"
+	OutcomeEvidenceChanged       Outcome = "evidence_changed"
+	OutcomePlannerFailed         Outcome = "planner_failed"
+	OutcomePlannerRetryScheduled Outcome = "planner_retry_scheduled"
+	OutcomeOther                 Outcome = "other"
+	OutcomeInterrupted           Outcome = "interrupted"
+	OutcomeRuntimeMismatch       Outcome = "runtime_mismatch"
+	OutcomeAlreadyReviewed       Outcome = "already_reviewed"
+	OutcomeIncompleteDownload    Outcome = "incomplete_download"
+	OutcomeQueueNotReady         Outcome = "queue_not_ready"
+	OutcomeImportPending         Outcome = "import_pending"
+	OutcomeInvalidCueSheet       Outcome = "invalid_cue_sheet"
 )
 
 const (
@@ -61,24 +64,41 @@ type Job struct {
 	// SourceFingerprint identifies the observed case used to authorize execution.
 	// PlanningFingerprint ignores assessment noise so an unchanged planning
 	// question can reuse its previous result.
-	SourceFingerprint   string
-	PlanningFingerprint string
-	StableSince         time.Time
-	Evidence            json.RawMessage `gorm:"serializer:json"`
-	CollectionError     string
-	CollectionOutcome   Outcome
-	Plan                json.RawMessage `gorm:"serializer:json"`
-	Guidance            string
-	RuntimeToleranceMS  int64
-	RetryAt             time.Time
-	PlanningAttempts    int
-	PendingAction       string
-	Revision            int64
-	InQueue             bool
-	State               State
-	Reason              string
-	Outcome             Outcome
-	UpdatedAt           time.Time `gorm:"autoUpdateTime:false"`
+	SourceFingerprint    string
+	PlanningFingerprint  string
+	StableSince          time.Time
+	TrackedDownloadState string
+	Evidence             json.RawMessage `gorm:"serializer:json"`
+	Findings             []string        `gorm:"serializer:json"`
+	CollectionError      string
+	CollectionOutcome    Outcome
+	Plan                 json.RawMessage  `gorm:"serializer:json"`
+	PlanResult           *planning.Result `gorm:"serializer:json"`
+	// The inbox reads the current question here. Each attempt keeps its own
+	// question after the operator answers or the case changes.
+	AttemptQuestion  *planning.Question `gorm:"serializer:json"`
+	planning.Answer  `gorm:"embedded"`
+	RetryAt          time.Time
+	PlanningAttempts int
+	PendingAction    string
+	// A queued deletion pins the fingerprint approved by the operator. An
+	// empty value means queue-only removal. Older requests have no value.
+	RemovalFingerprint *string
+	Revision           int64
+	InQueue            bool
+	State              State
+	Reason             string
+	Outcome            Outcome
+	UpdatedAt          time.Time `gorm:"autoUpdateTime:false"`
+}
+
+// Older jobs only have a text explanation. Keep it available until the next
+// poll replaces it with fresh findings or a successful inspection.
+func (job Job) InspectionProblem() string {
+	if len(job.Findings) > 0 {
+		return strings.Join(job.Findings, ", ")
+	}
+	return job.CollectionError
 }
 
 type Attempt struct {
@@ -92,7 +112,8 @@ type Attempt struct {
 	CommandID        int64
 	ImportStartedAt  time.Time
 	ImportTerminalAt time.Time
-	ImportReceipt    json.RawMessage `gorm:"serializer:json"`
+	ImportReceipt    *servarr.ImportReceipt `gorm:"serializer:json"`
+	Question         *planning.Question     `gorm:"serializer:json"`
 	Reason           string
 	Outcome          Outcome
 	StartedAt        time.Time
@@ -171,8 +192,18 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		}
 
 		job.Title = observed.Title
+		// Queue progress can change while a ready plan keeps its original evidence.
+		job.TrackedDownloadState = observed.TrackedDownloadState
+		// A blocked import ends the wait requested by authorization.
+		// Other retries, including queue removal, keep their own deadlines.
+		if job.State == Ready && job.PendingAction == "" && job.Outcome == OutcomeImportPending && observed.TrackedDownloadState == "importBlocked" {
+			job.RetryAt = time.Time{}
+			job.Reason = ""
+			job.Outcome = ""
+		}
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
+		job.Findings = observed.Findings
 		job.CollectionError = observed.CollectionError
 		job.CollectionOutcome = observed.CollectionOutcome
 		if !active(job.State) && observed.Evidence != nil {
@@ -180,8 +211,19 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			if err != nil {
 				return err
 			}
-			if changed && job.State != Imported && job.State != Removed {
+			// A poll may refresh the visible case during removal. Keep the
+			// retry deadline or the outstanding confirmation until it is resolved.
+			removalPending := job.PendingAction == Delete || job.PendingAction == ConfirmRemoval
+			// An answer applies to the source that stopped this attempt, even
+			// when its replacement would give the planner the same inputs.
+			if !changed && job.AttemptQuestion != nil && job.SourceFingerprint != observed.SourceFingerprint {
+				changed = true
+				changes = append(changes, "source changed since the repair stopped")
+			}
+			if changed && job.State != Imported && job.State != Removed && !removalPending {
 				job.Plan = nil
+				job.PlanResult = nil
+				job.AttemptQuestion = nil
 				job.State = Observed
 				job.Reason = strings.Join(changes, ", ")
 				job.Outcome = ""
@@ -197,6 +239,11 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			// A ready plan belongs to its original full evidence. Import execution
 			// revalidates it; assessment noise must not silently replace that case.
 			if job.State != Ready || changed {
+				// The operator picked from the files or releases offered in that case.
+				if job.SourceFingerprint != observed.SourceFingerprint {
+					job.SelectedFileID = ""
+					job.SelectedReleaseID = 0
+				}
 				job.SourceFingerprint = observed.SourceFingerprint
 				job.Evidence = observed.Evidence
 			}
@@ -248,6 +295,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 		}
 
 		job.State = Running
+		job.AttemptQuestion = nil
 		job.Reason = ""
 		job.Outcome = ""
 		job.RetryAt = time.Time{}
@@ -281,6 +329,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		previous.State = attempt.State
 		previous.Reason = attempt.Reason
 		previous.Outcome = attempt.Outcome
+		previous.Question = attempt.Question
 		previous.UpdatedAt = attempt.UpdatedAt
 		previous.OutputPath = attempt.OutputPath
 		previous.ImportReceipt = attempt.ImportReceipt
@@ -300,6 +349,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		job.State = attempt.State
 		job.Reason = attempt.Reason
 		job.Outcome = attempt.Outcome
+		job.AttemptQuestion = attempt.Question
 		job.UpdatedAt = attempt.UpdatedAt
 		if !retryAt.IsZero() {
 			job.State = Ready
@@ -311,9 +361,28 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 }
 
 func (store *Store) Attempts(ctx context.Context, id int64) ([]Attempt, error) {
+	return readAttempts(store.db.WithContext(ctx), id)
+}
+
+func readAttempts(db *gorm.DB, id int64) ([]Attempt, error) {
 	var attempts []Attempt
-	err := store.db.WithContext(ctx).Where(&Attempt{JobID: id}).Order("number").Find(&attempts).Error
+	err := db.Where(&Attempt{JobID: id}).Order("number").Find(&attempts).Error
 	return attempts, err
+}
+
+// Read one snapshot so a client sees a confirmed job and its receipt together.
+func (store *Store) JobWithAttempts(ctx context.Context, id int64) (Job, []Attempt, error) {
+	var job Job
+	var attempts []Attempt
+	err := store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&job, id).Error; err != nil {
+			return err
+		}
+		var err error
+		attempts, err = readAttempts(tx, id)
+		return err
+	})
+	return job, attempts, err
 }
 
 func (store *Store) LatestAttempt(ctx context.Context, id int64) (Attempt, error) {
@@ -323,6 +392,7 @@ func (store *Store) LatestAttempt(ctx context.Context, id int64) (Attempt, error
 }
 
 var ErrConflict = errors.New("job changed or operation is not valid in its current state")
+var ErrNotFound = gorm.ErrRecordNotFound
 
 func active(state State) bool {
 	return state == Running || state == Importing || state == Removing

@@ -1,15 +1,14 @@
-package inspection
+package repairradarr
 
 import (
 	"context"
 	"errors"
-	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
-	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
@@ -22,10 +21,7 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	fixture := inspectionFixture()
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	result := assembly.Request
 	if !result.ObservedAt.Equal(fixture.clock.now) || result.Radarr.Movie == nil ||
 		result.Radarr.Movie.Title != fixture.radarr.movie.Title || result.Radarr.Failure.Title != fixture.record.Title ||
@@ -43,13 +39,6 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	}
 	if fixture.radarr.manualImportQuery != wantQuery {
 		t.Fatalf("manual-import query = %#v, want %#v", fixture.radarr.manualImportQuery, wantQuery)
-	}
-	wantTargets := []controller.MediaProbeTarget{
-		{AbsolutePath: "/downloads/Example_Movie/CD1.mkv", Fingerprint: fixture.files.inventory.Files[0].Fingerprint},
-		{AbsolutePath: "/downloads/Example_Movie/CD2.mkv", Fingerprint: fixture.files.inventory.Files[1].Fingerprint},
-	}
-	if !reflect.DeepEqual(fixture.probes.targets, wantTargets) {
-		t.Fatalf("probe targets = %#v, want %#v", fixture.probes.targets, wantTargets)
 	}
 }
 
@@ -102,10 +91,7 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 	)
 
 	inspector := newTestInspector(t, fixture.dependencies())
-	assembly, err := inspector.Inspect(context.Background(), record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), record))
 	if assembly.Request.Download.Client != contracts.Sabnzbd ||
 		assembly.Request.Download.SourceType != contracts.Usenet ||
 		assembly.Request.Download.ContentOwnership != contracts.OutputTree {
@@ -139,7 +125,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 	fixture.archives = &fakeArchiveMaterializer{
 		found: true,
-		source: archivematerialize.Source{
+		source: controller.VideoSource{
 			Root: "/downloads/.media-repair/workspaces/archive",
 			Inventory: controller.FileInventory{
 				Files: []controller.InventoryFile{materializedFile},
@@ -148,7 +134,7 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 					AbsolutePath: "/downloads/.media-repair/workspaces/archive/Movie/movie.mkv",
 				}},
 			},
-			Probes: []casebuilder.FileProbe{{
+			ExistingProbes: []controller.FileProbe{{
 				FileID:  materializedFile.ID,
 				Outcome: controller.SuccessfulMediaProbe(testProbeEvidence(100)),
 			}},
@@ -156,17 +142,13 @@ func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
 	}
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	if len(assembly.Request.Files) != 1 || assembly.Request.Files[0].FileID != string(materializedFile.ID) ||
 		assembly.Request.Files[0].Probe.Status != contracts.Ok {
 		t.Fatalf("archive source was not used: %#v", assembly.Request.Files)
 	}
-	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root ||
-		len(fixture.probes.targets) != 0 {
-		t.Fatalf("manual import query = %#v, probe targets = %#v", fixture.radarr.manualImportQuery, fixture.probes.targets)
+	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root {
+		t.Fatalf("manual import folder = %q, want %q", fixture.radarr.manualImportQuery.Folder, fixture.archives.source.Root)
 	}
 }
 
@@ -181,10 +163,7 @@ func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	fixture.radarr.recoveredMovieFound = true
 	inspector := newTestInspector(t, fixture.dependencies())
 
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	radarr := assembly.Request.Radarr
 	if radarr.Movie == nil || radarr.Movie.Title != fixture.radarr.movie.Title ||
 		len(radarr.History) != 1 || len(radarr.ManualImports) != 1 {
@@ -201,9 +180,9 @@ func TestInspectRejectsIneligibleRecord(t *testing.T) {
 	fixture := inspectionFixture()
 	fixture.record.Protocol = "usenet"
 	inspector := newTestInspector(t, fixture.dependencies())
-	_, err := inspector.Inspect(context.Background(), fixture.record)
-	if err == nil || !strings.Contains(err.Error(), "record 71 is ineligible") {
-		t.Fatalf("error = %v", err)
+	result := inspector.Inspect(context.Background(), fixture.record)
+	if result.Err != nil || result.Case != nil || !slices.Equal(result.Findings, []string{"unsupported_download_source"}) {
+		t.Fatalf("inspection = %+v", result)
 	}
 }
 
@@ -211,37 +190,38 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		mutate func(*inspectionTestFixture)
-		want   string
+		name    string
+		mutate  func(*inspectionTestFixture)
+		finding string
+		wantErr string
 	}{
 		{
 			name: "missing torrent",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.transmission.found = false
 			},
-			want: "was not found",
+			finding: "download_not_found",
 		},
 		{
 			name: "ineligible correlation",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.transmission.torrent.ID = "abcdef0123456789abcdef0123456789abcdef02"
 			},
-			want: "ineligible download correlation",
+			finding: "download_id_mismatch",
 		},
 		{
 			name: "missing candidate path",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.files.inventory.Paths = fixture.files.inventory.Paths[:1]
 			},
-			want: "has no local path",
+			wantErr: "has no local path",
 		},
 		{
 			name: "probe failure",
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.probes.err = errors.New("worker unavailable")
 			},
-			want: "probe candidate file",
+			wantErr: "probe candidate file",
 		},
 	}
 
@@ -251,9 +231,16 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 			fixture := inspectionFixture()
 			test.mutate(&fixture)
 			inspector := newTestInspector(t, fixture.dependencies())
-			_, err := inspector.Inspect(context.Background(), fixture.record)
-			if err == nil || !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("error = %v, want substring %q", err, test.want)
+			result := inspector.Inspect(context.Background(), fixture.record)
+			if result.Case != nil {
+				t.Fatal("unexpected case")
+			}
+			if test.finding != "" {
+				if result.Err != nil || !slices.Contains(result.Findings, test.finding) {
+					t.Fatalf("inspection = %+v, want finding %q", result, test.finding)
+				}
+			} else if result.Err == nil || !strings.Contains(result.Err.Error(), test.wantErr) {
+				t.Fatalf("error = %v, want substring %q", result.Err, test.wantErr)
 			}
 		})
 	}
@@ -266,18 +253,18 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	inspector := newTestInspector(t, fixture.dependencies())
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := inspector.Inspect(ctx, fixture.record); !errors.Is(err, context.Canceled) {
+	if err := inspector.Inspect(ctx, fixture.record).Err; !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
 	}
 }
 
-func TestNewRejectsMissingCollectionTimeout(t *testing.T) {
+func TestNewInspectorRejectsMissingCollectionTimeout(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 0
-	if _, err := New(dependencies); err == nil ||
+	if _, err := NewInspector(dependencies); err == nil ||
 		!strings.Contains(err.Error(), "collection timeout") {
 		t.Fatalf("error = %v", err)
 	}
@@ -287,7 +274,7 @@ func TestZeroValueInspectorIsUnconfigured(t *testing.T) {
 	t.Parallel()
 
 	var inspector Inspector
-	if _, err := inspector.Inspect(context.Background(), controller.RadarrQueueRecord{}); err == nil ||
+	if err := inspector.Inspect(context.Background(), controller.RadarrQueueRecord{}).Err; err == nil ||
 		!strings.Contains(err.Error(), "inspector is not configured") {
 		t.Fatalf("error = %v", err)
 	}
@@ -306,18 +293,12 @@ func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
 		controller.MediaProbeUnsupportedFormat,
 	)
 	inspector := newTestInspector(t, fixture.dependencies())
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	files := assembly.Request.Files
 	if len(files) != 3 || files[0].Probe.Status != contracts.Failed ||
 		files[1].Probe.Status != contracts.Failed || files[2].Probe.Status != contracts.NotProbed ||
 		files[2].Probe.Reason == nil || string(*files[2].Probe.Reason) != "not_probe_candidate" {
 		t.Fatalf("probe outcomes = %#v", files)
-	}
-	if len(fixture.probes.targets) != 2 {
-		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
 	}
 }
 
@@ -329,10 +310,7 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 	dependencies := fixture.dependencies()
 	dependencies.CollectionTimeout = 20 * time.Millisecond
 	inspector := newTestInspector(t, dependencies)
-	assembly, err := inspector.Inspect(context.Background(), fixture.record)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assembly := requireCase(t, inspector.Inspect(context.Background(), fixture.record))
 	if len(assembly.Request.Files) != 2 {
 		t.Fatalf("files = %#v", assembly.Request.Files)
 	}
@@ -342,9 +320,29 @@ func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
 			t.Fatalf("probe outcome = %#v", file.Probe)
 		}
 	}
-	if len(fixture.probes.targets) != 1 {
-		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
+}
+
+func TestInspectStopsWhenCallerDeadlineExpires(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.probes.waitForCancellation = true
+	inspector := newTestInspector(t, fixture.dependencies())
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	result := inspector.Inspect(ctx, fixture.record)
+	if result.Case != nil || !errors.Is(result.Err, context.DeadlineExceeded) {
+		t.Fatalf("expected the caller's deadline to stop inspection, got %+v", result)
 	}
+}
+
+func requireCase(t *testing.T, result CollectionResult) *casebuilder.Assembly {
+	t.Helper()
+	if result.Err != nil || result.Case == nil {
+		t.Fatalf("expected a case, got findings %v and error %v", result.Findings, result.Err)
+	}
+	return result.Case
 }
 
 type inspectionTestFixture struct {
@@ -381,12 +379,15 @@ func inspectionFixture() inspectionTestFixture {
 				{FileID: second.ID, AbsolutePath: "/downloads/Example_Movie/CD2.mkv"},
 			},
 		}},
-		probes: &fakeProbes{},
+		probes: &fakeProbes{files: map[string]controller.FileFingerprint{
+			"/downloads/Example_Movie/CD1.mkv": first.Fingerprint,
+			"/downloads/Example_Movie/CD2.mkv": second.Fingerprint,
+		}},
 	}
 }
 
-func (fixture inspectionTestFixture) dependencies() Dependencies {
-	dependencies := Dependencies{
+func (fixture inspectionTestFixture) dependencies() InspectorConfig {
+	dependencies := InspectorConfig{
 		Clock: fixture.clock, Radarr: fixture.radarr, Downloads: fixture.transmission,
 		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
@@ -397,7 +398,7 @@ func (fixture inspectionTestFixture) dependencies() Dependencies {
 }
 
 type fakeArchiveMaterializer struct {
-	source archivematerialize.Source
+	source controller.VideoSource
 	found  bool
 	err    error
 }
@@ -406,7 +407,7 @@ func (materializer *fakeArchiveMaterializer) MaterializeVideo(
 	context.Context,
 	int64,
 	controller.FileInventory,
-) (archivematerialize.Source, bool, error) {
+) (controller.VideoSource, bool, error) {
 	return materializer.source, materializer.found, materializer.err
 }
 
@@ -455,9 +456,9 @@ func inventoryFile(
 	}
 }
 
-func newTestInspector(t *testing.T, dependencies Dependencies) *Inspector {
+func newTestInspector(t *testing.T, dependencies InspectorConfig) *Inspector {
 	t.Helper()
-	inspector, err := New(dependencies)
+	inspector, err := NewInspector(dependencies)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -574,14 +575,13 @@ type fakeProbes struct {
 	outcome             controller.MediaProbeOutcome
 	err                 error
 	waitForCancellation bool
-	targets             []controller.MediaProbeTarget
+	files               map[string]controller.FileFingerprint
 }
 
 func (reader *fakeProbes) Probe(
 	ctx context.Context,
 	target controller.MediaProbeTarget,
 ) (controller.MediaProbeOutcome, error) {
-	reader.targets = append(reader.targets, target)
 	if reader.waitForCancellation {
 		<-ctx.Done()
 		return controller.MediaProbeOutcome{}, ctx.Err()
@@ -591,6 +591,10 @@ func (reader *fakeProbes) Probe(
 	}
 	if reader.outcome.Status != "" {
 		return reader.outcome, nil
+	}
+	fingerprint, found := reader.files[target.AbsolutePath]
+	if !found || fingerprint != target.Fingerprint {
+		return controller.MediaProbeOutcome{}, errors.New("probe target does not match a fixture file")
 	}
 	return controller.SuccessfulMediaProbe(testProbeEvidence(target.Fingerprint.SizeBytes)), nil
 }

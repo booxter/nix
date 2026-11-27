@@ -18,6 +18,11 @@ type QueuePage[Record any] struct {
 	Records      []Record
 }
 
+// The client can report completion while the queue still lists bytes to download.
+func DownloadComplete(status string, remainingBytes float64) bool {
+	return status == "completed" && remainingBytes == 0
+}
+
 type QueuePageReader[Record any] func(
 	context.Context,
 	int,

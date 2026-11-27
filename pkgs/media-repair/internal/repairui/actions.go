@@ -2,149 +2,181 @@ package repairui
 
 import (
 	"crypto/subtle"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
-func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
-	if !app.validForm(w, r) {
-		return
-	}
-	job, ok := app.readJob(w, r)
+type availableActions map[string]bool
+
+type jobResponse struct {
+	Actions     availableActions   `json:"actions"`
+	Question    *planning.Question `json:"question,omitempty"`
+	Revision    int64              `json:"revision"`
+	Fingerprint string             `json:"fingerprint"`
+	CSRFToken   string             `json:"csrfToken"`
+	Guidance    string             `json:"guidance,omitempty"`
+}
+
+type actionRequest struct {
+	Revision       *int64  `json:"revision"`
+	Fingerprint    *string `json:"fingerprint"`
+	Choice         string  `json:"choice,omitempty"`
+	Guidance       string  `json:"guidance,omitempty"`
+	RuntimeMinutes *int64  `json:"runtimeMinutes,omitempty"`
+}
+
+func (app *Handler) question(w http.ResponseWriter, r *http.Request) {
+	job, ok := app.readActionJob(w, r)
 	if !ok {
 		return
 	}
-	if r.PathValue("action") == "respond" {
-		app.respond(w, r, job)
+	review := reviewFor(job)
+	if review.Attention == nil {
+		jsonError(w, http.StatusNotFound, "this job has no question to answer")
 		return
 	}
 
-	action := jobs.Reconsider
-	switch r.PathValue("action") {
+	app.setCSRFCookie(w)
+	writeJSON(w, app.jobActions(job, review))
+}
+
+func (app *Handler) jobActions(job jobs.Job, review review) jobResponse {
+	return jobResponse{
+		Actions: review.Actions, Question: review.Attention,
+		Revision: job.Revision, Fingerprint: job.SourceFingerprint, CSRFToken: app.csrf, Guidance: job.Guidance,
+	}
+}
+
+func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
+	var input actionRequest
+	if !app.readAction(w, r, &input) {
+		return
+	}
+	job, ok := app.readActionJob(w, r)
+	if !ok {
+		return
+	}
+	const stale = "This item changed. Refresh the page before trying again."
+	if *input.Revision != job.Revision || *input.Fingerprint != job.SourceFingerprint {
+		jsonError(w, http.StatusConflict, stale)
+		return
+	}
+
+	review := reviewFor(job)
+	action := r.PathValue("action")
+	allowed, known := review.Actions[action]
+	if !known {
+		jsonError(w, http.StatusNotFound, "unknown action")
+		return
+	}
+	if !allowed {
+		jsonError(w, http.StatusConflict, stale)
+		return
+	}
+	answer, err := input.forAction(action, job, review.Attention)
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if action == "remove" {
+		err = app.config.Store.RequestRemoval(r.Context(), job, time.Now().UTC())
+	} else {
+		err = app.config.Store.RequestReconsideration(r.Context(), job, answer, time.Now().UTC())
+	}
+	if errors.Is(err, jobs.ErrConflict) {
+		jsonError(w, http.StatusConflict, stale)
+		return
+	}
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "could not queue the request")
+		return
+	}
+
+	// The request is already durable. Wake the scheduler to process it now.
+	app.config.Wake(job.Service)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (app *Handler) readActionJob(w http.ResponseWriter, r *http.Request) (jobs.Job, bool) {
+	var job jobs.Job
+	id, err := requestedJobID(r)
+	if err == nil {
+		job, err = app.config.Store.Get(r.Context(), id)
+	}
+	if err != nil {
+		status, message := jobReadError(err)
+		jsonError(w, status, message)
+	}
+	return job, err == nil
+}
+
+func (input actionRequest) forAction(action string, job jobs.Job, question *planning.Question) (planning.Answer, error) {
+	switch action {
+	case "answer":
+		return input.forQuestion(job, *question)
 	case "reconsider":
+		if input.Choice != "" {
+			return planning.Answer{}, fmt.Errorf("a choice requires an open question")
+		}
+		guidance, limit, err := checkGuidance(input.Guidance, input.RuntimeMinutes, job.Service)
+		return planning.Answer{Guidance: guidance, RuntimeToleranceMS: limit}, err
 	case "remove":
-		action = jobs.Delete
+		if input.Choice != "" || input.Guidance != "" || input.RuntimeMinutes != nil {
+			return planning.Answer{}, fmt.Errorf("removal takes only a revision and fingerprint")
+		}
+		return planning.Answer{}, nil
 	default:
-		http.NotFound(w, r)
-		return
+		return planning.Answer{}, fmt.Errorf("unknown action")
 	}
-
-	guidance, tolerance, err := parseGuidance(r, job.Service)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := app.config.Store.RequestAction(r.Context(), job.ID, action, guidance, tolerance, time.Now().UTC()); err != nil {
-		status := http.StatusInternalServerError
-		if errors.Is(err, jobs.ErrConflict) {
-			status = http.StatusConflict
-		}
-		http.Error(w, "job changed or is already active", status)
-		return
-	}
-
-	// The database makes the request durable; this signal only avoids waiting
-	// for the scheduler's next poll. There is no second action spool to update.
-	app.config.Wake(job.Service)
-	http.Redirect(w, r, fmt.Sprintf("/jobs/%d", job.ID), http.StatusSeeOther)
 }
 
-func (app *Handler) respond(w http.ResponseWriter, r *http.Request, job jobs.Job) {
-	entry := present(job)
-	revision, err := strconv.ParseInt(r.PostForm.Get("revision"), 10, 64)
-	if err != nil || entry.Attention == nil || revision != job.Revision || r.PostForm.Get("fingerprint") != job.SourceFingerprint {
-		http.Error(w, "This item changed. Refresh the inbox before answering.", http.StatusConflict)
-		return
-	}
-	guidance, tolerance, err := responseGuidance(r, job, *entry.Attention)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := app.config.Store.RequestReconsideration(r.Context(), job, guidance, tolerance, time.Now().UTC()); err != nil {
-		status := http.StatusInternalServerError
-		if errors.Is(err, jobs.ErrConflict) {
-			status = http.StatusConflict
-		}
-		http.Error(w, "This item changed. Refresh the inbox before answering.", status)
-		return
-	}
-	app.config.Wake(job.Service)
-	http.Redirect(w, r, "/?submitted="+strconv.FormatInt(job.ID, 10), http.StatusSeeOther)
-}
-
-func responseGuidance(r *http.Request, job jobs.Job, request attention) (string, int64, error) {
-	if request.Kind == "retry" {
-		return job.Guidance, job.RuntimeToleranceMS, nil
-	}
-	guidance, tolerance, err := parseGuidance(r, job.Service)
-	if err != nil {
-		return "", 0, err
-	}
-	if tolerance != 0 && !request.AllowRuntime {
-		return "", 0, fmt.Errorf("this question does not offer a runtime override")
-	}
-	if request.Kind == "runtime" && tolerance == 0 {
-		return "", 0, fmt.Errorf("choose the maximum runtime difference you accept")
-	}
-	if request.RequireGuidance && guidance == "" {
-		return "", 0, fmt.Errorf("provide instructions before requesting another review")
-	}
-	if len(request.Choices) > 0 {
-		selected := r.PostForm.Get("selection")
-		found := false
-		for _, choice := range request.Choices {
-			found = found || choice.Value == selected
-		}
-		if !found {
-			return "", 0, fmt.Errorf("choose one of the offered options")
-		}
-		instruction := ""
-		switch request.Kind {
-		case "release":
-			instruction = fmt.Sprintf("Prefer offered release %s. I accept uncertainty about the edition. Only map tracks supported by the available evidence.", selected)
-		case "file":
-			instruction = fmt.Sprintf("Use offered file %s for this movie. I accept the file-selection ambiguity. Keep all structural and capability checks.", selected)
-		}
-		guidance = strings.TrimSpace(instruction + "\n" + guidance)
-	}
-	if len(guidance) > 2000 {
-		return "", 0, fmt.Errorf("instructions are too long; shorten your answer")
-	}
-	return guidance, tolerance, nil
-}
-
-func (app *Handler) validForm(w http.ResponseWriter, r *http.Request) bool {
+func (app *Handler) validOrigin(r *http.Request) bool {
 	fetchSite := r.Header.Get("Sec-Fetch-Site")
 	origin := r.Header.Get("Origin")
-	if fetchSite != "" && fetchSite != "same-origin" ||
-		!app.origins[origin] && !(origin == "" && fetchSite == "same-origin") {
-		http.Error(w, "invalid request origin", http.StatusForbidden)
-		return false
-	}
+	return (fetchSite == "" || fetchSite == "same-origin") &&
+		(app.origins[origin] || origin == "" && fetchSite == "same-origin")
+}
 
-	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if err != nil || contentType != "application/x-www-form-urlencoded" {
-		http.Error(w, "invalid form content type", http.StatusUnsupportedMediaType)
-		return false
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, 8<<10)
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
-		return false
-	}
-
+func (app *Handler) validToken(r *http.Request, token string) bool {
 	cookie, err := r.Cookie("repairr_csrf")
-	if err != nil || !sameToken(cookie.Value, app.csrf) || !sameToken(r.PostForm.Get("csrf_token"), app.csrf) {
-		http.Error(w, "invalid CSRF token", http.StatusForbidden)
+	return err == nil && sameToken(cookie.Value, app.csrf) && sameToken(token, app.csrf)
+}
+
+func hasContentType(r *http.Request, want string) bool {
+	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	return err == nil && contentType == want
+}
+
+func (app *Handler) readAction(w http.ResponseWriter, r *http.Request, input *actionRequest) bool {
+	if !app.validOrigin(r) || !app.validToken(r, r.Header.Get("X-CSRF-Token")) {
+		jsonError(w, http.StatusForbidden, "invalid request origin or CSRF token")
+		return false
+	}
+
+	if !hasContentType(r, "application/json") {
+		jsonError(w, http.StatusUnsupportedMediaType, "send the request as application/json")
+		return false
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10))
+	decoder.DisallowUnknownFields()
+	if decoder.Decode(input) != nil || decoder.Decode(new(any)) != io.EOF {
+		jsonError(w, http.StatusBadRequest, "expected one JSON request")
+		return false
+	}
+
+	if input.Revision == nil || input.Fingerprint == nil {
+		jsonError(w, http.StatusBadRequest, "include the job revision and fingerprint")
 		return false
 	}
 
@@ -155,8 +187,14 @@ func sameToken(left, right string) bool {
 	return subtle.ConstantTimeCompare([]byte(left), []byte(right)) == 1
 }
 
-func parseGuidance(r *http.Request, service jobs.Service) (string, int64, error) {
-	guidance := strings.TrimSpace(r.PostForm.Get("guidance"))
+func jsonError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+func checkGuidance(text string, minutes *int64, service jobs.Service) (string, int64, error) {
+	guidance := strings.TrimSpace(text)
 	if len(guidance) > 2000 {
 		return "", 0, fmt.Errorf("guidance exceeds 2000 bytes")
 	}
@@ -167,12 +205,11 @@ func parseGuidance(r *http.Request, service jobs.Service) (string, int64, error)
 	}
 
 	var tolerance int64
-	if r.PostForm.Get("override_runtime_difference") != "" {
-		minutes, err := strconv.ParseInt(r.PostForm.Get("runtime_minutes"), 10, 64)
-		if err != nil || service != jobs.Radarr || minutes < 1 || minutes > 60 {
+	if minutes != nil {
+		if service != jobs.Radarr || *minutes < 1 || *minutes > 60 {
 			return "", 0, fmt.Errorf("Radarr runtime tolerance must be 1–60 minutes")
 		}
-		tolerance = minutes * 60 * 1000
+		tolerance = *minutes * 60 * 1000
 	}
 
 	return guidance, tolerance, nil

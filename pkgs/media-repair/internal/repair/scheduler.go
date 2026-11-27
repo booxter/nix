@@ -13,16 +13,20 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
-type Observation struct {
-	Jobs     []jobs.Job
-	Queue    []jobs.QueueKey
-	Complete []jobs.QueueKey
+type Decision struct {
+	Data        json.RawMessage
+	Result      planning.Result
+	ReasonCode  jobs.Outcome
+	Explanation string
 }
 
-type Decision struct {
-	Data   json.RawMessage
-	Repair bool
-	Reason string
+// A planner stop carries both the code used by API clients and the planner's
+// explanation for the operator, whether it declines or asks a question.
+func PlannerStop(data json.RawMessage, code, explanation string, question *planning.Question) Decision {
+	return Decision{
+		Data: data, Result: planning.NoRepair(code, question),
+		ReasonCode: jobs.Outcome(code), Explanation: explanation,
+	}
 }
 
 type Service interface {
@@ -30,7 +34,6 @@ type Service interface {
 	Observe(context.Context, []jobs.Job) (Observation, error)
 	PlanningInputs(json.RawMessage) (planning.Inputs, error)
 	Plan(context.Context, jobs.Job) (Decision, error)
-	Ready(jobs.Job) bool
 	Remove(context.Context, jobs.Job) error
 }
 
@@ -96,7 +99,7 @@ func (scheduler *Scheduler) observe(ctx context.Context) error {
 	}
 
 	// Rebind changing queue IDs before observations look up existing jobs.
-	if err := scheduler.Store.ReconcileQueue(ctx, scheduler.Name, observed.Queue, scheduler.Now()); err != nil {
+	if err := scheduler.Store.ReconcileQueue(ctx, scheduler.Name, jobs.QueueKeys(observed.Jobs), scheduler.Now()); err != nil {
 		return err
 	}
 	for _, job := range observed.Jobs {
@@ -146,7 +149,12 @@ func (scheduler *Scheduler) advanceJob(ctx context.Context, engine Engine, job j
 	if job.State == jobs.Observed {
 		return scheduler.plan(ctx, job)
 	}
-	if job.State == jobs.Ready && !disabled && scheduler.Service.Ready(job) {
+	if job.State == jobs.Ready && !disabled {
+		// Give the media service one queue interval to finish a pending import.
+		grace := ImportGracePeriod{Duration: scheduler.Interval, Now: scheduler.Now}
+		if grace.CheckImportState(job.TrackedDownloadState, job.StableSince) != nil {
+			return nil
+		}
 		return engine.Run(ctx, job.ID)
 	}
 
@@ -174,7 +182,7 @@ func (scheduler *Scheduler) requestCompletedRemovals(ctx context.Context, comple
 		}
 		// Automatic cleanup shares the durable action path with UI removal.
 		// An active repair wins the transaction and cannot be removed here.
-		err := scheduler.Store.RequestAction(ctx, job.ID, jobs.Delete, "", 0, scheduler.Now())
+		err := scheduler.Store.RequestCleanup(ctx, job, scheduler.Now())
 		if err != nil && !errors.Is(err, jobs.ErrConflict) {
 			return err
 		}
@@ -244,11 +252,18 @@ func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
 		job.Reason = fmt.Sprintf("planning: %v", err)
 		job.RetryAt = job.UpdatedAt.Add(planningDelay(job.PlanningAttempts))
 	} else {
+		job.RetryAt = time.Time{}
 		job.Plan = decision.Data
-		job.Reason = decision.Reason
-		job.State = jobs.Blocked
-		if decision.Repair {
+		job.PlanResult = &decision.Result
+		job.Reason = decision.Explanation
+		switch decision.Result.Outcome {
+		case planning.Repair:
 			job.State = jobs.Ready
+		case planning.Decline, planning.AskOperator:
+			job.State = jobs.Blocked
+			job.Outcome = decision.ReasonCode
+		default:
+			return fmt.Errorf("unknown planning outcome %q", decision.Result.Outcome)
 		}
 	}
 

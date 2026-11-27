@@ -17,6 +17,14 @@ func (adapter *Adapter) FinalizeQueue(ctx context.Context, id int64, removeFromC
 	return adapter.Client.FinalizeQueue(ctx, id, removeFromClient)
 }
 
+func (adapter *Adapter) InspectRemoval(ctx context.Context, key jobs.QueueKey) (jobs.InspectedCase, error) {
+	assembly, err := adapter.readQueuedCase(ctx, key)
+	if err != nil {
+		return jobs.InspectedCase{}, err
+	}
+	return encodeCase(assembly)
+}
+
 func (adapter *Adapter) RemovalQueue(ctx context.Context) ([]queuefinalize.Entry, error) {
 	queue, err := adapter.Client.ReadQueue(ctx)
 	if err != nil {

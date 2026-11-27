@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestPlanningHistorySurvivesRestartAndInputCycles(t *testing.T) {
@@ -48,12 +50,19 @@ func TestPlanningHistorySurvivesRestartAndInputCycles(t *testing.T) {
 	if err != nil || job.State != Blocked || job.PlanningAttempts != 1 {
 		t.Fatalf("returning inputs reopened decision: %+v, %v", job, err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Reconsider, "try this mapping", 0, time.Now()); err != nil {
+	answer := planning.Answer{SelectedReleaseID: 12, Guidance: "try this mapping"}
+	if err := store.RequestReconsideration(ctx, job, answer, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	job, err = store.Observe(ctx, observation)
-	if err != nil || job.State != Observed || job.PlanningAttempts != 0 || job.Guidance != "try this mapping" {
+	if err != nil || job.State != Observed || job.PlanningAttempts != 0 || job.Answer != answer {
 		t.Fatalf("operator reconsideration suppressed: %+v, %v", job, err)
+	}
+	observation.SourceFingerprint = "case-c"
+	observation.Evidence = json.RawMessage(`{"files":"c"}`)
+	job, err = store.Observe(ctx, observation)
+	if err != nil || job.SelectedReleaseID != 0 || job.Guidance != answer.Guidance {
+		t.Fatalf("new case inherited the old release or lost the operator note: %+v, %v", job, err)
 	}
 }
 

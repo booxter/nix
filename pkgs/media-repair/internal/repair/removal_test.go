@@ -2,6 +2,7 @@ package repair
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -12,6 +13,10 @@ type removalQueue struct {
 	entries         []queuefinalize.Entry
 	retain          bool
 	downloadPresent bool
+}
+
+func (queue *removalQueue) InspectRemoval(context.Context, jobs.QueueKey) (jobs.InspectedCase, error) {
+	return jobs.InspectedCase{Fingerprint: "movie"}, nil
 }
 
 func (queue *removalQueue) RemovalQueue(context.Context) ([]queuefinalize.Entry, error) {
@@ -57,7 +62,7 @@ func TestRemovalCleansSABnzbdAndPreservesOtherDownloads(t *testing.T) {
 					Protocol: test.protocol, DownloadClient: test.client,
 				}},
 			}
-			err := RemoveTracking(context.Background(), queue, jobs.Job{QueueID: 20, DownloadID: "download"})
+			err := RemoveTracking(context.Background(), queue, jobs.Job{QueueID: 20, DownloadID: "download", RemovalFingerprint: new("movie")})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -73,13 +78,28 @@ func TestRemovalFollowsChangedQueueID(t *testing.T) {
 		queue := &removalQueue{retain: retain, entries: []queuefinalize.Entry{
 			{QueueID: 20, DownloadID: "download", Status: "completed", TrackedDownloadStatus: "warning", SubjectID: 1},
 		}}
-		err := RemoveTracking(context.Background(), queue, jobs.Job{QueueID: 10, DownloadID: "download"})
+		err := RemoveTracking(context.Background(), queue, jobs.Job{QueueID: 10, DownloadID: "download", RemovalFingerprint: new("")})
 		if (err != nil) != retain {
 			t.Fatalf("retain=%t: removal result %v, queue %+v", retain, err, queue.entries)
 		}
 		if !retain && len(queue.entries) != 0 {
 			t.Fatal("reported removal without deleting the current entry")
 		}
+	}
+}
+
+func TestLegacyRemovalNeedsConfirmationOnlyIfStillQueued(t *testing.T) {
+	job := jobs.Job{QueueID: 10, DownloadID: "download"}
+	queue := &removalQueue{entries: []queuefinalize.Entry{
+		{QueueID: 10, DownloadID: "download", Status: "completed", TrackedDownloadStatus: "warning", SubjectID: 1},
+	}}
+	var notice *jobs.RemovalNeedsConfirmation
+	if err := RemoveTracking(context.Background(), queue, job); !errors.As(err, &notice) || len(queue.entries) != 1 {
+		t.Fatalf("legacy request with no saved approval: %v, queue %+v", err, queue.entries)
+	}
+	queue.entries = nil
+	if err := RemoveTracking(context.Background(), queue, job); err != nil {
+		t.Fatalf("already removed: %v", err)
 	}
 }
 

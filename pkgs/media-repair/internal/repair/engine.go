@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -18,9 +19,9 @@ import (
 // Adapter owns media validation and the service-specific import command. The
 // engine owns persistence and never repeats an uncertain external submission.
 type Adapter interface {
-	Repair(context.Context, jobs.Job, jobs.Attempt) (PreparedImport, error)
+	ImportSteps() ImportFlow
 	Submit(context.Context, json.RawMessage) (int64, error)
-	CheckImport(context.Context, jobs.Attempt) (ImportStatus, error)
+	ConfirmationSteps() ConfirmationSteps
 }
 
 type PreparedImport struct {
@@ -29,14 +30,10 @@ type PreparedImport struct {
 	HistoryIDBefore int64
 }
 
-type ImportStatus struct {
-	Receipt json.RawMessage
-	Failure string
-}
-
 type BlockedError struct {
-	Reason string
-	Code   jobs.Outcome
+	Reason   string
+	Code     jobs.Outcome
+	Question *planning.Question
 }
 
 func (failure *BlockedError) Error() string { return failure.Reason }
@@ -113,14 +110,18 @@ func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.At
 }
 
 func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
-	prepared, err := engine.Adapter.Repair(ctx, job, attempt)
+	prepared, err := engine.Adapter.ImportSteps().prepare(ctx, job, attempt)
 	if err != nil {
-		var retryable *retryableReadError
+		var retryable *preparationRetry
 		if errors.As(err, &retryable) {
 			attempt.State = jobs.Failed
 			attempt.Reason = err.Error()
+			attempt.Outcome = retryable.outcome
 			attempt.UpdatedAt = engine.Now().UTC()
-			retryAt := attempt.UpdatedAt.Add(time.Minute)
+			retryAt := retryable.at
+			if retryAt.IsZero() {
+				retryAt = attempt.UpdatedAt.Add(time.Minute)
+			}
 			return errors.Join(err, engine.Store.RetryPreparation(context.WithoutCancel(ctx), attempt, retryAt))
 		}
 
@@ -129,6 +130,7 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 		if errors.As(err, &blocked) {
 			state = jobs.Blocked
 			attempt.Outcome = blocked.Code
+			attempt.Question = blocked.Question
 		} else if errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled {
 			attempt.Outcome = jobs.OutcomeInterrupted
 		}
@@ -164,26 +166,9 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 }
 
 func (engine *Engine) reconcile(ctx context.Context, attempt jobs.Attempt) error {
-	status, err := engine.Adapter.CheckImport(ctx, attempt)
+	err := engine.checkImport(ctx, &attempt)
 	if err != nil {
 		attempt.Reason = fmt.Sprintf("checking import: %v", err)
-	} else if len(status.Receipt) != 0 {
-		attempt.State = jobs.Imported
-		attempt.Reason = ""
-		attempt.ImportReceipt = status.Receipt
-	} else if status.Failure != "" {
-		// Give history time to catch up with a completed command. Starting the
-		// grace period at submission would break for long-running imports.
-		if attempt.ImportTerminalAt.IsZero() {
-			attempt.ImportTerminalAt = engine.Now().UTC()
-		}
-		attempt.Reason = "command finished; waiting for import history"
-		if engine.Now().Sub(attempt.ImportTerminalAt) >= 30*time.Second {
-			attempt.State = jobs.Failed
-			attempt.Reason = status.Failure
-		}
-	} else if attempt.CommandID == 0 {
-		attempt.Reason = "import submission uncertain; checking history without resubmitting"
 	}
 
 	attempt.UpdatedAt = engine.Now().UTC()
@@ -195,6 +180,9 @@ func (engine *Engine) finish(ctx context.Context, attempt jobs.Attempt, state jo
 	attempt.Reason = reason
 	if attempt.Outcome == "" {
 		attempt.Outcome = jobs.OutcomeOther
+	}
+	if attempt.Outcome == jobs.OutcomeInterrupted {
+		attempt.Question = planning.ResumeRepair()
 	}
 	attempt.UpdatedAt = engine.Now().UTC()
 	return engine.Store.UpdateAttempt(ctx, attempt)

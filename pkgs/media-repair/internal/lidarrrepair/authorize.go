@@ -21,13 +21,14 @@ type AuthorizedTrack struct {
 }
 
 type AuthorizedImport struct {
-	CaseID       string
-	CapabilityID string
-	QueueID      int64
-	ArtistID     int64
-	AlbumID      int64
-	ReleaseID    int64
-	Tracks       []AuthorizedTrack
+	WorkspaceRoot string
+	CaseID        string
+	CapabilityID  string
+	QueueID       int64
+	ArtistID      int64
+	AlbumID       int64
+	ReleaseID     int64
+	Tracks        []AuthorizedTrack
 }
 
 type EvidenceChangedError struct {
@@ -90,7 +91,8 @@ func AuthorizeImport(
 	}
 
 	authorized := AuthorizedImport{
-		CaseID: plannedCase.CaseID, CapabilityID: selected.CapabilityID,
+		WorkspaceRoot: current.WorkspaceRoot,
+		CaseID:        plannedCase.CaseID, CapabilityID: selected.CapabilityID,
 		QueueID: current.Queue.ID, ArtistID: current.Case.Album.ArtistID,
 		AlbumID: selected.AlbumID, ReleaseID: selected.ReleaseID,
 		Tracks: make([]AuthorizedTrack, len(selected.Mappings)),

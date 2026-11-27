@@ -13,9 +13,8 @@ func TestClassifyRepairCandidatesAcceptsSupportedLifecycleStates(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			record.TrackedDownloadState = state
-			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
-			if !assessment.Eligible() {
-				t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
+			if reasons := record.RejectionReasons(true); len(reasons) != 0 {
+				t.Fatalf("rejection reasons = %v", reasons)
 			}
 		})
 	}
@@ -48,20 +47,6 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 				record.SizeRemainingBytes = 1
 			},
 			want: []CandidateRejectionReason{CandidateIncompleteDownload},
-		},
-		{
-			name: "usenet",
-			mutate: func(record *RadarrQueueRecord) {
-				record.Protocol = "usenet"
-			},
-			want: []CandidateRejectionReason{CandidateUnsupportedSource},
-		},
-		{
-			name: "future protocol",
-			mutate: func(record *RadarrQueueRecord) {
-				record.Protocol = "futureProtocol"
-			},
-			want: []CandidateRejectionReason{CandidateUnsupportedSource},
 		},
 		{
 			name: "error status",
@@ -119,12 +104,8 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			test.mutate(&record)
-			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
-			if assessment.Eligible() {
-				t.Fatal("record was eligible")
-			}
-			if !reflect.DeepEqual(assessment.RejectionReasons, test.want) {
-				t.Fatalf("rejection reasons = %v, want %v", assessment.RejectionReasons, test.want)
+			if reasons := record.RejectionReasons(true); !reflect.DeepEqual(reasons, test.want) {
+				t.Fatalf("rejection reasons = %v, want %v", reasons, test.want)
 			}
 		})
 	}
@@ -141,10 +122,9 @@ func TestClassifyRepairCandidatesRejectsOtherLifecycleStates(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
 			record.TrackedDownloadState = state
-			assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
 			want := []CandidateRejectionReason{CandidateUnsupportedQueueState}
-			if !reflect.DeepEqual(assessment.RejectionReasons, want) {
-				t.Fatalf("rejection reasons = %v, want %v", assessment.RejectionReasons, want)
+			if reasons := record.RejectionReasons(true); !reflect.DeepEqual(reasons, want) {
+				t.Fatalf("rejection reasons = %v, want %v", reasons, want)
 			}
 		})
 	}
@@ -160,9 +140,8 @@ func TestClassifyRepairCandidatesIgnoresMovieAndMessageEvidence(t *testing.T) {
 		{Title: "first", Messages: []string{}},
 		{Title: "second", Messages: []string{"diagnostic one", "diagnostic two"}},
 	}
-	assessment := ClassifyRepairCandidate(record, testDownloadSupport{})
-	if !assessment.Eligible() {
-		t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
+	if reasons := record.RejectionReasons(true); len(reasons) != 0 {
+		t.Fatalf("rejection reasons = %v", reasons)
 	}
 }
 
@@ -184,10 +163,4 @@ func eligibleCandidateRecord() RadarrQueueRecord {
 			{Title: "Movie.mkv", Messages: []string{"diagnostic"}},
 		},
 	}
-}
-
-type testDownloadSupport struct{}
-
-func (testDownloadSupport) Supports(protocol DownloadProtocol, clientName string) bool {
-	return protocol == "torrent" && clientName == "Transmission"
 }

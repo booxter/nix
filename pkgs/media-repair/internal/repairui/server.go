@@ -5,14 +5,16 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
+	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 //go:embed page.html
@@ -21,8 +23,8 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js
-var localTimeScript string
+//go:embed dom.js actions.js job.js listing.js
+var scripts embed.FS
 
 type Config struct {
 	Store     *jobs.Store
@@ -39,41 +41,39 @@ type Handler struct {
 }
 
 type item struct {
+	review
 	Job         jobs.Job
-	Decision    decision
-	CanAct      bool
 	Subject     string
 	Status      string
 	Explanation string
 	NextStep    string
-	Attention   *attention
-	CSRF        string
+}
+
+type review struct {
+	Decision  decision
+	Outcome   jobs.Outcome
+	Attention *planning.Question
+	Actions   availableActions
 }
 
 type decision struct {
-	Action          string   `json:"action"`
-	Reason          string   `json:"reason"`
-	Explanation     string   `json:"explanation"`
-	MissingEvidence []string `json:"missing_evidence"`
+	Action          string                      `json:"action"`
+	Reason          string                      `json:"reason"`
+	Explanation     string                      `json:"explanation"`
+	MissingEvidence []contracts.MissingEvidence `json:"missing_evidence"`
 }
 
 type page struct {
-	Title          string
-	Service        jobs.Service
-	History        bool
-	Items          []item
-	Selected       *item
-	Attempts       []jobs.Attempt
-	CSRF           string
-	ConfirmRemoval bool
-	QueueURL       string
-	State          string
-	Query          string
-	Inbox          bool
-	Activity       bool
-	InboxCount     int
-	ActivityCount  int
-	Notice         string
+	ListURL  string
+	Title    string
+	Service  jobs.Service
+	History  bool
+	JobID    int64
+	State    string
+	Query    string
+	Inbox    bool
+	Activity bool
+	Notice   string
 }
 
 func New(config Config) (http.Handler, error) {
@@ -111,15 +111,15 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /history", app.list)
 	router.HandleFunc("GET /jobs/{id}", app.detail)
 	router.HandleFunc("GET /jobs/{id}/remove", app.detail)
-	router.HandleFunc("POST /jobs/{id}/{action}", app.action)
+	router.HandleFunc("GET /api/jobs", app.listJobs)
+	router.HandleFunc("GET /api/jobs/{id}", app.jobInfo)
+	router.HandleFunc("GET /api/jobs/{id}/question", app.question)
+	router.HandleFunc("POST /api/jobs/{id}/{action}", app.action)
 	router.HandleFunc("GET /assets/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = w.Write([]byte(Style))
 	})
-	router.HandleFunc("GET /assets/local-time.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
-		_, _ = w.Write([]byte(localTimeScript))
-	})
+	router.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServerFS(scripts)))
 	router.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -133,106 +133,73 @@ func New(config Config) (http.Handler, error) {
 }
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
-	view := page{Title: "Needs you", CSRF: app.csrf, History: r.URL.Path == "/history"}
-	view.State = r.URL.Query().Get("state")
-	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
-	view.Activity = r.URL.Path == "/activity" || view.State != ""
-	view.Inbox = !view.Activity && !view.History
-	if view.Activity {
-		view.Title = "Queue activity"
-	} else if view.History {
-		view.Title = "History"
+	filter := readListFilter(r.URL.Query())
+	view := page{State: filter.State, Query: filter.Query}
+	switch {
+	case r.URL.Path == "/history":
+		view.Title, view.History = "History", true
+		filter.View = "history"
+	case r.URL.Path == "/activity" || filter.State != "":
+		view.Title, view.Activity = "Queue activity", true
+		filter.View = "activity"
+	default:
+		view.Title, view.Inbox = "Needs you", true
+		filter.View = "inbox"
 	}
-	view.Service = jobs.Service(r.URL.Query().Get("service"))
 	if r.URL.Path == "/radarr" {
-		view.Service = jobs.Radarr
+		filter.Service = jobs.Radarr
 	} else if r.URL.Path == "/lidarr" {
-		view.Service = jobs.Lidarr
+		filter.Service = jobs.Lidarr
 	}
-	if view.Service != "" && view.Service != jobs.Radarr && view.Service != jobs.Lidarr {
-		http.Error(w, "unknown service", http.StatusBadRequest)
+	if err := filter.validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	view.Service = filter.Service
 	if r.URL.Query().Get("submitted") != "" {
 		view.Notice = "Your request was saved. Repairr will review it; follow its progress in Queue activity."
 	}
 
-	for _, service := range []jobs.Service{jobs.Lidarr, jobs.Radarr} {
-		if view.Service != "" && view.Service != service {
-			continue
-		}
-		listed, err := app.config.Store.List(r.Context(), service)
-		if err != nil {
-			http.Error(w, "read jobs", http.StatusInternalServerError)
-			return
-		}
-
-		for _, job := range listed {
-			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
-			entry := present(job)
-			entry.CSRF = app.csrf
-			if !historical {
-				view.ActivityCount++
-				if entry.Attention != nil {
-					view.InboxCount++
-				}
-			}
-			if historical != view.History || view.State != "" && string(job.State) != view.State {
-				continue
-			}
-			if view.Inbox && entry.Attention == nil {
-				continue
-			}
-			searchable := strings.Join([]string{
-				entry.Subject, job.Title, entry.Status, entry.Explanation, job.Reason, job.CollectionError,
-			}, " ")
-			if view.Query != "" && !strings.Contains(strings.ToLower(searchable), strings.ToLower(view.Query)) {
-				continue
-			}
-			view.Items = append(view.Items, entry)
-		}
-	}
+	query := r.URL.Query()
+	query.Del("submitted")
+	query.Set("view", filter.View)
+	query.Set("service", string(filter.Service))
+	view.ListURL = "/api/jobs?" + query.Encode()
 	app.render(w, view)
 }
 
 func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
-	job, ok := app.readJob(w, r)
-	if !ok {
-		return
-	}
-	attempts, err := app.config.Store.Attempts(r.Context(), job.ID)
+	id, err := requestedJobID(r)
 	if err != nil {
-		http.Error(w, "read attempts", http.StatusInternalServerError)
+		status, message := jobReadError(err)
+		http.Error(w, message, status)
 		return
 	}
 
-	selected := present(job)
-	selected.CSRF = app.csrf
-	app.render(w, page{
-		Title:          "Item details",
-		Service:        job.Service,
-		Selected:       &selected,
-		Attempts:       attempts,
-		CSRF:           app.csrf,
-		ConfirmRemoval: r.URL.Path == fmt.Sprintf("/jobs/%d/remove", job.ID),
-		QueueURL:       app.config.QueueURLs[job.Service],
-	})
+	app.render(w, page{Title: "Item details", JobID: id})
 }
 
-func (app *Handler) readJob(w http.ResponseWriter, r *http.Request) (jobs.Job, bool) {
+func requestedJobID(r *http.Request) (int64, error) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		http.NotFound(w, r)
-		return jobs.Job{}, false
+		return 0, jobs.ErrNotFound
 	}
+	return id, nil
+}
 
-	job, err := app.config.Store.Get(r.Context(), id)
+func (app *Handler) readDetail(r *http.Request) (jobs.Job, []jobs.Attempt, error) {
+	id, err := requestedJobID(r)
 	if err != nil {
-		http.NotFound(w, r)
-		return jobs.Job{}, false
+		return jobs.Job{}, nil, err
 	}
+	return app.config.Store.JobWithAttempts(r.Context(), id)
+}
 
-	return job, true
+func jobReadError(err error) (int, string) {
+	if errors.Is(err, jobs.ErrNotFound) {
+		return http.StatusNotFound, "job not found"
+	}
+	return http.StatusInternalServerError, "could not read job"
 }
 
 func (app *Handler) render(w http.ResponseWriter, view page) {
@@ -242,10 +209,13 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = output.WriteTo(w)
+}
+
+func (app *Handler) setCSRFCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name: "repairr_csrf", Value: app.csrf, Path: "/",
 		Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode,
 	})
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = output.WriteTo(w)
 }

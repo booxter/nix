@@ -215,7 +215,7 @@ func joinAssembly() casebuilder.Assembly {
 			CaseID: caseID,
 			Observation: casebuilder.Observation{
 				Inventory: controller.FileInventory{Files: files},
-				Probes: []casebuilder.FileProbe{
+				Probes: []controller.FileProbe{
 					{
 						FileID: "file:first",
 						Outcome: controller.SuccessfulMediaProbe(

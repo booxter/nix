@@ -3,6 +3,8 @@ package controller
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 type CandidateRejectionReason string
@@ -15,85 +17,62 @@ const (
 	CandidateInvalidOutputPath     CandidateRejectionReason = "invalid_output_path"
 )
 
-type CandidateAssessment struct {
-	RejectionReasons []CandidateRejectionReason
+// Radarr names the download client in its queue. Repairr's configuration
+// determines whether that client is supported.
+type queueCandidate struct {
+	RadarrQueueRecord
+	sourceSupported bool
 }
 
-func (assessment CandidateAssessment) Eligible() bool {
-	return len(assessment.RejectionReasons) == 0
+var queueChecks = [...]struct {
+	passes func(queueCandidate) bool
+	reason CandidateRejectionReason
+}{
+	{queueCandidate.hasSupportedSource, CandidateUnsupportedSource},
+	{queueCandidate.downloadComplete, CandidateIncompleteDownload},
+	{queueCandidate.hasEligibleQueueState, CandidateUnsupportedQueueState},
+	{queueCandidate.HasDownloadID, CandidateMissingDownloadID},
+	{queueCandidate.hasUsableOutputPath, CandidateInvalidOutputPath},
 }
 
-type candidateQueueState struct {
-	status        QueueStatus
-	trackedStatus TrackedDownloadStatus
-	trackedState  TrackedDownloadState
-}
-
-var eligibleQueueStates = [...]candidateQueueState{
-	{
-		status:        QueueStatus("completed"),
-		trackedStatus: TrackedDownloadStatus("warning"),
-		trackedState:  TrackedDownloadState("importBlocked"),
-	},
-	{
-		status:        QueueStatus("completed"),
-		trackedStatus: TrackedDownloadStatus("warning"),
-		trackedState:  TrackedDownloadState("importPending"),
-	},
-}
-
-func ClassifyRepairCandidate(
-	record RadarrQueueRecord,
-	downloads DownloadSupport,
-) CandidateAssessment {
-	var assessment CandidateAssessment
-	addReason := func(reason CandidateRejectionReason) {
-		for _, existing := range assessment.RejectionReasons {
-			if existing == reason {
-				return
-			}
-		}
-		assessment.RejectionReasons = append(assessment.RejectionReasons, reason)
-	}
-
-	if downloads == nil || !downloads.Supports(record.Protocol, record.DownloadClient) {
-		addReason(CandidateUnsupportedSource)
-	}
-	if record.Status != QueueStatus("completed") || record.SizeRemainingBytes != 0 {
-		addReason(CandidateIncompleteDownload)
-	}
-	if !eligibleQueueState(record) {
-		addReason(CandidateUnsupportedQueueState)
-	}
-	if !usableDownloadID(record.DownloadID) {
-		addReason(CandidateMissingDownloadID)
-	}
-	if !usableOutputPath(record.OutputPath) {
-		addReason(CandidateInvalidOutputPath)
-	}
-
-	return assessment
-}
-
-func eligibleQueueState(record RadarrQueueRecord) bool {
-	actual := candidateQueueState{
-		status:        record.Status,
-		trackedStatus: record.TrackedDownloadStatus,
-		trackedState:  record.TrackedDownloadState,
-	}
-	for _, eligible := range eligibleQueueStates {
-		if actual == eligible {
-			return true
+// RejectionReasons lists every reason to skip this queue entry so the operator can see them together.
+func (record RadarrQueueRecord) RejectionReasons(sourceSupported bool) []CandidateRejectionReason {
+	candidate := queueCandidate{RadarrQueueRecord: record, sourceSupported: sourceSupported}
+	var reasons []CandidateRejectionReason
+	for _, check := range queueChecks {
+		if !check.passes(candidate) {
+			reasons = append(reasons, check.reason)
 		}
 	}
-	return false
+	return reasons
 }
 
-func usableDownloadID(downloadID string) bool {
+func (candidate queueCandidate) hasSupportedSource() bool {
+	return candidate.sourceSupported
+}
+
+func (record RadarrQueueRecord) downloadComplete() bool {
+	return servarr.DownloadComplete(string(record.Status), record.SizeRemainingBytes)
+}
+
+// Radarr must have finished the download and reported a warning about its import.
+func (record RadarrQueueRecord) hasEligibleQueueState() bool {
+	return record.Status == "completed" && record.TrackedDownloadStatus == "warning" &&
+		(record.TrackedDownloadState == "importBlocked" || record.TrackedDownloadState == "importPending")
+}
+
+// HasDownloadID checks that we can look up the ID exactly as Radarr supplied it.
+func (record RadarrQueueRecord) HasDownloadID() bool {
+	downloadID := record.DownloadID
 	return downloadID != "" && strings.TrimSpace(downloadID) == downloadID &&
 		!strings.ContainsRune(downloadID, '\x00')
 }
 
+func (record RadarrQueueRecord) hasUsableOutputPath() bool {
+	return usableOutputPath(record.OutputPath)
+}
+
+// usableOutputPath requires a clean, absolute path below the filesystem root.
 func usableOutputPath(outputPath string) bool {
 	if outputPath == "" || strings.TrimSpace(outputPath) != outputPath ||
 		strings.ContainsRune(outputPath, '\x00') || !filepath.IsAbs(outputPath) {

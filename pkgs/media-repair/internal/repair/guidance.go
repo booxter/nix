@@ -7,9 +7,8 @@ import (
 
 func Guidance(job jobs.Job) planning.Options {
 	return planning.Options{
-		JobID:                      job.ID,
-		PriorDecision:              job.Plan,
-		Guidance:                   job.Guidance,
-		MaximumRuntimeDifferenceMS: job.RuntimeToleranceMS,
+		JobID:         job.ID,
+		PriorDecision: job.Plan,
+		Answer:        job.Answer,
 	}
 }

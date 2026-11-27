@@ -3,12 +3,39 @@ package casebuilder
 import (
 	"reflect"
 
+	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
-// SameCaseState compares the typed request and controller snapshot while
-// allowing only their collection timestamps to differ.
-func SameCaseState(left, right Assembly) bool {
+// ForSavedPlan checks fresh evidence against the case the planner actually saw.
+// Radarr giving up its pending import changes the case hash even if every file
+// and import option stayed the same.
+func (fresh Assembly) ForSavedPlan(planned Assembly) (Assembly, bool) {
+	comparison := fresh
+	if planned.Request.Radarr.Failure.TrackedDownloadState == "importPending" &&
+		fresh.Request.Radarr.Failure.TrackedDownloadState == "importBlocked" &&
+		fresh.LocalSnapshot.Observation.Correlation.Radarr.TrackedDownloadState == "importBlocked" {
+		comparison.Request.Radarr.Failure.TrackedDownloadState = "importPending"
+		comparison.LocalSnapshot.Observation.Correlation.Radarr.TrackedDownloadState = "importPending"
+		id, err := contracts.CalculateCaseID(comparison.Request)
+		if err != nil {
+			return Assembly{}, false
+		}
+		comparison.Request.CaseID = id
+		comparison.LocalSnapshot.CaseID = id
+	}
+	if !sameCaseState(planned, comparison) {
+		return Assembly{}, false
+	}
+
+	// The decision refers to the original request. Run its safety checks with
+	// the current queue record, file bindings and manual-import rejections.
+	fresh.Request = comparison.Request
+	fresh.LocalSnapshot.CaseID = comparison.Request.CaseID
+	return fresh, true
+}
+
+func sameCaseState(left, right Assembly) bool {
 	leftRequest := left.Request
 	rightRequest := right.Request
 	leftRequest.ObservedAt = rightRequest.ObservedAt

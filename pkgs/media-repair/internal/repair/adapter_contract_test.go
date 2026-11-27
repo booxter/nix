@@ -51,7 +51,7 @@ func TestAdaptersSharePlanningHistory(t *testing.T) {
 			fixture.close()
 			fixture.start()
 			job := observe("noise", 2)
-			if err := fixture.store.RequestAction(context.Background(), job.ID, jobs.Reconsider, "try again", 0, job.UpdatedAt); err != nil {
+			if err := fixture.store.RequestReconsideration(context.Background(), job, planning.Answer{Guidance: "try again"}, job.UpdatedAt); err != nil {
 				t.Fatal(err)
 			}
 			observe("original", 3)
@@ -163,9 +163,7 @@ type observedService struct {
 func (service *observedService) Observe(ctx context.Context, _ []jobs.Job) (repair.Observation, error) {
 	select {
 	case job := <-service.observations:
-		return repair.Observation{
-			Jobs: []jobs.Job{job}, Queue: []jobs.QueueKey{job.QueueKey()},
-		}, nil
+		return repair.Observation{Jobs: []jobs.Job{job}}, nil
 	case <-ctx.Done():
 		return repair.Observation{}, ctx.Err()
 	}
@@ -173,7 +171,7 @@ func (service *observedService) Observe(ctx context.Context, _ []jobs.Job) (repa
 
 func (service *observedService) Plan(context.Context, jobs.Job) (repair.Decision, error) {
 	service.calls.Add(1)
-	return repair.Decision{Data: json.RawMessage(`{"action":"no_repair"}`), Reason: "no repair"}, nil
+	return repair.PlannerStop(json.RawMessage(`{"action":"no_repair"}`), "no_repair_needed", "no repair", nil), nil
 }
 
 func radarrObservation(t *testing.T, variant string) jobs.Job {

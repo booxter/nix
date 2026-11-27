@@ -362,7 +362,7 @@ func manualImportAssembly() casebuilder.Assembly {
 					}},
 					Paths: []controller.FilePathMapping{{FileID: fileID, AbsolutePath: path}},
 				},
-				Probes: []casebuilder.FileProbe{{
+				Probes: []controller.FileProbe{{
 					FileID: fileID,
 					Outcome: controller.SuccessfulMediaProbe(
 						manualImportProbe(durationMS, size),
