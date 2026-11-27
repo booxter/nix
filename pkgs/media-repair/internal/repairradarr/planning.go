@@ -60,13 +60,12 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 
 	data, err := contracts.EncodeDecision(decision)
-	result := repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}
 	if stop := decision.NoRepair; stop != nil {
-		result.Reason = string(stop.Reason)
-		result.Result = planning.NoRepair(result.Reason, Question(evidence.Case, result.Reason, stop.MissingEvidence))
+		code := string(stop.Reason)
+		question := Question(evidence.Case, code, stop.MissingEvidence)
+		return repair.PlannerStop(data, code, stop.Explanation, question), err
 	}
-
-	return result, err
+	return repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}, err
 }
 
 func (adapter *Adapter) Ready(job jobs.Job) bool {

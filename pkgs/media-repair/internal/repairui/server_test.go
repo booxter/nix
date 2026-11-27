@@ -160,6 +160,32 @@ func TestTitlesAreEscaped(t *testing.T) {
 	}
 }
 
+func TestJobsAPIExplainsSavedRadarrStop(t *testing.T) {
+	fixture := newFixture(t)
+	ctx := context.Background()
+	job, err := fixture.store.Observe(ctx, jobs.Job{
+		Service: jobs.Radarr, QueueID: 100, Evidence: json.RawMessage(`{}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Earlier versions stored the explanation only in the planner's decision.
+	job.State, job.Outcome, job.Reason = jobs.Blocked, jobs.OutcomeOther, "unsafe_to_repair"
+	job.Plan = json.RawMessage(`{"action":"no_repair","reason":"unsafe_to_repair","explanation":"The movie files overlap."}`)
+	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
+		t.Fatal(err)
+	}
+
+	response := fixture.get("/api/jobs?service=radarr")
+	var listed []jobSummary
+	if err := json.Unmarshal(response.Body.Bytes(), &listed); err != nil {
+		t.Fatal(err)
+	}
+	if len(listed) != 1 || listed[0].ReasonCode != "unsafe_to_repair" || listed[0].Reason != "The movie files overlap." {
+		t.Fatalf("unexpected stop reason: %s", response.Body)
+	}
+}
+
 func TestBlockedActivityExplainsReasonsAndSearchesMediaIdentity(t *testing.T) {
 	fixture := newFixture(t)
 	ctx := context.Background()

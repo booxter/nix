@@ -131,13 +131,11 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 
 	data, err := lidarrcontracts.EncodeDecision(decision)
-	result := repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}
 	if stop := decision.NoRepair; stop != nil {
-		result.Reason = stop.Explanation
-		result.Result = planning.NoRepair(stop.Reason, Question(repairCase, stop.Reason))
+		question := Question(repairCase, stop.Reason)
+		return repair.PlannerStop(data, stop.Reason, stop.Explanation, question), err
 	}
-
-	return result, err
+	return repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}, err
 }
 
 func (adapter *Adapter) Ready(jobs.Job) bool {

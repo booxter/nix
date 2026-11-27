@@ -39,9 +39,16 @@ type jobDetail struct {
 
 func summarize(entry item) jobSummary {
 	job := entry.Job
+	reason := job.Reason
+	// Older movie jobs saved the planner code as their reason. Use the saved
+	// explanation only while that code still describes the current stop.
+	plan := entry.Decision
+	if plan.Action == "no_repair" && plan.Reason != "" && plan.Reason == reason && jobs.Outcome(plan.Reason) == entry.Outcome {
+		reason = plan.Explanation
+	}
 	return jobSummary{
 		ID: job.ID, Service: job.Service, Title: job.Title, Subject: entry.Subject,
-		State: job.State, ReasonCode: entry.Outcome, Reason: job.Reason,
+		State: job.State, ReasonCode: entry.Outcome, Reason: reason,
 		Findings: job.Findings, InspectionError: job.InspectionProblem(), PendingAction: job.PendingAction,
 	}
 }

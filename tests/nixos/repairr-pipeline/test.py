@@ -58,6 +58,10 @@ def read_job(vm, url):
     return json.loads(vm.succeed(f"curl -fsS -c {COOKIES} {shlex.quote(url)}"))
 
 
+def assert_planner_stop(job, code, explanation):
+    assert (job["reasonCode"], job["reason"]) == (code, explanation), job
+
+
 def action_request(url, token, case, **fields):
     body = {"revision": case["revision"], "fingerprint": case["fingerprint"], **fields}
     return shlex.join(
@@ -336,7 +340,11 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     assert submitted_imports(fileChoice) == []
 
     fileChoice.succeed("systemctl restart repairr.service")
-    assert wait_for_json(fileChoice, job, ".question != null")["question"] == question
+    reopened = wait_for_json(fileChoice, job, ".question != null")
+    assert reopened["question"] == question
+    assert_planner_stop(
+        reopened, "ambiguous_file_selection", "Both videos can be imported. Choose the movie file."
+    )
     assert submitted_imports(fileChoice) == []
     answer = choice_request(fileChoice, job, ["movie.mkv", "theatrical.mkv"], "theatrical.mkv")
     assert fileChoice.succeed(answer) == "204"
@@ -440,7 +448,11 @@ with subtest("the operator's edition selects the release and tracks imported int
     assert submitted_imports(releaseChoice) == []
 
     releaseChoice.succeed("systemctl restart repairr.service")
-    assert wait_for_json(releaseChoice, job, ".question != null")["question"] == question
+    reopened = wait_for_json(releaseChoice, job, ".question != null")
+    assert reopened["question"] == question
+    assert_planner_stop(
+        reopened, "ambiguous_release", "The same songs appear on both editions. Choose a release."
+    )
     original = "Example Album — CD (release 81)"
     reissue = "Example Album Reissue — CD (release 82)"
     answer = choice_request(releaseChoice, job, [original, reissue], reissue)
@@ -481,6 +493,7 @@ with subtest("a completed library album is declined without an operator question
         "systemctl start repairr.service",
     )
     declined = wait_for_json(unfinishedAlbum, job, '.reasonCode == "no_repair_needed"')
+    assert_planner_stop(declined, "no_repair_needed", "There are no missing tracks to import.")
     assert "findings" not in declined and "inspectionError" not in declined, declined
     assert not declined["actions"]["answer"] and "question" not in declined, declined
     assert read_job(unfinishedAlbum, f"{REPAIRR}/api/jobs?service=lidarr&view=inbox") == []

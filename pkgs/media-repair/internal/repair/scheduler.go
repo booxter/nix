@@ -14,9 +14,19 @@ import (
 )
 
 type Decision struct {
-	Data   json.RawMessage
-	Result planning.Result
-	Reason string
+	Data        json.RawMessage
+	Result      planning.Result
+	ReasonCode  jobs.Outcome
+	Explanation string
+}
+
+// A planner stop carries both the code used by API clients and the planner's
+// explanation for the operator, whether it declines or asks a question.
+func PlannerStop(data json.RawMessage, code, explanation string, question *planning.Question) Decision {
+	return Decision{
+		Data: data, Result: planning.NoRepair(code, question),
+		ReasonCode: jobs.Outcome(code), Explanation: explanation,
+	}
 }
 
 type Service interface {
@@ -240,12 +250,13 @@ func (scheduler *Scheduler) plan(ctx context.Context, job jobs.Job) error {
 	} else {
 		job.Plan = decision.Data
 		job.PlanResult = &decision.Result
-		job.Reason = decision.Reason
+		job.Reason = decision.Explanation
 		switch decision.Result.Outcome {
 		case planning.Repair:
 			job.State = jobs.Ready
 		case planning.Decline, planning.AskOperator:
 			job.State = jobs.Blocked
+			job.Outcome = decision.ReasonCode
 		default:
 			return fmt.Errorf("unknown planning outcome %q", decision.Result.Outcome)
 		}
