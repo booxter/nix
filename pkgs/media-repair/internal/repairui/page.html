@@ -31,14 +31,16 @@
         </div>
       </div>
       <p class="case-explanation">{{$entry.Explanation}}</p>
-      {{if and $entry.Attention (not .ConfirmRemoval)}}{{template "response-form" $entry}}{{else}}
-      {{if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}{{end}}
+      {{$retryAt := $entry.Job.PendingRetryAt}}
+      {{if and $entry.Attention (not .ConfirmRemoval)}}{{template "response-form" $entry}}
+      {{else if not $retryAt.IsZero}}<p class="next-step"><strong>Next retry:</strong> {{template "local-time" $retryAt}}</p>
+      {{else if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}
       <details class="technical-details">
         <summary>Release and technical details</summary>
         <dl>
           <dt>Release</dt><dd>{{$entry.Job.Title}}</dd>
           <dt>Job / queue</dt><dd>#{{$entry.Job.ID}} / #{{$entry.Job.QueueID}}</dd>
-          <dt>Last checked</dt><dd><time datetime="{{$entry.Job.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{$entry.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</time></dd>
+          <dt>Last checked</dt><dd>{{template "local-time" $entry.Job.UpdatedAt}}</dd>
           <dt>Internal state</dt><dd>{{$entry.Job.State}}</dd>
           {{with $entry.Job.InspectionProblem}}<dt>Inspection problem</dt><dd>{{.}}</dd>{{end}}
           {{if $entry.Job.Reason}}<dt>Recorded reason</dt><dd>{{$entry.Job.Reason}}</dd>{{end}}
@@ -159,7 +161,7 @@
             <td><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></td>
             <td><span class="badge">{{.Status}}</span></td>
             <td>{{.Explanation}}{{if .NextStep}}<small>{{.NextStep}}</small>{{end}}</td>
-            <td><time datetime="{{.Job.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.Job.UpdatedAt.Format "2006-01-02 15:04 MST"}}</time></td>
+            <td>{{template "local-time" .Job.UpdatedAt}}</td>
           </tr>
           {{end}}
         </tbody>
@@ -174,6 +176,8 @@
   </main>
 </body>
 </html>
+
+{{define "local-time"}}<time datetime="{{.Format "2006-01-02T15:04:05Z07:00"}}">{{.Format "2006-01-02 15:04 MST"}}</time>{{end}}
 
 {{define "action-fields"}}
   <input type="hidden" name="csrf_token" value="{{.CSRF}}">

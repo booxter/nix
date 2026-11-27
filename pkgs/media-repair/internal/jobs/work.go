@@ -5,6 +5,22 @@ import (
 	"time"
 )
 
+// PendingRetryAt is the earliest time the job can retry its current step.
+func (job Job) PendingRetryAt() time.Time {
+	switch {
+	case job.State == Ready && job.Reason == "":
+		// Older jobs kept the planning deadline after a successful retry.
+		return time.Time{}
+	case job.State == Observed || job.State == Ready:
+		if job.InQueue && job.InspectionProblem() == "" {
+			return job.RetryAt
+		}
+	case job.State == Blocked && job.PendingAction == Delete:
+		return job.RetryAt
+	}
+	return time.Time{}
+}
+
 // Interrupted preparations and submitted imports still need reconciliation
 // after their queue entry disappears. Only new work depends on queue presence.
 func (store *Store) DueRepairs(ctx context.Context, service Service, now time.Time) ([]Job, error) {

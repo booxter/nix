@@ -40,21 +40,6 @@ type jobDetail struct {
 	Attempts []attemptResponse `json:"attempts"`
 }
 
-func pendingRetryAt(job jobs.Job) time.Time {
-	switch {
-	case job.State == jobs.Ready && job.Reason == "":
-		// Older jobs kept the planning deadline after a successful retry.
-		return time.Time{}
-	case job.State == jobs.Observed || job.State == jobs.Ready:
-		if job.InQueue && job.InspectionProblem() == "" {
-			return job.RetryAt
-		}
-	case job.State == jobs.Blocked && job.PendingAction == jobs.Delete:
-		return job.RetryAt
-	}
-	return time.Time{}
-}
-
 func summarize(entry item) jobSummary {
 	job := entry.Job
 	reason := job.Reason
@@ -100,7 +85,7 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	entry := present(job)
 	detail := jobDetail{
 		jobSummary: summarize(entry), jobResponse: app.jobActions(job, entry.review),
-		RetryAt:  pendingRetryAt(job),
+		RetryAt:  job.PendingRetryAt(),
 		Attempts: make([]attemptResponse, 0, len(attempts)),
 	}
 	for _, attempt := range attempts {

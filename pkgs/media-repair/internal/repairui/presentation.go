@@ -13,7 +13,7 @@ const plannerFallback = "The planner could not produce a valid decision within i
 
 func classifyOutcome(job jobs.Job, plan decision) jobs.Outcome {
 	// Planning history restores the retry deadline along with the failure.
-	if job.State == jobs.Observed && !pendingRetryAt(job).IsZero() {
+	if job.State == jobs.Observed && !job.PendingRetryAt().IsZero() {
 		return jobs.OutcomePlannerRetryScheduled
 	}
 
@@ -73,6 +73,9 @@ func present(job jobs.Job) item {
 		if job.PendingAction == jobs.Reconsider {
 			view.NextStep += " Reconsideration will wait until this is resolved."
 		}
+	case view.Outcome == jobs.OutcomePlannerRetryScheduled:
+		view.Status = "Planner retry scheduled"
+		view.Explanation = job.Reason
 	case job.PendingAction == jobs.Reconsider:
 		view.Status = "Reconsideration queued"
 		view.Explanation = job.Reason
