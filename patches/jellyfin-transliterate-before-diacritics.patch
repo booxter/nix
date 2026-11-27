@@ -1,0 +1,21 @@
+diff --git a/MediaBrowser.Controller/Entities/BaseItem.cs b/MediaBrowser.Controller/Entities/BaseItem.cs
+index a1e955f..8132f36 100644
+--- a/MediaBrowser.Controller/Entities/BaseItem.cs
++++ b/MediaBrowser.Controller/Entities/BaseItem.cs
+@@ -1093,13 +1093,14 @@ namespace MediaBrowser.Controller.Entities
+             AppendChunk(builder, isDigitChunk, name.Slice(chunkStart));
+ 
+             // logger.LogDebug("ModifySortChunks Start: {0} End: {1}", name, builder.ToString());
+-            var result = builder.ToString().RemoveDiacritics();
++            var result = builder.ToString();
+             if (!result.All(char.IsAscii))
+             {
+                 result = result.Transliterated();
+             }
+ 
+-            return result;
++            // Transliteration needs the original letters, including Russian ё and й.
++            return result.RemoveDiacritics();
+         }
+ 
+         public BaseItem GetParent()

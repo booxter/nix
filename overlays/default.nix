@@ -276,6 +276,7 @@
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
+          ../patches/jellyfin-transliterate-before-diacritics.patch
           ../patches/jellyfin-refresh-artwork-on-movie-change.patch
           # Jellyfin 12 still leaves disposed-session errors unhandled in the close callback.
           # Upstream: https://github.com/jellyfin/jellyfin/issues/16512
