@@ -301,7 +301,12 @@
           ../patches/sabnzbd-publish-connection-before-connect.patch
           ../patches/sabnzbd-bound-recovery-capacity.patch
           ../patches/sabnzbd-literal-par2-set-prefix.patch
+          ../patches/sabnzbd-search-by-par2-filename.patch
         ];
+        doCheck = true;
+        postCheck = (old.postCheck or "") + ''
+          python -m unittest tests.test_par2_search_pattern
+        '';
       });
 
       vikunja = prev.vikunja.overrideAttrs (
