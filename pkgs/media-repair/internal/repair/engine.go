@@ -116,6 +116,7 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 		if errors.As(err, &retryable) {
 			attempt.State = jobs.Failed
 			attempt.Reason = err.Error()
+			attempt.Outcome = retryable.outcome
 			attempt.UpdatedAt = engine.Now().UTC()
 			retryAt := retryable.at
 			if retryAt.IsZero() {

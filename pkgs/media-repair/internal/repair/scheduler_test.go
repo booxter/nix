@@ -39,6 +39,11 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 
 	service.authorizeError = nil
 	service.imported = []servarr.ImportedFile{{MovieFileID: 42}}
+	job.TrackedDownloadState = "importBlocked"
+	service.observed = Observation{Jobs: []jobs.Job{job}}
+	if err := scheduler.observe(ctx); err != nil {
+		t.Fatal(err)
+	}
 	if err := scheduler.advance(ctx); err != nil || service.submissions != 0 {
 		t.Fatalf("retried during backoff: %v, submissions: %d", err, service.submissions)
 	}
@@ -105,16 +110,32 @@ func TestSchedulerWaitsForPendingImport(t *testing.T) {
 	}
 }
 
-func TestPendingImportFoundDuringAuthorizationRetriesAtGraceDeadline(t *testing.T) {
+func TestPendingImportFoundDuringAuthorization(t *testing.T) {
+	const grace = 15 * time.Minute
+	for _, next := range []struct {
+		state string
+		after time.Duration
+	}{
+		{"importBlocked", 2 * time.Minute},
+		{"importPending", grace},
+	} {
+		t.Run(next.state, func(t *testing.T) {
+			checkAuthorizationRetry(t, grace, next.state, next.after)
+		})
+	}
+}
+
+func checkAuthorizationRetry(t *testing.T, interval time.Duration, nextState string, after time.Duration) {
+	t.Helper()
 	engine, adapter, job := fixture(t)
 	ctx := t.Context()
-	start := time.Now().UTC()
+	start := job.StableSince
 	now := start.Add(time.Minute)
-	grace := ImportGracePeriod{Duration: 15 * time.Minute, Now: func() time.Time { return now }}
+	grace := ImportGracePeriod{Duration: interval, Now: func() time.Time { return now }}
 	service := &waitingService{fakeAdapter: *adapter}
 	scheduler := Scheduler{
 		Store: engine.Store, Service: service, Name: jobs.Radarr,
-		Now: grace.Now, Disabled: func() (bool, error) { return false, nil },
+		Now: grace.Now, Interval: interval, Disabled: func() (bool, error) { return false, nil },
 	}
 
 	// The saved plan was ready, but the fresh queue read found a pending import.
@@ -128,10 +149,15 @@ func TestPendingImportFoundDuringAuthorizationRetriesAtGraceDeadline(t *testing.
 		t.Fatalf("expected a pending retry at %v, got %+v, %v", deadline, waiting, err)
 	}
 
-	now = deadline
-	service.authorizeError = grace.CheckImportState("importPending", start)
+	now = start.Add(after)
+	job.TrackedDownloadState = nextState
+	service.observed = Observation{Jobs: []jobs.Job{job}}
+	if err := scheduler.observe(ctx); err != nil {
+		t.Fatal(err)
+	}
+	service.authorizeError = grace.CheckImportState(nextState, start)
 	if err := scheduler.advance(ctx); err != nil || service.submissions != 1 {
-		t.Fatalf("retry at deadline: %v, submissions: %d", err, service.submissions)
+		t.Fatalf("retry after observing %s: %v, submissions: %d", nextState, err, service.submissions)
 	}
 }
 

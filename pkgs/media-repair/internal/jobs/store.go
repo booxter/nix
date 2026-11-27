@@ -39,6 +39,7 @@ const (
 	OutcomeAlreadyReviewed       Outcome = "already_reviewed"
 	OutcomeIncompleteDownload    Outcome = "incomplete_download"
 	OutcomeQueueNotReady         Outcome = "queue_not_ready"
+	OutcomeImportPending         Outcome = "import_pending"
 	OutcomeInvalidCueSheet       Outcome = "invalid_cue_sheet"
 )
 
@@ -193,6 +194,13 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		job.Title = observed.Title
 		// Queue progress can change while a ready plan keeps its original evidence.
 		job.TrackedDownloadState = observed.TrackedDownloadState
+		// A blocked import ends the wait requested by authorization.
+		// Other retries, including queue removal, keep their own deadlines.
+		if job.State == Ready && job.PendingAction == "" && job.Outcome == OutcomeImportPending && observed.TrackedDownloadState == "importBlocked" {
+			job.RetryAt = time.Time{}
+			job.Reason = ""
+			job.Outcome = ""
+		}
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
 		job.Findings = observed.Findings

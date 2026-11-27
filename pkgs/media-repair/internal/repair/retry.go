@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"syscall"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/jobs"
 )
 
 type preparationRetry struct {
-	cause error
-	at    time.Time
+	cause   error
+	at      time.Time
+	outcome jobs.Outcome
 }
 
 func (err *preparationRetry) Error() string { return err.cause.Error() }
@@ -27,7 +30,10 @@ func (grace ImportGracePeriod) CheckImportState(state string, stableSince time.T
 	if state == "importPending" {
 		deadline := stableSince.Add(grace.Duration)
 		if grace.Now().Before(deadline) {
-			return &preparationRetry{cause: errors.New("waiting for the media service to import"), at: deadline}
+			return &preparationRetry{
+				cause: errors.New("waiting for the media service to import"),
+				at:    deadline, outcome: jobs.OutcomeImportPending,
+			}
 		}
 	}
 	return nil
