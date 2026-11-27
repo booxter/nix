@@ -56,31 +56,52 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 }
 
 func TestSchedulerWaitsForPendingImport(t *testing.T) {
-	engine, adapter, job := fixture(t)
-	ctx := t.Context()
-	job.TrackedDownloadState = "importPending"
-	if _, err := engine.Store.Observe(ctx, job); err != nil {
-		t.Fatal(err)
-	}
-
 	const interval = 15 * time.Minute
-	deadline := job.StableSince.Add(interval)
-	now := deadline.Add(-time.Second)
-	service := &waitingService{fakeAdapter: *adapter}
-	scheduler := Scheduler{
-		Store: engine.Store, Service: service, Name: job.Service, Interval: interval,
-		Now: func() time.Time { return now }, Disabled: func() (bool, error) { return false, nil },
-	}
-	if err := scheduler.advance(ctx); err != nil {
-		t.Fatal(err)
-	}
-	if attempts, err := engine.Store.Attempts(ctx, job.ID); err != nil || len(attempts) != 0 {
-		t.Fatalf("expected no repair attempts during grace period, got %v, %v", attempts, err)
-	}
+	for _, app := range []jobs.Service{jobs.Radarr, jobs.Lidarr} {
+		for _, next := range []struct {
+			state string
+			after time.Duration
+		}{
+			{"importPending", interval},
+			{"importBlocked", time.Minute},
+		} {
+			t.Run(string(app)+"/"+next.state, func(t *testing.T) {
+				engine, adapter, job := readyJobFixture(t, app)
+				service := &countingPlanner{waitingService: waitingService{fakeAdapter: *adapter}}
+				nextPoll := job.StableSince.Add(next.after)
+				now := nextPoll.Add(-time.Second)
+				scheduler := Scheduler{
+					Store: engine.Store, Service: service, Name: app, Interval: interval,
+					Now: func() time.Time { return now }, Disabled: func() (bool, error) { return false, nil },
+				}
+				poll := func(state string) {
+					t.Helper()
+					job.TrackedDownloadState = state
+					service.observed = Observation{Jobs: []jobs.Job{job}}
+					if err := scheduler.observe(t.Context()); err != nil {
+						t.Fatal(err)
+					}
+					if err := scheduler.advance(t.Context()); err != nil {
+						t.Fatal(err)
+					}
+				}
 
-	now = deadline
-	if err := scheduler.advance(ctx); err != nil || service.submissions != 1 {
-		t.Fatalf("expected one import at deadline, got %d, %v", service.submissions, err)
+				poll("importPending")
+				if attempts, err := engine.Store.Attempts(t.Context(), job.ID); err != nil || len(attempts) != 0 {
+					t.Fatalf("expected no repair attempts during grace period, got %v, %v", attempts, err)
+				}
+
+				now = nextPoll
+				poll(next.state)
+				if service.calls != 0 || service.submissions != 1 {
+					t.Fatalf("got %d new planner calls and %d import submissions, want 0 and 1", service.calls, service.submissions)
+				}
+				attempt, err := engine.Store.LatestAttempt(t.Context(), job.ID)
+				if err != nil || string(attempt.Plan) != string(job.Plan) {
+					t.Fatalf("expected saved plan %s, got %s, %v", job.Plan, attempt.Plan, err)
+				}
+			})
+		}
 	}
 }
 

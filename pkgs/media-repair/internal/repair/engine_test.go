@@ -263,6 +263,11 @@ func (adapter *fakeAdapter) ConfirmationSteps() ConfirmationSteps {
 
 func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	t.Helper()
+	return readyJobFixture(t, jobs.Radarr)
+}
+
+func readyJobFixture(t *testing.T, service jobs.Service) (*Engine, *fakeAdapter, jobs.Job) {
+	t.Helper()
 	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {
 		t.Fatal(err)
@@ -274,7 +279,7 @@ func fixture(t *testing.T) (*Engine, *fakeAdapter, jobs.Job) {
 	})
 	ctx := context.Background()
 	job, err := store.Observe(ctx, jobs.Job{
-		Service: jobs.Radarr, QueueID: 42, SourceFingerprint: "source",
+		Service: service, QueueID: 42, SourceFingerprint: "source",
 		Evidence: json.RawMessage(`{"files":"source"}`), UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
