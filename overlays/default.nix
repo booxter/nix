@@ -127,6 +127,10 @@
       nix = releasePkgs.nixVersions.latest.appendPatches [
         # Avoid inheriting a locked signal callback registry in daemon workers.
         ../patches/nix-reset-signal-callbacks-after-fork.patch
+        # Don't block the worker in goal cleanup on a substitution thread that
+        # may be waiting for the GC lock held by a build hook whose stderr the
+        # worker drains.
+        ../patches/nix-do-not-join-substitution-thread.patch
       ];
 
       inherit (releasePkgs) nix-output-monitor;

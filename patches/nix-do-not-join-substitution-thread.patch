@@ -1,0 +1,18 @@
+--- a/src/libstore/build/substitution-goal.cc
++++ b/src/libstore/build/substitution-goal.cc
+@@ -306,10 +306,14 @@ void PathSubstitutionGoal::cleanup()
+ {
+     try {
+         if (thr.joinable()) {
+-            // FIXME: signal worker thread to quit.
+-            thr.join();
++            /* Joining here can block the worker event loop: the substitution
++               thread may be waiting for the GC lock, which can be held by a
++               build hook whose stderr only the worker drains. The thread only
++               holds weak references to the worker and its store, so it is
++               safe to let it finish on its own. */
+             worker.childTerminated(this, JobCategory::Substitution);
++            thr.detach();
+         }
+     } catch (...) {
+         ignoreExceptionInDestructor();
