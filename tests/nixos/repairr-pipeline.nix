@@ -43,6 +43,7 @@ let
   node = fixture: {
     environment.systemPackages = [
       pkgs.curl
+      pkgs.jq
       pkgs.repairr
     ];
     environment.etc."repairr.json".source = config;

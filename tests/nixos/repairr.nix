@@ -98,23 +98,32 @@ pkgs.testers.runNixOSTest {
           '';
         };
       };
-      environment.systemPackages = [ pkgs.curl ];
+      environment.systemPackages = [
+        pkgs.curl
+        pkgs.jq
+      ];
     };
   };
   testScript = ''
+    import json
+
     machine.start()
     machine.wait_for_unit("repairr.service")
-    activity = "curl --fail --silent 'http://127.0.0.1:8790/activity?service=lidarr'"
-    machine.wait_until_succeeds(activity + " | grep -F 'Unfinished album download'")
-    assert "Queue not ready" in machine.succeed(activity)
+    listing = "curl -fsS 'http://127.0.0.1:8790/api/jobs?service=lidarr&view=activity'"
+    machine.wait_until_succeeds(listing + " | jq -e 'length == 1'")
+    (album,) = json.loads(machine.succeed(listing))
+    assert album["title"] == "Unfinished album download" and album["reasonCode"] == "queue_not_ready", album
+
+    # The operator page gives the reason in plain language.
+    page = machine.succeed("curl -fsS 'http://127.0.0.1:8790/activity?service=lidarr'")
+    assert album["title"] in page and "Queue not ready" in page
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
 
     # With the queue offline, the restarted daemon can only show the stored job.
     machine.succeed("systemctl stop nginx.service")
     machine.succeed("systemctl restart repairr.service")
     machine.wait_until_succeeds("curl --fail http://127.0.0.1:8790/health")
-    page = machine.succeed(activity)
-    assert "Unfinished album download" in page and "Queue not ready" in page
+    assert json.loads(machine.succeed(listing)) == [album]
     machine.fail("systemctl is-active radarr-repair-controller.timer")
     machine.fail("systemctl is-active lidarr-repair-controller.timer")
     machine.fail("systemctl is-active media-repair-worker.service")

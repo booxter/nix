@@ -88,6 +88,9 @@ func present(job jobs.Job) item {
 		view.Explanation = job.Reason
 		view.NextStep = "Request reconsideration to review these inputs again."
 	case view.Decision.Action == "no_repair":
+		if view.Outcome == "" || view.Outcome == jobs.OutcomeOther {
+			view.Outcome = jobs.Outcome(view.Decision.Reason)
+		}
 		view.Status = "No automatic repair chosen"
 		view.Explanation = view.Decision.Explanation
 		view.NextStep = "Review the decision or request reconsideration."
@@ -149,6 +152,7 @@ func presentCollectionError(view *item, code jobs.Outcome, message string) {
 	if code == "" {
 		code = legacyCollectionOutcome(message)
 	}
+	view.Outcome = code
 	switch code {
 	case jobs.OutcomeIncompleteDownload:
 		view.Status = "Waiting for download"

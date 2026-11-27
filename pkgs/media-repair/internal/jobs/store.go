@@ -323,9 +323,28 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 }
 
 func (store *Store) Attempts(ctx context.Context, id int64) ([]Attempt, error) {
+	return readAttempts(store.db.WithContext(ctx), id)
+}
+
+func readAttempts(db *gorm.DB, id int64) ([]Attempt, error) {
 	var attempts []Attempt
-	err := store.db.WithContext(ctx).Where(&Attempt{JobID: id}).Order("number").Find(&attempts).Error
+	err := db.Where(&Attempt{JobID: id}).Order("number").Find(&attempts).Error
 	return attempts, err
+}
+
+// Read one snapshot so a client sees a confirmed job and its receipt together.
+func (store *Store) JobWithAttempts(ctx context.Context, id int64) (Job, []Attempt, error) {
+	var job Job
+	var attempts []Attempt
+	err := store.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&job, id).Error; err != nil {
+			return err
+		}
+		var err error
+		attempts, err = readAttempts(tx, id)
+		return err
+	})
+	return job, attempts, err
 }
 
 func (store *Store) LatestAttempt(ctx context.Context, id int64) (Attempt, error) {
@@ -335,6 +354,7 @@ func (store *Store) LatestAttempt(ctx context.Context, id int64) (Attempt, error
 }
 
 var ErrConflict = errors.New("job changed or operation is not valid in its current state")
+var ErrNotFound = gorm.ErrRecordNotFound
 
 func active(state State) bool {
 	return state == Running || state == Importing || state == Removing

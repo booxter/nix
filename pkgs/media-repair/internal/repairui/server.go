@@ -5,12 +5,12 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -65,10 +65,10 @@ type decision struct {
 }
 
 type page struct {
+	jobListing
 	Title          string
 	Service        jobs.Service
 	History        bool
-	Items          []item
 	Selected       *item
 	Attempts       []jobs.Attempt
 	ConfirmRemoval bool
@@ -77,8 +77,6 @@ type page struct {
 	Query          string
 	Inbox          bool
 	Activity       bool
-	InboxCount     int
-	ActivityCount  int
 	Notice         string
 }
 
@@ -117,6 +115,7 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /history", app.list)
 	router.HandleFunc("GET /jobs/{id}", app.detail)
 	router.HandleFunc("GET /jobs/{id}/remove", app.detail)
+	router.HandleFunc("GET /api/jobs", app.listJobs)
 	router.HandleFunc("GET /api/jobs/{id}", app.jobInfo)
 	router.HandleFunc("GET /api/jobs/{id}/question", app.question)
 	router.HandleFunc("POST /api/jobs/{id}/{action}", app.action)
@@ -138,78 +137,50 @@ func New(config Config) (http.Handler, error) {
 }
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
-	view := page{Title: "Needs you", History: r.URL.Path == "/history"}
-	view.State = r.URL.Query().Get("state")
-	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
-	view.Activity = r.URL.Path == "/activity" || view.State != ""
-	view.Inbox = !view.Activity && !view.History
-	if view.Activity {
-		view.Title = "Queue activity"
-	} else if view.History {
-		view.Title = "History"
+	filter := readListFilter(r.URL.Query())
+	view := page{State: filter.State, Query: filter.Query}
+	switch {
+	case r.URL.Path == "/history":
+		view.Title, view.History = "History", true
+		filter.View = "history"
+	case r.URL.Path == "/activity" || filter.State != "":
+		view.Title, view.Activity = "Queue activity", true
+		filter.View = "activity"
+	default:
+		view.Title, view.Inbox = "Needs you", true
+		filter.View = "inbox"
 	}
-	view.Service = jobs.Service(r.URL.Query().Get("service"))
 	if r.URL.Path == "/radarr" {
-		view.Service = jobs.Radarr
+		filter.Service = jobs.Radarr
 	} else if r.URL.Path == "/lidarr" {
-		view.Service = jobs.Lidarr
+		filter.Service = jobs.Lidarr
 	}
-	if view.Service != "" && view.Service != jobs.Radarr && view.Service != jobs.Lidarr {
-		http.Error(w, "unknown service", http.StatusBadRequest)
+	if err := filter.validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	view.Service = filter.Service
 	if r.URL.Query().Get("submitted") != "" {
 		view.Notice = "Your request was saved. Repairr will review it; follow its progress in Queue activity."
 	}
 
-	for _, service := range []jobs.Service{jobs.Lidarr, jobs.Radarr} {
-		if view.Service != "" && view.Service != service {
-			continue
-		}
-		listed, err := app.config.Store.List(r.Context(), service)
-		if err != nil {
-			http.Error(w, "read jobs", http.StatusInternalServerError)
-			return
-		}
-
-		for _, job := range listed {
-			historical := !job.InQueue || job.State == jobs.Removed || job.State == jobs.Imported
-			entry := present(job)
-			needsOperator := entry.Attention != nil || job.PendingAction == jobs.ConfirmRemoval
-			entry.CSRF = app.csrf
-			if !historical {
-				view.ActivityCount++
-				if needsOperator {
-					view.InboxCount++
-				}
-			}
-			if historical != view.History || view.State != "" && string(job.State) != view.State {
-				continue
-			}
-			if view.Inbox && !needsOperator {
-				continue
-			}
-			searchable := strings.Join([]string{
-				entry.Subject, job.Title, entry.Status, entry.Explanation, job.Reason, job.CollectionError,
-			}, " ")
-			if view.Query != "" && !strings.Contains(strings.ToLower(searchable), strings.ToLower(view.Query)) {
-				continue
-			}
-			view.Items = append(view.Items, entry)
-		}
+	list, err := app.filteredJobs(r.Context(), filter)
+	if err != nil {
+		http.Error(w, "read jobs", http.StatusInternalServerError)
+		return
 	}
+	for i := range list.Items {
+		list.Items[i].CSRF = app.csrf
+	}
+	view.jobListing = list
 	app.render(w, view)
 }
 
 func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
-	job, ok := app.readJob(r)
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	attempts, err := app.config.Store.Attempts(r.Context(), job.ID)
+	job, attempts, err := app.readDetail(r)
 	if err != nil {
-		http.Error(w, "read attempts", http.StatusInternalServerError)
+		status, message := jobReadError(err)
+		http.Error(w, message, status)
 		return
 	}
 
@@ -225,14 +196,27 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (app *Handler) readJob(r *http.Request) (jobs.Job, bool) {
+func requestedJobID(r *http.Request) (int64, error) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		return jobs.Job{}, false
+		return 0, jobs.ErrNotFound
 	}
+	return id, nil
+}
 
-	job, err := app.config.Store.Get(r.Context(), id)
-	return job, err == nil
+func (app *Handler) readDetail(r *http.Request) (jobs.Job, []jobs.Attempt, error) {
+	id, err := requestedJobID(r)
+	if err != nil {
+		return jobs.Job{}, nil, err
+	}
+	return app.config.Store.JobWithAttempts(r.Context(), id)
+}
+
+func jobReadError(err error) (int, string) {
+	if errors.Is(err, jobs.ErrNotFound) {
+		return http.StatusNotFound, "job not found"
+	}
+	return http.StatusInternalServerError, "could not read job"
 }
 
 func (app *Handler) render(w http.ResponseWriter, view page) {

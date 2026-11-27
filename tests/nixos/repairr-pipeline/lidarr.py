@@ -163,6 +163,7 @@ class Lidarr(BaseHTTPRequestHandler):
             case "/api/v1/history" if query.get("albumId") == ["3"]:
                 payload = album.history()
             case "/api/v1/command/1":
+                Path("/run/lidarr-fixture/command-checked").touch()
                 payload = COMMAND
             case "/fixture/imports":
                 payload = album.commands

@@ -1,10 +1,9 @@
 # ruff: noqa: F821
 # The NixOS test driver supplies the VMs and subtest.
-import html
 import json
-import re
 import shlex
 from pathlib import PurePosixPath
+from urllib.parse import urlencode
 
 COMPLETED_QUEUE_ID = 101
 UNFINISHED_QUEUE_ID = 102
@@ -31,21 +30,20 @@ def assert_fixture_video(video):
     assert widths == [64], probe
 
 
-def wait_for_text(vm, url, text):
-    return vm.wait_until_succeeds(
-        f"curl -fsS {shlex.quote(url)} | grep -F -- {shlex.quote(text)}", timeout=60
+def wait_for_json(vm, url, condition):
+    """Return the first response that meets the jq condition, including after a restart."""
+    select = shlex.quote(f"select({condition})")
+    return json.loads(
+        vm.wait_until_succeeds(
+            f"set -o pipefail; curl -fsS {shlex.quote(url)} | jq -ce {select}", timeout=60
+        )
     )
 
 
-def wait_for_movie(vm, state, text):
-    return wait_for_text(vm, f"{REPAIRR}/activity?service=radarr&state={state}", text)
-
-
-def wait_for_job(vm, listing_url, title):
-    link = wait_for_text(vm, listing_url, title)
-    match = re.search(r'href="(/jobs/\d+)"', link)
-    assert match, link
-    return REPAIRR + match[1]
+def find_job(vm, service, title, **filters):
+    query = urlencode({"service": service, "q": title, **filters})
+    (job,) = wait_for_json(vm, f"{REPAIRR}/api/jobs?{query}", "length == 1")
+    return f"{REPAIRR}/api/jobs/{job['id']}"
 
 
 def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
@@ -53,15 +51,11 @@ def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
     vm.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     vm.succeed(f"touch /run/pause-{service}-repairs", "systemctl start repairr.service")
     # Follow the same job across restarts and after it leaves the queue.
-    return wait_for_job(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
-
-
-def job_api(job_url):
-    return REPAIRR + "/api" + job_url.removeprefix(REPAIRR)
+    return find_job(vm, service, title, state="ready")
 
 
 def read_job(vm, url):
-    return json.loads(vm.succeed(f"curl -fsS -c {COOKIES} {url}"))
+    return json.loads(vm.succeed(f"curl -fsS -c {COOKIES} {shlex.quote(url)}"))
 
 
 def action_request(url, token, case, **fields):
@@ -87,8 +81,7 @@ def action_request(url, token, case, **fields):
     )
 
 
-def choice_request(vm, job_url, options, selected):
-    api = job_api(job_url)
+def choice_request(vm, api, options, selected):
     current = read_job(vm, api + "/question")
     choices = {choice["label"]: choice["value"] for choice in current["question"]["choices"]}
     assert set(choices) == set(options), choices
@@ -112,10 +105,10 @@ def replace_file(vm, path):
 
 
 def import_receipt(vm, job_url):
-    wait_for_text(vm, job_url, "Attempt 1 · imported")
-    detail = vm.succeed(f"curl -fsS {job_url}")
-    (raw_receipt,) = re.findall(r"<pre>(.*?)</pre>", detail, flags=re.DOTALL)
-    return json.loads(html.unescape(raw_receipt))
+    job = wait_for_json(vm, job_url, '.state == "imported"')
+    (attempt,) = job["attempts"]
+    assert attempt["number"] == 1 and attempt["state"] == "imported", attempt
+    return attempt["receipt"]
 
 
 def confirm_from_history(vm, job_url, expected_path=VIDEO):
@@ -163,11 +156,8 @@ with subtest("the selected file is confirmed only when Radarr reports a new impo
     job = plan_with_repairs_paused(machine)
     assert submitted_imports(machine) == []
     machine.succeed(f"rm {PAUSE}")
-    wait_for_movie(machine, "importing", "Example Movie")
+    wait_for_json(machine, job, '.state == "importing" and .attempts[0].commandId == 1')
     # The command received by Radarr shows exactly what passed authorization.
-    machine.wait_until_succeeds(
-        "curl -fsS http://127.0.0.1:7878/fixture/imports | grep -F ManualImport"
-    )
     (command,) = submitted_imports(machine)
     assert command["name"] == "ManualImport" and command["importMode"] == "copy", command
     (selected,) = command["files"]
@@ -176,9 +166,8 @@ with subtest("the selected file is confirmed only when Radarr reports a new impo
         42,
         "SABnzbd_nzo_complete",
     ), selected
-    wait_for_text(machine, job, "Import command #1")
     machine.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
-    wait_for_text(machine, job, "Attempt 1 · importing")
+    assert read_job(machine, job)["attempts"][0]["state"] == "importing"
 
 with subtest("a fresh poll finds a new movie while the first waits for import history"):
     # Restart to poll immediately. Radarr still lists the first movie, but
@@ -186,23 +175,22 @@ with subtest("a fresh poll finds a new movie while the first waits for import hi
     machine.succeed(
         "systemctl stop repairr.service", f"rm {VIDEO}", "systemctl start repairr.service"
     )
-    wait_for_text(machine, f"{REPAIRR}/activity?service=radarr&q=New+Movie", "Waiting for download")
-    detail = machine.succeed(f"curl -fsS {job}")
-    assert "Attempt 1 · importing" in detail and "Inspection error" not in detail, detail
+    new_movie = find_job(machine, "radarr", "New Movie")
+    assert read_job(machine, new_movie)["reasonCode"] == "incomplete_download"
+    detail = read_job(machine, job)
+    assert detail["attempts"][0]["state"] == "importing" and "inspectionError" not in detail, detail
     confirm_from_history(machine, job)
     machine.shutdown()
 
 with subtest("a same-size replacement blocks the saved plan before Radarr receives a command"):
     replaced.start()
     job = plan_with_repairs_paused(replaced)
-    wait_for_text(replaced, job + "/remove", "Remove from radarr queue?")
-    api = job_api(job)
-    original_case = read_job(replaced, api)
+    original_case = read_job(replaced, job)
     assert original_case["actions"]["remove"], original_case
     # A new inode with identical bytes and timestamps isolates the identity change.
     replacement = replace_file(replaced, VIDEO)
     replaced.succeed(f"rm {PAUSE}")
-    wait_for_movie(replaced, "blocked", "selected file changed after planning")
+    wait_for_json(replaced, job, '.state == "blocked" and .reasonCode == "evidence_changed"')
     assert submitted_imports(replaced) == []
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
 
@@ -210,14 +198,14 @@ with subtest("a removal confirmation belongs to the file the operator reviewed")
     # Restart to observe the replacement immediately. Use the new CSRF credentials
     # for both requests so only the case fingerprint distinguishes them.
     replaced.succeed(f"touch {PAUSE}", "systemctl restart repairr.service")
-    wait_for_movie(replaced, "ready", "Example Movie")
-    current_case = read_job(replaced, api)
+    wait_for_json(replaced, job, '.state == "ready"')
+    current_case = read_job(replaced, job)
     assert current_case["actions"]["remove"], current_case
     assert original_case["revision"] == current_case["revision"]
     assert original_case["fingerprint"] != current_case["fingerprint"]
     token = current_case["csrfToken"]
 
-    assert replaced.succeed(action_request(api + "/remove", token, original_case)) == "409"
+    assert replaced.succeed(action_request(job + "/remove", token, original_case)) == "409"
     queue = "curl -fsS http://127.0.0.1:7878/api/v3/queue"
     assert COMPLETED_QUEUE_ID in [
         row["id"] for row in json.loads(replaced.succeed(queue))["records"]
@@ -225,8 +213,8 @@ with subtest("a removal confirmation belongs to the file the operator reviewed")
 
 with subtest("a failed removal cannot delete a replacement on retry"):
     replaced.succeed(f"touch {FIXTURE}/reject-removal")
-    assert replaced.succeed(action_request(api + "/remove", token, current_case)) == "204"
-    wait_for_text(replaced, job, "<dt>Internal state</dt><dd>blocked</dd>")
+    assert replaced.succeed(action_request(job + "/remove", token, current_case)) == "204"
+    wait_for_json(replaced, job, '.state == "blocked" and .pendingAction == "delete"')
     assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID]
 
     # Restart to observe the replacement before the retry. The latest case
@@ -234,22 +222,23 @@ with subtest("a failed removal cannot delete a replacement on retry"):
     replaced.succeed("systemctl stop repairr.service")
     replacement = replace_file(replaced, VIDEO)
     replaced.succeed("systemctl start repairr.service")
-    replaced.wait_until_succeeds(
-        f"curl -fsS {api} | grep -Fv -- {shlex.quote(current_case['fingerprint'])}", timeout=60
+    changed = wait_for_json(
+        replaced, job, f".fingerprint != {json.dumps(current_case['fingerprint'])}"
     )
-    wait_for_text(replaced, job, "Removal requested")
+    assert changed["pendingAction"] == "delete", changed
     replaced.succeed(f"rm {FIXTURE}/reject-removal", "date -s '+6 minutes'")
-    wait_for_text(replaced, f"{REPAIRR}/radarr", "Confirm removal again")
+    assert find_job(replaced, "radarr", "Example Movie", view="inbox") == job
     assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID]
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
     assert COMPLETED_QUEUE_ID in [
         row["id"] for row in json.loads(replaced.succeed(queue))["records"]
     ]
 
-    fresh = read_job(replaced, api)
+    fresh = read_job(replaced, job)
+    assert fresh["pendingAction"] == "confirm_removal", fresh
     assert fresh["fingerprint"] != current_case["fingerprint"]
-    assert replaced.succeed(action_request(api + "/remove", fresh["csrfToken"], fresh)) == "204"
-    wait_for_text(replaced, job, "queue removal completed")
+    assert replaced.succeed(action_request(job + "/remove", fresh["csrfToken"], fresh)) == "204"
+    assert find_job(replaced, "radarr", "Example Movie", state="removed", view="history") == job
     assert submitted_removals(replaced) == [COMPLETED_QUEUE_ID, COMPLETED_QUEUE_ID]
     assert [row["id"] for row in json.loads(replaced.succeed(queue))["records"]] == [
         UNFINISHED_QUEUE_ID
@@ -258,13 +247,14 @@ with subtest("a failed removal cannot delete a replacement on retry"):
 
 with subtest("the scan and pre-import recheck both report a missing movie"):
     missingMovie.start()
-    plan_with_repairs_paused(missingMovie)
+    job = plan_with_repairs_paused(missingMovie)
     missingMovie.succeed(f"touch {FIXTURE}/missing-movie")
     report = collect_queue(missingMovie)[COMPLETED_QUEUE_ID]
     assert report["findings"] == ["missing_movie_id"] and "case" not in report, report
 
     missingMovie.succeed(f"rm {PAUSE}")
-    wait_for_movie(missingMovie, "blocked", "missing_movie_id")
+    blocked = wait_for_json(missingMovie, job, '.state == "blocked"')
+    assert blocked["reason"] == "missing_movie_id", blocked
     assert submitted_imports(missingMovie) == []
     missingMovie.shutdown()
 
@@ -272,7 +262,9 @@ with subtest("a lost command response is recovered from history after restart"):
     lostResponse.start()
     job = plan_with_repairs_paused(lostResponse)
     lostResponse.succeed(f"touch {FIXTURE}/drop-reply", f"rm {PAUSE}")
-    wait_for_text(lostResponse, job, "checking history without resubmitting")
+    lostResponse.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
+    detail = read_job(lostResponse, job)
+    assert detail["state"] == "importing" and "commandId" not in detail["attempts"][0], detail
     assert len(submitted_imports(lostResponse)) == 1
 
     # Keep fake Radarr running so it counts submissions across both processes.
@@ -281,7 +273,10 @@ with subtest("a lost command response is recovered from history after restart"):
     lostResponse.succeed("systemctl stop repairr.service", f"rm {FIXTURE}/history-checked")
     lostResponse.succeed("systemctl start repairr.service")
     lostResponse.wait_until_succeeds(f"test -e {FIXTURE}/history-checked", timeout=60)
-    wait_for_text(lostResponse, job, "Attempt 1 · importing")
+    detail = read_job(lostResponse, job)
+    assert (
+        detail["attempts"][0]["state"] == "importing" and "commandId" not in detail["attempts"][0]
+    )
     assert len(submitted_imports(lostResponse)) == 1
     confirm_from_history(lostResponse, job)
     lostResponse.shutdown()
@@ -292,19 +287,19 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     fileChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     fileChoice.succeed("systemctl start repairr.service")
 
-    job = wait_for_job(fileChoice, f"{REPAIRR}/radarr", "Example Movie")
-    question = "Which file should be used for this movie?"
-    wait_for_text(fileChoice, job, question)
+    job = find_job(fileChoice, "radarr", "Example Movie", view="inbox")
+    question = read_job(fileChoice, job)["question"]
+    assert question["kind"] == "file", question
     assert submitted_imports(fileChoice) == []
 
     fileChoice.succeed("systemctl restart repairr.service")
-    wait_for_text(fileChoice, job, question)
+    assert wait_for_json(fileChoice, job, ".question != null")["question"] == question
     assert submitted_imports(fileChoice) == []
     answer = choice_request(fileChoice, job, ["movie.mkv", "theatrical.mkv"], "theatrical.mkv")
     assert fileChoice.succeed(answer) == "204"
 
     chosen = str(PurePosixPath(VIDEO).with_name("theatrical.mkv"))
-    wait_for_text(fileChoice, job, "Import command #1")
+    wait_for_json(fileChoice, job, ".attempts[0].commandId == 1")
     (command,) = submitted_imports(fileChoice)
     (selected,) = command["files"]
     assert selected["path"] == chosen, command
@@ -319,8 +314,9 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
 
     # The fixture returns a completed command and history for just 01.flac.
     # Wait for Repairr to record that it checked both before releasing 02.flac.
-    wait_for_text(albumImport, job, "waiting for import history")
-    wait_for_text(albumImport, job, "Attempt 1 · importing")
+    albumImport.wait_until_succeeds("test -e /run/lidarr-fixture/command-checked")
+    detail = read_job(albumImport, job)
+    assert detail["attempts"][0]["state"] == "importing" and "receipt" not in detail["attempts"][0]
     albumImport.succeed("touch /run/lidarr-fixture/publish-second-track")
     receipt = import_receipt(albumImport, job)
 
@@ -347,13 +343,13 @@ with subtest("the operator's edition selects the release and tracks imported int
     releaseChoice.wait_for_open_port(7878)
     releaseChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
     releaseChoice.succeed("systemctl start repairr.service")
-    job = wait_for_job(releaseChoice, f"{REPAIRR}/lidarr", "Example Artist")
-    question = "Which release should these tracks be imported into?"
-    wait_for_text(releaseChoice, job, question)
+    job = find_job(releaseChoice, "lidarr", "Example Artist", view="inbox")
+    question = read_job(releaseChoice, job)["question"]
+    assert question["kind"] == "release", question
     assert submitted_imports(releaseChoice) == []
 
     releaseChoice.succeed("systemctl restart repairr.service")
-    wait_for_text(releaseChoice, job, question)
+    assert wait_for_json(releaseChoice, job, ".question != null")["question"] == question
     original = "Example Album — CD (release 81)"
     reissue = "Example Album Reissue — CD (release 82)"
     answer = choice_request(releaseChoice, job, [original, reissue], reissue)
@@ -375,8 +371,10 @@ with subtest("an album that resumes downloading blocks the saved plan before imp
     job = plan_with_repairs_paused(unfinishedAlbum, "lidarr", "Example Album")
     unfinishedAlbum.succeed("touch /run/lidarr-fixture/downloading", "rm /run/pause-lidarr-repairs")
 
-    wait_for_text(unfinishedAlbum, job, "Attempt 1 · blocked")
-    wait_for_text(unfinishedAlbum, job, "Lidarr queue item is not eligible for repair")
+    detail = wait_for_json(
+        unfinishedAlbum, job, '.state == "blocked" and .reasonCode == "queue_not_ready"'
+    )
+    assert detail["attempts"][0]["state"] == "blocked", detail
     assert submitted_imports(unfinishedAlbum) == []
 
 with subtest("a completed library album is declined without an operator question"):
@@ -387,20 +385,23 @@ with subtest("a completed library album is declined without an operator question
         "touch /run/lidarr-fixture/library-complete /run/pause-lidarr-repairs",
         "systemctl start repairr.service",
     )
-    wait_for_text(unfinishedAlbum, job, "There are no missing tracks to import.")
-    inbox = unfinishedAlbum.succeed(f"curl -fsS {REPAIRR}/lidarr")
-    assert "Example Album" not in inbox
+    declined = wait_for_json(unfinishedAlbum, job, '.reasonCode == "no_repair_needed"')
+    assert not declined["actions"]["answer"] and "question" not in declined, declined
+    assert read_job(unfinishedAlbum, f"{REPAIRR}/api/jobs?service=lidarr&view=inbox") == []
     assert submitted_imports(unfinishedAlbum) == []
 
 with subtest("Lidarr rechecks the download even when the prepared tracks have identical bytes"):
-    api = job_api(job)
-    reviewed = read_job(unfinishedAlbum, api)
+    reviewed = read_job(unfinishedAlbum, job)
     track = "/var/lib/repairr-pipeline/Example.Album/01.flac"
     replacement = replace_file(unfinishedAlbum, track)
     assert (
-        unfinishedAlbum.succeed(action_request(api + "/remove", reviewed["csrfToken"], reviewed))
+        unfinishedAlbum.succeed(action_request(job + "/remove", reviewed["csrfToken"], reviewed))
         == "204"
     )
-    wait_for_text(unfinishedAlbum, f"{REPAIRR}/lidarr", "Confirm removal again")
-    assert read_job(unfinishedAlbum, api)["fingerprint"] != reviewed["fingerprint"]
+    assert find_job(unfinishedAlbum, "lidarr", "Example Album", view="inbox") == job
+    fresh = read_job(unfinishedAlbum, job)
+    assert (
+        fresh["pendingAction"] == "confirm_removal"
+        and fresh["fingerprint"] != reviewed["fingerprint"]
+    )
     assert unfinishedAlbum.succeed(f"stat -c '%i %s %Y' {track}").split() == replacement

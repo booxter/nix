@@ -34,32 +34,26 @@ type actionRequest struct {
 	RuntimeMinutes *int64  `json:"runtimeMinutes,omitempty"`
 }
 
-func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
-	app.describeJob(w, r, false)
-}
-
 func (app *Handler) question(w http.ResponseWriter, r *http.Request) {
-	app.describeJob(w, r, true)
-}
-
-func (app *Handler) describeJob(w http.ResponseWriter, r *http.Request, requireQuestion bool) {
-	job, ok := app.readJob(r)
+	job, ok := app.readActionJob(w, r)
 	if !ok {
-		jsonError(w, http.StatusNotFound, "job not found")
 		return
 	}
 	review := reviewFor(job)
-	if requireQuestion && review.Attention == nil {
+	if review.Attention == nil {
 		jsonError(w, http.StatusNotFound, "this job has no question to answer")
 		return
 	}
 
 	app.setCSRFCookie(w)
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(jobResponse{
+	writeJSON(w, app.jobActions(job, review))
+}
+
+func (app *Handler) jobActions(job jobs.Job, review review) jobResponse {
+	return jobResponse{
 		Actions: review.Actions, Question: review.Attention,
 		Revision: job.Revision, Fingerprint: job.SourceFingerprint, CSRFToken: app.csrf,
-	})
+	}
 }
 
 func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
@@ -67,9 +61,8 @@ func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
 	if !app.readAction(w, r, &input) {
 		return
 	}
-	job, ok := app.readJob(r)
+	job, ok := app.readActionJob(w, r)
 	if !ok {
-		jsonError(w, http.StatusNotFound, "job not found")
 		return
 	}
 	const stale = "This item changed. Refresh the page before trying again."
@@ -112,6 +105,19 @@ func (app *Handler) action(w http.ResponseWriter, r *http.Request) {
 	// The request is already durable. Wake the scheduler to process it now.
 	app.config.Wake(job.Service)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (app *Handler) readActionJob(w http.ResponseWriter, r *http.Request) (jobs.Job, bool) {
+	var job jobs.Job
+	id, err := requestedJobID(r)
+	if err == nil {
+		job, err = app.config.Store.Get(r.Context(), id)
+	}
+	if err != nil {
+		status, message := jobReadError(err)
+		jsonError(w, status, message)
+	}
+	return job, err == nil
 }
 
 func (input actionRequest) forAction(action string, job jobs.Job, question *planning.Question) (planning.Answer, error) {
