@@ -1,6 +1,6 @@
 { inputs, pkgs }:
 let
-  jellyfin = inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.jellyfin;
+  jellyfin = inputs.self.nixosConfigurations.beast.config.services.jellyfin.package;
   serverName = "api.themoviedb.org";
   pki = import ./lib/tls-pki.nix { inherit pkgs serverName; };
   fixtures =

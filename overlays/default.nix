@@ -275,7 +275,8 @@
       });
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
-        patches = old.patches or [ ] ++ [
+        patches = (old.patches or [ ]) ++ [
+          ../patches/jellyfin-refresh-artwork-on-movie-change.patch
           # Catch websocket keepalive send races.
           # Upstream: https://github.com/jellyfin/jellyfin/issues/14837
           (prev.fetchpatch {

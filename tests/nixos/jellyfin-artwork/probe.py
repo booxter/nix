@@ -126,6 +126,32 @@ class Api:
     def images(self, item_id):
         return self.request(f"Items/{item_id}/Images")
 
+    def add_library(self):
+        self.request(
+            "Library/VirtualFolders?" + urlencode({"name": "Movies", "collectionType": "movies"}),
+            {
+                "LibraryOptions": {
+                    "PathInfos": [{"Path": "/srv/movies"}],
+                    "EnableRealtimeMonitor": False,
+                    "SaveLocalMetadata": True,
+                    "MetadataSavers": [],
+                    "TypeOptions": [
+                        {
+                            "Type": "Movie",
+                            "MetadataFetchers": [],
+                            "ImageFetchers": ["TheMovieDb"],
+                            "ImageOptions": [
+                                {"Type": "Primary", "Limit": 1, "MinWidth": 0},
+                                {"Type": "Backdrop", "Limit": 1, "MinWidth": 0},
+                                {"Type": "Logo", "Limit": 0},
+                                {"Type": "Thumb", "Limit": 0},
+                            ],
+                        }
+                    ],
+                }
+            },
+        )
+
 
 def wait_for(predicate, description):
     deadline = time.monotonic() + 90
@@ -160,30 +186,7 @@ def check(fixtures):
     api.bootstrap()
     movies = {title: add_movie(fixtures, title) for title in ["Missing", "Custom", "Unchanged"]}
     shutil.copyfile(fixtures / "custom.png", movies["Custom"].parent / "poster.png")
-    api.request(
-        "Library/VirtualFolders?" + urlencode({"name": "Movies", "collectionType": "movies"}),
-        {
-            "LibraryOptions": {
-                "PathInfos": [{"Path": "/srv/movies"}],
-                "EnableRealtimeMonitor": False,
-                "SaveLocalMetadata": True,
-                "MetadataSavers": [],
-                "TypeOptions": [
-                    {
-                        "Type": "Movie",
-                        "MetadataFetchers": [],
-                        "ImageFetchers": ["TheMovieDb"],
-                        "ImageOptions": [
-                            {"Type": "Primary", "Limit": 1, "MinWidth": 0},
-                            {"Type": "Backdrop", "Limit": 1, "MinWidth": 0},
-                            {"Type": "Logo", "Limit": 0},
-                            {"Type": "Thumb", "Limit": 0},
-                        ],
-                    }
-                ],
-            }
-        },
-    )
+    api.add_library()
     api.scan()
     items = api.request("Items?Recursive=true&IncludeItemTypes=Movie&Fields=Path")["Items"]
     ids = {Path(item["Path"]).stem: item["Id"] for item in items}
@@ -195,7 +198,9 @@ def check(fixtures):
     for title in movies:
         assert {"Primary", "Backdrop"} <= images[title].keys(), (title, images[title])
     custom_hash = image_hash(images["Custom"]["Primary"])
+    assert custom_hash == image_hash(fixtures / "custom.png")
     unchanged_hash = image_hash(images["Unchanged"]["Primary"])
+    unchanged_mtime = images["Unchanged"]["Primary"].stat().st_mtime_ns
 
     for title in ["Missing", "Custom"]:
         images[title]["Backdrop"].unlink()
@@ -213,6 +218,7 @@ def check(fixtures):
     )
     assert image_hash(images["Custom"]["Primary"]) == custom_hash
     assert image_hash(images["Unchanged"]["Primary"]) == unchanged_hash
+    assert images["Unchanged"]["Primary"].stat().st_mtime_ns == unchanged_mtime
     print(f"Ordinary scan recovered replacement artwork: {recovered}", flush=True)
 
     # Positive control: prove the same provider can restore the deleted images.
@@ -227,6 +233,7 @@ def check(fixtures):
     assert image_hash(images["Custom"]["Primary"]) == custom_hash
     api.scan()
     assert image_hash(images["Custom"]["Primary"]) == custom_hash
+    assert images["Unchanged"]["Primary"].stat().st_mtime_ns == unchanged_mtime
     assert recovered, (
         "Replacing a movie left artwork missing; an explicit image refresh restored it"
     )

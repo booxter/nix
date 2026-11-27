@@ -1,0 +1,44 @@
+diff --git a/MediaBrowser.Providers/Manager/MetadataService.cs b/MediaBrowser.Providers/Manager/MetadataService.cs
+index e9cb46e..16ca296 100644
+--- a/MediaBrowser.Providers/Manager/MetadataService.cs
++++ b/MediaBrowser.Providers/Manager/MetadataService.cs
+@@ -12,6 +12,7 @@ using Jellyfin.Extensions;
+ using MediaBrowser.Controller.Configuration;
+ using MediaBrowser.Controller.Entities;
+ using MediaBrowser.Controller.Entities.Audio;
++using MediaBrowser.Controller.Entities.Movies;
+ using MediaBrowser.Controller.IO;
+ using MediaBrowser.Controller.Library;
+ using MediaBrowser.Controller.Persistence;
+@@ -147,8 +148,11 @@ namespace MediaBrowser.Providers.Manager
+                 Item = itemOfType
+             };
+ 
++            // BeforeSave updates DateModified, so retain the change for image-provider selection.
++            var previousDateModified = item.DateModified;
+             var beforeSaveResult = await BeforeSave(itemOfType, isFirstRefresh || refreshOptions.ReplaceAllMetadata || refreshOptions.MetadataRefreshMode == MetadataRefreshMode.FullRefresh || requiresRefresh || refreshOptions.ForceSave, updateType)
+                 .ConfigureAwait(false);
++            var movieFileChanged = item is Movie && item.DateModified != previousDateModified;
+             updateType |= beforeSaveResult;
+ 
+             if (isFirstRefresh)
+@@ -195,7 +199,18 @@ namespace MediaBrowser.Providers.Manager
+             // Next run remote image providers, but only if local image providers didn't throw an exception
+             if (!localImagesFailed && refreshOptions.ImageRefreshMode > MetadataRefreshMode.ValidationOnly)
+             {
+-                var providers = GetNonLocalImageProviders(item, allImageProviders, refreshOptions).ToList();
++                var imageProviderOptions = refreshOptions;
++                if (movieFileChanged && refreshOptions.ImageRefreshMode == MetadataRefreshMode.Default)
++                {
++                    // Movie upgrades can remove sidecar artwork. Query providers again, while the
++                    // download stage below retains the original policy for replacing existing images.
++                    imageProviderOptions = new MetadataRefreshOptions(refreshOptions)
++                    {
++                        ImageRefreshMode = MetadataRefreshMode.FullRefresh
++                    };
++                }
++
++                var providers = GetNonLocalImageProviders(item, allImageProviders, imageProviderOptions).ToList();
+ 
+                 if (providers.Count > 0)
+                 {
