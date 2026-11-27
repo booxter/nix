@@ -1,0 +1,86 @@
+diff --git a/sabnzbd/par2file.py b/sabnzbd/par2file.py
+--- a/sabnzbd/par2file.py
++++ b/sabnzbd/par2file.py
+@@ -52,6 +52,13 @@ class FilePar2Info:
+     filesize: int
+     filehash: Optional[int] = None
+     has_duplicate: bool = False
++    blocksize: int = 0
++
++    def __setstate__(self, state):
++        # Queues saved before block sizes were recorded have no such field.
++        self.blocksize = 0
++        for name, value in state[1].items():
++            setattr(self, name, value)
+ 
+ 
+ def has_par2_in_filename(filename: str) -> bool:
+@@ -229,6 +236,7 @@ def parse_par2_file(fname: str, md5of16k: dict[bytes, str]) -> tuple[str, dict[str, FilePar2Info]]:
+                         crc32, sabctools.crc32_zero_unpad(filecrc32[fileid][-1], slice_size - tail_size), tail_size
+                     )
+                 par2info.filehash = crc32
++                par2info.blocksize = slice_size
+ 
+                 # We found hash data, add it to final table
+                 table[par2info.filename] = par2info
+diff --git a/sabnzbd/nzb/object.py b/sabnzbd/nzb/object.py
+--- a/sabnzbd/nzb/object.py
++++ b/sabnzbd/nzb/object.py
+@@ -742,6 +742,29 @@ class NzbObject(TryList):
+                     return True
+         return False
+ 
++    def recovery_block_capacity(self, setname: str, nzf: NzbFile) -> Optional[int]:
++        """Upper bound on blocks this volume could supply to the requested set."""
++        par2pack = self.par2packs.get(setname)
++        if not par2pack:
++            return None
++
++        blocksize = next(iter(par2pack.values())).blocksize
++        if not blocksize:
++            return None
++
++        file_sizes = [
++            article.file_size
++            for article in nzf.decodetable
++            if article.file_size is not None and article.crc32 is not None
++        ]
++        if not file_sizes:
++            return None
++
++        # Use full yEnc sizes, including gaps in an incomplete NZB. Taking the
++        # largest keeps an upper bound if headers disagree. Each recovery
++        # packet needs a 64-byte header and a four-byte exponent.
++        return max(file_sizes) // (blocksize + 68)
++
+     def get_extra_blocks(self, setname: str, needed_blocks: int) -> int:
+         """We want par2-files of all sets that are similar to this one
+         So that we also can handle multi-sets with duplicate filenames
+@@ -761,19 +784,22 @@ class NzbObject(TryList):
+                     # Don't count extrapars that are completed already
+                     if nzf.completed or nzf in self.finished_files:
+                         continue
+-                    block_list.append(nzf)
+-                    avail_blocks += nzf.blocks
++                    blocks = self.recovery_block_capacity(setname, nzf)
++                    if blocks is None:
++                        blocks = nzf.blocks
++                    block_list.append((blocks, nzf))
++                    avail_blocks += blocks
+ 
+         # Sort the smallest blocks first
+-        block_list.sort(key=lambda x: x.blocks, reverse=False)
++        block_list.sort(key=lambda item: item[0])
+         logging.info("%s blocks available", avail_blocks)
+ 
+         # Enough?
+         if avail_blocks >= needed_blocks:
+             added_blocks = 0
+-            for new_nzf in block_list:
++            for blocks, new_nzf in block_list:
+                 if self.add_parfile(new_nzf):
+-                    added_blocks += new_nzf.blocks
++                    added_blocks += blocks
+                     if added_blocks >= needed_blocks:
+                         break
+             else:

@@ -13,7 +13,7 @@ BLOCKS = 16
 PROBE_SIZE = 4096
 
 
-def make_set(directory: Path, name: str, index: int, par2: str) -> Path:
+def make_set(directory: Path, name: str, index: int, par2: str, volumes: int) -> Path:
     payload = directory / f"{name}.bin"
     payload.write_bytes(hashlib.shake_256(name.encode()).digest(BLOCKS * BLOCK_SIZE))
     subprocess.run(
@@ -24,7 +24,7 @@ def make_set(directory: Path, name: str, index: int, par2: str) -> Path:
             "-t1",
             f"-s{BLOCK_SIZE}",
             "-c4",
-            "-n4",
+            f"-n{volumes}",
             str(directory / name),
             str(payload),
         ],
@@ -33,19 +33,25 @@ def make_set(directory: Path, name: str, index: int, par2: str) -> Path:
 
     (directory / f"{name}.par2").rename(directory / f"bundle.vol-0{index + 1}.par2")
     for number, volume in enumerate(sorted(directory.glob(f"{name}.vol*.par2"))):
-        # Each file holds one recovery block. Its suffix looks like a much
-        # larger block count to SABnzbd's filename heuristic.
-        volume.rename(directory / f"bundle.vol-0{100 + index * 4 + number}.par2")
+        if volumes == 1:
+            # This volume contains four blocks, while the name claims one.
+            filename = "bundle.vol000+01.par2"
+        else:
+            # Each file holds one block, while its name claims at least 100.
+            filename = f"bundle.vol-0{100 + index * 4 + number}.par2"
+        volume.rename(directory / filename)
 
     return payload
 
 
-def make_job(directory: Path, names: tuple[str, ...], missing: set[int], par2: str) -> dict:
+def make_job(
+    directory: Path, names: tuple[str, ...], missing: set[int], par2: str, volumes: int = 4
+) -> dict:
     directory.mkdir()
     articles = {}
     payloads = []
     for index, name in enumerate(names):
-        payload = make_set(directory, name, index, par2)
+        payload = make_set(directory, name, index, par2, volumes)
         articles[payload.name] = [
             Segment(number + 1, number * BLOCK_SIZE, BLOCK_SIZE)
             for number in range(BLOCKS)
@@ -77,6 +83,7 @@ def main() -> None:
     directory.mkdir()
     par2 = sys.argv[2]
     repairable = make_job(directory / "repairable", ("payload",), {4, 8}, par2)
+    understated = make_job(directory / "understated", ("payload",), {4, 8}, par2, volumes=1)
     # Each set loses twelve blocks, while all eight recovery volumes together
     # contain only eight. Even pooling the sets cannot make repair possible.
     unrepairable = make_job(
@@ -86,7 +93,13 @@ def main() -> None:
         par2,
     )
     (directory / "manifest.json").write_text(
-        json.dumps({"repairable": repairable, "unrepairable": unrepairable})
+        json.dumps(
+            {
+                "repairable": repairable,
+                "understated": understated,
+                "unrepairable": unrepairable,
+            }
+        )
     )
 
 

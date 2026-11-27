@@ -26,15 +26,16 @@ def main() -> None:
     fixtures = Path(sys.argv[1])
     manifest = json.loads((fixtures / "manifest.json").read_text())
 
-    repaired = download(fixtures / "repairable" / "repairable.nzb")
-    assert repaired["status"] == "Completed", repaired
-    for name in manifest["repairable"]["payloads"]:
-        actual = Path(repaired["storage"])
-        if actual.is_dir():
-            actual /= name
-        expected = fixtures / "repairable" / name
-        assert actual.read_bytes() == expected.read_bytes(), actual
-    print("Repairable NZB gaps were restored with ambiguously named PAR2 volumes", flush=True)
+    for case in ("repairable", "understated"):
+        repaired = download(fixtures / case / f"{case}.nzb")
+        assert repaired["status"] == "Completed", repaired
+        for name in manifest[case]["payloads"]:
+            actual = Path(repaired["storage"])
+            if actual.is_dir():
+                actual /= name
+            expected = fixtures / case / name
+            assert actual.read_bytes() == expected.read_bytes(), actual
+        print(f"{case}: NZB gaps were restored despite misleading PAR2 names", flush=True)
 
     failed = download(fixtures / "unrepairable" / "unrepairable.nzb")
     assert failed["status"] == "Failed", failed

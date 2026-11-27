@@ -290,6 +290,7 @@
         patches = (old.patches or [ ]) ++ [
           ../patches/sabnzbd-cancel-multiple-par2-sets.patch
           ../patches/sabnzbd-publish-connection-before-connect.patch
+          ../patches/sabnzbd-bound-recovery-capacity.patch
         ];
       });
 
