@@ -73,7 +73,16 @@ with subtest("Radarr and Lidarr get time to finish their own pending imports"):
         detail = read_json(f"{REPAIRR}/api/jobs/{job_id}")
         assert detail["state"] == "ready" and detail["attempts"] == [], detail
 
-    machine.succeed("date -s '+15 minutes'")
+with subtest("Repairr restarts with a saved movie plan and a saved album plan"):
+    # Let both grace periods expire while Repairr is stopped. A new planning
+    # request would receive 503, so either import needs its saved decision.
+    machine.succeed(
+        "systemctl stop repairr.service",
+        "touch /run/repairr-planner-unavailable",
+        "date -s '+15 minutes'",
+        "systemctl start repairr.service",
+    )
+    machine.wait_until_succeeds(f"curl -fsS {REPAIRR}/health")
 
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
@@ -140,6 +149,13 @@ with subtest("Lidarr reads the staged tracks and Repairr waits for both history 
         (12, 91),
     ], album_attempt
     check_imported_files_page(album_job["id"], tracks)
+
+    # Each app made one failed request during the outage and one successful
+    # request before restart. Count rejected requests as well as successful ones.
+    planner_log = machine.succeed("journalctl -b -u media-repair-planner.service -o cat")
+    for service in waiting_jobs:
+        requests = [line for line in planner_log.splitlines() if f'"POST /{service}/plan ' in line]
+        assert len(requests) == 2, requests
 
 with subtest("the service user can reopen saved jobs with the media services offline"):
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
