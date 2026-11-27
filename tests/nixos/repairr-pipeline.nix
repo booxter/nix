@@ -92,6 +92,7 @@ pkgs.testers.runNixOSTest {
       '';
     };
     albumImport = albumNode;
+    albumLostResponse = albumNode;
     releaseChoice = {
       imports = [ albumNode ];
       systemd.services.repairr-fixture.environment.OFFER_REISSUE = "1";

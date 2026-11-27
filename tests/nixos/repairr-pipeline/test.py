@@ -92,6 +92,30 @@ def submitted_imports(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/imports"))
 
 
+def restart_after_lost_reply(vm, job, service):
+    """Restart Repairr while the media service still has incomplete import history."""
+    fixture = f"/run/{service}-fixture"
+    history_checked = f"{fixture}/history-checked"
+
+    def check_pending_import():
+        vm.wait_until_succeeds(f"test -e {history_checked}", timeout=60)
+        detail = read_job(vm, job)
+        (attempt,) = detail["attempts"]
+        assert detail["state"] == attempt["state"] == "importing", detail
+        assert "commandId" not in attempt and "receipt" not in attempt, attempt
+        assert len(submitted_imports(vm)) == 1
+
+    vm.succeed(f"touch {fixture}/drop-reply", f"rm /run/pause-{service}-repairs")
+    check_pending_import()
+
+    # Keep the media service running so it counts submissions across the restart.
+    # Clear the marker while Repairr is stopped so the next check requires a new history read.
+    vm.succeed(
+        "systemctl stop repairr.service", f"rm {history_checked}", "systemctl start repairr.service"
+    )
+    check_pending_import()
+
+
 def retry_after_queue_outage(vm, job, service):
     """Fail the queue recheck after planning, then let the saved plan run again."""
     outage = f"/run/{service}-fixture/queue-unavailable"
@@ -293,26 +317,10 @@ with subtest("the scan and pre-import recheck both report a missing movie"):
     assert submitted_imports(missingMovie) == []
     missingMovie.shutdown()
 
-with subtest("a lost command response is recovered from history after restart"):
+with subtest("Radarr confirms the movie after its command response is lost and Repairr restarts"):
     lostResponse.start()
     job = plan_with_repairs_paused(lostResponse)
-    lostResponse.succeed(f"touch {FIXTURE}/drop-reply", f"rm {PAUSE}")
-    lostResponse.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
-    detail = read_job(lostResponse, job)
-    assert detail["state"] == "importing" and "commandId" not in detail["attempts"][0], detail
-    assert len(submitted_imports(lostResponse)) == 1
-
-    # Keep fake Radarr running so it counts submissions across both processes.
-    # Clearing the marker while Repairr is stopped proves the next history
-    # lookup comes from the new process, with the receipt still withheld.
-    lostResponse.succeed("systemctl stop repairr.service", f"rm {FIXTURE}/history-checked")
-    lostResponse.succeed("systemctl start repairr.service")
-    lostResponse.wait_until_succeeds(f"test -e {FIXTURE}/history-checked", timeout=60)
-    detail = read_job(lostResponse, job)
-    assert (
-        detail["attempts"][0]["state"] == "importing" and "commandId" not in detail["attempts"][0]
-    )
-    assert len(submitted_imports(lostResponse)) == 1
+    restart_after_lost_reply(lostResponse, job, "radarr")
     confirm_from_history(lostResponse, job)
     lostResponse.shutdown()
 
@@ -406,6 +414,20 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
         files
     )
     albumImport.shutdown()
+
+with subtest("Lidarr confirms both tracks after its command response is lost and Repairr restarts"):
+    albumLostResponse.start()
+    job = plan_with_repairs_paused(albumLostResponse, "lidarr", "Example Album")
+    restart_after_lost_reply(albumLostResponse, job, "lidarr")
+
+    # Only the first track was in history during the restart.
+    albumLostResponse.succeed("touch /run/lidarr-fixture/publish-second-track")
+    files = confirmed_files(albumLostResponse, job)
+    assert sorted((file["trackId"], file["historyId"]) for file in files) == [(11, 92), (12, 91)], (
+        files
+    )
+    assert len(submitted_imports(albumLostResponse)) == 1
+    albumLostResponse.shutdown()
 
 with subtest("the operator's edition selects the release and tracks imported into Lidarr"):
     releaseChoice.start()

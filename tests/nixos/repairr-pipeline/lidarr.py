@@ -131,6 +131,7 @@ class AlbumImport:
     def history(self):
         if not self.commands:
             return page([])
+        Path("/run/lidarr-fixture/history-checked").touch()
         release_id = self.commands[-1]["files"][0]["albumReleaseId"]
         tracks = TRACKS_BY_RELEASE[release_id]
         visible = tracks if PUBLISH_SECOND.exists() else tracks[:1]
@@ -197,6 +198,10 @@ class Lidarr(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         album.submit(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+        if Path("/run/lidarr-fixture/drop-reply").exists():
+            # The files reached the library, but Repairr never receives the command ID.
+            self.close_connection = True
+            return
         self.send_json(COMMAND)
 
     def send_json(self, payload):
