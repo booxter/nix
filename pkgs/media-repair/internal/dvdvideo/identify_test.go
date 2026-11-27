@@ -33,6 +33,27 @@ func TestDecodeTitlesKeepsDVDNavigationMetadata(t *testing.T) {
 	}
 }
 
+func TestDecodeTitlesKeepsContinuationAcrossTitleSets(t *testing.T) {
+	t.Parallel()
+
+	data := []byte(`<lsdvd>
+  <track><ix>1</ix><length>60</length><vts>1</vts><ttn>1</ttn>
+    <angles>1</angles><format>PAL</format><chapter><ix>1</ix></chapter>
+    <next_title>2</next_title>
+  </track>
+  <track><ix>2</ix><length>60</length><vts>2</vts><ttn>1</ttn>
+    <angles>1</angles><format>PAL</format><chapter><ix>1</ix></chapter>
+  </track>
+</lsdvd>`)
+	titles, err := decodeTitles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if titles[0].NextTitle != 2 || titles[1].NextTitle != 0 {
+		t.Fatalf("wrong cross-set continuation: %+v", titles)
+	}
+}
+
 func TestDecodeTitlesRejectsIncompleteNavigation(t *testing.T) {
 	t.Parallel()
 

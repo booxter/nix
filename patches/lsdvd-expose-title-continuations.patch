@@ -1,5 +1,5 @@
 diff --git a/lsdvd.c b/lsdvd.c
-index 9be5ac2..d26e417 100644
+index 9be5ac2..aaaa494 100644
 --- a/lsdvd.c
 +++ b/lsdvd.c
 @@ -367,6 +367,29 @@ static char output_option(char *arg)
@@ -32,7 +32,15 @@ index 9be5ac2..d26e417 100644
  int main(int argc, char *argv[])
  {
  	char title[DVD_TITLE_MAX+1];
-@@ -506,7 +529,11 @@ int main(int argc, char *argv[])
+@@ -474,6 +497,7 @@ int main(int argc, char *argv[])
+ 	dvd_info.discinfo.provider_id = vmgi_mat->provider_identifier;
+ 
+ 	dvd_info.title_count = titles;
++	dvd_info.manager_menus = ifo_zero->pgci_ut;
+ 	dvd_info.titles = calloc(titles, sizeof(*dvd_info.titles));
+ 
+ 	// Format the 128 bit result from DVDDiscID() the same way
+@@ -506,7 +530,11 @@ int main(int argc, char *argv[])
  				vts_ttn = ifo_zero->tt_srpt->title[j].vts_ttn;
  				vmgi_mat = ifo_zero->vmgi_mat;
  				title_set_nr = ifo_zero->tt_srpt->title[j].title_set_nr;
@@ -46,7 +54,7 @@ index 9be5ac2..d26e417 100644
  				dvd_info.titles[j].chapter_count_reported = ifo_zero->tt_srpt->title[j].nr_of_ptts;
  				if(pgc->cell_playback == NULL || pgc->program_map == NULL) {
 diff --git a/lsdvd.h b/lsdvd.h
-index 66f8dea..05960da 100644
+index 66f8dea..8365247 100644
 --- a/lsdvd.h
 +++ b/lsdvd.h
 @@ -1,6 +1,8 @@
@@ -58,8 +66,11 @@ index 66f8dea..05960da 100644
  #ifdef __linux__
  #define DEFAULT_DVD_DEVICE "/dev/sr0"
  #elif __FreeBSD__ || __DragonFly__
-@@ -51,6 +53,7 @@ struct dvd_info {
+@@ -49,8 +51,10 @@ struct dvd_info {
+ 		char *provider_id;
+ 	} discinfo;
  	int title_count;
++	const pgci_ut_t *manager_menus;
  	struct {
  		int enabled;
 +		const pgc_t *playback;
@@ -67,13 +78,170 @@ index 66f8dea..05960da 100644
  			float length;
  			playback_time_t playback_time;
 diff --git a/oxml.c b/oxml.c
-index ff87412..2d49ca9 100644
+index ff87412..115be32 100644
 --- a/oxml.c
 +++ b/oxml.c
-@@ -127,6 +127,30 @@ static void XMLSTOP(void) {
+@@ -127,6 +127,187 @@ static void XMLSTOP(void) {
  	xmlFreeDoc(doc);
  }
  
++/* DVD commands are eight bytes. Keep their encoding here, separate from
++   following the playback path below. Anything we cannot prove is rejected. */
++enum {
++	REGISTER_COUNT = 16,
++	UNKNOWN_VALUE = -1,
++	SET_REGISTER = 0x61,
++	SET_CONSTANT = 0x71,
++	JUMP_OR_CALL = 0x30,
++	JUMP_TITLE = 0x02,
++	CALL_MENU = 0x08,
++	MANAGER_CHAIN = 0xc0,
++	BREAK_IF_EQUAL = 0xa2
++};
++
++static int dvd_word(const uint8_t *bytes)
++{
++	return (bytes[0] << 8) | bytes[1];
++}
++
++/* Only plain assignments and no-ops are safe to pass over. Values inherited
++   from earlier playback remain unknown until an assignment supplies them. */
++static int apply_assignment(const uint8_t *command, int *registers)
++{
++	static const uint8_t noop[8] = {0};
++	if (!memcmp(command, noop, sizeof(noop)))
++		return 1;
++
++	int destination = command[3];
++	if (command[1] || command[2] || destination >= REGISTER_COUNT ||
++	    command[6] || command[7])
++		return 0;
++
++	if (command[0] == SET_CONSTANT) {
++		registers[destination] = dvd_word(command + 4);
++		return 1;
++	}
++
++	int source = command[5];
++	if (command[0] == SET_REGISTER && !command[4] && source < REGISTER_COUNT) {
++		registers[destination] = registers[source];
++		return 1;
++	}
++	return 0;
++}
++
++/* Return the final command only if everything before it is an assignment. */
++static const uint8_t *after_assignments(const vm_cmd_t *commands, int count, int *registers)
++{
++	if (!commands || !count)
++		return NULL;
++
++	for (int i = 0; i < count - 1; i++) {
++		if (!apply_assignment(commands[i].bytes, registers))
++			return NULL;
++	}
++	return commands[count - 1].bytes;
++}
++
++static int called_manager_chain(const uint8_t *command)
++{
++	if (!command || command[0] != JUMP_OR_CALL || command[1] != CALL_MENU ||
++	    command[5] != MANAGER_CHAIN || command[6] || command[7])
++		return 0;
++
++	/* Bytes 2–3 name the chain; byte 4 is the resume cell, not the destination. */
++	return dvd_word(command + 2) & 0x7fff;
++}
++
++static int jumped_title(const uint8_t *command)
++{
++	if (!command || command[0] != JUMP_OR_CALL || command[1] != JUMP_TITLE ||
++	    command[2] || command[3] || command[4] || command[6] || command[7])
++		return 0;
++
++	return command[5] & 0x7f;
++}
++
++/* A manager chain can act as a small routing script. Menus with video or
++   language-dependent choices need player interaction, so do not follow them. */
++static const pgc_command_tbl_t *manager_commands(const pgci_ut_t *menus, int chain)
++{
++	if (!menus || menus->nr_of_lus != 1 || !menus->lu)
++		return NULL;
++
++	const pgcit_t *chains = menus->lu[0].pgcit;
++	if (!chains || chain < 1 || chain > chains->nr_of_pgci_srp)
++		return NULL;
++
++	const pgc_t *menu = chains->pgci_srp[chain - 1].pgc;
++	if (!menu || menu->nr_of_programs || menu->nr_of_cells)
++		return NULL;
++
++	return menu->command_tbl;
++}
++
++/* Jumping to a title still runs its startup commands. Prove they reach the
++   first chapter: allow assignments and known equality tests ending in Break.
++   Break ends the startup script and begins playback; other jumps are rejected. */
++static int starts_at_beginning(const pgc_t *title, int *registers)
++{
++	if (!title)
++		return 0;
++
++	const pgc_command_tbl_t *commands = title->command_tbl;
++	if (!commands || !commands->nr_of_pre)
++		return 1;
++	if (!commands->pre_cmds)
++		return 0;
++
++	for (int i = 0; i < commands->nr_of_pre; i++) {
++		const uint8_t *command = commands->pre_cmds[i].bytes;
++		if (apply_assignment(command, registers))
++			continue;
++
++		/* This encoding compares register byte 3 with the constant in bytes 4–5. */
++		int compared = command[3];
++		if (command[0] || command[1] != BREAK_IF_EQUAL || command[2] ||
++		    compared >= REGISTER_COUNT || command[6] || command[7] ||
++		    registers[compared] == UNKNOWN_VALUE)
++			return 0;
++
++		if (registers[compared] == dvd_word(command + 4))
++			return 1;
++	}
++	return 1;
++}
++
++/* Follow title end → manager script → next title. Carry register values
++   through all three steps because the next title may use them to pick a chapter. */
++static int next_manager_title(const struct dvd_info *dvd, int title)
++{
++	const pgc_t *playback = dvd->titles[title].playback;
++	if (!playback || !playback->command_tbl)
++		return 0;
++
++	int registers[REGISTER_COUNT];
++	for (int i = 0; i < REGISTER_COUNT; i++)
++		registers[i] = UNKNOWN_VALUE;
++
++	const pgc_command_tbl_t *end = playback->command_tbl;
++	const uint8_t *call = after_assignments(end->post_cmds, end->nr_of_post, registers);
++	int chain = called_manager_chain(call);
++	const pgc_command_tbl_t *menu = manager_commands(dvd->manager_menus, chain);
++	if (!menu)
++		return 0;
++
++	const uint8_t *jump = after_assignments(menu->pre_cmds, menu->nr_of_pre, registers);
++	int next = jumped_title(jump);
++	if (next < 1 || next > dvd->title_count || next == title + 1)
++		return 0;
++
++	if (!starts_at_beginning(dvd->titles[next - 1].playback, registers))
++		return 0;
++
++	return next;
++}
++
 +/* Read direct, unconditional title jumps. Earlier commands may only be
 +   no-ops or standalone assignments to a general-purpose register. */
 +static int next_title_in_set(const pgc_t *pgc)
@@ -101,10 +269,13 @@ index ff87412..2d49ca9 100644
  void oxml_print(struct dvd_info *dvd_info) {
  	int j, i;
  
-@@ -148,6 +172,10 @@ void oxml_print(struct dvd_info *dvd_info) {
+@@ -148,6 +329,13 @@ void oxml_print(struct dvd_info *dvd_info) {
  		XMLDEF("length", "%.3f", dvd_info->titles[j].general.length);
  		XMLDEF("vts_id", "%.12s", dvd_info->titles[j].general.vts_id);
  
++		int next_title = next_manager_title(dvd_info, j);
++		if (next_title)
++			XMLDEF("next_title", "%d", next_title);
 +		int next = next_title_in_set(dvd_info->titles[j].playback);
 +		if (next)
 +			XMLDEF("next_ttn", "%d", next);
