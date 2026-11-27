@@ -275,8 +275,16 @@
       });
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          cp ${inputs.cldr}/common/transforms/Russian-Latin-BGN.xml \
+            src/Jellyfin.Extensions/RussianLatinBgn.xml
+        '';
+        postInstall = (old.postInstall or "") + ''
+          install -Dm644 ${inputs.cldr}/LICENSE "$out/share/licenses/jellyfin/CLDR"
+        '';
         patches = (old.patches or [ ]) ++ [
           ../patches/jellyfin-transliterate-before-diacritics.patch
+          ../patches/jellyfin-russian-bgn.patch
           ../patches/jellyfin-refresh-artwork-on-movie-change.patch
           # Jellyfin 12 still leaves disposed-session errors unhandled in the close callback.
           # Upstream: https://github.com/jellyfin/jellyfin/issues/16512

@@ -82,6 +82,11 @@ url = "gh:nix-community/disko/latest"
 [inputs.jellarr]
 url = "gh:booxter/jellarr/my-fork-plus-fix-plugin-404"
 
+# Russian BGN transliteration rules for Jellyfin.
+[inputs.cldr]
+url = "gh:unicode-org/cldr/release-48"
+type = "fetch"
+
 [inputs.vpnconfinement]
 url = "gh:Maroka-chan/VPN-Confinement"
 

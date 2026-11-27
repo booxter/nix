@@ -4,6 +4,10 @@ let
   qsvAvailable = gpu.vendor == "intel" && gpu.renderDevice != null;
 in
 {
+  # Compose Cyrillic combining sequences before BGN's Cyrillic-only filter.
+  systemd.services.jellyfin.environment.JELLYFIN_TRANSLITERATOR_ID =
+    "NFC; Russian-Latin/BGN; Any-Latin; Latin-Ascii; Lower; NFD; [:Nonspacing Mark:] Remove; [:Punctuation:] Remove;";
+
   host.jellyfinDeclarativeConfig = {
     system = {
       serverName = "main";
