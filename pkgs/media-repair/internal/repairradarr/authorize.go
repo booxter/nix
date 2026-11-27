@@ -44,7 +44,7 @@ func (adapter *Adapter) authorize(ctx context.Context, job jobs.Job, plan json.R
 	}
 	fresh, matches := fresh.ForSavedPlan(planned.Assembly())
 	if queue.DownloadID != job.DownloadID || !matches {
-		return authorizedRepair{}, &repair.BlockedError{Reason: "source or queue identity changed; collect a new plan"}
+		return authorizedRepair{}, &repair.BlockedError{Reason: "source or queue identity changed; collect a new plan", Code: jobs.OutcomeEvidenceChanged}
 	}
 
 	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}
@@ -84,7 +84,7 @@ func (adapter *Adapter) readQueuedCase(ctx context.Context, key jobs.QueueKey) (
 	if result.Err != nil {
 		return casebuilder.Assembly{}, repair.RetryableRead(result.Err)
 	}
-	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeOther); err != nil {
+	if err := repair.CheckEligibility(result.Findings); err != nil {
 		return casebuilder.Assembly{}, err
 	}
 	return *result.Case, nil

@@ -484,7 +484,7 @@ with subtest("an album that resumes downloading blocks the saved plan before imp
     unfinishedAlbum.succeed("touch /run/lidarr-fixture/downloading", "rm /run/pause-lidarr-repairs")
 
     detail = wait_for_json(
-        unfinishedAlbum, job, '.state == "blocked" and .reasonCode == "queue_not_ready"'
+        unfinishedAlbum, job, '.state == "blocked" and .reasonCode == "incomplete_download"'
     )
     assert detail["attempts"][0]["state"] == "blocked", detail
     assert submitted_imports(unfinishedAlbum) == []

@@ -94,7 +94,7 @@ with subtest("Repairr restarts with a saved movie plan and a saved album plan"):
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
     assert (
-        album["title"] == "Unfinished album download" and album["reasonCode"] == "queue_not_ready"
+        album["title"] == "Unfinished album download" and album["reasonCode"] == "incomplete_download"
     ), album
     assert set(album["findings"]) == {
         "incomplete_download",
@@ -104,7 +104,7 @@ with subtest("an unfinished album appears in the operator activity page"):
         "missing_artist_id",
     }, album
     page = browser_page("/activity?service=lidarr")
-    assert album["title"] in page and "Queue not ready" in page
+    assert album["title"] in page and "Waiting for download" in page
 
 with subtest("Repairr imports the movie and confirms it from Radarr history"):
     # Radarr publishes the new history entry only after receiving the command.

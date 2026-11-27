@@ -59,7 +59,7 @@ func (adapter *Adapter) authorize(
 	if result.Err != nil {
 		return lidarrrepair.AuthorizedImport{}, result.Err
 	}
-	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeQueueNotReady); err != nil {
+	if err := repair.CheckEligibility(result.Findings); err != nil {
 		return lidarrrepair.AuthorizedImport{}, err
 	}
 	if err := adapter.CheckImportState(queue.TrackedDownloadState, job.StableSince); err != nil {

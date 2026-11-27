@@ -164,11 +164,11 @@ func presentCollectionError(view *item, code jobs.Outcome, message string) {
 	switch code {
 	case jobs.OutcomeIncompleteDownload:
 		view.Status = "Waiting for download"
-		view.Explanation = "Radarr still reports the download as incomplete."
+		view.Explanation = "The download is still incomplete."
 		view.NextStep = "Wait for the download to finish."
 	case jobs.OutcomeQueueNotReady:
 		view.Status = "Queue not ready"
-		view.Explanation = "The Lidarr queue entry is not eligible for repair yet."
+		view.Explanation = "The queue entry is not eligible for repair yet."
 		view.NextStep = "Wait for the queue entry to become eligible for repair."
 	case jobs.OutcomeInvalidCueSheet:
 		view.Status = "Files need attention"

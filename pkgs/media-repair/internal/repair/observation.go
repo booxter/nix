@@ -19,7 +19,7 @@ type QueuePoll[Entry, Case any] struct {
 	FindComplete func(context.Context, []Entry) ([]queuefinalize.Entry, error)
 	NewJob       func(Entry) jobs.Job
 	Inspect      func(context.Context, Entry, json.RawMessage) pipeline.Result[Case]
-	StopReason   func(pipeline.Result[Case]) jobs.Outcome
+	ErrorOutcome func(error) jobs.Outcome
 	EncodeCase   func(Case) (jobs.InspectedCase, error)
 }
 
@@ -68,10 +68,16 @@ func (poll QueuePoll[Entry, Case]) Observe(ctx context.Context, saved []jobs.Job
 // or the error that prevented inspection, alongside the queue entry.
 func (poll QueuePoll[Entry, Case]) recordInspection(job *jobs.Job, result pipeline.Result[Case]) error {
 	if result.Case == nil {
-		job.CollectionOutcome = poll.StopReason(result)
 		job.Findings = result.Findings
+		job.CollectionOutcome = jobs.OutcomeOther
+		if len(result.Findings) > 0 {
+			job.CollectionOutcome = eligibilityOutcome(result.Findings)
+		}
 		if result.Err != nil {
 			job.CollectionError = result.Err.Error()
+			if poll.ErrorOutcome != nil {
+				job.CollectionOutcome = poll.ErrorOutcome(result.Err)
+			}
 		}
 		return nil
 	}

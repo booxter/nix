@@ -29,9 +29,9 @@ func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.O
 				TrackedDownloadState: entry.TrackedDownloadState,
 			}
 		},
-		Inspect:    adapter.inspectAlbum,
-		StopReason: albumStopReason,
-		EncodeCase: encodeEvidence,
+		Inspect:      adapter.inspectAlbum,
+		ErrorOutcome: albumInspectionError,
+		EncodeCase:   encodeEvidence,
 	}.Observe(ctx, saved)
 }
 
@@ -48,12 +48,9 @@ func (adapter *Adapter) inspectAlbum(ctx context.Context, entry lidarr.QueueReco
 	return adapter.Inspector.Inspect(ctx, entry, record)
 }
 
-func albumStopReason(result lidarrrepair.CollectionResult) jobs.Outcome {
-	if len(result.Findings) > 0 {
-		return jobs.OutcomeQueueNotReady
-	}
+func albumInspectionError(err error) jobs.Outcome {
 	var rejection *materialize.Rejection
-	if errors.As(result.Err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
+	if errors.As(err, &rejection) && rejection.Reason == materialize.FailureInvalidCueSheet {
 		return jobs.OutcomeInvalidCueSheet
 	}
 	return jobs.OutcomeOther

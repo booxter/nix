@@ -32,7 +32,7 @@ func (adapter *Adapter) InspectRemoval(ctx context.Context, key jobs.QueueKey) (
 	if result.Err != nil {
 		return jobs.InspectedCase{}, result.Err
 	}
-	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeQueueNotReady); err != nil {
+	if err := repair.CheckEligibility(result.Findings); err != nil {
 		return jobs.InspectedCase{}, err
 	}
 	return encodeEvidence(*result.Case)

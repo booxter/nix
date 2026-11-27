@@ -3,6 +3,7 @@ package repair
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -59,9 +60,17 @@ func ReadQueueEntry[Entry any](
 
 // A queued download can become ineligible while its plan waits to run.
 // Keep the inspection findings as the operator-visible reason for stopping.
-func CheckEligibility(findings []string, code jobs.Outcome) error {
+func CheckEligibility(findings []string) error {
 	if len(findings) == 0 {
 		return nil
 	}
-	return &BlockedError{Reason: strings.Join(findings, ", "), Code: code}
+	return &BlockedError{Reason: strings.Join(findings, ", "), Code: eligibilityOutcome(findings)}
+}
+
+// A download still in progress can become eligible on a later poll.
+func eligibilityOutcome(findings []string) jobs.Outcome {
+	if slices.Contains(findings, string(jobs.OutcomeIncompleteDownload)) {
+		return jobs.OutcomeIncompleteDownload
+	}
+	return jobs.OutcomeQueueNotReady
 }
