@@ -3,6 +3,7 @@ package repairui
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
@@ -21,6 +22,10 @@ type jobSummary struct {
 	Findings        []string     `json:"findings,omitempty"`
 	InspectionError string       `json:"inspectionError,omitempty"`
 	PendingAction   string       `json:"pendingAction,omitempty"`
+	UpdatedAt       time.Time    `json:"updatedAt"`
+	Status          string       `json:"status"`
+	Explanation     string       `json:"explanation"`
+	NextStep        string       `json:"nextStep,omitempty"`
 }
 
 type attemptResponse struct {
@@ -37,15 +42,11 @@ type attemptResponse struct {
 type jobDetail struct {
 	jobSummary
 	jobResponse
-	QueueID     int64             `json:"queueId"`
-	QueueURL    string            `json:"queueUrl,omitempty"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
-	Status      string            `json:"status"`
-	Explanation string            `json:"explanation"`
-	NextStep    string            `json:"nextStep,omitempty"`
-	Decision    *decision         `json:"decision,omitempty"`
-	RetryAt     time.Time         `json:"retryAt,omitzero"`
-	Attempts    []attemptResponse `json:"attempts"`
+	QueueID  int64             `json:"queueId"`
+	QueueURL string            `json:"queueUrl,omitempty"`
+	Decision *decision         `json:"decision,omitempty"`
+	RetryAt  time.Time         `json:"retryAt,omitzero"`
+	Attempts []attemptResponse `json:"attempts"`
 }
 
 func summarize(entry item) jobSummary {
@@ -60,6 +61,7 @@ func summarize(entry item) jobSummary {
 	return jobSummary{
 		ID: job.ID, Service: job.Service, Title: job.Title, Subject: entry.Subject,
 		State: job.State, ReasonCode: entry.Outcome, Reason: reason,
+		UpdatedAt: job.UpdatedAt, Status: entry.Status, Explanation: entry.Explanation, NextStep: entry.NextStep,
 		Findings: job.Findings, InspectionError: job.InspectionProblem(), PendingAction: job.PendingAction,
 	}
 }
@@ -76,10 +78,25 @@ func (app *Handler) listJobs(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusInternalServerError, "could not read jobs")
 		return
 	}
-	summaries := make([]jobSummary, 0, len(list.Items))
-	for _, entry := range list.Items {
-		summaries = append(summaries, summarize(entry))
+	// Inbox questions and their revision come from the same read as the list.
+	type listedJob struct {
+		jobSummary
+		*jobResponse
 	}
+	summaries := make([]listedJob, 0, len(list.Items))
+	for _, entry := range list.Items {
+		row := listedJob{jobSummary: summarize(entry)}
+		if filter.View == "inbox" {
+			actions := app.jobActions(entry.Job, entry.review)
+			row.jobResponse = &actions
+		}
+		summaries = append(summaries, row)
+	}
+	if filter.View == "inbox" {
+		app.setCSRFCookie(w)
+	}
+	w.Header().Set("X-Inbox-Count", strconv.Itoa(list.InboxCount))
+	w.Header().Set("X-Activity-Count", strconv.Itoa(list.ActivityCount))
 	writeJSON(w, summaries)
 }
 
@@ -93,8 +110,7 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	entry := present(job)
 	detail := jobDetail{
 		jobSummary: summarize(entry), jobResponse: app.jobActions(job, entry.review),
-		QueueID: job.QueueID, QueueURL: app.config.QueueURLs[job.Service], UpdatedAt: job.UpdatedAt,
-		Status: entry.Status, Explanation: entry.Explanation, NextStep: entry.NextStep,
+		QueueID: job.QueueID, QueueURL: app.config.QueueURLs[job.Service],
 		RetryAt:  job.PendingRetryAt(),
 		Attempts: make([]attemptResponse, 0, len(attempts)),
 	}

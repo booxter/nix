@@ -44,7 +44,7 @@
       <a href="?state=importing"{{if eq .State "importing"}} aria-current="page"{{end}}>Importing</a>
       <a href="?state=failed"{{if eq .State "failed"}} aria-current="page"{{end}}>Failed</a>
     </div>
-    {{if .Activity}}<p class="view-description">All current queue entries, including waiting downloads, work in progress, technical problems and declined repairs. <a href="/">{{.InboxCount}} need your input or a retry →</a></p>{{end}}
+    {{if .Activity}}<p class="view-description">All current queue entries, including waiting downloads, work in progress, technical problems and declined repairs. <a href="/"><span data-count="inbox"></span> need your input or a retry →</a></p>{{end}}
     {{end}}
     <form class="search" method="get">
       {{if .State}}<input type="hidden" name="state" value="{{.State}}">{{end}}
@@ -53,46 +53,19 @@
       <input id="search" name="q" type="search" value="{{.Query}}" placeholder="Album, artist, movie, release or reason">
       <button type="submit">Search</button>
     </form>
-    <p class="result-count">{{len .Items}} {{if eq (len .Items) 1}}item{{else}}items{{end}}{{if .Query}} matching “{{.Query}}”{{end}}</p>
-    {{if .Items}}
-    {{if .Inbox}}
-    <div class="action-inbox">
-      {{range .Items}}
-        <article class="action-item">
-          <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Status}}</span></div>
-          <h3><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></h3>
-          <p class="case-explanation">{{.Explanation}}</p>
-          {{if .Attention}}<div data-question-for="{{.Job.ID}}"><noscript>Enable JavaScript to answer this question.</noscript></div>{{end}}
-          <div class="item-links"><a href="/jobs/{{.Job.ID}}">Details</a><a href="/jobs/{{.Job.ID}}/remove">Remove from queue…</a></div>
-          {{if ne .Subject .Job.Title}}<details class="release-name"><summary>Download name</summary><p>{{.Job.Title}}</p></details>{{end}}
-        </article>
-      {{end}}
-    </div>
-    {{else}}
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Service</th><th>Item</th><th>Status</th><th>Why / next step</th><th>Last checked</th></tr></thead>
-        <tbody>
-          {{range .Items}}
-          <tr>
-            <td><span class="service">{{.Job.Service}}</span></td>
-            <td><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></td>
-            <td><span class="badge">{{.Status}}</span></td>
-            <td>{{.Explanation}}{{if .NextStep}}<small>{{.NextStep}}</small>{{end}}</td>
-            <td>{{template "local-time" .Job.UpdatedAt}}</td>
-          </tr>
-          {{end}}
-        </tbody>
-      </table>
-    </div>
-    {{end}}
-    {{else}}
-    {{if and .Inbox (not .Query)}}<div class="empty"><h2>Nothing needs your input right now.</h2><p>Other downloads may still be waiting, processing or blocked by technical problems. <a href="/activity">See queue activity ({{.ActivityCount}})</a>.</p></div>
-    {{else}}<p class="empty">No entries match this view.</p>{{end}}
-    {{end}}
+    <section id="listing" data-api="{{.ListURL}}">
+      <p role="status">Loading items…</p>
+      <noscript>Enable JavaScript to view the list.</noscript>
+      {{if .Inbox}}<div class="action-inbox"></div>
+      {{else}}<div class="table-wrap" hidden>
+        <table>
+          <thead><tr><th>Service</th><th>Item</th><th>Status</th><th>Why / next step</th><th>Last checked</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>{{end}}
+    </section>
+    <script src="/assets/listing.js" defer></script>
     {{end}}
   </main>
 </body>
 </html>
-
-{{define "local-time"}}<time datetime="{{.Format "2006-01-02T15:04:05Z07:00"}}">{{.Format "2006-01-02 15:04 MST"}}</time>{{end}}

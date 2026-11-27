@@ -109,27 +109,3 @@ function answerForm(job) {
   form.className = "response-form";
   return form;
 }
-
-
-// A question may have closed since the inbox was listed. Use the revision and
-// choices from the same response, just as the job page does.
-async function loadInboxQuestion(slot) {
-  const id = slot.dataset.questionFor;
-  try {
-    const response = await fetch("/api/jobs/" + id + "/question");
-    if (response.status === 404) {
-      slot.textContent = "This question is no longer open.";
-      return;
-    }
-    if (!response.ok) throw new Error();
-    const job = await response.json();
-    if (job.actions.answer) slot.replaceChildren(answerForm({ ...job, id }));
-    else slot.textContent = "This question is no longer open.";
-  } catch {
-    slot.textContent = "Could not load the question. Refresh the page to try again.";
-  }
-}
-
-for (const slot of document.querySelectorAll("[data-question-for]")) {
-  loadInboxQuestion(slot);
-}

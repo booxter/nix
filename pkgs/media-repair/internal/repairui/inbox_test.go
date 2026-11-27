@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -62,16 +61,16 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	if err := fixture.store.RequestReconsideration(context.Background(), pending, planning.Answer{Guidance: "use CD"}, time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	response := fixture.get("/")
-	body := response.Body.String()
-	if response.Code != http.StatusOK || !strings.Contains(body, "Choose my release") {
-		t.Fatalf("missing actionable release: %d %s", response.Code, body)
+	inbox := fixture.listJobs(t, "view=inbox")
+	if len(inbox) != 1 || inbox[0].Title != "Choose my release" {
+		t.Fatalf("unexpected inbox: %+v", inbox)
+	}
+	titles := map[string]bool{}
+	for _, job := range fixture.listJobs(t, "view=activity") {
+		titles[job.Title] = true
 	}
 	for _, title := range []string{"Incomplete download", "Technical problem", "Missing audio", "Already processing", "Already answered"} {
-		if strings.Contains(body, title) {
-			t.Errorf("inbox includes non-actionable item %q", title)
-		}
-		if !strings.Contains(fixture.get("/activity").Body.String(), title) {
+		if !titles[title] {
 			t.Errorf("activity lost %q", title)
 		}
 	}
@@ -118,7 +117,7 @@ func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 		current.SelectedReleaseID != 12 || current.Guidance != note || len(fixture.wakes) != 1 {
 		t.Fatalf("answer not persisted: %+v, %v", current, err)
 	}
-	if strings.Contains(fixture.get("/").Body.String(), "Choose my release") {
+	if len(fixture.listJobs(t, "view=inbox")) != 0 {
 		t.Fatal("answered item remains in inbox")
 	}
 	response = httptest.NewRecorder()

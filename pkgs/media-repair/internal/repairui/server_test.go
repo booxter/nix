@@ -3,7 +3,6 @@ package repairui
 import (
 	"context"
 	"encoding/json"
-	"html"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -84,13 +83,11 @@ func TestRemovalWakesSchedulerAndLeavesCurrentListAfterCompletion(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	current := fixture.get("/lidarr")
-	history := fixture.get("/history")
-	if current.Code != http.StatusOK || strings.Contains(current.Body.String(), html.EscapeString(fixture.job.Title)) {
-		t.Fatalf("removed item remains current: %s", current.Body.String())
+	if current := fixture.listJobs(t, "view=inbox&service=lidarr"); len(current) != 0 {
+		t.Fatalf("removed item remains current: %+v", current)
 	}
-	if history.Code != http.StatusOK || !strings.Contains(history.Body.String(), html.EscapeString(fixture.job.Title)) {
-		t.Fatalf("removed item missing from history: %s", history.Body.String())
+	if history := fixture.listJobs(t, "view=history"); len(history) != 1 || history[0].ID != job.ID {
+		t.Fatalf("removed item missing from history: %+v", history)
 	}
 }
 
@@ -148,13 +145,14 @@ func TestNewReviewSavesGuidanceWhileInspectionIsBlocked(t *testing.T) {
 	}
 }
 
-func TestActivityEscapesTitles(t *testing.T) {
-	fixture := newFixture(t)
-	response := fixture.get("/activity")
-	if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "<script>") ||
-		!strings.Contains(response.Body.String(), "&lt;script&gt;") {
-		t.Fatalf("unsafe title: %s", response.Body.String())
+func (fixture *fixture) listJobs(t *testing.T, query string) []jobSummary {
+	t.Helper()
+	response := fixture.get("/api/jobs?" + query)
+	var listed []jobSummary
+	if err := json.Unmarshal(response.Body.Bytes(), &listed); err != nil || response.Code != http.StatusOK {
+		t.Fatalf("list jobs: %d %s", response.Code, response.Body)
 	}
+	return listed
 }
 
 func TestJobsAPIExplainsSavedRadarrStop(t *testing.T) {
@@ -206,35 +204,20 @@ func TestBlockedActivityExplainsReasonsAndSearchesMediaIdentity(t *testing.T) {
 		}
 	}
 
-	response := fixture.get("/?state=blocked")
-	body := response.Body.String()
-	for _, want := range []string{
-		"3 items", "Moby — All Visible Objects", "These remixes do not match",
-		"Planner failed", "No automatic repair chosen", "Waiting for download",
-		"Radarr still reports the download as incomplete.",
-	} {
-		if response.Code != http.StatusOK || !strings.Contains(body, want) {
-			t.Fatalf("blocked page missing %q: %d %s", want, response.Code, body)
-		}
+	const filter = "view=activity&state=blocked"
+	listed := fixture.listJobs(t, filter)
+	if len(listed) != 3 {
+		t.Fatalf("blocked jobs: %+v", listed)
 	}
-	for _, internal := range []string{"unsafe_to_repair", "unsupported_queue_state", "no_repair"} {
-		if strings.Contains(body, internal) {
-			t.Errorf("list exposes internal code %q", internal)
-		}
+	movie := fixture.listJobs(t, filter+"&q=incomplete_download")
+	if len(movie) != 1 || movie[0].Title != "unfinished movie" || movie[0].Status != "Waiting for download" {
+		t.Fatalf("search by inspection problem: %+v", movie)
 	}
-
-	response = fixture.get("/?state=blocked&q=mObY")
-	body = response.Body.String()
-	if response.Code != http.StatusOK || !strings.Contains(body, "1 item") ||
-		!strings.Contains(body, "Moby — All Visible Objects") || strings.Contains(body, "unfinished movie") {
-		t.Fatalf("search did not filter by canonical media identity: %d %s", response.Code, body)
+	album := fixture.listJobs(t, filter+"&q=mObY")
+	if len(album) != 1 || album[0].Subject != "Moby — All Visible Objects" || !strings.Contains(album[0].Explanation, "These remixes do not match") {
+		t.Fatalf("search by media identity: %+v", album)
 	}
-	response = fixture.get("/?state=blocked&q=missing-title")
-	if !strings.Contains(response.Body.String(), "No entries match this view.") {
-		t.Fatalf("search without matches: %s", response.Body.String())
-	}
-	response = fixture.get("/?state=blocked&q=incomplete_download")
-	if !strings.Contains(response.Body.String(), "unfinished movie") {
-		t.Fatalf("recorded inspection error is not searchable: %s", response.Body.String())
+	if missing := fixture.listJobs(t, filter+"&q=missing-title"); len(missing) != 0 {
+		t.Fatalf("unexpected match: %+v", missing)
 	}
 }

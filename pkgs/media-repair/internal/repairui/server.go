@@ -23,7 +23,7 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js actions.js job.js
+//go:embed local-time.js actions.js job.js listing.js
 var scripts embed.FS
 
 type Config struct {
@@ -64,7 +64,7 @@ type decision struct {
 }
 
 type page struct {
-	jobListing
+	ListURL  string
 	Title    string
 	Service  jobs.Service
 	History  bool
@@ -160,12 +160,11 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 		view.Notice = "Your request was saved. Repairr will review it; follow its progress in Queue activity."
 	}
 
-	list, err := app.filteredJobs(r.Context(), filter)
-	if err != nil {
-		http.Error(w, "read jobs", http.StatusInternalServerError)
-		return
-	}
-	view.jobListing = list
+	query := r.URL.Query()
+	query.Del("submitted")
+	query.Set("view", filter.View)
+	query.Set("service", string(filter.Service))
+	view.ListURL = "/api/jobs?" + query.Encode()
 	app.render(w, view)
 }
 

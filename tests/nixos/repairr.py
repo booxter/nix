@@ -22,16 +22,16 @@ def wait_for_job(listing, condition="true"):
     return json.loads(machine.wait_until_succeeds(command, timeout=60))
 
 
-def job_page(job_id):
-    # The detail page loads its data from the API after navigation.
+def browser_page(path):
+    # The operator pages load their data from the API after navigation.
     return machine.succeed(
         "chromium --headless --no-sandbox --disable-dev-shm-usage --disable-gpu "
-        f"--virtual-time-budget=5000 --dump-dom {REPAIRR}/jobs/{job_id} 2>/dev/null"
+        f"--virtual-time-budget=5000 --dump-dom {shlex.quote(REPAIRR + path)} 2>/dev/null"
     )
 
 
 def check_imported_files_page(job_id, files):
-    page = job_page(job_id)
+    page = browser_page(f"/jobs/{job_id}")
     assert "Next retry" not in page, page
     assert f"Imported files ({len(files)})" in page, page
     assert "Source path" in page and "Library path" in page, page
@@ -55,7 +55,7 @@ with subtest("both apps wait and retry when the planner returns"):
         assert detail["reasonCode"] == "planner_retry_scheduled", detail
         assert detail["attempts"] == [], detail
         deadlines.append(detail["retryAt"])
-        page = job_page(job["id"])
+        page = browser_page(f"/jobs/{job['id']}")
         assert "Planner retry scheduled" in page and "Next retry" in page, page
         assert f'datetime="{detail["retryAt"]}"' in page, page
         assert read_json(f"http://127.0.0.1:{port}/fixture/imports") == []
@@ -103,7 +103,7 @@ with subtest("an unfinished album appears in the operator activity page"):
         "missing_album_id",
         "missing_artist_id",
     }, album
-    page = machine.succeed(f"curl -fsS '{REPAIRR}/activity?service=lidarr'")
+    page = browser_page("/activity?service=lidarr")
     assert album["title"] in page and "Queue not ready" in page
 
 with subtest("Repairr imports the movie and confirms it from Radarr history"):
@@ -168,7 +168,8 @@ with subtest("the service user can reopen saved jobs with the media services off
     assert machine.succeed("stat -c %U /var/lib/repairr/jobs.db").strip() == "media-repair-worker"
     machine.succeed("systemctl stop nginx.service", "systemctl restart repairr.service")
     machine.wait_until_succeeds(f"curl -fsS {REPAIRR}/health")
-    assert read_json(UNFINISHED_ALBUM) == [album]
+    (reopened_album,) = read_json(UNFINISHED_ALBUM)
+    assert (reopened_album["id"], reopened_album["findings"]) == (album["id"], album["findings"])
     assert read_json(detail)["attempts"] == [attempt]
     assert read_json(album_url)["attempts"] == [album_attempt]
 

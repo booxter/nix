@@ -9,6 +9,6 @@ const localTime = new Intl.DateTimeFormat(undefined, {
   timeZoneName: "short",
 });
 
-for (const element of document.querySelectorAll("time[datetime]")) {
-  element.textContent = localTime.format(new Date(element.dateTime));
+function timestamp(value) {
+  return element("time", { datetime: value }, localTime.format(new Date(value)));
 }

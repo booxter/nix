@@ -1,8 +1,4 @@
-/* global document, window, URL, fetch, element, actionForm, guidance, runtimeLimit, answerForm, localTime */
-
-function timestamp(value) {
-  return element("time", { datetime: value }, localTime.format(new Date(value)));
-}
+/* global document, window, URL, fetch, element, actionForm, guidance, runtimeLimit, answerForm, timestamp */
 
 function row(list, label, value) {
   if (value) list.append(element("dt", {}, label), element("dd", {}, value));
