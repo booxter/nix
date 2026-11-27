@@ -16,7 +16,7 @@ import (
 )
 
 type Planner interface {
-	Plan(context.Context, contracts.RepairCaseV3, planning.Options) (contracts.RepairDecisionV3, error)
+	PlanRadarr(context.Context, contracts.RepairCaseV3, planning.Options) (contracts.RepairDecisionV3, error)
 }
 
 func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.Observation, error) {
@@ -54,7 +54,7 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 		return repair.Decision{}, err
 	}
 
-	decision, err := adapter.Planner.Plan(ctx, evidence.Case, repair.Guidance(job))
+	decision, err := adapter.Planner.PlanRadarr(ctx, evidence.Case, repair.Guidance(job))
 	if err != nil {
 		return repair.Decision{}, err
 	}

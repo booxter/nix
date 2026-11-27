@@ -43,7 +43,7 @@ func TestClientPlansThroughUnixSocket(t *testing.T) {
 	}))
 	client := testClient(t, socketPath, time.Second)
 
-	decision, err := client.Plan(context.Background(), repairCase, planning.Options{})
+	decision, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestClientRejectsInvalidResponses(t *testing.T) {
 			t.Parallel()
 			socketPath := serveUnix(t, test.handler)
 			client := testClient(t, socketPath, time.Second)
-			_, err := client.Plan(context.Background(), repairCase, planning.Options{})
+			_, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{})
 			assertFailure(t, err, test.kind, test.status)
 			if strings.Contains(fmt.Sprint(err), "do-not-expose-response") {
 				t.Fatalf("error exposes response body: %v", err)
@@ -128,7 +128,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 		t.Parallel()
 		socketPath := filepath.Join(t.TempDir(), "missing.sock")
 		client := testClient(t, socketPath, time.Second)
-		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
+		_, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureUnavailable, 0)
 		if strings.Contains(err.Error(), socketPath) {
 			t.Fatalf("error exposes socket path: %v", err)
@@ -151,7 +151,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 			t.Fatal(err)
 		}
 		client := testClient(t, socketPath, time.Second)
-		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
+		_, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureUnavailable, 0)
 		if strings.Contains(err.Error(), socketPath) {
 			t.Fatalf("error exposes socket path: %v", err)
@@ -167,7 +167,7 @@ func TestClientClassifiesUnavailablePlannerAndTimeout(t *testing.T) {
 			<-request.Context().Done()
 		}))
 		client := testClient(t, socketPath, 20*time.Millisecond)
-		_, err := client.Plan(context.Background(), repairCase, planning.Options{})
+		_, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{})
 		assertFailure(t, err, FailureTimeout, 0)
 	})
 }
@@ -182,7 +182,7 @@ func TestClientHonorsCallerCancellation(t *testing.T) {
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := client.Plan(ctx, fixtureCase(t), planning.Options{})
+	_, err := client.PlanRadarr(ctx, fixtureCase(t), planning.Options{})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v", err)
 	}
@@ -194,7 +194,7 @@ func TestClientRejectsInvalidCase(t *testing.T) {
 	repairCase := fixtureCase(t)
 	repairCase.CaseID = "sha256:" + strings.Repeat("f", 64)
 	client := testClient(t, "/run/planner.sock", time.Second)
-	if _, err := client.Plan(context.Background(), repairCase, planning.Options{}); err == nil {
+	if _, err := client.PlanRadarr(context.Background(), repairCase, planning.Options{}); err == nil {
 		t.Fatal("invalid repair case was accepted")
 	}
 }

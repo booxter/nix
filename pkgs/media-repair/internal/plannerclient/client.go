@@ -12,16 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/booxter/nix-config/media-repair/contracts"
-	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
-const (
-	radarrPlanningURL       = "http://planner/radarr/plan"
-	lidarrPlanningURL       = "http://planner/lidarr/plan"
-	maxDecisionResponseSize = 64 << 10
-)
+const maxDecisionResponseSize = 64 << 10
 
 type FailureKind uint8
 
@@ -98,38 +91,6 @@ func (client *Client) Close() {
 	if client != nil && client.transport != nil {
 		client.transport.CloseIdleConnections()
 	}
-}
-
-func (client *Client) Plan(
-	ctx context.Context,
-	repairCase contracts.RepairCaseV3,
-	options planningrunner.Options,
-) (contracts.RepairDecisionV3, error) {
-	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
-		return contracts.RepairDecisionV3{}, fmt.Errorf("planner client is not configured")
-	}
-	caseData, err := contracts.EncodeCase(repairCase)
-	if err != nil {
-		return contracts.RepairDecisionV3{}, fmt.Errorf("construct planner request: %w", err)
-	}
-
-	payload, err := encodeRequest(caseData, options)
-	if err != nil {
-		return contracts.RepairDecisionV3{}, err
-	}
-
-	data, err := client.postPlan(ctx, radarrPlanningURL, payload)
-	if err != nil {
-		return contracts.RepairDecisionV3{}, err
-	}
-	decision, err := contracts.DecodeDecision(data)
-	if err != nil {
-		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse, cause: err}
-	}
-	if decision.CaseID() != repairCase.CaseID {
-		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse}
-	}
-	return decision, nil
 }
 
 func (client *Client) postPlan(ctx context.Context, endpoint string, payload []byte) ([]byte, error) {
