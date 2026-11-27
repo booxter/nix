@@ -97,6 +97,7 @@ type titleXML struct {
 	Subtitles      []subtitleXML `xml:"subp"`
 	Chapters       []chapterXML  `xml:"chapter"`
 	NextTitleInSet int           `xml:"next_ttn"`
+	NextTitle      int           `xml:"next_title"`
 	EquivalentTo   int           `xml:"equivalent_to"`
 }
 
@@ -158,7 +159,11 @@ func decodeTitles(data []byte) ([]Title, error) {
 		})
 	}
 	for index, raw := range disc.Titles {
-		if next := nextDVDTitle(titles, raw.TitleSet, raw.NextTitleInSet); next != raw.Number {
+		next := raw.NextTitle
+		if next == 0 {
+			next = nextDVDTitle(titles, raw.TitleSet, raw.NextTitleInSet)
+		}
+		if next > 0 && next <= len(titles) && next != raw.Number {
 			titles[index].NextTitle = next
 		}
 	}

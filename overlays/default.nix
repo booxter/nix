@@ -286,6 +286,13 @@
         ];
       });
 
+      sabnzbd = prev.sabnzbd.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../patches/sabnzbd-cancel-multiple-par2-sets.patch
+          ../patches/sabnzbd-publish-connection-before-connect.patch
+        ];
+      });
+
       vikunja = prev.vikunja.overrideAttrs (
         old:
         let

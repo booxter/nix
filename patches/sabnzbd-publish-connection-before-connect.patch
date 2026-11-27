@@ -1,0 +1,35 @@
+diff --git a/sabnzbd/newswrapper.py b/sabnzbd/newswrapper.py
+--- a/sabnzbd/newswrapper.py
++++ b/sabnzbd/newswrapper.py
+@@ -133,6 +133,7 @@ class NewsWrapper:
+         # On connect the first "response" will be 200 Welcome
+         self._response_queue.append(None)
+         self.concurrent_requests.acquire()
++        self.nntp.start()
+ 
+     def finish_connect(self, code: int, message: str) -> None:
+         """Perform login options"""
+@@ -595,6 +596,8 @@ class NNTP:
+         self.sock: socket.socket | ssl.SSLSocket = socket.socket(self.addrinfo.family, self.addrinfo.type)
+         self.fileno: int = self.sock.fileno()
+ 
++    def start(self):
++        """Connect after the caller has published the connection and greeting state."""
+         # Open the connection in a separate thread due to avoid blocking
+         # For server-testing we do want blocking
+         if not self.nw.blocking:
+diff --git a/tests/test_newswrapper.py b/tests/test_newswrapper.py
+--- a/tests/test_newswrapper.py
++++ b/tests/test_newswrapper.py
+@@ -173,9 +173,10 @@ class TestNewsWrapper:
+         # Do we expect failure to connect?
+         if not can_connect:
+             with pytest.raises(OSError):
+-                newswrapper.NNTP(nw, nw.server.info)
++                newswrapper.NNTP(nw, nw.server.info).start()
+         else:
+             nntp = newswrapper.NNTP(nw, nw.server.info)
++            nntp.start()
+             assert nntp.sock.recv(len(TEST_DATA)) == TEST_DATA
+ 
+             # Assert SSL data
