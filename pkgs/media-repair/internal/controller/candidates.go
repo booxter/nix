@@ -3,6 +3,8 @@ package controller
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 type CandidateRejectionReason string
@@ -50,7 +52,7 @@ func (candidate queueCandidate) hasSupportedSource() bool {
 }
 
 func (record RadarrQueueRecord) downloadComplete() bool {
-	return record.Status == "completed" && record.SizeRemainingBytes == 0
+	return servarr.DownloadComplete(string(record.Status), record.SizeRemainingBytes)
 }
 
 // Radarr must have finished the download and reported a warning about its import.

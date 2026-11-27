@@ -6,6 +6,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/pipeline"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 // A download can disappear between scans. The previous record identifies
@@ -76,7 +77,7 @@ func downloadFindings(queue lidarr.QueueRecord) []string {
 	if queue.DownloadID == "" {
 		findings = append(findings, "missing_download_id")
 	}
-	if queue.Status != "completed" {
+	if !servarr.DownloadComplete(string(queue.Status), queue.SizeRemainingBytes) {
 		findings = append(findings, "incomplete_download")
 	}
 	// Leave an active or finished import to Lidarr even if it also reports a warning.

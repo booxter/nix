@@ -306,6 +306,16 @@ func requireAlbumEvidence(t *testing.T, result CollectionResult) *Evidence {
 	return result.Case
 }
 
+func TestAlbumWithBytesRemainingWaitsForDownload(t *testing.T) {
+	queue := evidenceQueue(t.TempDir())
+	queue.SizeRemainingBytes = 1
+	collector := NewEvidenceCollector(&fakeLidarr{}, &fakeWorker{})
+	result := collector.Inspect(t.Context(), queue, nil)
+	if result.Err != nil || result.Case != nil || !slices.Contains(result.Findings, "incomplete_download") {
+		t.Fatalf("expected an incomplete download, got %+v", result)
+	}
+}
+
 func evidenceQueue(download string) lidarr.QueueRecord {
 	albumID, artistID := int64(3), int64(2)
 	return lidarr.QueueRecord{
