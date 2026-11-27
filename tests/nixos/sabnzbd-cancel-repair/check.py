@@ -1,41 +1,9 @@
 """Cancel a multi-set repair through the API, then delete the cancelled job."""
 
-import json
 import sys
-import time
 from pathlib import Path
-from urllib.parse import urlencode
-from urllib.request import urlopen
 
-
-def api(mode: str, **parameters):
-    query = urlencode(
-        {
-            "mode": mode,
-            "apikey": "0123456789abcdef0123456789abcdef",
-            "output": "json",
-            **parameters,
-        }
-    )
-    with urlopen(f"http://127.0.0.1:8080/api?{query}", timeout=10) as response:
-        return json.load(response)
-
-
-def wait_for(predicate, description: str, timeout: int = 30):
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        result = predicate()
-        if result:
-            return result
-        time.sleep(0.1)
-    raise AssertionError(f"Timed out waiting for {description}")
-
-
-def history(job_id: str):
-    return next(
-        (slot for slot in api("history")["history"]["slots"] if slot["nzo_id"] == job_id),
-        None,
-    )
+from sabnzbd_test import api, history, wait_for
 
 
 def main() -> None:
