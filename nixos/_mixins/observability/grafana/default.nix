@@ -99,6 +99,11 @@ in
     };
     services.grafana = {
       enable = true;
+      declarativePlugins = with pkgs.grafanaPlugins; [
+        prometheus
+        loki
+        tempo
+      ];
       settings = {
         database = {
           # Reduce transient SQLITE_BUSY failures during concurrent dashboard refreshes.
