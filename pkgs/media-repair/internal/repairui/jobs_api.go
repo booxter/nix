@@ -29,6 +29,7 @@ type attemptResponse struct {
 	ReasonCode jobs.Outcome           `json:"reasonCode,omitempty"`
 	Reason     string                 `json:"reason,omitempty"`
 	CommandID  int64                  `json:"commandId,omitempty"`
+	OutputPath string                 `json:"outputPath,omitempty"`
 	Receipt    *servarr.ImportReceipt `json:"receipt,omitempty"`
 	Question   *planning.Question     `json:"question,omitempty"`
 }
@@ -36,8 +37,16 @@ type attemptResponse struct {
 type jobDetail struct {
 	jobSummary
 	jobResponse
-	RetryAt  time.Time         `json:"retryAt,omitzero"`
-	Attempts []attemptResponse `json:"attempts"`
+	QueueID     int64             `json:"queueId"`
+	QueueURL    string            `json:"queueUrl,omitempty"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+	Status      string            `json:"status"`
+	Explanation string            `json:"explanation"`
+	NextStep    string            `json:"nextStep,omitempty"`
+	Guidance    string            `json:"guidance,omitempty"`
+	Decision    *decision         `json:"decision,omitempty"`
+	RetryAt     time.Time         `json:"retryAt,omitzero"`
+	Attempts    []attemptResponse `json:"attempts"`
 }
 
 func summarize(entry item) jobSummary {
@@ -85,14 +94,19 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	entry := present(job)
 	detail := jobDetail{
 		jobSummary: summarize(entry), jobResponse: app.jobActions(job, entry.review),
+		QueueID: job.QueueID, QueueURL: app.config.QueueURLs[job.Service], UpdatedAt: job.UpdatedAt,
+		Status: entry.Status, Explanation: entry.Explanation, NextStep: entry.NextStep, Guidance: job.Guidance,
 		RetryAt:  job.PendingRetryAt(),
 		Attempts: make([]attemptResponse, 0, len(attempts)),
+	}
+	if entry.Decision.Action != "" {
+		detail.Decision = &entry.Decision
 	}
 	for _, attempt := range attempts {
 		detail.Attempts = append(detail.Attempts, attemptResponse{
 			Number: attempt.Number, State: attempt.State,
 			ReasonCode: attempt.Outcome, Reason: attempt.Reason,
-			CommandID: attempt.CommandID, Receipt: attempt.ImportReceipt, Question: attempt.Question,
+			CommandID: attempt.CommandID, OutputPath: attempt.OutputPath, Receipt: attempt.ImportReceipt, Question: attempt.Question,
 		})
 	}
 	app.setCSRFCookie(w)

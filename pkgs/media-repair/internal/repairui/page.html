@@ -20,94 +20,12 @@
   <main>
     <h1>{{.Title}}</h1>
     {{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
-    {{if .Selected}}
-    {{$entry := .Selected}}
-    <article class="case">
-      <div class="case-heading">
-        <div><span class="service">{{$entry.Job.Service}}</span><h2>{{$entry.Subject}}</h2></div>
-        <div class="case-actions">
-          <span class="badge">{{$entry.Status}}</span>
-          {{if $entry.Actions.remove}}<a class="remove-link" href="/jobs/{{$entry.Job.ID}}/remove" title="Remove from queue">×</a>{{end}}
-        </div>
-      </div>
-      <p class="case-explanation">{{$entry.Explanation}}</p>
-      {{$retryAt := $entry.Job.PendingRetryAt}}
-      {{if and $entry.Attention (not .ConfirmRemoval)}}{{template "response-form" $entry}}
-      {{else if not $retryAt.IsZero}}<p class="next-step"><strong>Next retry:</strong> {{template "local-time" $retryAt}}</p>
-      {{else if $entry.NextStep}}<p class="next-step"><strong>Next step:</strong> {{$entry.NextStep}}</p>{{end}}
-      <details class="technical-details">
-        <summary>Release and technical details</summary>
-        <dl>
-          <dt>Release</dt><dd>{{$entry.Job.Title}}</dd>
-          <dt>Job / queue</dt><dd>#{{$entry.Job.ID}} / #{{$entry.Job.QueueID}}</dd>
-          <dt>Last checked</dt><dd>{{template "local-time" $entry.Job.UpdatedAt}}</dd>
-          <dt>Internal state</dt><dd>{{$entry.Job.State}}</dd>
-          {{with $entry.Job.InspectionProblem}}<dt>Inspection problem</dt><dd>{{.}}</dd>{{end}}
-          {{if $entry.Job.Reason}}<dt>Recorded reason</dt><dd>{{$entry.Job.Reason}}</dd>{{end}}
-          {{if $entry.Decision.Action}}<dt>Last planner action</dt><dd>{{$entry.Decision.Action}} · {{$entry.Decision.Reason}}</dd>
-          <dt>Last explanation</dt><dd>{{$entry.Decision.Explanation}}</dd>{{end}}
-        </dl>
-      </details>
-
-      {{if .ConfirmRemoval}}
-      <section class="remove-confirmation">
-        <h3>Remove from {{$entry.Job.Service}} queue?</h3>
-        <p>This removes the queue entry. SABnzbd downloads and their remaining files are deleted; torrents are retained. Library files are kept and the release is not blocklisted.</p>
-        <form method="post" action="/api/jobs/{{$entry.Job.ID}}/remove" data-return-to="/jobs/{{$entry.Job.ID}}">
-          {{template "action-fields" $entry}}
-          <button class="danger-button" type="submit">Remove from queue</button>
-          <a class="button secondary-button" href="/jobs/{{$entry.Job.ID}}">Cancel</a>
-          {{template "action-message"}}
-        </form>
-      </section>
-      {{end}}
-
-      {{if and $entry.Actions.reconsider (not .ConfirmRemoval)}}
-      <details class="nudge">
-        <summary>Advanced: request a new review</summary>
-        <form method="post" action="/api/jobs/{{$entry.Job.ID}}/reconsider" data-return-to="/jobs/{{$entry.Job.ID}}">
-          {{template "action-fields" $entry}}
-          <label for="guidance">Guidance</label>
-          <textarea id="guidance" name="guidance" maxlength="2000">{{$entry.Job.Guidance}}</textarea>
-          {{if eq $entry.Job.Service "radarr"}}
-          <fieldset>
-            <legend>Job-specific authorization</legend>
-            <label class="check"><input type="checkbox" name="override_runtime_difference"> Allow a larger runtime difference</label>
-            <label for="runtime">Maximum difference in minutes</label>
-            <input id="runtime" name="runtime_minutes" type="number" min="1" max="60" value="15">
-          </fieldset>
-          {{end}}
-          <button type="submit">Reconsider</button>
-          {{template "action-message"}}
-        </form>
-      </details>
-      {{end}}
-
-      {{range .Attempts}}
-      <section class="decision">
-        <h3>Attempt {{.Number}} · {{.State}}</h3>
-        <p>{{.Reason}}</p>
-        {{if .CommandID}}<p>Import command #{{.CommandID}}</p>{{end}}
-        {{if .OutputPath}}<p><code>{{.OutputPath}}</code></p>{{end}}
-        {{with .ImportReceipt}}
-        <details>
-          <summary>Imported files ({{len .Files}})</summary>
-          <ul class="imported-files">
-            {{range .Files}}
-            <li>
-              <dl>
-                <dt>Source path</dt><dd><code>{{.DroppedPath}}</code></dd>
-                <dt>Library path</dt><dd><code>{{.ImportedPath}}</code></dd>
-              </dl>
-            </li>
-            {{end}}
-          </ul>
-        </details>
-        {{end}}
-      </section>
-      {{end}}
-      <p><a class="button" href="{{.QueueURL}}">Open {{$entry.Job.Service}} queue</a></p>
+    {{if .JobID}}
+    <article class="case" id="job" data-api="/api/jobs/{{.JobID}}">
+      <p role="status">Loading item details…</p>
+      <noscript>Enable JavaScript to view this item.</noscript>
     </article>
+    <script src="/assets/job.js" defer></script>
     {{else}}
     {{if .Inbox}}
     <p class="view-description">These downloads are still in the queue and need your answer or a retry. Answer here to send them back for processing.</p>

@@ -138,6 +138,7 @@ pkgs.testers.runNixOSTest {
         };
       };
       environment.systemPackages = [
+        pkgs.chromium
         pkgs.curl
         pkgs.jq
       ];

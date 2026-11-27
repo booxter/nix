@@ -23,7 +23,7 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js actions.js
+//go:embed local-time.js actions.js job.js
 var scripts embed.FS
 
 type Config struct {
@@ -66,18 +66,15 @@ type decision struct {
 
 type page struct {
 	jobListing
-	Title          string
-	Service        jobs.Service
-	History        bool
-	Selected       *item
-	Attempts       []jobs.Attempt
-	ConfirmRemoval bool
-	QueueURL       string
-	State          string
-	Query          string
-	Inbox          bool
-	Activity       bool
-	Notice         string
+	Title    string
+	Service  jobs.Service
+	History  bool
+	JobID    int64
+	State    string
+	Query    string
+	Inbox    bool
+	Activity bool
+	Notice   string
 }
 
 func New(config Config) (http.Handler, error) {
@@ -177,23 +174,14 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
-	job, attempts, err := app.readDetail(r)
+	id, err := requestedJobID(r)
 	if err != nil {
 		status, message := jobReadError(err)
 		http.Error(w, message, status)
 		return
 	}
 
-	selected := present(job)
-	selected.CSRF = app.csrf
-	app.render(w, page{
-		Title:          "Item details",
-		Service:        job.Service,
-		Selected:       &selected,
-		Attempts:       attempts,
-		ConfirmRemoval: selected.Actions["remove"] && r.URL.Path == fmt.Sprintf("/jobs/%d/remove", job.ID),
-		QueueURL:       app.config.QueueURLs[job.Service],
-	})
+	app.render(w, page{Title: "Item details", JobID: id})
 }
 
 func requestedJobID(r *http.Request) (int64, error) {

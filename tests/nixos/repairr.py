@@ -22,8 +22,16 @@ def wait_for_job(listing, condition="true"):
     return json.loads(machine.wait_until_succeeds(command, timeout=60))
 
 
+def job_page(job_id):
+    # The detail page loads its data from the API after navigation.
+    return machine.succeed(
+        "chromium --headless --no-sandbox --disable-dev-shm-usage --disable-gpu "
+        f"--virtual-time-budget=5000 --dump-dom {REPAIRR}/jobs/{job_id} 2>/dev/null"
+    )
+
+
 def check_imported_files_page(job_id, files):
-    page = machine.succeed(f"curl -fsS {REPAIRR}/jobs/{job_id}")
+    page = job_page(job_id)
     assert "Next retry" not in page, page
     assert f"Imported files ({len(files)})" in page, page
     assert "Source path" in page and "Library path" in page, page
@@ -47,10 +55,9 @@ with subtest("both apps wait and retry when the planner returns"):
         assert detail["reasonCode"] == "planner_retry_scheduled", detail
         assert detail["attempts"] == [], detail
         deadlines.append(detail["retryAt"])
-        page = machine.succeed(f"curl -fsS {REPAIRR}/jobs/{job['id']}")
-        retry_time = datetime.fromisoformat(detail["retryAt"]).strftime("%Y-%m-%d %H:%M %Z")
+        page = job_page(job["id"])
         assert "Planner retry scheduled" in page and "Next retry" in page, page
-        assert retry_time in page, page
+        assert f'datetime="{detail["retryAt"]}"' in page, page
         assert read_json(f"http://127.0.0.1:{port}/fixture/imports") == []
 
     # Give the scheduler time to run with a healthy planner before the retry is due.

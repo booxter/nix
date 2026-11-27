@@ -3,7 +3,6 @@ package repairui
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"html"
 	"net/http"
 	"net/http/httptest"
@@ -149,14 +148,12 @@ func TestNewReviewSavesGuidanceWhileInspectionIsBlocked(t *testing.T) {
 	}
 }
 
-func TestTitlesAreEscaped(t *testing.T) {
+func TestActivityEscapesTitles(t *testing.T) {
 	fixture := newFixture(t)
-	for _, path := range []string{"/activity", fmt.Sprintf("/jobs/%d", fixture.job.ID)} {
-		response := fixture.get(path)
-		if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "<script>") ||
-			!strings.Contains(response.Body.String(), "&lt;script&gt;") {
-			t.Fatalf("unsafe title at %s: %s", path, response.Body.String())
-		}
+	response := fixture.get("/activity")
+	if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "<script>") ||
+		!strings.Contains(response.Body.String(), "&lt;script&gt;") {
+		t.Fatalf("unsafe title: %s", response.Body.String())
 	}
 }
 

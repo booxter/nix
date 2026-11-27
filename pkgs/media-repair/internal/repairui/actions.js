@@ -1,6 +1,6 @@
 /* global document, FormData, fetch, window */
 
-for (const form of document.querySelectorAll("form[data-return-to]")) {
+function bindAction(form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const fields = new FormData(form);
@@ -42,4 +42,8 @@ for (const form of document.querySelectorAll("form[data-return-to]")) {
     message.hidden = false;
     button.disabled = false;
   });
+}
+
+for (const form of document.querySelectorAll("form[data-return-to]")) {
+  bindAction(form);
 }
