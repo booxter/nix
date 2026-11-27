@@ -52,6 +52,7 @@ func (adapter *Adapter) authorize(ctx context.Context, job jobs.Job, plan json.R
 		blocked := &repair.BlockedError{Reason: "decision rejected: " + string(reason)}
 		if reason == executioncheck.RuntimeMismatch {
 			blocked.Code = jobs.OutcomeRuntimeMismatch
+			blocked.Question = Question(fresh.Request, string(reason), nil)
 		}
 		return authorizedRepair{}, blocked
 	}

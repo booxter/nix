@@ -29,17 +29,23 @@ func reviewFor(job jobs.Job) review {
 	}
 }
 
-// Execution can stop for a retry or runtime override after planning has finished.
-// Otherwise the inbox shows the question saved by the planning step.
 func attentionFor(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Question {
 	if !job.InQueue || job.PendingAction != "" || job.CollectionError != "" || len(job.Findings) > 0 ||
 		(job.State != jobs.Blocked && job.State != jobs.Failed) || outcome == jobs.OutcomeEvidenceChanged {
 		return nil
 	}
-	if outcome != jobs.OutcomeInterrupted && outcome != jobs.OutcomeRuntimeMismatch && job.PlanResult != nil {
+	if job.AttemptQuestion != nil {
+		return job.AttemptQuestion
+	}
+	if job.PlanResult != nil && outcome != jobs.OutcomeInterrupted && outcome != jobs.OutcomeRuntimeMismatch {
 		return job.PlanResult.Question
 	}
+	return legacyQuestion(job, plan, outcome)
+}
 
+// Older daemons saved the stop reason without its question. Rebuild it for
+// jobs that were already waiting for an answer at upgrade time.
+func legacyQuestion(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Question {
 	var evidence struct {
 		Case json.RawMessage `json:"case"`
 	}
@@ -48,7 +54,7 @@ func attentionFor(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Q
 	}
 	switch outcome {
 	case jobs.OutcomeInterrupted:
-		return &planning.Question{Kind: planning.Retry, Title: "Resume interrupted repair", Text: "Resume this interrupted repair?", Button: "Resume repair"}
+		return planning.ResumeRepair()
 	case jobs.OutcomeRuntimeMismatch:
 		if job.Service == jobs.Radarr {
 			return movieQuestion(evidence.Case, "runtime_mismatch", nil)
@@ -58,7 +64,6 @@ func attentionFor(job jobs.Job, plan decision, outcome jobs.Outcome) *planning.Q
 		return planning.RetryPlanning()
 	}
 
-	// Older jobs and history entries stored the decision without its question.
 	if plan.Action == "no_repair" {
 		switch job.Service {
 		case jobs.Radarr:

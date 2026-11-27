@@ -104,20 +104,35 @@ def replace_file(vm, path):
     return replacement
 
 
-def import_receipt(vm, job_url):
+def import_receipt(vm, job_url, attempt_number=1):
     job = wait_for_json(vm, job_url, '.state == "imported"')
-    (attempt,) = job["attempts"]
-    assert attempt["number"] == 1 and attempt["state"] == "imported", attempt
+    assert len(job["attempts"]) == attempt_number and "question" not in job, job
+    attempt = job["attempts"][-1]
+    assert attempt["number"] == attempt_number and attempt["state"] == "imported", attempt
     return attempt["receipt"]
 
 
-def confirm_from_history(vm, job_url, expected_path=VIDEO):
+def confirm_from_history(vm, job_url, expected_path=VIDEO, attempt_number=1):
     vm.succeed(f"touch {FIXTURE}/publish-import")
-    receipt = import_receipt(vm, job_url)
+    receipt = import_receipt(vm, job_url, attempt_number)
     assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
     assert receipt["DroppedPath"] == expected_path and receipt["MovieID"] == 42, receipt
     assert receipt["DownloadID"] == "SABnzbd_nzo_complete", receipt
     assert len(submitted_imports(vm)) == 1
+
+
+def reopen_execution_question(vm, job, kind):
+    """Restart with an unanswered attempt and read its question with fresh credentials."""
+    stopped = wait_for_json(vm, job, f".question.kind == {json.dumps(kind)}")
+    question = stopped["question"]
+    assert stopped["attempts"][-1]["question"] == question, stopped
+    assert submitted_imports(vm) == []
+
+    vm.succeed("systemctl restart repairr.service")
+    vm.wait_for_open_port(8790)
+    reopened = read_job(vm, job + "/question")
+    assert reopened["question"] == question and reopened["actions"]["answer"], reopened
+    return reopened
 
 
 machine.start()
@@ -288,7 +303,7 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     fileChoice.start()
     fileChoice.wait_for_open_port(7878)
     fileChoice.wait_until_succeeds("test -S /run/repairr-planner/planner.sock")
-    fileChoice.succeed("systemctl start repairr.service")
+    fileChoice.succeed(f"touch {FIXTURE}/runtime-mismatch", "systemctl start repairr.service")
 
     job = find_job(fileChoice, "radarr", "Example Movie", view="inbox")
     question = read_job(fileChoice, job)["question"]
@@ -301,14 +316,45 @@ with subtest("an operator can reopen a movie after restart and choose the file t
     answer = choice_request(fileChoice, job, ["movie.mkv", "theatrical.mkv"], "theatrical.mkv")
     assert fileChoice.succeed(answer) == "204"
 
+with subtest("a runtime override after restart imports the file the operator chose"):
+    reviewed = reopen_execution_question(fileChoice, job, "runtime")
+    question = reviewed["question"]
+    assert "Movie runtime: 12 minutes" in question["context"], question
+    answer = action_request(
+        job + "/answer",
+        reviewed["csrfToken"],
+        reviewed,
+        runtimeMinutes=12,
+        guidance="Use the shorter theatrical cut.",
+    )
+    assert fileChoice.succeed(answer) == "204"
+
     chosen = str(PurePosixPath(VIDEO).with_name("theatrical.mkv"))
-    wait_for_json(fileChoice, job, ".attempts[0].commandId == 1")
+    wait_for_json(fileChoice, job, ".attempts[1].commandId == 1")
     (command,) = submitted_imports(fileChoice)
     (selected,) = command["files"]
     assert selected["path"] == chosen, command
-    confirm_from_history(fileChoice, job, chosen)
+    confirm_from_history(fileChoice, job, chosen, attempt_number=2)
+    assert read_job(fileChoice, job)["attempts"][0]["question"] == question
     fileChoice.shutdown()
 
+with subtest("an interrupted preparation waits for the operator before it tries again"):
+    interrupted.start()
+    job = plan_with_repairs_paused(interrupted)
+    # Hold Radarr's reply to the authorization check so the daemon dies before submission.
+    interrupted.succeed("systemctl kill -s STOP repairr-fixture.service", f"rm {PAUSE}")
+    wait_for_json(interrupted, job, '.state == "running"')
+    interrupted.succeed("systemctl kill -s KILL repairr.service")
+    interrupted.wait_until_succeeds("systemctl is-failed repairr.service")
+    interrupted.succeed(
+        "systemctl kill -s CONT repairr-fixture.service",
+        "systemctl start repairr.service",
+    )
+    reviewed = reopen_execution_question(interrupted, job, "retry")
+    answer = action_request(job + "/answer", reviewed["csrfToken"], reviewed)
+    assert interrupted.succeed(answer) == "204"
+    confirm_from_history(interrupted, job, attempt_number=2)
+    interrupted.shutdown()
 
 with subtest("Lidarr confirms the album only after both selected tracks appear in history"):
     albumImport.start()

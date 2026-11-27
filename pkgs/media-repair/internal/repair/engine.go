@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -30,8 +31,9 @@ type PreparedImport struct {
 }
 
 type BlockedError struct {
-	Reason string
-	Code   jobs.Outcome
+	Reason   string
+	Code     jobs.Outcome
+	Question *planning.Question
 }
 
 func (failure *BlockedError) Error() string { return failure.Reason }
@@ -124,6 +126,7 @@ func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt
 		if errors.As(err, &blocked) {
 			state = jobs.Blocked
 			attempt.Outcome = blocked.Code
+			attempt.Question = blocked.Question
 		} else if errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled {
 			attempt.Outcome = jobs.OutcomeInterrupted
 		}
@@ -173,6 +176,9 @@ func (engine *Engine) finish(ctx context.Context, attempt jobs.Attempt, state jo
 	attempt.Reason = reason
 	if attempt.Outcome == "" {
 		attempt.Outcome = jobs.OutcomeOther
+	}
+	if attempt.Outcome == jobs.OutcomeInterrupted {
+		attempt.Question = planning.ResumeRepair()
 	}
 	attempt.UpdatedAt = engine.Now().UTC()
 	return engine.Store.UpdateAttempt(ctx, attempt)

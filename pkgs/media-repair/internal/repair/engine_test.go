@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -112,6 +113,29 @@ func TestInterruptedRepairDoesNotImportPartialOutput(t *testing.T) {
 	assertState(t, engine, job.ID, jobs.Failed)
 	if adapter.repairs != 0 || adapter.submissions != 0 {
 		t.Fatal("used interrupted output")
+	}
+}
+
+func TestReplacingTheSourceClosesTheResumeQuestion(t *testing.T) {
+	engine, adapter, job := fixture(t)
+	ctx := context.Background()
+	adapter.prepareError = context.Canceled
+	if err := engine.Run(ctx, job.ID); !errors.Is(err, context.Canceled) {
+		t.Fatal("expected preparation to stop on cancellation", err)
+	}
+
+	stopped, err := engine.Store.Get(ctx, job.ID)
+	if err != nil || stopped.AttemptQuestion == nil || stopped.AttemptQuestion.Kind != planning.Retry {
+		t.Fatalf("missing resume question: %+v, %v", stopped.AttemptQuestion, err)
+	}
+	// A different source may offer exactly the same operations to the planner.
+	job.SourceFingerprint = "replacement"
+	current, err := engine.Store.Observe(ctx, job)
+	if err != nil || current.AttemptQuestion != nil {
+		t.Fatalf("replacement inherited the resume question: %+v, %v", current.AttemptQuestion, err)
+	}
+	if err := engine.Store.RequestReconsideration(ctx, stopped, stopped.Answer, engine.Now()); !errors.Is(err, jobs.ErrConflict) {
+		t.Fatalf("stale resume request: %v", err)
 	}
 }
 

@@ -50,6 +50,10 @@ func RetryPlanning() *Question {
 	return &Question{Kind: Retry, Title: "Retry planning", Text: "Try planning again?", Button: "Retry planning"}
 }
 
+func ResumeRepair() *Question {
+	return &Question{Kind: Retry, Title: "Resume interrupted repair", Text: "Resume this interrupted repair?", Button: "Resume repair"}
+}
+
 // Both planners return no_repair for a decline, a question, or exhausted
 // planning attempts. Only the latter two need an operator answer.
 func NoRepair(reason string, question *Question) Result {

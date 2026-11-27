@@ -95,6 +95,7 @@ pkgs.testers.runNixOSTest {
     replaced = movieNode;
     missingMovie = movieNode;
     lostResponse = movieNode;
+    interrupted = movieNode;
     fileChoice = {
       imports = [ movieNode ];
       systemd.services.repairr-fixture.preStart = lib.mkAfter ''

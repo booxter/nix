@@ -70,10 +70,13 @@ type Job struct {
 	CollectionOutcome   Outcome
 	Plan                json.RawMessage  `gorm:"serializer:json"`
 	PlanResult          *planning.Result `gorm:"serializer:json"`
-	planning.Answer     `gorm:"embedded"`
-	RetryAt             time.Time
-	PlanningAttempts    int
-	PendingAction       string
+	// The inbox reads the current question here. Each attempt keeps its own
+	// question after the operator answers or the case changes.
+	AttemptQuestion  *planning.Question `gorm:"serializer:json"`
+	planning.Answer  `gorm:"embedded"`
+	RetryAt          time.Time
+	PlanningAttempts int
+	PendingAction    string
 	// A queued deletion pins the fingerprint approved by the operator. An
 	// empty value means queue-only removal. Older requests have no value.
 	RemovalFingerprint *string
@@ -105,7 +108,8 @@ type Attempt struct {
 	CommandID        int64
 	ImportStartedAt  time.Time
 	ImportTerminalAt time.Time
-	ImportReceipt    json.RawMessage `gorm:"serializer:json"`
+	ImportReceipt    json.RawMessage    `gorm:"serializer:json"`
+	Question         *planning.Question `gorm:"serializer:json"`
 	Reason           string
 	Outcome          Outcome
 	StartedAt        time.Time
@@ -197,9 +201,16 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 			// A poll may refresh the visible case during removal. Keep the
 			// retry deadline or the outstanding confirmation until it is resolved.
 			removalPending := job.PendingAction == Delete || job.PendingAction == ConfirmRemoval
+			// An answer applies to the source that stopped this attempt, even
+			// when its replacement would give the planner the same inputs.
+			if !changed && job.AttemptQuestion != nil && job.SourceFingerprint != observed.SourceFingerprint {
+				changed = true
+				changes = append(changes, "source changed since the repair stopped")
+			}
 			if changed && job.State != Imported && job.State != Removed && !removalPending {
 				job.Plan = nil
 				job.PlanResult = nil
+				job.AttemptQuestion = nil
 				job.State = Observed
 				job.Reason = strings.Join(changes, ", ")
 				job.Outcome = ""
@@ -271,6 +282,7 @@ func (store *Store) Start(ctx context.Context, id int64, at time.Time) (Attempt,
 		}
 
 		job.State = Running
+		job.AttemptQuestion = nil
 		job.Reason = ""
 		job.Outcome = ""
 		job.RetryAt = time.Time{}
@@ -304,6 +316,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		previous.State = attempt.State
 		previous.Reason = attempt.Reason
 		previous.Outcome = attempt.Outcome
+		previous.Question = attempt.Question
 		previous.UpdatedAt = attempt.UpdatedAt
 		previous.OutputPath = attempt.OutputPath
 		previous.ImportReceipt = attempt.ImportReceipt
@@ -323,6 +336,7 @@ func (store *Store) updateAttempt(ctx context.Context, attempt Attempt, retryAt 
 		job.State = attempt.State
 		job.Reason = attempt.Reason
 		job.Outcome = attempt.Outcome
+		job.AttemptQuestion = attempt.Question
 		job.UpdatedAt = attempt.UpdatedAt
 		if !retryAt.IsZero() {
 			job.State = Ready

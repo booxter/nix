@@ -139,6 +139,8 @@ def response_for(path: str, query: dict[str, list[str]]) -> object | None:
     if path == "/api/v3/queue":
         return radarr_queue()
     if path == "/api/v3/movie/42":
+        if (FIXTURE / "runtime-mismatch").exists():
+            return {**MOVIE, "runtime": 12}
         return MOVIE
     # When a queue entry loses its movie ID, Repairr searches by download ID alone.
     if (

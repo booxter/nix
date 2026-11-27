@@ -45,6 +45,7 @@ func (store *Store) requestAction(ctx context.Context, expected Job, action stri
 
 		job.Revision++
 		job.PendingAction = action
+		job.AttemptQuestion = nil
 		job.RemovalFingerprint = removalFingerprint
 		job.Reason = ""
 		job.Outcome = ""
@@ -76,6 +77,7 @@ func (store *Store) FinishPlanning(ctx context.Context, planned Job) error {
 
 		job.Plan = planned.Plan
 		job.PlanResult = planned.PlanResult
+		job.AttemptQuestion = nil
 		job.State = planned.State
 		job.Reason = planned.Reason
 		job.Outcome = planned.Outcome

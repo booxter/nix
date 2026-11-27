@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 type jobSummary struct {
@@ -21,11 +22,12 @@ type jobSummary struct {
 }
 
 type attemptResponse struct {
-	Number    int64           `json:"number"`
-	State     jobs.State      `json:"state"`
-	Reason    string          `json:"reason,omitempty"`
-	CommandID int64           `json:"commandId,omitempty"`
-	Receipt   json.RawMessage `json:"receipt,omitempty"`
+	Number    int64              `json:"number"`
+	State     jobs.State         `json:"state"`
+	Reason    string             `json:"reason,omitempty"`
+	CommandID int64              `json:"commandId,omitempty"`
+	Receipt   json.RawMessage    `json:"receipt,omitempty"`
+	Question  *planning.Question `json:"question,omitempty"`
 }
 
 type jobDetail struct {
@@ -77,7 +79,7 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	for _, attempt := range attempts {
 		detail.Attempts = append(detail.Attempts, attemptResponse{
 			Number: attempt.Number, State: attempt.State, Reason: attempt.Reason,
-			CommandID: attempt.CommandID, Receipt: attempt.ImportReceipt,
+			CommandID: attempt.CommandID, Receipt: attempt.ImportReceipt, Question: attempt.Question,
 		})
 	}
 	app.setCSRFCookie(w)
