@@ -15,17 +15,8 @@ def github_lock(revision, owner="example", repo="project"):
     }
 
 
-def lock_data(inputs):
-    nodes = {"root": {"inputs": {}}}
-    for name, locked in inputs.items():
-        node_name = f"node-{name}"
-        nodes["root"]["inputs"][name] = node_name
-        nodes[node_name] = {"locked": locked}
-    return {"nodes": nodes, "root": "root", "version": 7}
-
-
 def lock(inputs):
-    return app.FlakeLock.model_validate(lock_data(inputs))
+    return app.PinsLock.model_validate(inputs)
 
 
 def locked(value):
@@ -58,36 +49,13 @@ def test_renders_updated_inputs_with_compare_links():
     assert body.endswith("Trigger: schedule\n")
 
 
-def test_renders_transitive_input_updates_by_path():
-    old_data = lock_data({"parent": github_lock("a" * 40)})
-    new_data = lock_data({"parent": github_lock("a" * 40)})
-    old_data["nodes"]["node-parent"]["inputs"] = {"child": "old-child"}
-    new_data["nodes"]["node-parent"]["inputs"] = {"child": "new-child"}
-    old_data["nodes"]["old-child"] = {"locked": github_lock("b" * 40)}
-    new_data["nodes"]["new-child"] = {"locked": github_lock("c" * 40)}
+def test_renders_unchanged_pins():
+    pins = lock({"nixpkgs": github_lock("a" * 40)})
 
-    body = app.render_body(
-        app.FlakeLock.model_validate(old_data),
-        app.FlakeLock.model_validate(new_data),
-        "workflow_dispatch",
-    )
-
-    assert "| `parent/child` | `bbbbbbb` → `ccccccc` |" in body
-
-
-def test_ignores_follows_aliases_cycles_and_missing_nodes():
-    data = lock_data({"parent": github_lock("a" * 40)})
-    data["nodes"]["node-parent"]["inputs"] = {
-        "follows": ["nixpkgs"],
-        "cycle": "root",
-        "missing": "absent",
-    }
-    parsed = app.FlakeLock.model_validate(data)
-
-    body = app.render_body(parsed, parsed, "schedule")
+    body = app.render_body(pins, pins, "schedule")
 
     assert "No flake input revisions changed." in body
-    assert "parent/follows" not in body
+    assert "| Input |" not in body
 
 
 def test_marks_cross_repository_updates_without_compare_link():
@@ -182,14 +150,14 @@ def test_revision_uses_available_lock_identity(value, expected):
     assert app.revision(locked(value)) == expected
 
 
-def test_load_lock_rejects_missing_root(tmp_path):
-    lock_path = tmp_path / "flake.lock"
+def test_load_lock_rejects_invalid_pin(tmp_path):
+    lock_path = tmp_path / "pins.lock.json"
     lock_path.write_text(
-        json.dumps({"nodes": {}, "root": "root", "version": 7}),
+        json.dumps({"nixpkgs": {"rev": "a" * 40}}),
         encoding="utf-8",
     )
 
-    with pytest.raises(app.Error, match="root node 'root' is missing"):
+    with pytest.raises(app.Error, match="invalid input lock"):
         app.load_lock(lock_path)
 
 
@@ -198,11 +166,11 @@ def test_main_writes_summary(tmp_path):
     new_lock = tmp_path / "new.lock"
     output = tmp_path / "summary.md"
     old_lock.write_text(
-        json.dumps(lock_data({"nixpkgs": github_lock("a" * 40)})),
+        json.dumps({"nixpkgs": github_lock("a" * 40)}),
         encoding="utf-8",
     )
     new_lock.write_text(
-        json.dumps(lock_data({"nixpkgs": github_lock("b" * 40)})),
+        json.dumps({"nixpkgs": github_lock("b" * 40)}),
         encoding="utf-8",
     )
 

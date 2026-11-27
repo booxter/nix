@@ -72,7 +72,9 @@ let
       position = meta.position or "";
     };
 
-  inputPackageSet = name: attrByPath [ "inputs" name "legacyPackages" request.system ] flake;
+  # Audit requests can also name ordinary flakes outside this repository.
+  inputs = flake.lib.inputs or flake.inputs;
+  inputPackageSet = name: attrByPath [ name "legacyPackages" request.system ] inputs;
   inputComparisons = builtins.map (name: {
     label = name;
     packageSet = inputPackageSet name;

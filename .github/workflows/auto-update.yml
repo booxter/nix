@@ -19,19 +19,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Save current flake lock
-        run: cp flake.lock "$RUNNER_TEMP/flake.lock.before"
+      - name: Save current input lock
+        run: cp .tack/pins.lock.json "$RUNNER_TEMP/pins.lock.before.json"
 
       - name: Update flake inputs
-        run: nix flake update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: nix run .#tack -- update
 
       - name: Generate pull request body
         env:
           TRIGGER: ${{ github.event_name }}
         run: |
           nix run .#flake-input-update-summary -- \
-            "$RUNNER_TEMP/flake.lock.before" \
-            flake.lock \
+            "$RUNNER_TEMP/pins.lock.before.json" \
+            .tack/pins.lock.json \
             --trigger "$TRIGGER" \
             --output "$RUNNER_TEMP/flake-update-body.md"
 
@@ -55,4 +57,4 @@ jobs:
           branch: ci/flake-update
           delete-branch: true
           add-paths: |
-            flake.lock
+            .tack/pins.lock.json

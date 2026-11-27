@@ -2,10 +2,9 @@ import argparse
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
 from urllib.parse import quote, urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, ValidationError
 
 
 class Error(RuntimeError):
@@ -26,25 +25,8 @@ class LockedInput(BaseModel):
     repo: str | None = None
 
 
-class LockNode(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
-
-    inputs: dict[str, str | list[str]] = Field(default_factory=dict)
-    locked: LockedInput | None = None
-
-
-class FlakeLock(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-    nodes: dict[str, LockNode]
-    root: str
-    version: int
-
-    @model_validator(mode="after")
-    def validate_root(self) -> Self:
-        if self.root not in self.nodes:
-            raise ValueError(f"root node {self.root!r} is missing")
-        return self
+class PinsLock(RootModel[dict[str, LockedInput]]):
+    pass
 
 
 @dataclass(frozen=True)
@@ -61,34 +43,13 @@ class Update:
     new: LockedInput
 
 
-def load_lock(path: Path) -> FlakeLock:
+def load_lock(path: Path) -> PinsLock:
     try:
-        return FlakeLock.model_validate_json(path.read_text(encoding="utf-8"))
+        return PinsLock.model_validate_json(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise Error(f"failed to read {path}: {exc}") from exc
     except ValidationError as exc:
-        raise Error(f"invalid flake lock {path}: {exc}") from exc
-
-
-def locked_inputs(lock: FlakeLock) -> dict[str, LockedInput]:
-    inputs: dict[str, LockedInput] = {}
-
-    def visit(node_name: str, path: tuple[str, ...], ancestors: set[str]) -> None:
-        node = lock.nodes[node_name]
-        for name, child_name in node.inputs.items():
-            if not isinstance(child_name, str) or child_name in ancestors:
-                continue
-
-            child = lock.nodes.get(child_name)
-            if child is None:
-                continue
-            child_path = (*path, name)
-            if child.locked is not None:
-                inputs["/".join(child_path)] = child.locked
-            visit(child_name, child_path, ancestors | {child_name})
-
-    visit(lock.root, (), {lock.root})
-    return inputs
+        raise Error(f"invalid input lock {path}: {exc}") from exc
 
 
 def revision(locked: LockedInput) -> str:
@@ -173,9 +134,9 @@ def compare_url(old: LockedInput, new: LockedInput) -> str | None:
     return None
 
 
-def updated_inputs(old_lock: FlakeLock, new_lock: FlakeLock) -> list[Update]:
-    old_inputs = locked_inputs(old_lock)
-    new_inputs = locked_inputs(new_lock)
+def updated_inputs(old_lock: PinsLock, new_lock: PinsLock) -> list[Update]:
+    old_inputs = old_lock.root
+    new_inputs = new_lock.root
     return [
         Update(name, old_inputs[name], new_inputs[name])
         for name in sorted(old_inputs.keys() & new_inputs.keys())
@@ -183,7 +144,7 @@ def updated_inputs(old_lock: FlakeLock, new_lock: FlakeLock) -> list[Update]:
     ]
 
 
-def render_body(old_lock: FlakeLock, new_lock: FlakeLock, trigger: str) -> str:
+def render_body(old_lock: PinsLock, new_lock: PinsLock, trigger: str) -> str:
     updates = updated_inputs(old_lock, new_lock)
     lines = ["Automated update of flake inputs.", ""]
 
