@@ -92,6 +92,21 @@ def submitted_imports(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/imports"))
 
 
+def retry_after_queue_outage(vm, job, service):
+    """Fail the queue recheck after planning, then let the saved plan run again."""
+    outage = f"/run/{service}-fixture/queue-unavailable"
+    vm.succeed(f"touch {outage}", f"rm /run/pause-{service}-repairs")
+    waiting = wait_for_json(vm, job, '.state == "ready" and .attempts[0].state == "failed"')
+    (failed,) = waiting["attempts"]
+    assert "503" in failed["reason"] and "commandId" not in failed, failed
+    assert submitted_imports(vm) == []
+
+    # Passing the retry deadline with the planner offline proves that
+    # recovery uses the original decision without operator intervention.
+    vm.succeed("systemctl stop scripted-planner.service", f"rm {outage}", "date -s '+2 minutes'")
+    wait_for_json(vm, job, '.state == "importing" and .attempts[1].commandId == 1')
+
+
 def submitted_removals(vm):
     return json.loads(vm.succeed("curl -fsS http://127.0.0.1:7878/fixture/removals"))
 
@@ -171,10 +186,10 @@ with subtest("the unfinished download reports problems from both Radarr and SABn
     assert set(unfinished_job["findings"]) == expected, unfinished_job
     assert unfinished_job["fingerprint"] == "" and unfinished_job["attempts"] == [], unfinished_job
 
+with subtest("Radarr retries authorization after its queue returns 503"):
+    retry_after_queue_outage(machine, job, "radarr")
+
 with subtest("the selected file is confirmed only when Radarr reports a new import"):
-    assert submitted_imports(machine) == []
-    machine.succeed(f"rm {PAUSE}")
-    wait_for_json(machine, job, '.state == "importing" and .attempts[0].commandId == 1')
     # The command received by Radarr shows exactly what passed authorization.
     (command,) = submitted_imports(machine)
     assert command["name"] == "ManualImport" and command["importMode"] == "copy", command
@@ -185,7 +200,7 @@ with subtest("the selected file is confirmed only when Radarr reports a new impo
         "SABnzbd_nzo_complete",
     ), selected
     machine.wait_until_succeeds(f"test -e {FIXTURE}/history-checked")
-    assert read_job(machine, job)["attempts"][0]["state"] == "importing"
+    assert read_job(machine, job)["attempts"][-1]["state"] == "importing"
 
 with subtest("a fresh poll finds a new movie while the first waits for import history"):
     # Restart to poll immediately. Radarr still lists the first movie, but
@@ -196,8 +211,10 @@ with subtest("a fresh poll finds a new movie while the first waits for import hi
     new_movie = find_job(machine, "radarr", "New Movie")
     assert read_job(machine, new_movie)["reasonCode"] == "incomplete_download"
     detail = read_job(machine, job)
-    assert detail["attempts"][0]["state"] == "importing" and "inspectionError" not in detail, detail
-    confirm_from_history(machine, job)
+    assert detail["attempts"][-1]["state"] == "importing" and "inspectionError" not in detail, (
+        detail
+    )
+    confirm_from_history(machine, job, attempt_number=2)
     machine.shutdown()
 
 with subtest("a same-size replacement blocks the saved plan before Radarr receives a command"):
@@ -356,18 +373,21 @@ with subtest("an interrupted preparation waits for the operator before it tries 
     confirm_from_history(interrupted, job, attempt_number=2)
     interrupted.shutdown()
 
-with subtest("Lidarr confirms the album only after both selected tracks appear in history"):
+with subtest("Lidarr retries authorization after its queue returns 503"):
     albumImport.start()
     job = plan_with_repairs_paused(albumImport, "lidarr", "Example Album")
-    albumImport.succeed("rm /run/pause-lidarr-repairs")
+    retry_after_queue_outage(albumImport, job, "lidarr")
 
+with subtest("Lidarr confirms the album only after both selected tracks appear in history"):
     # The fixture returns a completed command and history for just 01.flac.
     # Wait for Repairr to record that it checked both before releasing 02.flac.
     albumImport.wait_until_succeeds("test -e /run/lidarr-fixture/command-checked")
     detail = read_job(albumImport, job)
-    assert detail["attempts"][0]["state"] == "importing" and "receipt" not in detail["attempts"][0]
+    assert (
+        detail["attempts"][-1]["state"] == "importing" and "receipt" not in detail["attempts"][-1]
+    )
     albumImport.succeed("touch /run/lidarr-fixture/publish-second-track")
-    receipt = import_receipt(albumImport, job)
+    receipt = import_receipt(albumImport, job, attempt_number=2)
 
     (command,) = submitted_imports(albumImport)
     assert command["name"] == "ManualImport" and command["importMode"] == "copy", command

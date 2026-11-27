@@ -29,6 +29,34 @@ func (steps ImportSteps[Approved]) prepare(ctx context.Context, job jobs.Job, at
 	return steps.PrepareImport(ctx, attempt, approved)
 }
 
+// Recheck the queue before acting on a saved job. A temporary read failure
+// can be retried. A missing or ambiguous download must stop the repair.
+func ReadQueueEntry[Entry any](
+	ctx context.Context,
+	key jobs.QueueKey,
+	readQueue func(context.Context) ([]Entry, error),
+	keyOf func(Entry) jobs.QueueKey,
+) (Entry, error) {
+	var zero Entry
+	entries, err := readQueue(ctx)
+	if err != nil {
+		return zero, RetryableRead(err)
+	}
+
+	keys := make([]jobs.QueueKey, len(entries))
+	for i, entry := range entries {
+		keys[i] = keyOf(entry)
+	}
+	index, err := jobs.MatchQueue(key, keys)
+	if err != nil {
+		return zero, &BlockedError{Reason: err.Error()}
+	}
+	if index < 0 {
+		return zero, &BlockedError{Reason: "download is no longer queued"}
+	}
+	return entries[index], nil
+}
+
 // A queued download can become ineligible while its plan waits to run.
 // Keep the inspection findings as the operator-visible reason for stopping.
 func CheckEligibility(findings []string, code jobs.Outcome) error {

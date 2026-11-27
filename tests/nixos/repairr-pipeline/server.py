@@ -179,6 +179,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         request = urlsplit(self.path)
+        if request.path == "/api/v3/queue" and (FIXTURE / "queue-unavailable").exists():
+            self.send_error(503)
+            return
         payload = response_for(request.path, parse_qs(request.query))
         if payload is None:
             # Movie 43 has no collection endpoints. Fetching its facts would fail the scan.

@@ -95,24 +95,9 @@ func (adapter *Adapter) prepareImport(
 }
 
 func (adapter *Adapter) findQueue(ctx context.Context, key jobs.QueueKey) (lidarr.QueueRecord, error) {
-	queue, err := adapter.Client.ReadQueue(ctx)
-	if err != nil {
-		return lidarr.QueueRecord{}, err
-	}
-
-	keys := make([]jobs.QueueKey, len(queue))
-	for index, entry := range queue {
-		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
-	}
-	index, err := jobs.MatchQueue(key, keys)
-	if err != nil {
-		return lidarr.QueueRecord{}, &repair.BlockedError{Reason: err.Error()}
-	}
-	if index >= 0 {
-		return queue[index], nil
-	}
-
-	return lidarr.QueueRecord{}, &repair.BlockedError{Reason: "queue item disappeared or changed download identity"}
+	return repair.ReadQueueEntry(ctx, key, adapter.Client.ReadQueue, func(entry lidarr.QueueRecord) jobs.QueueKey {
+		return jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
+	})
 }
 
 func importCommand(authorized lidarrrepair.AuthorizedImport) lidarr.ManualImportCommand {

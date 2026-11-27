@@ -62,23 +62,12 @@ func (adapter *Adapter) authorize(ctx context.Context, job jobs.Job, plan json.R
 	return authorizedRepair{source: fresh, operation: operation}, nil
 }
 
-// Radarr can assign a new queue ID to a download. Follow it only when the
-// download still identifies a single queue entry.
 func (adapter *Adapter) readQueuedCase(ctx context.Context, key jobs.QueueKey) (casebuilder.Assembly, error) {
-	entries, err := adapter.Client.ReadQueue(ctx)
+	entry, err := repair.ReadQueueEntry(ctx, key, adapter.Client.ReadQueue, func(entry controller.RadarrQueueRecord) jobs.QueueKey {
+		return jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
+	})
 	if err != nil {
-		return casebuilder.Assembly{}, repair.RetryableRead(err)
-	}
-	keys := make([]jobs.QueueKey, len(entries))
-	for index, entry := range entries {
-		keys[index] = jobs.QueueKey{QueueID: entry.ID, DownloadID: entry.DownloadID}
-	}
-	index, err := jobs.MatchQueue(key, keys)
-	if err != nil {
-		return casebuilder.Assembly{}, &repair.BlockedError{Reason: err.Error()}
-	}
-	if index < 0 {
-		return casebuilder.Assembly{}, &repair.BlockedError{Reason: "download is no longer queued"}
+		return casebuilder.Assembly{}, err
 	}
 
 	// Limit the entire recheck, including the download lookup and file reads.
@@ -87,7 +76,7 @@ func (adapter *Adapter) readQueuedCase(ctx context.Context, key jobs.QueueKey) (
 	}
 	recheckCtx, cancel := controller.WithCollectionTimeout(ctx, adapter.Inspector.dependencies.CollectionTimeout)
 	defer cancel()
-	result := adapter.Inspector.Inspect(recheckCtx, entries[index])
+	result := adapter.Inspector.Inspect(recheckCtx, entry)
 	if err := ctx.Err(); err != nil {
 		return casebuilder.Assembly{}, repair.RetryableRead(err)
 	}

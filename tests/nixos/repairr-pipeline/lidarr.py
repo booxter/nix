@@ -148,6 +148,9 @@ class Lidarr(BaseHTTPRequestHandler):
         match url.path:
             case "/api/v3/queue":
                 payload = page([])  # Radarr has no jobs in this VM.
+            case "/api/v1/queue" if Path("/run/lidarr-fixture/queue-unavailable").exists():
+                self.send_error(503)
+                return
             case "/api/v1/queue":
                 payload = album.queue()
             case "/api/v1/album/3":
