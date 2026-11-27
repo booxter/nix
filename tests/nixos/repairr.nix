@@ -86,6 +86,8 @@ pkgs.testers.runNixOSTest {
         "d ${mediaRoot} 2750 root media -"
         "d ${album} 2750 lidarr-fixture media -"
         "d ${mediaRoot}/.media-repair 2750 media-repair-worker media -"
+        # The test restores the planner after both apps report their first failure.
+        "f /run/repairr-planner-unavailable - - - -"
       ];
       systemd.services.radarr-fixture = lib.mkMerge [
         movieFixture

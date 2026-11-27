@@ -3,6 +3,7 @@
 import json
 import socket
 from http.server import BaseHTTPRequestHandler
+from pathlib import Path
 from socketserver import UnixStreamServer
 
 
@@ -89,6 +90,10 @@ class Planner(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if Path("/run/repairr-planner-unavailable").exists():
+            self.send_error(503)
+            return
+
         case = request["repair_case"]
         decision = {
             "schema_version": case["schema_version"],

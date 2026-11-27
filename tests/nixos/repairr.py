@@ -31,6 +31,23 @@ def check_imported_files_page(job_id, files):
 machine.start()
 machine.wait_for_unit("repairr.service")
 
+with subtest("both apps wait and retry when the planner returns"):
+    waiting_jobs = {}
+    for service, port in [("radarr", 7878), ("lidarr", 8687)]:
+        job = wait_for_job(f"{REPAIRR}/api/jobs?service={service}&state=observed&q=503")
+        assert "503" in job["reason"], job
+        waiting_jobs[service] = job["id"]
+        assert read_json(f"{REPAIRR}/api/jobs/{job['id']}")["attempts"] == []
+        assert read_json(f"http://127.0.0.1:{port}/fixture/imports") == []
+
+    # Give the scheduler time to run with a healthy planner before the retry is due.
+    machine.succeed("rm /run/repairr-planner-unavailable", "sleep 6")
+    for job_id in waiting_jobs.values():
+        detail = read_json(f"{REPAIRR}/api/jobs/{job_id}")
+        assert detail["state"] == "observed" and detail["attempts"] == [], detail
+
+    machine.succeed("date -s '+6 minutes'")
+
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
     assert (
@@ -49,6 +66,7 @@ with subtest("an unfinished album appears in the operator activity page"):
 with subtest("Repairr imports the movie and confirms it from Radarr history"):
     # Radarr publishes the new history entry only after receiving the command.
     movie = wait_for_job(f"{REPAIRR}/api/jobs?service=radarr&state=importing")
+    assert movie["id"] == waiting_jobs["radarr"], movie
     detail = f"{REPAIRR}/api/jobs/{movie['id']}"
     machine.succeed("touch /run/radarr-fixture/publish-import")
     imported = wait_for_job(f"{REPAIRR}/api/jobs?service=radarr&state=imported")
@@ -65,11 +83,16 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
 
 with subtest("Lidarr reads the staged tracks and Repairr waits for both history records"):
     album_job = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=importing")
+    assert album_job["id"] == waiting_jobs["lidarr"], album_job
     album_url = f"{REPAIRR}/api/jobs/{album_job['id']}"
     # The fixture has copied both files, but has published only the first in history.
     machine.wait_until_succeeds("test -e /run/lidarr-fixture/command-checked", timeout=60)
     (pending,) = read_json(album_url)["attempts"]
     assert pending["state"] == "importing" and "receipt" not in pending, pending
+
+    machine.succeed("touch /run/lidarr-fixture/publish-second-track")
+    imported = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=imported")
+    assert imported["id"] == album_job["id"], imported
 
     (command,) = read_json("http://127.0.0.1:8687/fixture/imports")
     paths = [PurePosixPath(file["path"]) for file in command["files"]]
@@ -80,9 +103,6 @@ with subtest("Lidarr reads the staged tracks and Repairr waits for both history 
             f"cmp {MEDIA}/Example.Album/{path.name} /run/lidarr-fixture/library/{path.name}"
         )
 
-    machine.succeed("touch /run/lidarr-fixture/publish-second-track")
-    imported = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=imported")
-    assert imported["id"] == album_job["id"], imported
     (album_attempt,) = read_json(album_url)["attempts"]
     tracks = album_attempt["receipt"]["files"]
     assert sorted((row["trackId"], row["historyId"]) for row in tracks) == [
