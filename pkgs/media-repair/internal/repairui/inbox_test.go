@@ -64,9 +64,8 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	}
 	response := fixture.get("/")
 	body := response.Body.String()
-	if response.Code != http.StatusOK || !strings.Contains(body, "Choose my release") ||
-		!strings.Contains(body, "Use this release") || !strings.Contains(body, "Label") {
-		t.Fatalf("missing actionable form: %d %s", response.Code, body)
+	if response.Code != http.StatusOK || !strings.Contains(body, "Choose my release") {
+		t.Fatalf("missing actionable release: %d %s", response.Code, body)
 	}
 	for _, title := range []string{"Incomplete download", "Technical problem", "Missing audio", "Already processing", "Already answered"} {
 		if strings.Contains(body, title) {
@@ -180,8 +179,12 @@ func TestUnansweredQuestionSurvivesReturningInputs(t *testing.T) {
 	if _, err := fixture.store.Observe(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	response := fixture.get("/")
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Which edition should be imported?") {
+	response := fixture.get(fmt.Sprintf("/api/jobs/%d/question", job.ID))
+	var saved jobResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &saved); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || saved.Question == nil || saved.Question.Text != "Which edition should be imported?" {
 		t.Fatalf("history lost unanswered question: %d %s", response.Code, response.Body.String())
 	}
 }

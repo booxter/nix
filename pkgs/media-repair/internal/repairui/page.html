@@ -62,7 +62,7 @@
           <div class="item-heading"><span class="service">{{.Job.Service}}</span><span class="badge">{{.Status}}</span></div>
           <h3><a href="/jobs/{{.Job.ID}}">{{.Subject}}</a></h3>
           <p class="case-explanation">{{.Explanation}}</p>
-          {{if .Attention}}{{template "response-form" .}}{{end}}
+          {{if .Attention}}<div data-question-for="{{.Job.ID}}"><noscript>Enable JavaScript to answer this question.</noscript></div>{{end}}
           <div class="item-links"><a href="/jobs/{{.Job.ID}}">Details</a><a href="/jobs/{{.Job.ID}}/remove">Remove from queue…</a></div>
           {{if ne .Subject .Job.Title}}<details class="release-name"><summary>Download name</summary><p>{{.Job.Title}}</p></details>{{end}}
         </article>
@@ -96,45 +96,3 @@
 </html>
 
 {{define "local-time"}}<time datetime="{{.Format "2006-01-02T15:04:05Z07:00"}}">{{.Format "2006-01-02 15:04 MST"}}</time>{{end}}
-
-{{define "action-fields"}}
-  <input type="hidden" name="csrf_token" value="{{.CSRF}}">
-  <input type="hidden" name="revision" value="{{.Job.Revision}}">
-  <input type="hidden" name="fingerprint" value="{{.Job.SourceFingerprint}}">
-{{end}}
-
-{{define "action-message"}}
-  <p role="alert" hidden></p>
-  <noscript>Enable JavaScript to submit this request.</noscript>
-{{end}}
-
-{{define "response-form"}}
-<form class="response-form" method="post" action="/api/jobs/{{.Job.ID}}/answer" data-return-to="/?submitted=1">
-  {{template "action-fields" .}}
-  <h4>{{.Attention.Text}}</h4>
-  {{if .Attention.Context}}<details class="evidence-context"><summary>Files and media information</summary><ul>{{range .Attention.Context}}<li>{{.}}</li>{{end}}</ul></details>{{end}}
-  {{if .Attention.Choices}}
-  <label for="selection-{{.Job.ID}}">Your choice</label>
-  <select id="selection-{{.Job.ID}}" name="choice" required>
-    <option value="" selected disabled>Choose…</option>
-    {{range .Attention.Choices}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
-  </select>
-  {{end}}
-  {{if .Attention.Hint}}<p class="input-hint">{{.Attention.Hint}}</p>{{end}}
-  {{if ne .Attention.Kind "retry"}}
-  <label for="answer-{{.Job.ID}}">{{if .Attention.RequireGuidance}}Your instructions{{else}}Additional instructions (optional){{end}}</label>
-  <textarea id="answer-{{.Job.ID}}" name="guidance" maxlength="2000"{{if .Attention.RequireGuidance}} required{{end}}>{{.Job.Guidance}}</textarea>
-  {{end}}
-  {{if .Attention.AllowRuntime}}
-  <fieldset>
-    <legend>Runtime difference you accept</legend>
-    {{if eq .Attention.Kind "runtime"}}<input type="hidden" name="override_runtime_difference" value="on">
-    {{else}}<label class="check"><input type="checkbox" name="override_runtime_difference"> Accept a larger difference</label>{{end}}
-    <label for="runtime-{{.Job.ID}}">Maximum difference in minutes</label>
-    <input id="runtime-{{.Job.ID}}" name="runtime_minutes" type="number" min="1" max="60"{{if eq .Attention.Kind "runtime"}} required{{end}}>
-  </fieldset>
-  {{end}}
-  <button type="submit">{{.Attention.Button}}</button>
-  {{template "action-message"}}
-</form>
-{{end}}

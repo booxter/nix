@@ -24,6 +24,7 @@ type jobResponse struct {
 	Revision    int64              `json:"revision"`
 	Fingerprint string             `json:"fingerprint"`
 	CSRFToken   string             `json:"csrfToken"`
+	Guidance    string             `json:"guidance,omitempty"`
 }
 
 type actionRequest struct {
@@ -52,7 +53,7 @@ func (app *Handler) question(w http.ResponseWriter, r *http.Request) {
 func (app *Handler) jobActions(job jobs.Job, review review) jobResponse {
 	return jobResponse{
 		Actions: review.Actions, Question: review.Attention,
-		Revision: job.Revision, Fingerprint: job.SourceFingerprint, CSRFToken: app.csrf,
+		Revision: job.Revision, Fingerprint: job.SourceFingerprint, CSRFToken: app.csrf, Guidance: job.Guidance,
 	}
 }
 

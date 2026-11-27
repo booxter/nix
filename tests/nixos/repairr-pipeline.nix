@@ -19,6 +19,7 @@ let
     Database = "/var/lib/repairr/jobs.db";
     MetricsFile = "/var/lib/repairr/metrics.prom";
     Listen = "127.0.0.1:8790";
+    Origins = [ "https://localhost" ];
     Radarr = {
       URL = fixtureURL;
       APIKeyFile = key;
@@ -96,6 +97,20 @@ pkgs.testers.runNixOSTest {
     releaseChoice = {
       imports = [ albumNode ];
       systemd.services.repairr-fixture.environment.OFFER_REISSUE = "1";
+      # Exercise the same HTTPS origin and secure cookie checks as the operator UI.
+      services.caddy = {
+        enable = true;
+        virtualHosts."https://localhost".extraConfig = ''
+          tls internal
+          reverse_proxy 127.0.0.1:8790
+        '';
+      };
+      environment.systemPackages = [
+        pkgs.chromium
+        pkgs.chromedriver
+        (pkgs.python3.withPackages (ps: [ ps.selenium ]))
+      ];
+      environment.etc."choose-release.py".source = ./repairr-pipeline/choose-release.py;
     };
     unfinishedAlbum = albumNode;
   };

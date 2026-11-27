@@ -1,12 +1,12 @@
 /* global document, FormData, fetch, window */
 
-function bindAction(form) {
+function bindAction(form, job) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const fields = new FormData(form);
     const request = {
-      revision: Number(fields.get("revision")),
-      fingerprint: fields.get("fingerprint"),
+      revision: job.revision,
+      fingerprint: job.fingerprint,
     };
     if (fields.has("choice")) {
       request.choice = fields.get("choice");
@@ -27,7 +27,7 @@ function bindAction(form) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": fields.get("csrf_token"),
+          "X-CSRF-Token": job.csrfToken,
         },
         body: JSON.stringify(request),
       });
@@ -44,6 +44,92 @@ function bindAction(form) {
   });
 }
 
-for (const form of document.querySelectorAll("form[data-return-to]")) {
-  bindAction(form);
+// append() treats strings from the API as text, including file names and planner replies.
+function element(tag, attributes, ...children) {
+  const node = document.createElement(tag);
+  for (const [name, value] of Object.entries(attributes)) {
+    node.setAttribute(name, value);
+  }
+  node.append(...children);
+  return node;
+}
+
+function actionForm(job, action, ...controls) {
+  const form = element("form", {
+    method: "post", action: "/api/jobs/" + job.id + "/" + action,
+    "data-return-to": action === "answer" ? "/?submitted=1" : "/jobs/" + job.id,
+  });
+  form.append(...controls, element("p", { role: "alert", hidden: "" }));
+  bindAction(form, job);
+  return form;
+}
+
+function guidance(label, job, required = false) {
+  const input = element("textarea", { name: "guidance", maxlength: 2000 }, job.guidance || "");
+  input.required = required;
+  return element("label", {}, label, input);
+}
+
+function runtimeLimit(required, initialValue = "") {
+  const minutes = element("input", {
+    name: "runtime_minutes", type: "number", min: 1, max: 60, value: initialValue,
+  });
+  minutes.required = required;
+  const override = element("input", {
+    type: required ? "hidden" : "checkbox", name: "override_runtime_difference", value: "on",
+  });
+  return element("fieldset", {}, element("legend", {}, "Runtime difference you accept"),
+    required ? override : element("label", { class: "check" }, override, " Accept a larger difference"),
+    element("label", {}, "Maximum difference in minutes", minutes));
+}
+
+function answerForm(job) {
+  const question = job.question;
+  const controls = [element("h4", {}, question.text)];
+  if (question.context?.length) {
+    controls.push(element("details", { class: "evidence-context" },
+      element("summary", {}, "Files and media information"),
+      element("ul", {}, ...question.context.map(line => element("li", {}, line)))));
+  }
+  if (question.choices?.length) {
+    const select = element("select", { name: "choice", required: "" },
+      element("option", { value: "", disabled: "", selected: "" }, "Choose…"));
+    for (const choice of question.choices) {
+      select.append(element("option", { value: choice.value }, choice.label));
+    }
+    controls.push(element("label", {}, "Your choice", select));
+  }
+  if (question.hint) controls.push(element("p", { class: "input-hint" }, question.hint));
+  if (question.kind !== "retry") {
+    controls.push(guidance(question.requireGuidance ? "Your instructions" : "Additional instructions (optional)",
+      job, question.requireGuidance));
+  }
+  if (question.allowRuntime) controls.push(runtimeLimit(question.kind === "runtime"));
+  const form = actionForm(job, "answer", ...controls, element("button", { type: "submit" }, question.button));
+  form.className = "response-form";
+  return form;
+}
+
+
+// A question may have closed since the inbox was listed. Use the revision and
+// choices from the same response, just as the job page does.
+async function loadInboxQuestion(slot) {
+  const id = slot.dataset.questionFor;
+  try {
+    const response = await fetch("/api/jobs/" + id + "/question");
+    if (response.status === 404) {
+      slot.textContent = "This question is no longer open.";
+      return;
+    }
+    if (!response.ok) throw new Error();
+    const job = await response.json();
+    if (job.actions.answer) slot.replaceChildren(answerForm({ ...job, id }));
+    else slot.textContent = "This question is no longer open.";
+  } catch {
+    slot.textContent = "Could not load the question. Refresh the page to try again.";
+  }
+}
+
+for (const slot of document.querySelectorAll("[data-question-for]")) {
+  loadInboxQuestion(slot);
 }

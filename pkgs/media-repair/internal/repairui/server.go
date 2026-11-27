@@ -47,7 +47,6 @@ type item struct {
 	Status      string
 	Explanation string
 	NextStep    string
-	CSRF        string
 }
 
 type review struct {
@@ -166,9 +165,6 @@ func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "read jobs", http.StatusInternalServerError)
 		return
 	}
-	for i := range list.Items {
-		list.Items[i].CSRF = app.csrf
-	}
 	view.jobListing = list
 	app.render(w, view)
 }
@@ -214,7 +210,6 @@ func (app *Handler) render(w http.ResponseWriter, view page) {
 		return
 	}
 
-	app.setCSRFCookie(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = output.WriteTo(w)
 }

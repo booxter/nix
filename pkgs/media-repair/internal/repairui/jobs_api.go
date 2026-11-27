@@ -43,7 +43,6 @@ type jobDetail struct {
 	Status      string            `json:"status"`
 	Explanation string            `json:"explanation"`
 	NextStep    string            `json:"nextStep,omitempty"`
-	Guidance    string            `json:"guidance,omitempty"`
 	Decision    *decision         `json:"decision,omitempty"`
 	RetryAt     time.Time         `json:"retryAt,omitzero"`
 	Attempts    []attemptResponse `json:"attempts"`
@@ -95,7 +94,7 @@ func (app *Handler) jobInfo(w http.ResponseWriter, r *http.Request) {
 	detail := jobDetail{
 		jobSummary: summarize(entry), jobResponse: app.jobActions(job, entry.review),
 		QueueID: job.QueueID, QueueURL: app.config.QueueURLs[job.Service], UpdatedAt: job.UpdatedAt,
-		Status: entry.Status, Explanation: entry.Explanation, NextStep: entry.NextStep, Guidance: job.Guidance,
+		Status: entry.Status, Explanation: entry.Explanation, NextStep: entry.NextStep,
 		RetryAt:  job.PendingRetryAt(),
 		Attempts: make([]attemptResponse, 0, len(attempts)),
 	}

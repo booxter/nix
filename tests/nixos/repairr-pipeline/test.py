@@ -464,7 +464,8 @@ with subtest("the operator's edition selects the release and tracks imported int
     original = "Example Album — CD (release 81)"
     reissue = "Example Album Reissue — CD (release 82)"
     answer = choice_request(releaseChoice, job, [original, reissue], reissue)
-    assert releaseChoice.succeed(answer) == "204"
+    releaseChoice.wait_for_open_port(443)
+    releaseChoice.succeed(shlex.join(["python3", "/etc/choose-release.py", reissue]))
     # A second open tab still has the previous revision of the question.
     assert releaseChoice.succeed(answer) == "409"
     releaseChoice.succeed("touch /run/lidarr-fixture/publish-second-track")
