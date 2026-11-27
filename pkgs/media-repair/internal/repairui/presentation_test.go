@@ -66,7 +66,7 @@ func TestPresentationKeepsRepairFailureVisible(t *testing.T) {
 				Plan: json.RawMessage(`{"action":"join_parts_v1","explanation":"Join both parts"}`),
 			}
 			view := present(job)
-			if view.Explanation != job.Reason || !view.CanAct {
+			if view.Explanation != job.Reason || !view.Actions["reconsider"] {
 				t.Fatalf("failure lost its explanation or actions: %+v", view)
 			}
 		})

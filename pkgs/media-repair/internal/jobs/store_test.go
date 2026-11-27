@@ -53,7 +53,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 	if err != nil || job.State != Blocked || job.Reason != attempt.Reason || job.Outcome != attempt.Outcome {
 		t.Fatalf("job=%+v error=%v", job, err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Reconsider, "retry", 0, at); err != nil {
+	if err := store.RequestReconsideration(ctx, job, planning.Answer{Guidance: "retry"}, at); err != nil {
 		t.Fatal(err)
 	}
 	job, err = store.Get(ctx, job.ID)

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 func TestNewGuidanceInvalidatesAnInflightPlan(t *testing.T) {
@@ -17,7 +19,7 @@ func TestNewGuidanceInvalidatesAnInflightPlan(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := store.RequestAction(ctx, job.ID, Reconsider, "use both parts", 0, time.Now()); err != nil {
+	if err := store.RequestReconsideration(ctx, job, planning.Answer{Guidance: "use both parts"}, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	job.Plan = json.RawMessage(`{"action":"join"}`)
@@ -42,7 +44,11 @@ func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 	if err := finishTestPlan(ctx, store, job.ID, "", json.RawMessage(`{}`), time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
+	job, err = store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RequestRemoval(ctx, job, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,7 +59,7 @@ func TestQueueRemovalExcludesRepairAndDisappearsFromCurrentJobs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Reconsider, "retry", 0, time.Now()); !errors.Is(err, ErrConflict) {
+	if err := store.RequestReconsideration(ctx, requested, planning.Answer{Guidance: "retry"}, time.Now()); !errors.Is(err, ErrConflict) {
 		t.Fatalf("changed an active removal: %v", err)
 	}
 

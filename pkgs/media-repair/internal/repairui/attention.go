@@ -17,7 +17,16 @@ func reviewFor(job jobs.Job) review {
 	var plan decision
 	_ = json.Unmarshal(job.Plan, &plan)
 	outcome := classifyOutcome(job, plan)
-	return review{Decision: plan, Outcome: outcome, Attention: attentionFor(job, plan, outcome)}
+	question := attentionFor(job, plan, outcome)
+	canAct := job.AcceptsActions()
+	return review{
+		Decision: plan, Outcome: outcome, Attention: question,
+		Actions: availableActions{
+			"answer":     question != nil,
+			"remove":     canAct,
+			"reconsider": canAct && question == nil && job.State != jobs.Imported,
+		},
+	}
 }
 
 // Execution can stop for a retry or runtime override after planning has finished.

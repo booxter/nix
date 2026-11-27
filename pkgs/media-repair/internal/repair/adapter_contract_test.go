@@ -51,7 +51,7 @@ func TestAdaptersSharePlanningHistory(t *testing.T) {
 			fixture.close()
 			fixture.start()
 			job := observe("noise", 2)
-			if err := fixture.store.RequestAction(context.Background(), job.ID, jobs.Reconsider, "try again", 0, job.UpdatedAt); err != nil {
+			if err := fixture.store.RequestReconsideration(context.Background(), job, planning.Answer{Guidance: "try again"}, job.UpdatedAt); err != nil {
 				t.Fatal(err)
 			}
 			observe("original", 3)

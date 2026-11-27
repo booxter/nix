@@ -7,7 +7,6 @@ import (
 	"html"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -62,31 +61,11 @@ func (fixture *fixture) get(path string) *httptest.ResponseRecorder {
 	return response
 }
 
-func (fixture *fixture) removalRequest(t *testing.T) *http.Request {
-	t.Helper()
-	page := fixture.get(fmt.Sprintf("/jobs/%d/remove", fixture.job.ID))
-	if page.Code != http.StatusOK {
-		t.Fatalf("confirmation: %d %s", page.Code, page.Body.String())
-	}
-	cookies := page.Result().Cookies()
-	if len(cookies) != 1 {
-		t.Fatalf("cookies: %v", cookies)
-	}
-
-	form := url.Values{"csrf_token": {cookies[0].Value}}
-	request := httptest.NewRequest(http.MethodPost,
-		fmt.Sprintf("/jobs/%d/remove", fixture.job.ID), strings.NewReader(form.Encode()))
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	request.Header.Set("Origin", "https://repairr.home.arpa")
-	request.AddCookie(cookies[0])
-	return request
-}
-
 func TestRemovalWakesSchedulerAndLeavesCurrentListAfterCompletion(t *testing.T) {
 	fixture := newFixture(t)
 	response := httptest.NewRecorder()
-	fixture.handler.ServeHTTP(response, fixture.removalRequest(t))
-	if response.Code != http.StatusSeeOther {
+	fixture.handler.ServeHTTP(response, fixture.actionRequest(t, fixture.job.ID, "remove", actionRequest{}))
+	if response.Code != http.StatusNoContent {
 		t.Fatalf("request: %d %s", response.Code, response.Body.String())
 	}
 	if len(fixture.wakes) != 1 || fixture.wakes[0] != jobs.Lidarr {
@@ -120,7 +99,7 @@ func TestRemovalRejectsCrossSiteAndMissingToken(t *testing.T) {
 	for _, scenario := range []string{"foreign origin", "missing cookie", "cross-site fetch"} {
 		t.Run(scenario, func(t *testing.T) {
 			fixture := newFixture(t)
-			request := fixture.removalRequest(t)
+			request := fixture.actionRequest(t, fixture.job.ID, "remove", actionRequest{})
 			switch scenario {
 			case "foreign origin":
 				request.Header.Set("Origin", "https://attacker.invalid")
@@ -136,6 +115,37 @@ func TestRemovalRejectsCrossSiteAndMissingToken(t *testing.T) {
 				t.Fatalf("unsafe request accepted: %d, wakes=%v", response.Code, fixture.wakes)
 			}
 		})
+	}
+}
+
+func TestNewReviewSavesGuidanceWhileInspectionIsBlocked(t *testing.T) {
+	fixture := newFixture(t)
+	ctx := context.Background()
+	job, err := fixture.store.Observe(ctx, jobs.Job{
+		Service: jobs.Radarr, QueueID: 101, CollectionError: "incomplete_download",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	minutes := int64(15)
+	input := actionRequest{Guidance: "Use the extended cut.", RuntimeMinutes: &minutes}
+	review := fixture.actionRequest(t, job.ID, "reconsider", input)
+	oldRemoval := fixture.actionRequest(t, job.ID, "remove", actionRequest{})
+	response := httptest.NewRecorder()
+	fixture.handler.ServeHTTP(response, review)
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("request review: %d %s", response.Code, response.Body)
+	}
+	response = httptest.NewRecorder()
+	fixture.handler.ServeHTTP(response, oldRemoval)
+	if response.Code != http.StatusConflict {
+		t.Fatalf("old removal confirmation: %d %s", response.Code, response.Body)
+	}
+	current, err := fixture.store.Get(ctx, job.ID)
+	if err != nil || current.PendingAction != jobs.Reconsider || current.Guidance != input.Guidance ||
+		current.RuntimeToleranceMS != 900_000 || len(fixture.wakes) != 1 {
+		t.Fatalf("queued review: %+v, %v", current, err)
 	}
 }
 

@@ -12,6 +12,7 @@ VIDEO = "/var/lib/repairr-pipeline/Example.Movie.2026/movie.mkv"
 PAUSE = "/run/pause-radarr-repairs"
 FIXTURE = "/run/radarr-fixture"
 REPAIRR = "http://127.0.0.1:8790"
+COOKIES = "/tmp/repairr-operator.cookies"
 
 
 def collect_queue(vm):
@@ -55,18 +56,16 @@ def plan_with_repairs_paused(vm, service="radarr", title="Example Movie"):
     return wait_for_job(vm, f"{REPAIRR}/activity?service={service}&state=ready", title)
 
 
-def choice_request(vm, job_url, options, selected):
-    # Keep the original request so a second submission answers the old revision.
-    api = REPAIRR + "/api" + job_url.removeprefix(REPAIRR)
-    cookies = "/tmp/repairr-operator.cookies"
-    current = json.loads(vm.succeed(f"curl -fsS -c {cookies} {api}/question"))
-    choices = {choice["label"]: choice["value"] for choice in current["question"]["choices"]}
-    assert set(choices) == set(options), choices
-    answer = {
-        "revision": current["revision"],
-        "fingerprint": current["fingerprint"],
-        "choice": choices[selected],
-    }
+def job_api(job_url):
+    return REPAIRR + "/api" + job_url.removeprefix(REPAIRR)
+
+
+def read_job(vm, url):
+    return json.loads(vm.succeed(f"curl -fsS -c {COOKIES} {url}"))
+
+
+def action_request(url, token, case, **fields):
+    body = {"revision": case["revision"], "fingerprint": case["fingerprint"], **fields}
     return shlex.join(
         [
             "curl",
@@ -76,16 +75,24 @@ def choice_request(vm, job_url, options, selected):
             "-w",
             "%{http_code}",
             "-b",
-            cookies,
+            COOKIES,
             "-H",
             "Sec-Fetch-Site: same-origin",
             "-H",
-            "X-CSRF-Token: " + current["csrfToken"],
+            "X-CSRF-Token: " + token,
             "--json",
-            json.dumps(answer),
-            api + "/answer",
+            json.dumps(body),
+            url,
         ]
     )
+
+
+def choice_request(vm, job_url, options, selected):
+    api = job_api(job_url)
+    current = read_job(vm, api + "/question")
+    choices = {choice["label"]: choice["value"] for choice in current["question"]["choices"]}
+    assert set(choices) == set(options), choices
+    return action_request(api + "/answer", current["csrfToken"], current, choice=choices[selected])
 
 
 def submitted_imports(vm):
@@ -175,7 +182,11 @@ with subtest("a fresh poll finds a new movie while the first waits for import hi
 
 with subtest("a same-size replacement blocks the saved plan before Radarr receives a command"):
     replaced.start()
-    plan_with_repairs_paused(replaced)
+    job = plan_with_repairs_paused(replaced)
+    wait_for_text(replaced, job + "/remove", "Remove from radarr queue?")
+    api = job_api(job)
+    original_case = read_job(replaced, api)
+    assert original_case["actions"]["remove"], original_case
     # A new inode with identical bytes and timestamps isolates the identity change.
     original = replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split()
     replaced.succeed(f"cp -p {VIDEO} {VIDEO}.new && mv -T {VIDEO}.new {VIDEO}")
@@ -185,6 +196,29 @@ with subtest("a same-size replacement blocks the saved plan before Radarr receiv
     wait_for_movie(replaced, "blocked", "selected file changed after planning")
     assert submitted_imports(replaced) == []
     assert replaced.succeed(f"stat -c '%i %s %Y' {VIDEO}").split() == replacement
+
+with subtest("a removal confirmation belongs to the file the operator reviewed"):
+    # Restart to observe the replacement immediately. Use the new CSRF credentials
+    # for both requests so only the case fingerprint distinguishes them.
+    replaced.succeed(f"touch {PAUSE}", "systemctl restart repairr.service")
+    wait_for_movie(replaced, "ready", "Example Movie")
+    current_case = read_job(replaced, api)
+    assert current_case["actions"]["remove"], current_case
+    assert original_case["revision"] == current_case["revision"]
+    assert original_case["fingerprint"] != current_case["fingerprint"]
+    token = current_case["csrfToken"]
+
+    assert replaced.succeed(action_request(api + "/remove", token, original_case)) == "409"
+    queue = "curl -fsS http://127.0.0.1:7878/api/v3/queue"
+    assert COMPLETED_QUEUE_ID in [
+        row["id"] for row in json.loads(replaced.succeed(queue))["records"]
+    ]
+
+    assert replaced.succeed(action_request(api + "/remove", token, current_case)) == "204"
+    wait_for_text(replaced, job, "queue removal completed")
+    assert [row["id"] for row in json.loads(replaced.succeed(queue))["records"]] == [
+        UNFINISHED_QUEUE_ID
+    ]
     replaced.shutdown()
 
 with subtest("the scan and pre-import recheck both report a missing movie"):

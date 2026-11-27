@@ -23,7 +23,7 @@ var templates embed.FS
 //go:embed style.css
 var Style string
 
-//go:embed local-time.js answer.js
+//go:embed local-time.js actions.js
 var scripts embed.FS
 
 type Config struct {
@@ -43,7 +43,6 @@ type Handler struct {
 type item struct {
 	review
 	Job         jobs.Job
-	CanAct      bool
 	Subject     string
 	Status      string
 	Explanation string
@@ -55,6 +54,7 @@ type review struct {
 	Decision  decision
 	Outcome   jobs.Outcome
 	Attention *planning.Question
+	Actions   availableActions
 }
 
 type decision struct {
@@ -71,7 +71,6 @@ type page struct {
 	Items          []item
 	Selected       *item
 	Attempts       []jobs.Attempt
-	CSRF           string
 	ConfirmRemoval bool
 	QueueURL       string
 	State          string
@@ -118,9 +117,9 @@ func New(config Config) (http.Handler, error) {
 	router.HandleFunc("GET /history", app.list)
 	router.HandleFunc("GET /jobs/{id}", app.detail)
 	router.HandleFunc("GET /jobs/{id}/remove", app.detail)
-	router.HandleFunc("POST /jobs/{id}/{action}", app.action)
+	router.HandleFunc("GET /api/jobs/{id}", app.jobInfo)
 	router.HandleFunc("GET /api/jobs/{id}/question", app.question)
-	router.HandleFunc("POST /api/jobs/{id}/answer", app.answer)
+	router.HandleFunc("POST /api/jobs/{id}/{action}", app.action)
 	router.HandleFunc("GET /assets/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = w.Write([]byte(Style))
@@ -139,7 +138,7 @@ func New(config Config) (http.Handler, error) {
 }
 
 func (app *Handler) list(w http.ResponseWriter, r *http.Request) {
-	view := page{Title: "Needs you", CSRF: app.csrf, History: r.URL.Path == "/history"}
+	view := page{Title: "Needs you", History: r.URL.Path == "/history"}
 	view.State = r.URL.Query().Get("state")
 	view.Query = strings.TrimSpace(r.URL.Query().Get("q"))
 	view.Activity = r.URL.Path == "/activity" || view.State != ""
@@ -220,8 +219,7 @@ func (app *Handler) detail(w http.ResponseWriter, r *http.Request) {
 		Service:        job.Service,
 		Selected:       &selected,
 		Attempts:       attempts,
-		CSRF:           app.csrf,
-		ConfirmRemoval: r.URL.Path == fmt.Sprintf("/jobs/%d/remove", job.ID),
+		ConfirmRemoval: selected.Actions["remove"] && r.URL.Path == fmt.Sprintf("/jobs/%d/remove", job.ID),
 		QueueURL:       app.config.QueueURLs[job.Service],
 	})
 }

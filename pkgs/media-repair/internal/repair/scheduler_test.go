@@ -101,7 +101,7 @@ func TestRemovalDoesNotWaitForPlanner(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("planner did not start")
 	}
-	if err := store.RequestAction(ctx, second.ID, jobs.Delete, "", 0, time.Now()); err != nil {
+	if err := store.RequestRemoval(ctx, second, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	wake <- struct{}{}
@@ -217,7 +217,7 @@ func TestRepeatedInputsDoNotBuyAnotherPlan(t *testing.T) {
 	if err != nil || len(listed) != 1 {
 		t.Fatalf("jobs: %+v, %v", listed, err)
 	}
-	if err := store.RequestAction(ctx, listed[0].ID, jobs.Reconsider, "try again", 0, time.Now()); err != nil {
+	if err := store.RequestReconsideration(ctx, listed[0], planning.Answer{Guidance: "try again"}, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if err := scheduler.advance(ctx); err != nil {

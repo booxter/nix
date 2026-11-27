@@ -50,7 +50,6 @@ func present(job jobs.Job) item {
 		review:  reviewFor(job),
 		Job:     job,
 		Subject: subject(job),
-		CanAct:  job.InQueue && job.State != jobs.Running && job.State != jobs.Importing && job.State != jobs.Removing && job.State != jobs.Removed,
 	}
 
 	switch {

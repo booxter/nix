@@ -52,6 +52,8 @@ def radarr_queue() -> dict[str, object]:
         "trackedDownloadStatus": "ok",
         "trackedDownloadState": "downloading",
     }
+    if (FIXTURE / "removed").exists():
+        return page(active_download)
     if IMPORTS:
         if (FIXTURE / "drop-reply").exists():
             # Recovery must also work when the original queue row is gone.
@@ -159,6 +161,13 @@ def response_for(path: str, query: dict[str, list[str]]) -> object | None:
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_DELETE(self) -> None:
+        if urlsplit(self.path).path != "/api/v3/queue/101":
+            self.send_error(404)
+            return
+        (FIXTURE / "removed").touch()
+        self.send_json({})
+
     def do_GET(self) -> None:
         request = urlsplit(self.path)
         payload = response_for(request.path, parse_qs(request.query))

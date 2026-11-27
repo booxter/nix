@@ -59,7 +59,7 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	addInboxJob(t, fixture, 103, "Missing audio", jobs.Blocked, "incomplete_release", "")
 	addInboxJob(t, fixture, 104, "Already processing", jobs.Ready, "ambiguous_release", "")
 	pending := addInboxJob(t, fixture, 105, "Already answered", jobs.Blocked, "ambiguous_release", "")
-	if err := fixture.store.RequestAction(context.Background(), pending.ID, jobs.Reconsider, "use CD", 0, time.Now()); err != nil {
+	if err := fixture.store.RequestReconsideration(context.Background(), pending, planning.Answer{Guidance: "use CD"}, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	response := fixture.get("/")
@@ -78,21 +78,21 @@ func TestInboxOnlyContainsCurrentUserActions(t *testing.T) {
 	}
 }
 
-func (fixture *fixture) answerRequest(t *testing.T, jobID int64, answer answerRequest) *http.Request {
+func (fixture *fixture) actionRequest(t *testing.T, jobID int64, action string, input actionRequest) *http.Request {
 	t.Helper()
 	path := fmt.Sprintf("/api/jobs/%d", jobID)
-	response := fixture.get(path + "/question")
-	var current questionResponse
-	if err := json.Unmarshal(response.Body.Bytes(), &current); err != nil || current.Question == nil {
-		t.Fatalf("get question: %d %s", response.Code, response.Body)
+	response := fixture.get(path)
+	var current jobResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &current); err != nil || !current.Actions[action] {
+		t.Fatalf("job does not offer %s: %d %s", action, response.Code, response.Body)
 	}
-	answer.Revision, answer.Fingerprint = &current.Revision, &current.Fingerprint
-	body, err := json.Marshal(answer)
+	input.Revision, input.Fingerprint = &current.Revision, &current.Fingerprint
+	body, err := json.Marshal(input)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	request := httptest.NewRequest(http.MethodPost, path+"/answer", bytes.NewReader(body))
+	request := httptest.NewRequest(http.MethodPost, path+"/"+action, bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Origin", "https://repairr.home.arpa")
 	request.Header.Set("X-CSRF-Token", current.CSRFToken)
@@ -106,9 +106,9 @@ func TestAnswerQueuesOneReviewAndLeavesInbox(t *testing.T) {
 	fixture := newFixture(t)
 	job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
 	note := "Keep the original track order."
-	answer := answerRequest{Choice: "12", Guidance: note}
-	request := fixture.answerRequest(t, job.ID, answer)
-	duplicate := fixture.answerRequest(t, job.ID, answer)
+	answer := actionRequest{Choice: "12", Guidance: note}
+	request := fixture.actionRequest(t, job.ID, "answer", answer)
+	duplicate := fixture.actionRequest(t, job.ID, "answer", answer)
 	response := httptest.NewRecorder()
 	fixture.handler.ServeHTTP(response, request)
 	if response.Code != http.StatusNoContent {
@@ -134,13 +134,13 @@ func TestInboxRejectsUnavailableChoicesAndStaleEvidence(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 			fixture := newFixture(t)
 			job := addInboxJob(t, fixture, 100, "Choose my release", jobs.Blocked, "ambiguous_release", "")
-			answer := answerRequest{Choice: "12"}
+			answer := actionRequest{Choice: "12"}
 			want := http.StatusConflict
 			if scenario == "unknown choice" {
 				answer.Choice = "999"
 				want = http.StatusBadRequest
 			}
-			request := fixture.answerRequest(t, job.ID, answer)
+			request := fixture.actionRequest(t, job.ID, "answer", answer)
 			switch scenario {
 			case "new evidence":
 				job.SourceFingerprint = "case-b"
@@ -202,11 +202,11 @@ func TestRuntimeQuestionAndRetryKeepTheChosenFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	note := "I accept the shorter edition."
-	answer := answerRequest{Guidance: note}
+	answer := actionRequest{Guidance: note}
 	submit := func(want int) {
 		t.Helper()
 		response := httptest.NewRecorder()
-		fixture.handler.ServeHTTP(response, fixture.answerRequest(t, job.ID, answer))
+		fixture.handler.ServeHTTP(response, fixture.actionRequest(t, job.ID, "answer", answer))
 		if response.Code != want {
 			t.Fatalf("answer returned %d, want %d: %s", response.Code, want, response.Body)
 		}
@@ -231,7 +231,7 @@ func TestRuntimeQuestionAndRetryKeepTheChosenFile(t *testing.T) {
 	if err := fixture.store.FinishPlanning(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	answer = answerRequest{}
+	answer = actionRequest{}
 	submit(http.StatusNoContent)
 	retried, err := fixture.store.Get(ctx, job.ID)
 	if err != nil || retried.Answer != want {

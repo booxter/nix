@@ -59,7 +59,7 @@ func TestQueueDisappearanceAndReturnPreserveRepairFailure(t *testing.T) {
 			if _, err := store.Start(ctx, job.ID, time.Now()); !errors.Is(err, ErrConflict) {
 				t.Fatalf("returned failure allowed an automatic retry: %v", err)
 			}
-			if err := store.RequestAction(ctx, job.ID, Reconsider, "try again", 0, time.Now()); err != nil {
+			if err := store.RequestReconsideration(ctx, returned, planning.Answer{Guidance: "try again"}, time.Now()); err != nil {
 				t.Fatalf("returned failure cannot be reconsidered: %v", err)
 			}
 		})
@@ -73,7 +73,7 @@ func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
+	if err := store.RequestRemoval(ctx, job, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	present := []QueueKey{{QueueID: 20, DownloadID: "download"}}
@@ -99,7 +99,7 @@ func TestQueueIDChangePreservesJobAndPendingDelete(t *testing.T) {
 	if err != nil || !reappeared.InQueue || reappeared.State != Blocked {
 		t.Fatalf("present download stayed removed: %+v, %v", reappeared, err)
 	}
-	if err := store.RequestAction(ctx, job.ID, Delete, "", 0, time.Now()); err != nil {
+	if err := store.RequestRemoval(ctx, reappeared, time.Now()); err != nil {
 		t.Fatalf("cannot retry deletion: %v", err)
 	}
 }
