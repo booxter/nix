@@ -15,9 +15,10 @@ def read_json(url):
     return json.loads(machine.succeed(f"curl -fsS {shlex.quote(url)}"))
 
 
-def wait_for_job(listing):
+def wait_for_job(listing, condition="true"):
     """Return the job when it first appears in this filtered list."""
-    command = f"curl -fsS {shlex.quote(listing)} | jq -ce 'select(length == 1) | first'"
+    select = shlex.quote(f"map(select({condition})) | select(length == 1) | first")
+    command = f"curl -fsS {shlex.quote(listing)} | jq -ce {select}"
     return json.loads(machine.wait_until_succeeds(command, timeout=60))
 
 
@@ -36,10 +37,13 @@ with subtest("both apps wait and retry when the planner returns"):
     waiting_jobs = {}
     deadlines = []
     for service, port in [("radarr", 7878), ("lidarr", 8687)]:
-        job = wait_for_job(f"{REPAIRR}/api/jobs?service={service}&state=observed&q=503")
-        assert "503" in job["reason"], job
+        job = wait_for_job(
+            f"{REPAIRR}/api/jobs?service={service}&state=observed",
+            '.reasonCode == "planner_retry_scheduled"',
+        )
         waiting_jobs[service] = job["id"]
         detail = read_json(f"{REPAIRR}/api/jobs/{job['id']}")
+        assert detail["reasonCode"] == "planner_retry_scheduled", detail
         assert detail["attempts"] == [], detail
         deadlines.append(detail["retryAt"])
         assert read_json(f"http://127.0.0.1:{port}/fixture/imports") == []
@@ -83,6 +87,7 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
     assert command["name"] == "ManualImport" and source["path"] == VIDEO, command
     completed = read_json(detail)
     assert "retryAt" not in completed, completed
+    assert completed.get("reasonCode") != "planner_retry_scheduled", completed
     (attempt,) = completed["attempts"]
     (movie_file,) = attempt["receipt"]["files"]
     assert movie_file["droppedPath"] == VIDEO and movie_file["movieId"] == 42, movie_file

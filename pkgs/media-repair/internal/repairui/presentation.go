@@ -12,6 +12,11 @@ import (
 const plannerFallback = "The planner could not produce a valid decision within its attempt limit."
 
 func classifyOutcome(job jobs.Job, plan decision) jobs.Outcome {
+	// Planning history restores the retry deadline along with the failure.
+	if job.State == jobs.Observed && !pendingRetryAt(job).IsZero() {
+		return jobs.OutcomePlannerRetryScheduled
+	}
+
 	code := job.Outcome
 	if code == "" {
 		code = legacyOutcome(job, plan)

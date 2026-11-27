@@ -40,18 +40,17 @@ type jobDetail struct {
 	Attempts []attemptResponse `json:"attempts"`
 }
 
-// Older jobs kept the planning deadline after a successful retry. A ready
-// job waiting to retry preparation still has the failure reason.
 func pendingRetryAt(job jobs.Job) time.Time {
-	switch job.State {
-	case jobs.Observed, jobs.Ready:
-		if job.InQueue && job.Reason != "" && job.InspectionProblem() == "" {
+	switch {
+	case job.State == jobs.Ready && job.Reason == "":
+		// Older jobs kept the planning deadline after a successful retry.
+		return time.Time{}
+	case job.State == jobs.Observed || job.State == jobs.Ready:
+		if job.InQueue && job.InspectionProblem() == "" {
 			return job.RetryAt
 		}
-	case jobs.Blocked:
-		if job.PendingAction == jobs.Delete {
-			return job.RetryAt
-		}
+	case job.State == jobs.Blocked && job.PendingAction == jobs.Delete:
+		return job.RetryAt
 	}
 	return time.Time{}
 }

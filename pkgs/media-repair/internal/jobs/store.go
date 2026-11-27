@@ -30,15 +30,16 @@ type State string
 type Outcome string
 
 const (
-	OutcomeEvidenceChanged    Outcome = "evidence_changed"
-	OutcomePlannerFailed      Outcome = "planner_failed"
-	OutcomeOther              Outcome = "other"
-	OutcomeInterrupted        Outcome = "interrupted"
-	OutcomeRuntimeMismatch    Outcome = "runtime_mismatch"
-	OutcomeAlreadyReviewed    Outcome = "already_reviewed"
-	OutcomeIncompleteDownload Outcome = "incomplete_download"
-	OutcomeQueueNotReady      Outcome = "queue_not_ready"
-	OutcomeInvalidCueSheet    Outcome = "invalid_cue_sheet"
+	OutcomeEvidenceChanged       Outcome = "evidence_changed"
+	OutcomePlannerFailed         Outcome = "planner_failed"
+	OutcomePlannerRetryScheduled Outcome = "planner_retry_scheduled"
+	OutcomeOther                 Outcome = "other"
+	OutcomeInterrupted           Outcome = "interrupted"
+	OutcomeRuntimeMismatch       Outcome = "runtime_mismatch"
+	OutcomeAlreadyReviewed       Outcome = "already_reviewed"
+	OutcomeIncompleteDownload    Outcome = "incomplete_download"
+	OutcomeQueueNotReady         Outcome = "queue_not_ready"
+	OutcomeInvalidCueSheet       Outcome = "invalid_cue_sheet"
 )
 
 const (
