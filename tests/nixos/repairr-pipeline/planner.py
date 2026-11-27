@@ -1,7 +1,7 @@
 """Select the manual import offered by Repairr over its normal planner socket."""
 
 import json
-import sys
+import socket
 from http.server import BaseHTTPRequestHandler
 from socketserver import UnixStreamServer
 
@@ -103,5 +103,8 @@ class Planner(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-with UnixStreamServer(sys.argv[1], Planner) as server:
+with UnixStreamServer("", Planner, bind_and_activate=False) as server:
+    # systemd has already bound the planner socket and passes it as fd 3.
+    server.socket.close()
+    server.socket = socket.socket(fileno=3)
     server.serve_forever()

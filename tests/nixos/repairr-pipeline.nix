@@ -54,7 +54,7 @@ let
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         RuntimeDirectory = "repairr-planner";
-        ExecStart = "${lib.getExe pkgs.python3} ${./repairr-pipeline/planner.py} ${plannerSocket}";
+        ExecStart = "${pkgs.systemd}/bin/systemd-socket-activate -l ${plannerSocket} ${lib.getExe pkgs.python3} ${./repairr-pipeline/planner.py}";
       };
     };
     # The test starts the daemon with repairs paused so it can see the saved
@@ -65,16 +65,7 @@ let
     };
   };
   ffmpeg = lib.getExe' pkgs.ffmpeg-headless "ffmpeg";
-  movieNode = node {
-    preStart = ''
-      mkdir -p ${release}
-      ${ffmpeg} -v error -y -f lavfi -i color=size=64x64:rate=1 -frames:v 1 -c:v mpeg4 ${video}
-    '';
-    serviceConfig = {
-      RuntimeDirectory = "radarr-fixture";
-      ExecStart = "${lib.getExe pkgs.python3} ${./repairr-pipeline/server.py} ${video}";
-    };
-  };
+  movieNode = node (import ./repairr-pipeline/movie-fixture.nix { inherit pkgs video; });
   albumNode = node {
     preStart = ''
       # On srvarr, storage provisioning creates the helper's workspace base.
