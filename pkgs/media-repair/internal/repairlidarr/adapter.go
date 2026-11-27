@@ -24,6 +24,7 @@ type Inspector interface {
 }
 
 type Adapter struct {
+	repair.ImportGracePeriod
 	Client    Client
 	Inspector Inspector
 	Planner   lidarrrepair.Planner
@@ -59,6 +60,9 @@ func (adapter *Adapter) authorize(
 		return lidarrrepair.AuthorizedImport{}, result.Err
 	}
 	if err := repair.CheckEligibility(result.Findings, jobs.OutcomeQueueNotReady); err != nil {
+		return lidarrrepair.AuthorizedImport{}, err
+	}
+	if err := adapter.CheckImportState(queue.TrackedDownloadState, job.StableSince); err != nil {
 		return lidarrrepair.AuthorizedImport{}, err
 	}
 

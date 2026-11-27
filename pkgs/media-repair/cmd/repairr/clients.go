@@ -12,6 +12,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	"github.com/booxter/nix-config/media-repair/internal/radarr"
+	"github.com/booxter/nix-config/media-repair/internal/repair"
 	"github.com/booxter/nix-config/media-repair/internal/repairlidarr"
 	"github.com/booxter/nix-config/media-repair/internal/repairradarr"
 	"github.com/booxter/nix-config/media-repair/internal/sabnzbd"
@@ -84,18 +85,19 @@ func (configuration config) newRepairServices(
 		return nil, err
 	}
 
+	grace := repair.ImportGracePeriod{Duration: queueInterval, Now: wallClock{}.Now}
 	radarrAdapter := &repairradarr.Adapter{
-		Client:        radarrClient,
-		Inspector:     inspector,
-		Media:         media,
-		Planner:       planner,
-		Stabilization: queueInterval,
-		Now:           wallClock{}.Now,
+		Client:            radarrClient,
+		Inspector:         inspector,
+		Media:             media,
+		Planner:           planner,
+		ImportGracePeriod: grace,
 	}
 	lidarrAdapter := &repairlidarr.Adapter{
-		Client:    lidarrClient,
-		Inspector: lidarrrepair.NewEvidenceCollector(lidarrClient, media),
-		Planner:   planner,
+		ImportGracePeriod: grace,
+		Client:            lidarrClient,
+		Inspector:         lidarrrepair.NewEvidenceCollector(lidarrClient, media),
+		Planner:           planner,
 	}
 	return repairServices{jobs.Radarr: radarrAdapter, jobs.Lidarr: lidarrAdapter}, nil
 }

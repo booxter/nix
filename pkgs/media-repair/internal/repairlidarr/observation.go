@@ -24,7 +24,10 @@ func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.O
 			return lidarr.FinalizationCandidates(ctx, adapter.Client, queue)
 		},
 		NewJob: func(entry lidarr.QueueRecord) jobs.Job {
-			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+			return jobs.Job{
+				QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title,
+				TrackedDownloadState: entry.TrackedDownloadState,
+			}
 		},
 		Inspect:    adapter.inspectAlbum,
 		StopReason: albumStopReason,

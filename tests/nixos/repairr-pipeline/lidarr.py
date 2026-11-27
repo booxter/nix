@@ -39,6 +39,7 @@ QUEUE_ENTRY = {
     "protocol": "usenet",
     "status": "completed",
     "trackedDownloadStatus": "warning",
+    "trackedDownloadState": os.environ.get("TRACKED_DOWNLOAD_STATE", "importFailed"),
     "outputPath": str(DOWNLOAD),
 }
 UNFINISHED = {

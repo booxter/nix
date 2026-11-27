@@ -55,6 +55,36 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 	}
 }
 
+func TestPendingImportFoundDuringAuthorizationRetriesAtGraceDeadline(t *testing.T) {
+	engine, adapter, job := fixture(t)
+	ctx := t.Context()
+	start := time.Now().UTC()
+	now := start.Add(time.Minute)
+	grace := ImportGracePeriod{Duration: 15 * time.Minute, Now: func() time.Time { return now }}
+	service := &waitingService{fakeAdapter: *adapter}
+	scheduler := Scheduler{
+		Store: engine.Store, Service: service, Name: jobs.Radarr,
+		Now: grace.Now, Disabled: func() (bool, error) { return false, nil },
+	}
+
+	// The saved plan was ready, but the fresh queue read found a pending import.
+	service.authorizeError = grace.CheckImportState("importPending", start)
+	if err := scheduler.advance(ctx); err == nil {
+		t.Fatal("expected preparation to wait for the media service")
+	}
+	waiting, err := engine.Store.Get(ctx, job.ID)
+	deadline := start.Add(grace.Duration)
+	if err != nil || waiting.State != jobs.Ready || !waiting.RetryAt.Equal(deadline) || service.submissions != 0 {
+		t.Fatalf("expected a pending retry at %v, got %+v, %v", deadline, waiting, err)
+	}
+
+	now = deadline
+	service.authorizeError = grace.CheckImportState("importPending", start)
+	if err := scheduler.advance(ctx); err != nil || service.submissions != 1 {
+		t.Fatalf("retry at deadline: %v, submissions: %d", err, service.submissions)
+	}
+}
+
 func TestRemovalDoesNotWaitForPlanner(t *testing.T) {
 	store, err := jobs.Open(filepath.Join(t.TempDir(), "jobs.db"), testInputs)
 	if err != nil {

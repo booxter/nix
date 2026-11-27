@@ -69,7 +69,3 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 	return repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}, err
 }
-
-func (adapter *Adapter) Ready(jobs.Job) bool {
-	return true
-}

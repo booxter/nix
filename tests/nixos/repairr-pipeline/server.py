@@ -1,6 +1,7 @@
 """Only the completed download has a SABnzbd history record."""
 
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -36,7 +37,7 @@ def radarr_queue() -> dict[str, object]:
         "size": DOWNLOAD_SIZE,
         "sizeleft": 0,
         "trackedDownloadStatus": "warning",
-        "trackedDownloadState": "importBlocked",
+        "trackedDownloadState": os.environ.get("TRACKED_DOWNLOAD_STATE", "importBlocked"),
     }
     if (FIXTURE / "missing-movie").exists():
         del blocked_import["movieId"]

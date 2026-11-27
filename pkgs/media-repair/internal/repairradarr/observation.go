@@ -20,7 +20,10 @@ func (adapter *Adapter) Observe(ctx context.Context, saved []jobs.Job) (repair.O
 			return radarr.FinalizationCandidates(ctx, adapter.Client, queue)
 		},
 		NewJob: func(entry controller.RadarrQueueRecord) jobs.Job {
-			return jobs.Job{QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title}
+			return jobs.Job{
+				QueueID: entry.ID, DownloadID: entry.DownloadID, Title: entry.Title,
+				TrackedDownloadState: string(entry.TrackedDownloadState),
+			}
 		},
 		Inspect: func(ctx context.Context, entry controller.RadarrQueueRecord, _ json.RawMessage) CollectionResult {
 			return adapter.Inspector.Inspect(ctx, entry)

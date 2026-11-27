@@ -63,6 +63,18 @@ with subtest("both apps wait and retry when the planner returns"):
     last_retry = max(deadlines, key=datetime.fromisoformat)
     machine.succeed(shlex.join(["date", "-s", last_retry]))
 
+with subtest("Radarr and Lidarr get time to finish their own pending imports"):
+    for service in waiting_jobs:
+        wait_for_job(f"{REPAIRR}/api/jobs?service={service}&state=ready")
+
+    # The planner has recovered. Let the scheduler run with both plans ready.
+    machine.succeed("sleep 6")
+    for job_id in waiting_jobs.values():
+        detail = read_json(f"{REPAIRR}/api/jobs/{job_id}")
+        assert detail["state"] == "ready" and detail["attempts"] == [], detail
+
+    machine.succeed("date -s '+15 minutes'")
+
 with subtest("an unfinished album appears in the operator activity page"):
     album = wait_for_job(UNFINISHED_ALBUM)
     assert (

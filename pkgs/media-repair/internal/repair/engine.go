@@ -112,12 +112,15 @@ func (engine *Engine) execute(ctx context.Context, job jobs.Job, attempt jobs.At
 func (engine *Engine) repairAndSubmit(ctx context.Context, job jobs.Job, attempt jobs.Attempt) error {
 	prepared, err := engine.Adapter.ImportSteps().prepare(ctx, job, attempt)
 	if err != nil {
-		var retryable *retryableReadError
+		var retryable *preparationRetry
 		if errors.As(err, &retryable) {
 			attempt.State = jobs.Failed
 			attempt.Reason = err.Error()
 			attempt.UpdatedAt = engine.Now().UTC()
-			retryAt := attempt.UpdatedAt.Add(time.Minute)
+			retryAt := retryable.at
+			if retryAt.IsZero() {
+				retryAt = attempt.UpdatedAt.Add(time.Minute)
+			}
 			return errors.Join(err, engine.Store.RetryPreparation(context.WithoutCancel(ctx), attempt, retryAt))
 		}
 

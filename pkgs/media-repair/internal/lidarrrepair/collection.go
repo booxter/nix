@@ -79,7 +79,9 @@ func downloadFindings(queue lidarr.QueueRecord) []string {
 	if queue.Status != "completed" {
 		findings = append(findings, "incomplete_download")
 	}
-	if queue.TrackedDownloadStatus != "warning" {
+	// Leave an active or finished import to Lidarr even if it also reports a warning.
+	alreadyImporting := queue.TrackedDownloadState == "importing" || queue.TrackedDownloadState == "imported"
+	if queue.TrackedDownloadStatus != "warning" || alreadyImporting {
 		findings = append(findings, "unsupported_queue_state")
 	}
 	return findings

@@ -63,15 +63,16 @@ type Job struct {
 	// SourceFingerprint identifies the observed case used to authorize execution.
 	// PlanningFingerprint ignores assessment noise so an unchanged planning
 	// question can reuse its previous result.
-	SourceFingerprint   string
-	PlanningFingerprint string
-	StableSince         time.Time
-	Evidence            json.RawMessage `gorm:"serializer:json"`
-	Findings            []string        `gorm:"serializer:json"`
-	CollectionError     string
-	CollectionOutcome   Outcome
-	Plan                json.RawMessage  `gorm:"serializer:json"`
-	PlanResult          *planning.Result `gorm:"serializer:json"`
+	SourceFingerprint    string
+	PlanningFingerprint  string
+	StableSince          time.Time
+	TrackedDownloadState string
+	Evidence             json.RawMessage `gorm:"serializer:json"`
+	Findings             []string        `gorm:"serializer:json"`
+	CollectionError      string
+	CollectionOutcome    Outcome
+	Plan                 json.RawMessage  `gorm:"serializer:json"`
+	PlanResult           *planning.Result `gorm:"serializer:json"`
 	// The inbox reads the current question here. Each attempt keeps its own
 	// question after the operator answers or the case changes.
 	AttemptQuestion  *planning.Question `gorm:"serializer:json"`
@@ -190,6 +191,8 @@ func (store *Store) Observe(ctx context.Context, observed Job) (Job, error) {
 		}
 
 		job.Title = observed.Title
+		// Queue progress can change while a ready plan keeps its original evidence.
+		job.TrackedDownloadState = observed.TrackedDownloadState
 		job.UpdatedAt = observed.UpdatedAt
 		job.InQueue = true
 		job.Findings = observed.Findings

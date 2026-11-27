@@ -256,6 +256,18 @@ func TestEvidenceCollectorRecoversAlbumIdentity(t *testing.T) {
 	}
 }
 
+func TestAlbumInspectionLeavesActiveAndFinishedImportsToLidarr(t *testing.T) {
+	queue := evidenceQueue(t.TempDir())
+	collector := NewEvidenceCollector(evidenceClient("/downloads"), &fakeWorker{root: "/downloads", directoryAudio: true})
+	for _, state := range []string{"importing", "imported"} {
+		queue.TrackedDownloadState = state
+		result := collector.Inspect(t.Context(), queue, nil)
+		if result.Err != nil || result.Case != nil || !slices.Contains(result.Findings, "unsupported_queue_state") {
+			t.Fatalf("queue state %s: %+v", state, result)
+		}
+	}
+}
+
 func TestEvidenceCollectorRejectsUnsupportedArchive(t *testing.T) {
 	t.Parallel()
 	download := t.TempDir()

@@ -39,11 +39,11 @@ func (adapter *Adapter) authorize(ctx context.Context, job jobs.Job, plan json.R
 	if selectedFileChanged(planned.Snapshot, fresh.LocalSnapshot, decision) {
 		return authorizedRepair{}, &repair.BlockedError{Reason: "selected file changed after planning", Code: jobs.OutcomeEvidenceChanged}
 	}
+	if err := adapter.CheckImportState(string(queue.TrackedDownloadState), job.StableSince); err != nil {
+		return authorizedRepair{}, err
+	}
 	if queue.DownloadID != job.DownloadID || !casebuilder.SameCaseState(planned.Assembly(), fresh) {
 		return authorizedRepair{}, &repair.BlockedError{Reason: "source or queue identity changed; collect a new plan"}
-	}
-	if queue.TrackedDownloadState == "importPending" && adapter.Now().Sub(job.StableSince) < adapter.Stabilization {
-		return authorizedRepair{}, &repair.BlockedError{Reason: "source is still stabilizing"}
 	}
 
 	policy := decisionpolicy.RuntimePolicy{MaximumDifferenceMS: job.RuntimeToleranceMS}

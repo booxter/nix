@@ -41,13 +41,3 @@ func (adapter *Adapter) Plan(ctx context.Context, job jobs.Job) (repair.Decision
 	}
 	return repair.Decision{Data: data, Result: planning.Result{Outcome: planning.Repair}}, err
 }
-
-func (adapter *Adapter) Ready(job jobs.Job) bool {
-	var evidence Evidence
-	if err := json.Unmarshal(job.Evidence, &evidence); err != nil {
-		return false
-	}
-
-	queue := evidence.Snapshot.Observation.Correlation.Radarr
-	return queue.TrackedDownloadState != "importPending" || adapter.Now().Sub(job.StableSince) >= adapter.Stabilization
-}

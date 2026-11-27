@@ -14,7 +14,8 @@ let
   radarrURL = "http://127.0.0.1:7878";
   lidarrURL = "http://127.0.0.1:8687";
   # The first queue poll should see both fixtures ready to serve.
-  waitForFixture = url: {
+  pendingImportFixture = url: {
+    environment.TRACKED_DOWNLOAD_STATE = "importPending";
     serviceConfig.UMask = "0027";
     postStart = "${pkgs.curl}/bin/curl -fsS --retry-connrefused --retry 10 ${url}/fixture/imports";
   };
@@ -91,11 +92,11 @@ pkgs.testers.runNixOSTest {
       ];
       systemd.services.radarr-fixture = lib.mkMerge [
         movieFixture
-        (waitForFixture radarrURL)
+        (pendingImportFixture radarrURL)
       ];
       systemd.services.lidarr-fixture = lib.mkMerge [
         albumFixture
-        (waitForFixture lidarrURL)
+        (pendingImportFixture lidarrURL)
         { serviceConfig.User = "lidarr-fixture"; }
       ];
       systemd.services.repairr = {

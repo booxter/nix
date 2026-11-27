@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
@@ -40,12 +39,11 @@ func (evidence Evidence) Assembly() casebuilder.Assembly {
 }
 
 type Adapter struct {
-	Inspector     *Inspector
-	Client        Client
-	Media         Media
-	Planner       Planner
-	Stabilization time.Duration
-	Now           func() time.Time
+	repair.ImportGracePeriod
+	Inspector *Inspector
+	Client    Client
+	Media     Media
+	Planner   Planner
 }
 
 func (adapter *Adapter) ImportSteps() repair.ImportFlow {
