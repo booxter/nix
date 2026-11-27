@@ -119,20 +119,20 @@ def replace_file(vm, path):
     return replacement
 
 
-def import_receipt(vm, job_url, attempt_number=1):
+def confirmed_files(vm, job_url, attempt_number=1):
     job = wait_for_json(vm, job_url, '.state == "imported"')
     assert len(job["attempts"]) == attempt_number and "question" not in job, job
     attempt = job["attempts"][-1]
     assert attempt["number"] == attempt_number and attempt["state"] == "imported", attempt
-    return attempt["receipt"]
+    return attempt["receipt"]["files"]
 
 
 def confirm_from_history(vm, job_url, expected_path=VIDEO, attempt_number=1):
     vm.succeed(f"touch {FIXTURE}/publish-import")
-    receipt = import_receipt(vm, job_url, attempt_number)
-    assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
-    assert receipt["DroppedPath"] == expected_path and receipt["MovieID"] == 42, receipt
-    assert receipt["DownloadID"] == "SABnzbd_nzo_complete", receipt
+    (movie,) = confirmed_files(vm, job_url, attempt_number)
+    assert movie["historyId"] == 51 and movie["movieFileId"] == 8, movie
+    assert movie["droppedPath"] == expected_path and movie["movieId"] == 42, movie
+    assert movie["downloadId"] == "SABnzbd_nzo_complete", movie
     assert len(submitted_imports(vm)) == 1
 
 
@@ -387,7 +387,7 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
         detail["attempts"][-1]["state"] == "importing" and "receipt" not in detail["attempts"][-1]
     )
     albumImport.succeed("touch /run/lidarr-fixture/publish-second-track")
-    receipt = import_receipt(albumImport, job, attempt_number=2)
+    files = confirmed_files(albumImport, job, attempt_number=2)
 
     (command,) = submitted_imports(albumImport)
     assert command["name"] == "ManualImport" and command["importMode"] == "copy", command
@@ -402,9 +402,9 @@ with subtest("Lidarr confirms the album only after both selected tracks appear i
         assert track_id == expected[path.name], file
         selected_paths[track_id] = str(path)
     assert set(selected_paths) == set(expected.values()), command
-    assert (
-        len(receipt) == 2 and {r["track_id"]: r["dropped_path"] for r in receipt} == selected_paths
-    ), receipt
+    assert len(files) == 2 and {f["trackId"]: f["droppedPath"] for f in files} == selected_paths, (
+        files
+    )
     albumImport.shutdown()
 
 with subtest("the operator's edition selects the release and tracks imported into Lidarr"):
@@ -426,13 +426,13 @@ with subtest("the operator's edition selects the release and tracks imported int
     # A second open tab still has the previous revision of the question.
     assert releaseChoice.succeed(answer) == "409"
     releaseChoice.succeed("touch /run/lidarr-fixture/publish-second-track")
-    receipt = import_receipt(releaseChoice, job)
+    files = confirmed_files(releaseChoice, job)
     (command,) = submitted_imports(releaseChoice)
     assert [(file["albumReleaseId"], file["trackIds"]) for file in command["files"]] == [
         (82, [21]),
         (82, [22]),
     ], command
-    assert {track["track_id"] for track in receipt} == {21, 22}, receipt
+    assert {file["trackId"] for file in files} == {21, 22}, files
     releaseChoice.shutdown()
 
 with subtest("an album that resumes downloading blocks the saved plan before import"):

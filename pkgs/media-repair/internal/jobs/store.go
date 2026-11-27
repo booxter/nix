@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -108,8 +109,8 @@ type Attempt struct {
 	CommandID        int64
 	ImportStartedAt  time.Time
 	ImportTerminalAt time.Time
-	ImportReceipt    json.RawMessage    `gorm:"serializer:json"`
-	Question         *planning.Question `gorm:"serializer:json"`
+	ImportReceipt    *servarr.ImportReceipt `gorm:"serializer:json"`
+	Question         *planning.Question     `gorm:"serializer:json"`
 	Reason           string
 	Outcome          Outcome
 	StartedAt        time.Time

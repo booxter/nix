@@ -57,7 +57,7 @@ func TestRepairImportsAndKeepsUIStateCurrent(t *testing.T) {
 	}
 	// History still proves the import after Servarr drops the command.
 	adapter.command = servarr.Command{}
-	adapter.receipt = json.RawMessage(`{"file_id":42}`)
+	adapter.imported = []servarr.ImportedFile{{MovieFileID: 42}}
 	if err := engine.Run(ctx, job.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestUncertainSubmissionIsReconciledAfterRestartWithoutResubmission(t *testi
 		t.Fatal(err)
 	}
 	assertState(t, engine, job.ID, jobs.Importing)
-	service.receipt = json.RawMessage(`{"file_id":42}`)
+	service.imported = []servarr.ImportedFile{{MovieFileID: 42}}
 	if err := restarted.advance(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +209,7 @@ type fakeAdapter struct {
 	jobID       int64
 	repairs     int
 	submissions int
-	receipt     json.RawMessage
+	imported    []servarr.ImportedFile
 	command     servarr.Command
 
 	authorizeError error
@@ -249,8 +249,8 @@ func (adapter *fakeAdapter) Submit(ctx context.Context, request json.RawMessage)
 
 func (adapter *fakeAdapter) ConfirmationSteps() ConfirmationSteps {
 	return ConfirmationSteps{
-		FindReceipt: func(context.Context, jobs.Attempt) (json.RawMessage, error) {
-			return adapter.receipt, adapter.historyError
+		FindImportedFiles: func(context.Context, jobs.Attempt) ([]servarr.ImportedFile, error) {
+			return adapter.imported, adapter.historyError
 		},
 		ReadCommandStatus: func(_ context.Context, id int64) (servarr.Command, error) {
 			if id != adapter.command.ID {

@@ -87,7 +87,7 @@
         <p>{{.Reason}}</p>
         {{if .CommandID}}<p>Import command #{{.CommandID}}</p>{{end}}
         {{if .OutputPath}}<p><code>{{.OutputPath}}</code></p>{{end}}
-        {{if .ImportReceipt}}<details><summary>Import confirmation</summary><pre>{{printf "%s" .ImportReceipt}}</pre></details>{{end}}
+        {{if .ImportReceipt}}<details><summary>Import confirmation</summary><pre>{{printf "%s" (json .ImportReceipt)}}</pre></details>{{end}}
       </section>
       {{end}}
       <p><a class="button" href="{{.QueueURL}}">Open {{$entry.Job.Service}} queue</a></p>

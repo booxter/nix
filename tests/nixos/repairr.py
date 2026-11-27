@@ -50,9 +50,9 @@ with subtest("Repairr imports the movie and confirms it from Radarr history"):
     (source,) = command["files"]
     assert command["name"] == "ManualImport" and source["path"] == VIDEO, command
     (attempt,) = read_json(detail)["attempts"]
-    receipt = attempt["receipt"]
-    assert receipt["DroppedPath"] == VIDEO and receipt["MovieID"] == 42, receipt
-    assert receipt["HistoryID"] == 51 and receipt["MovieFileID"] == 8, receipt
+    (movie_file,) = attempt["receipt"]["files"]
+    assert movie_file["droppedPath"] == VIDEO and movie_file["movieId"] == 42, movie_file
+    assert movie_file["historyId"] == 51 and movie_file["movieFileId"] == 8, movie_file
 
 with subtest("Lidarr reads the staged tracks and Repairr waits for both history records"):
     album_job = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=importing")
@@ -75,7 +75,8 @@ with subtest("Lidarr reads the staged tracks and Repairr waits for both history 
     imported = wait_for_job(f"{REPAIRR}/api/jobs?service=lidarr&state=imported")
     assert imported["id"] == album_job["id"], imported
     (album_attempt,) = read_json(album_url)["attempts"]
-    assert sorted((row["track_id"], row["history_id"]) for row in album_attempt["receipt"]) == [
+    tracks = album_attempt["receipt"]["files"]
+    assert sorted((row["trackId"], row["historyId"]) for row in tracks) == [
         (11, 92),
         (12, 91),
     ], album_attempt

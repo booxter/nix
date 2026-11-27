@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 func TestReadImportedFiles(t *testing.T) {
@@ -112,7 +112,7 @@ func TestImportedFileMatchUsesHistoryIDBoundary(t *testing.T) {
 	t.Parallel()
 
 	when := time.Date(2026, 9, 14, 20, 9, 25, 0, time.UTC)
-	old := controller.RadarrImportedFile{
+	old := servarr.ImportedFile{
 		HistoryID: 40, MovieID: 42, DownloadID: testHistoryDownloadID,
 		DroppedPath: "/downloads/movie.mkv", OccurredAt: when.Add(time.Minute),
 	}
@@ -122,9 +122,9 @@ func TestImportedFileMatchUsesHistoryIDBoundary(t *testing.T) {
 	mismatch := newImport
 	mismatch.HistoryID = 41
 	mismatch.DroppedPath = "/downloads/other.mkv"
-	imports := []controller.RadarrImportedFile{newImport, old, mismatch}
+	imports := []servarr.ImportedFile{newImport, old, mismatch}
 
-	if highest := HighestImportedFileHistoryID(imports); highest != 42 {
+	if highest := servarr.HighestHistoryID(imports); highest != 42 {
 		t.Fatalf("highest history ID = %d", highest)
 	}
 	found, ok := FindImportedFile(imports, ImportedFileMatch{

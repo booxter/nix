@@ -2,7 +2,6 @@ package repair
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,8 +10,8 @@ import (
 )
 
 type ConfirmationSteps struct {
-	// A nil receipt means history does not yet cover all the selected files.
-	FindReceipt       func(context.Context, jobs.Attempt) (json.RawMessage, error)
+	// Return the complete selection, or nil while any file is missing from history.
+	FindImportedFiles func(context.Context, jobs.Attempt) ([]servarr.ImportedFile, error)
 	ReadCommandStatus func(context.Context, int64) (servarr.Command, error)
 	// Radarr includes a result with a completed command. Lidarr can omit it.
 	RequireCompletionResult bool
@@ -22,13 +21,13 @@ type ConfirmationSteps struct {
 // Check command status only while we are still waiting for a receipt.
 func (engine *Engine) checkImport(ctx context.Context, attempt *jobs.Attempt) error {
 	steps := engine.Adapter.ConfirmationSteps()
-	receipt, err := steps.FindReceipt(ctx, *attempt)
+	files, err := steps.FindImportedFiles(ctx, *attempt)
 	if err != nil {
 		return err
 	}
-	if len(receipt) != 0 {
+	if len(files) != 0 {
 		attempt.State = jobs.Imported
-		attempt.ImportReceipt = receipt
+		attempt.ImportReceipt = &servarr.ImportReceipt{Files: files}
 		attempt.Reason = ""
 		return nil
 	}

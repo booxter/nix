@@ -10,6 +10,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/repair"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 type Client interface {
@@ -90,7 +91,7 @@ func (adapter *Adapter) prepareImport(
 	return repair.PreparedImport{
 		OutputPath:      authorized.WorkspaceRoot,
 		Request:         request,
-		HistoryIDBefore: lidarr.HighestImportedTrackHistoryID(history),
+		HistoryIDBefore: servarr.HighestHistoryID(history),
 	}, err
 }
 
@@ -130,13 +131,13 @@ func (adapter *Adapter) Submit(ctx context.Context, data json.RawMessage) (int64
 
 func (adapter *Adapter) ConfirmationSteps() repair.ConfirmationSteps {
 	return repair.ConfirmationSteps{
-		FindReceipt:       adapter.findReceipt,
+		FindImportedFiles: adapter.findImportedFiles,
 		ReadCommandStatus: adapter.Client.ReadManualImportCommand,
 	}
 }
 
 // An album receipt is complete only when history includes every selected track.
-func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (json.RawMessage, error) {
+func (adapter *Adapter) findImportedFiles(ctx context.Context, attempt jobs.Attempt) ([]servarr.ImportedFile, error) {
 	var request lidarr.ManualImportCommand
 	if err := json.Unmarshal(attempt.ImportRequest, &request); err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (
 		return nil, err
 	}
 
-	confirmed := make([]lidarr.ImportedTrack, 0, len(request.Files))
+	confirmed := make([]servarr.ImportedFile, 0, len(request.Files))
 	for _, file := range request.Files {
 		imported, found := lidarr.FindImportedTrack(history, lidarr.ImportedTrackMatch{
 			TrackID:        file.TrackID,
@@ -163,5 +164,5 @@ func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (
 		}
 		confirmed = append(confirmed, imported)
 	}
-	return json.Marshal(confirmed)
+	return confirmed, nil
 }

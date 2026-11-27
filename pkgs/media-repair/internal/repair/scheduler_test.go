@@ -13,6 +13,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
@@ -37,7 +38,7 @@ func TestTemporaryPreparationReadIsRetriedWithExistingPlan(t *testing.T) {
 	}
 
 	service.authorizeError = nil
-	service.receipt = json.RawMessage(`{"file_id":42}`)
+	service.imported = []servarr.ImportedFile{{MovieFileID: 42}}
 	if err := scheduler.advance(ctx); err != nil || service.submissions != 0 {
 		t.Fatalf("retried during backoff: %v, submissions: %d", err, service.submissions)
 	}

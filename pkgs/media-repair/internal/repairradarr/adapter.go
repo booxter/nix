@@ -23,7 +23,7 @@ type Client interface {
 	FinalizeQueue(context.Context, int64, bool) error
 	RequestManualImport(context.Context, controller.RadarrManualImportCommand) (servarr.Command, error)
 	ReadManualImportCommand(context.Context, int64) (servarr.Command, error)
-	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
+	ReadImportedFiles(context.Context, int64, string) ([]servarr.ImportedFile, error)
 }
 
 type Media interface {
@@ -74,7 +74,7 @@ func (adapter *Adapter) prepareImport(
 	return repair.PreparedImport{
 		OutputPath:      command.File.Path,
 		Request:         request,
-		HistoryIDBefore: radarr.HighestImportedFileHistoryID(history),
+		HistoryIDBefore: servarr.HighestHistoryID(history),
 	}, err
 }
 
@@ -127,14 +127,14 @@ func (adapter *Adapter) Submit(ctx context.Context, request json.RawMessage) (in
 
 func (adapter *Adapter) ConfirmationSteps() repair.ConfirmationSteps {
 	return repair.ConfirmationSteps{
-		FindReceipt:             adapter.findReceipt,
+		FindImportedFiles:       adapter.findImportedFiles,
 		ReadCommandStatus:       adapter.Client.ReadManualImportCommand,
 		RequireCompletionResult: true,
 	}
 }
 
 // Match the file sent to Radarr against history recorded after this attempt began.
-func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (json.RawMessage, error) {
+func (adapter *Adapter) findImportedFiles(ctx context.Context, attempt jobs.Attempt) ([]servarr.ImportedFile, error) {
 	var request controller.RadarrManualImportCommand
 	if err := json.Unmarshal(attempt.ImportRequest, &request); err != nil {
 		return nil, err
@@ -152,5 +152,5 @@ func (adapter *Adapter) findReceipt(ctx context.Context, attempt jobs.Attempt) (
 	if !found {
 		return nil, nil
 	}
-	return json.Marshal(imported)
+	return []servarr.ImportedFile{imported}, nil
 }

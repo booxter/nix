@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
@@ -76,7 +78,7 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatal(err)
 	}
 	retry.State = Imported
-	retry.ImportReceipt = json.RawMessage(`{"movie_file_id":9}`)
+	retry.ImportReceipt = &servarr.ImportReceipt{Files: []servarr.ImportedFile{{MovieFileID: 9}}}
 	if err := store.UpdateAttempt(ctx, retry); err != nil {
 		t.Fatal(err)
 	}
@@ -85,8 +87,60 @@ func TestAttemptsSurviveRestartAndKeepJobStateInSync(t *testing.T) {
 		t.Fatalf("observation reset imported job: %+v %v", job, err)
 	}
 	attempts, err := store.Attempts(ctx, job.ID)
-	if err != nil || len(attempts) != 2 || attempts[1].State != Imported || string(attempts[1].ImportReceipt) != `{"movie_file_id":9}` {
+	if err != nil || len(attempts) != 2 || attempts[1].State != Imported || !reflect.DeepEqual(attempts[1].ImportReceipt, retry.ImportReceipt) {
 		t.Fatalf("attempts=%+v error=%v", attempts, err)
+	}
+}
+
+func TestReadPreviouslySavedImportReceipts(t *testing.T) {
+	store := openStore(t, filepath.Join(t.TempDir(), "jobs.db"))
+	at := time.Date(2026, 11, 1, 9, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		service Service
+		saved   string
+		files   []servarr.ImportedFile
+	}{
+		{
+			Radarr, `{"HistoryID":51,"MovieID":42,"MovieFileID":8,"DownloadID":"movie",
+				"DroppedPath":"/downloads/m.mkv","ImportedPath":"/movies/m.mkv","OccurredAt":"2026-11-01T09:00:00Z"}`,
+			[]servarr.ImportedFile{{HistoryID: 51, MovieID: 42, MovieFileID: 8, DownloadID: "movie",
+				DroppedPath: "/downloads/m.mkv", ImportedPath: "/movies/m.mkv", OccurredAt: at}},
+		},
+		{
+			Lidarr, `[
+				{"history_id":91,"artist_id":7,"album_id":3,"track_id":12,"download_id":"album",
+				 "dropped_path":"/d/1.flac","imported_path":"/music/1.flac","occurred_at":"2026-11-01T09:00:00Z"},
+				{"history_id":92,"artist_id":7,"album_id":3,"track_id":11,"download_id":"album",
+				 "dropped_path":"/d/2.flac","imported_path":"/music/2.flac","occurred_at":"2026-11-01T09:00:00Z"}
+			]`,
+			[]servarr.ImportedFile{
+				{HistoryID: 91, ArtistID: 7, AlbumID: 3, TrackID: 12, DownloadID: "album",
+					DroppedPath: "/d/1.flac", ImportedPath: "/music/1.flac", OccurredAt: at},
+				{HistoryID: 92, ArtistID: 7, AlbumID: 3, TrackID: 11, DownloadID: "album",
+					DroppedPath: "/d/2.flac", ImportedPath: "/music/2.flac", OccurredAt: at},
+			},
+		},
+	} {
+		t.Run(string(test.service), func(t *testing.T) {
+			ctx := context.Background()
+			job, err := store.Observe(ctx, Job{Service: test.service, QueueID: 42})
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Seed the bytes written by the old daemon, bypassing the current encoder.
+			if err := store.db.Exec("INSERT INTO attempts (job_id, number, state, import_receipt) VALUES (?, 1, ?, ?)",
+				job.ID, Imported, test.saved).Error; err != nil {
+				t.Fatal(err)
+			}
+			_, attempts, err := store.JobWithAttempts(ctx, job.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := &servarr.ImportReceipt{Files: test.files}
+			if len(attempts) != 1 || !reflect.DeepEqual(attempts[0].ImportReceipt, want) {
+				t.Fatalf("saved receipt changed: attempts=%+v, want %+v", attempts, want)
+			}
+		})
 	}
 }
 
@@ -278,16 +332,16 @@ func TestFailedWriteDoesNotAdvanceJob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	attempt.State, attempt.ImportReceipt = Imported, json.RawMessage(`invalid JSON`)
+	attempt.State, attempt.ImportRequest = Importing, json.RawMessage(`invalid JSON`)
 	if err := store.UpdateAttempt(ctx, attempt); err == nil {
-		t.Fatal("saved an invalid import receipt")
+		t.Fatal("saved an invalid import request")
 	}
 	job, err = store.Get(ctx, job.ID)
 	if err != nil || job.State != Running {
 		t.Fatalf("failed write changed job: %+v, %v", job, err)
 	}
 	attempts, err := store.Attempts(ctx, job.ID)
-	if err != nil || len(attempts) != 1 || attempts[0].State != Running || len(attempts[0].ImportReceipt) != 0 {
+	if err != nil || len(attempts) != 1 || attempts[0].State != Running || len(attempts[0].ImportRequest) != 0 {
 		t.Fatalf("failed write changed attempt: %+v, %v", attempts, err)
 	}
 }

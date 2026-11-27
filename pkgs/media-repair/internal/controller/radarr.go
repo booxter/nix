@@ -22,10 +22,6 @@ type RadarrManualImportReader interface {
 	ReadManualImports(context.Context, RadarrManualImportQuery) ([]RadarrManualImport, error)
 }
 
-type RadarrImportedFileReader interface {
-	ReadImportedFiles(context.Context, int64, string) ([]RadarrImportedFile, error)
-}
-
 // Keep Radarr's evolving string values instead of importing the client's enums
 // into the controller. Candidate policy will interpret known values separately.
 type QueueStatus string
@@ -91,19 +87,6 @@ type RadarrHistoryEvent struct {
 	SourceTitle string
 	Quality     *RadarrQualityModel
 	Languages   []RadarrLanguage
-}
-
-// RadarrImportedFile is private execution evidence from Radarr history. It is
-// deliberately separate from RadarrHistoryEvent so library paths never enter a
-// planner case or alter its identity.
-type RadarrImportedFile struct {
-	HistoryID    int64
-	MovieFileID  int64
-	MovieID      int64
-	DownloadID   string
-	OccurredAt   time.Time
-	DroppedPath  string
-	ImportedPath string
 }
 
 type RadarrQuality struct {

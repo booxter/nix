@@ -6,6 +6,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/internal/jobs"
 	"github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 )
 
 type jobSummary struct {
@@ -22,12 +23,12 @@ type jobSummary struct {
 }
 
 type attemptResponse struct {
-	Number    int64              `json:"number"`
-	State     jobs.State         `json:"state"`
-	Reason    string             `json:"reason,omitempty"`
-	CommandID int64              `json:"commandId,omitempty"`
-	Receipt   json.RawMessage    `json:"receipt,omitempty"`
-	Question  *planning.Question `json:"question,omitempty"`
+	Number    int64                  `json:"number"`
+	State     jobs.State             `json:"state"`
+	Reason    string                 `json:"reason,omitempty"`
+	CommandID int64                  `json:"commandId,omitempty"`
+	Receipt   *servarr.ImportReceipt `json:"receipt,omitempty"`
+	Question  *planning.Question     `json:"question,omitempty"`
 }
 
 type jobDetail struct {

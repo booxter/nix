@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -81,7 +82,7 @@ type page struct {
 }
 
 func New(config Config) (http.Handler, error) {
-	parsed, err := template.ParseFS(templates, "page.html")
+	parsed, err := template.New("page.html").Funcs(template.FuncMap{"json": json.Marshal}).ParseFS(templates, "page.html")
 	if err != nil {
 		return nil, err
 	}

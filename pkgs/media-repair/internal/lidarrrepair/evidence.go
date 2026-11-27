@@ -27,7 +27,7 @@ type Planner interface {
 type ImportClient interface {
 	RequestManualImport(context.Context, lidarr.ManualImportCommand) (servarr.Command, error)
 	ReadManualImportCommand(context.Context, int64) (servarr.Command, error)
-	ReadImportedTracks(context.Context, int64, string) ([]lidarr.ImportedTrack, error)
+	ReadImportedTracks(context.Context, int64, string) ([]servarr.ImportedFile, error)
 }
 
 type Evidence struct {
