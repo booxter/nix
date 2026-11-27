@@ -7,6 +7,14 @@
     "rev": "3e47189a707c739ee1278a28a3b845f5834574e6",
     "type": "github"
   },
+  "cldr": {
+    "lastModified": 1761244613,
+    "narHash": "sha256-nzLtqSk3ow1GM/dUuo1xMTw669AisqchXcu8AABeqjI=",
+    "owner": "unicode-org",
+    "repo": "cldr",
+    "rev": "acd6d88ae493633240e19a87a721076a8a75c310",
+    "type": "github"
+  },
   "cocoa-way-homebrew-tap": {
     "lastModified": 1795031242,
     "narHash": "sha256-mR8sol+0WiTLM6tO6YEh6U/v5Czi+ooFsLVljUIeTyk=",

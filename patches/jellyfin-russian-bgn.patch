@@ -1,0 +1,52 @@
+diff --git a/src/Jellyfin.Extensions/Jellyfin.Extensions.csproj b/src/Jellyfin.Extensions/Jellyfin.Extensions.csproj
+index a591914..bde2692 100644
+--- a/src/Jellyfin.Extensions/Jellyfin.Extensions.csproj
++++ b/src/Jellyfin.Extensions/Jellyfin.Extensions.csproj
+@@ -34,4 +34,8 @@
+     <PackageReference Include="ICU4N.Transliterator" />
+   </ItemGroup>
+ 
++  <ItemGroup>
++    <EmbeddedResource Include="RussianLatinBgn.xml" />
++  </ItemGroup>
++
+ </Project>
+diff --git a/src/Jellyfin.Extensions/StringExtensions.cs b/src/Jellyfin.Extensions/StringExtensions.cs
+index 38f1cf7..1a166ba 100644
+--- a/src/Jellyfin.Extensions/StringExtensions.cs
++++ b/src/Jellyfin.Extensions/StringExtensions.cs
+@@ -3,6 +3,7 @@ using System.Collections.Generic;
+ using System.Linq;
+ using System.Text;
+ using System.Text.RegularExpressions;
++using System.Xml.Linq;
+ using ICU4N.Text;
+ 
+ namespace Jellyfin.Extensions
+@@ -18,6 +19,8 @@ namespace Jellyfin.Extensions
+ 
+         private static readonly Lazy<Transliterator?> _transliterator = new(() =>
+         {
++            RegisterRussianBgnTransliterator();
++
+             try
+             {
+                 return Transliterator.GetInstance(_transliteratorId.Value);
+@@ -28,6 +31,18 @@ namespace Jellyfin.Extensions
+             }
+         });
+ 
++        private static void RegisterRussianBgnTransliterator()
++        {
++            // ICU4N 60.1 omits this CLDR transform. Register it before resolving the configured ID.
++            using var rules = typeof(StringExtensions).Assembly.GetManifestResourceStream("Jellyfin.Extensions.RussianLatinBgn.xml")
++                ?? throw new InvalidOperationException("Russian BGN transliteration rules are missing.");
++            var document = XDocument.Load(rules);
++            Transliterator.RegisterInstance(Transliterator.CreateFromRules(
++                "Russian-Latin/BGN",
++                document.Descendants("tRule").Single().Value,
++                TransliterationDirection.Forward));
++        }
++
+         // Matches non-conforming unicode chars
+         // https://mnaoumov.wordpress.com/2014/06/14/stripping-invalid-characters-from-utf-16-strings/

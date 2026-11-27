@@ -1,0 +1,106 @@
+Use the selected PAR2 filename for the repair wildcard. A second set with
+the same prefix is keyed by its set ID, which need not appear on disk.
+Keep the wider search when it could recover an unclaimed file.
+
+Related upstream work: develop filters other sets' targets in its
+in-process repairer (https://github.com/sabnzbd/sabnzbd/commit/a5d99d10294f465017c7a45d126a4e6e160eb23f).
+
+diff --git a/sabnzbd/newsunpack.py b/sabnzbd/newsunpack.py
+--- a/sabnzbd/newsunpack.py
++++ b/sabnzbd/newsunpack.py
+@@ -73,6 +73,7 @@ from sabnzbd.filesystem import (
+     get_unique_filename,
+     points_outside,
+ )
++from sabnzbd.par2file import analyse_par2
+ from sabnzbd.nzb import NzbObject
+ import sabnzbd.cfg as cfg
+ from sabnzbd.constants import Status
+@@ -1261,6 +1262,33 @@ def par2_repair(nzo: NzbObject, setname: str) -> tuple[bool, bool]:
+     return readd, result
+ 
+ 
++def par2_search_pattern(parfile: str, nzo: NzbObject, setname: str) -> str:
++    if len(nzo.extrapars) == 1:
++        return "*"
++
++    folder, filename = os.path.split(parfile)
++    prefix, _, _ = analyse_par2(filename)
++    matches = globber(folder, glob.escape(prefix) + "*")
++    if len(matches) < 2:
++        return "*"
++
++    if prefix != setname:
++        # An ID-keyed set used to get a directory-wide search. Its targets
++        # are read from the index, but an unclaimed file can also hold blocks.
++        accounted_for = set(matches)
++        for key, pack in nzo.par2packs.items():
++            if pack:
++                accounted_for.update(pack)
++                if key != setname:
++                    accounted_for.update(nzf.filename for nzf in nzo.extrapars.get(key, ()))
++
++        with os.scandir(folder) as entries:
++            if any(entry.name not in accounted_for and entry.is_file() for entry in entries):
++                return "*"
++
++    return prefix + "*"
++
++
+ def par2cmdline_verify(
+     parfile: str, nzo: NzbObject, setname: str, joinables: list[str]
+ ) -> tuple[bool, bool, list[str], list[str]]:
+@@ -1279,15 +1307,7 @@ def par2cmdline_verify(
+ 
+     # Append the wildcard for this set
+     parfolder = os.path.split(parfile)[0]
+-    # Python's fnmatch treats brackets as character classes. PAR2 treats
+-    # them literally, so escape the prefix only for the Python lookup.
+-    if len(nzo.extrapars) == 1 or len(globber(parfolder, glob.escape(setname) + "*")) < 2:
+-        # Support bizarre naming conventions
+-        wildcard = "*"
+-    else:
+-        # Normal case, everything is named after set
+-        wildcard = setname + "*"
+-    command.append(os.path.join(parfolder, wildcard))
++    command.append(os.path.join(parfolder, par2_search_pattern(parfile, nzo, setname)))
+ 
+     # We need to check for the bad par2cmdline that skips blocks
+     # Or the one that complains about basepath
+diff --git a/tests/test_par2_search_pattern.py b/tests/test_par2_search_pattern.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_par2_search_pattern.py
+@@ -0,0 +1,32 @@
++from pathlib import Path
++from tempfile import TemporaryDirectory
++from unittest import TestCase
++
++from sabnzbd.newsunpack import par2_search_pattern
++from sabnzbd.nzb import NzbObject
++from sabnzbd.par2file import FilePar2Info
++
++
++class TestPar2SearchPattern(TestCase):
++    def test_top_level_donor_with_same_name_as_nested_target(self):
++        job = NzbObject("Bundle.nzb")
++        set_id = "a" * 32
++        job.extrapars = {"Bundle": [], set_id: []}
++        job.par2packs = {
++            "Bundle": {"nested/spare.bin": FilePar2Info("nested/spare.bin", b"", 0)},
++            set_id: {"episode.bin": FilePar2Info("episode.bin", b"", 0)},
++        }
++
++        with TemporaryDirectory() as tmp:
++            folder = Path(tmp)
++            volume = folder / "Bundle.vol002+01.par2"
++            for name in (volume.name, "Bundle.par2", "episode.bin"):
++                (folder / name).touch()
++
++            pattern = par2_search_pattern(str(volume), job, set_id)
++            self.assertEqual(set(folder.glob(pattern)), {volume, folder / "Bundle.par2"})
++
++            donor = folder / "spare.bin"
++            donor.touch()
++            pattern = par2_search_pattern(str(volume), job, set_id)
++            self.assertIn(donor, folder.glob(pattern))
