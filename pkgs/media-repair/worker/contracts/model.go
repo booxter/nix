@@ -5,6 +5,8 @@ type DVDIdentifySuccessV1 = DVDIdentifySuccessResponseV1Class
 type DVDIdentifyFailureV1 = DVDIdentifyFailureResponseV1Class
 type DVDTitleV1 = TitleElement
 type DVDTrackV1 = TitleTrack
+type DVDOverlapV1 = OverlapElement
+type DVDOverlapRangeV1 = RangeElement
 type Track = BlurayIdentifySuccessResponseV1Track
 
 type DVDIdentifyResponseV1 struct {

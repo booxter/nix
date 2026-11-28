@@ -71,6 +71,16 @@ func TestDVDPlaybackLinksUseTheOfferedEquivalentTitle(t *testing.T) {
 	}
 	titles[0].Details.NextTitle = 3
 	titles[2].Details.EquivalentTo = 2
+	overlap := dvdvideo.Overlap{Title: 3, SharedDurationMS: 1_100_000,
+		Ranges: []dvdvideo.OverlapRange{{StartMS: 17_200, OtherStartMS: 0, DurationMS: 1_100_000}},
+	}
+	titles[0].Details.Overlaps = []dvdvideo.Overlap{overlap}
+	overlap.Title = 2
+	titles[0].Details.Overlaps = append(titles[0].Details.Overlaps, overlap)
+	overlap.Title = 99
+	titles[0].Details.Overlaps = append(titles[0].Details.Overlaps, overlap)
+	overlap.Title = 3
+	titles[1].Details.Overlaps = []dvdvideo.Overlap{overlap}
 
 	capabilities, err := bindDVDCapabilities(titles, files)
 	if err != nil {
@@ -80,5 +90,14 @@ func TestDVDPlaybackLinksUseTheOfferedEquivalentTitle(t *testing.T) {
 		*capabilities[0].ContinuesTo != capabilities[1].CapabilityID ||
 		!slices.Equal(capabilities[1].EquivalentTitleNumbers, []int64{3}) {
 		t.Fatalf("offered DVD playback = %#v", capabilities)
+	}
+	if len(capabilities[0].Overlaps) != 1 || len(capabilities[1].Overlaps) != 0 {
+		t.Fatalf("overlaps include duplicate, missing, or equivalent titles: %+v", capabilities)
+	}
+	relation := capabilities[0].Overlaps[0]
+	if relation.CapabilityID != capabilities[1].CapabilityID || relation.SharedDurationMS != 1_100_000 ||
+		len(relation.Ranges) != 1 || relation.Ranges[0].StartMS != 17_200 ||
+		relation.Ranges[0].OtherStartMS != 0 || relation.Ranges[0].DurationMS != 1_100_000 {
+		t.Fatalf("overlap changed when binding offered titles: %+v", relation)
 	}
 }

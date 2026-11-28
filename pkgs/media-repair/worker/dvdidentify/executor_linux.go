@@ -92,6 +92,17 @@ func (executor *Executor) Execute(
 			number := int64(title.EquivalentTo)
 			wire.EquivalentTo = &number
 		}
+		for _, overlap := range title.Overlaps {
+			wireOverlap := workercontracts.DVDOverlapV1{
+				Title: int64(overlap.Title), SharedDurationMS: overlap.SharedDurationMS,
+			}
+			for _, part := range overlap.Ranges {
+				wireOverlap.Ranges = append(wireOverlap.Ranges, workercontracts.DVDOverlapRangeV1{
+					StartMS: part.StartMS, OtherStartMS: part.OtherStartMS, DurationMS: part.DurationMS,
+				})
+			}
+			wire.Overlaps = append(wire.Overlaps, wireOverlap)
+		}
 		result = append(result, wire)
 	}
 	return workercontracts.DVDIdentifyResponseV1{

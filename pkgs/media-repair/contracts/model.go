@@ -1,6 +1,8 @@
 package contracts
 
 type RepairCaseV3 = RadarrRepairCaseVersion3
+type DVDOverlap = OverlapElement
+type DVDOverlapRange = RangeElement
 
 type DecisionAction string
 

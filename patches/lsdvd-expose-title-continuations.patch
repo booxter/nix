@@ -2,10 +2,32 @@ diff --git a/lsdvd.c b/lsdvd.c
 index 9be5ac2..aaaa494 100644
 --- a/lsdvd.c
 +++ b/lsdvd.c
-@@ -367,6 +367,29 @@ static char output_option(char *arg)
+@@ -367,6 +367,51 @@ static char output_option(char *arg)
  }
  
  
++static int safe_cell_command(const pgc_t *pgc, int index)
++{
++	int number = pgc->cell_playback[index].cell_cmd_nr;
++	if (!number)
++		return 1;
++
++	const pgc_command_tbl_t *commands = pgc->command_tbl;
++	if (!commands || !commands->cell_cmds || number > commands->nr_of_cell)
++		return 0;
++
++	const uint8_t *command = commands->cell_cmds[number - 1].bytes;
++	static const uint8_t noop[8] = {0};
++	if (!memcmp(command, noop, sizeof(noop)))
++		return 1;
++
++	/* A final-cell command can bypass the post-command. Both exits must run
++	   exactly the same command before we can follow the title's successor. */
++	return index == pgc->nr_of_cells - 1 && commands->nr_of_post == 1 &&
++		commands->post_cmds &&
++		!memcmp(command, commands->post_cmds[0].bytes, sizeof(vm_cmd_t));
++}
++
 +/* Only a straight, single-chain title establishes a playback relationship. */
 +static int sequential_playback(const pgc_t *pgc, const ttu_t *parts)
 +{
@@ -22,7 +44,7 @@ index 9be5ac2..aaaa494 100644
 +	}
 +	for (int i = 0; i < pgc->nr_of_cells; i++) {
 +		const cell_playback_t *cell = &pgc->cell_playback[i];
-+		if (cell->block_type != BLOCK_TYPE_NONE || cell->cell_cmd_nr ||
++		if (cell->block_type != BLOCK_TYPE_NONE || !safe_cell_command(pgc, i) ||
 +		    cell->first_sector > cell->last_sector)
 +			return 0;
 +	}
@@ -32,7 +54,7 @@ index 9be5ac2..aaaa494 100644
  int main(int argc, char *argv[])
  {
  	char title[DVD_TITLE_MAX+1];
-@@ -474,6 +497,7 @@ int main(int argc, char *argv[])
+@@ -474,6 +519,7 @@ int main(int argc, char *argv[])
  	dvd_info.discinfo.provider_id = vmgi_mat->provider_identifier;
  
  	dvd_info.title_count = titles;
@@ -40,7 +62,7 @@ index 9be5ac2..aaaa494 100644
  	dvd_info.titles = calloc(titles, sizeof(*dvd_info.titles));
  
  	// Format the 128 bit result from DVDDiscID() the same way
-@@ -506,7 +530,11 @@ int main(int argc, char *argv[])
+@@ -506,7 +552,11 @@ int main(int argc, char *argv[])
  				vts_ttn = ifo_zero->tt_srpt->title[j].vts_ttn;
  				vmgi_mat = ifo_zero->vmgi_mat;
  				title_set_nr = ifo_zero->tt_srpt->title[j].title_set_nr;

@@ -62,8 +62,11 @@ same disc or from separate discs in the download. Consider each title's
 disc path, title number, duration, chapters, and tracks alongside the release
 and any operator guidance. A continues_to link gives the disc's authored
 playback order. Equivalent_title_numbers are alternate entries represented by
-the same capability. Use that capability once. A runtime match alone does not
-establish membership or order. Exclude menus, extras, episodes, and alternate cuts.
+the same capability. Use that capability once. Overlaps describe exact shared
+source cells: each range gives start_ms in this title, other_start_ms in the
+referenced title, and duration_ms. Gaps show where their content differs.
+A runtime match alone does not establish membership or order. Exclude menus,
+extras, episodes, and alternate cuts.
 If the evidence supports several parts, explain their membership and order.
 If the intended titles or order remain uncertain, choose no_repair."""
 

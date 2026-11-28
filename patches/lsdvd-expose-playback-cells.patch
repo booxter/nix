@@ -1,0 +1,19 @@
+diff --git a/oxml.c b/oxml.c
+--- a/oxml.c
++++ b/oxml.c
+@@ -211,6 +211,15 @@ void oxml_print(struct dvd_info *dvd_info) {
+ 				XMLBOX("cell");
+ 				XMLDEF("ix", "%d", i+1);
+ 				XMLDEF("length", "%.3f", dvd_info->titles[j].cells[i].length);
++				const pgc_t *playback = dvd_info->titles[j].playback;
++				if (playback && playback->cell_position && i < playback->nr_of_cells) {
++					const cell_playback_t *cell = &playback->cell_playback[i];
++					const cell_position_t *position = &playback->cell_position[i];
++					XMLDEF("vob_id", "%u", position->vob_id_nr);
++					XMLDEF("cell_id", "%u", position->cell_nr);
++					XMLDEF("first_sector", "%u", cell->first_sector);
++					XMLDEF("last_sector", "%u", cell->last_sector);
++				}
+ 				XMLRETURN();
+ 			}
+ 		}

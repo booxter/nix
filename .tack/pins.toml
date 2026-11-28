@@ -14,6 +14,10 @@ url = "gh:NixOS/nixpkgs/release-26.11"
 [inputs.nixpkgs-unstable]
 url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
 
+# Drop this input once nixpkgs-unstable carries Tack 2.
+[inputs.nixpkgs-master]
+url = "gh:NixOS/nixpkgs/master"
+
 [inputs.nixos-hardware]
 url = "gh:NixOS/nixos-hardware/master"
 

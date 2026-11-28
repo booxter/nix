@@ -64,11 +64,11 @@
     "type": "github"
   },
   "jellarr": {
-    "lastModified": 1795732224,
-    "narHash": "sha256-euW8bunVBMBj2aLq3DCPcphh+fvQEnd5ukR2U6UI/F0=",
+    "lastModified": 1795831306,
+    "narHash": "sha256-FpUlooo3ZYvhh+dUXF9fx3fUpQAdlGDkb12zwh1yD2s=",
     "owner": "booxter",
     "repo": "jellarr",
-    "rev": "72b73c503814e0eb40ac2d93b438a4cd9dd561a4",
+    "rev": "553cebaf6ea32f7a0a00ab495cb85e89a87b23c3",
     "type": "github"
   },
   "lolek": {
@@ -141,6 +141,14 @@
     "owner": "NixOS",
     "repo": "nixpkgs",
     "rev": "e05d2f9739fa56f59bca102badebcaabf5730983",
+    "type": "github"
+  },
+  "nixpkgs-master": {
+    "lastModified": 1795832003,
+    "narHash": "sha256-V7GFe4P2pYKjntrSu5N1dXlfnHHKdkPMboCgS5TKCUw=",
+    "owner": "NixOS",
+    "repo": "nixpkgs",
+    "rev": "186ec7d2201e0d91e1a853feeaf1608888921ba6",
     "type": "github"
   },
   "nixpkgs-unstable": {

@@ -7,6 +7,7 @@ import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import cast
@@ -18,6 +19,7 @@ from jellyfin_tools.service import JellyfinServiceError, create_backup_artifact
 from jellyfin_tools.systemd import active_state
 
 Response = tuple[int, object]
+CHECKED_AT = datetime(2026, 11, 28, 2, 17, 31, tzinfo=UTC)
 
 
 @dataclass
@@ -103,6 +105,7 @@ def test_inactive_jellyfin_does_not_require_api_credentials(tmp_path: Path) -> N
     run_wait(
         wait_arguments("http://127.0.0.1:1", tmp_path / "missing"),
         SequenceUnitState([False]),
+        now=lambda: CHECKED_AT,
         sleep=lambda _: None,
         stderr=io.StringIO(),
     )
@@ -136,6 +139,7 @@ def test_wait_reports_playback_then_allows_idle_maintenance(tmp_path: Path) -> N
         run_wait(
             wait_arguments(base_url, api_key(tmp_path)),
             SequenceUnitState([True, True]),
+            now=lambda: CHECKED_AT,
             sleep=sleeps.append,
             stderr=stderr,
         )
@@ -159,11 +163,95 @@ def test_invalid_sessions_are_retried(tmp_path: Path) -> None:
         run_wait(
             wait_arguments(base_url, api_key(tmp_path)),
             SequenceUnitState([True, True]),
+            now=lambda: CHECKED_AT,
             sleep=sleeps.append,
             stderr=stderr,
         )
 
     assert "Unable to query active Jellyfin sessions" in stderr.getvalue()
+    assert sleeps == [30.0]
+
+
+@pytest.mark.parametrize(
+    ("is_paused", "paused_for", "holds_maintenance"),
+    [
+        (True, None, True),
+        (True, timedelta(minutes=59, seconds=59), True),
+        (True, timedelta(minutes=60), False),
+        (True, timedelta(hours=8), False),
+        (False, timedelta(hours=8), True),
+        (True, timedelta(minutes=-5), True),
+    ],
+)
+def test_maintenance_hold_expires_only_for_long_pauses(
+    tmp_path: Path,
+    is_paused: bool,
+    paused_for: timedelta | None,
+    holds_maintenance: bool,
+) -> None:
+    last_paused_date = None if paused_for is None else (CHECKED_AT - paused_for).isoformat()
+    state = ApiState(
+        sessions=[
+            (
+                200,
+                [
+                    {
+                        "UserName": "Ihar",
+                        "NowPlayingItem": {"Name": "A Film"},
+                        "PlayState": {"IsPaused": is_paused},
+                        "LastPausedDate": last_paused_date,
+                    }
+                ],
+            ),
+            (200, []),
+        ]
+    )
+    sleeps: list[float] = []
+    with api_server(state) as base_url:
+        run_wait(
+            wait_arguments(base_url, api_key(tmp_path)),
+            SequenceUnitState([True]),
+            now=lambda: CHECKED_AT,
+            sleep=sleeps.append,
+            stderr=io.StringIO(),
+        )
+
+    assert sleeps == ([30.0] if holds_maintenance else [])
+
+
+def test_maintenance_hold_expires_while_waiting(tmp_path: Path) -> None:
+    paused_at = CHECKED_AT - timedelta(minutes=59, seconds=30)
+    state = ApiState(
+        sessions=[
+            (
+                200,
+                [
+                    {
+                        "NowPlayingItem": {"Name": "A Film"},
+                        "PlayState": {"IsPaused": True},
+                        "LastPausedDate": paused_at.isoformat(),
+                    }
+                ],
+            )
+        ]
+    )
+    checked_at = CHECKED_AT
+    sleeps: list[float] = []
+
+    def advance_clock(seconds: float) -> None:
+        nonlocal checked_at
+        sleeps.append(seconds)
+        checked_at += timedelta(seconds=seconds)
+
+    with api_server(state) as base_url:
+        run_wait(
+            wait_arguments(base_url, api_key(tmp_path)),
+            SequenceUnitState([True, True, False]),
+            now=lambda: checked_at,
+            sleep=advance_clock,
+            stderr=io.StringIO(),
+        )
+
     assert sleeps == [30.0]
 
 

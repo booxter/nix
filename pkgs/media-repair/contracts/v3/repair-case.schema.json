@@ -272,6 +272,15 @@
         "navigation_file_id": {
           "$ref": "#/$defs/opaqueId"
         },
+        "overlaps": {
+          "description": "Shared physical DVD cells with other offered titles.",
+          "items": {
+            "$ref": "#/$defs/dvdOverlap"
+          },
+          "maxItems": 127,
+          "minItems": 1,
+          "type": "array"
+        },
         "source_file_ids": {
           "items": {
             "$ref": "#/$defs/opaqueId"
@@ -317,6 +326,60 @@
         "duration_ms",
         "chapter_count",
         "tracks"
+      ],
+      "type": "object"
+    },
+    "dvdOverlap": {
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "ranges": {
+          "items": {
+            "$ref": "#/$defs/dvdOverlapRange"
+          },
+          "maxItems": 255,
+          "minItems": 1,
+          "type": "array"
+        },
+        "shared_duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "capability_id",
+        "shared_duration_ms",
+        "ranges"
+      ],
+      "type": "object"
+    },
+    "dvdOverlapRange": {
+      "additionalProperties": false,
+      "description": "The same source cells at start_ms in this title and other_start_ms in the referenced title. Gaps describe content unique to each title.",
+      "properties": {
+        "duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "other_start_ms": {
+          "maximum": 604800000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "start_ms": {
+          "maximum": 604800000,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_ms",
+        "other_start_ms",
+        "duration_ms"
       ],
       "type": "object"
     },

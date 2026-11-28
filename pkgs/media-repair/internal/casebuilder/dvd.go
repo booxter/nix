@@ -112,6 +112,27 @@ func withDVDPlayback(titles []dvdvideo.Candidate, capabilities []contracts.Capab
 		if found && representatives[next] != index {
 			capability.ContinuesTo = ptr(capabilities[representatives[next]].CapabilityID)
 		}
+		seen := make(map[int]bool)
+		for _, overlap := range title.Details.Overlaps {
+			other, found := indices[dvdTitleKey{title.NavigationFileID, overlap.Title}]
+			if !found {
+				continue
+			}
+			other = representatives[other]
+			if other == index || seen[other] {
+				continue
+			}
+			seen[other] = true
+			relation := contracts.DVDOverlap{
+				CapabilityID: capabilities[other].CapabilityID, SharedDurationMS: overlap.SharedDurationMS,
+			}
+			for _, part := range overlap.Ranges {
+				relation.Ranges = append(relation.Ranges, contracts.DVDOverlapRange{
+					StartMS: part.StartMS, OtherStartMS: part.OtherStartMS, DurationMS: part.DurationMS,
+				})
+			}
+			capability.Overlaps = append(capability.Overlaps, relation)
+		}
 		offered = append(offered, capability)
 	}
 	return offered
