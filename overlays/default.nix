@@ -37,6 +37,11 @@
         zoom-us
         ;
 
+      tack = inputs.nixpkgs-master.legacyPackages.${system}.tack.overrideAttrs {
+        # The HTTP credential test binds a loopback server.
+        __darwinAllowLocalNetworking = true;
+      };
+
       attic-client = prev.attic-client.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Drop when the packaged client honors NIX_SSL_CERT_FILE.

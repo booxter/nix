@@ -143,6 +143,14 @@
     "rev": "e05d2f9739fa56f59bca102badebcaabf5730983",
     "type": "github"
   },
+  "nixpkgs-master": {
+    "lastModified": 1795832003,
+    "narHash": "sha256-V7GFe4P2pYKjntrSu5N1dXlfnHHKdkPMboCgS5TKCUw=",
+    "owner": "NixOS",
+    "repo": "nixpkgs",
+    "rev": "186ec7d2201e0d91e1a853feeaf1608888921ba6",
+    "type": "github"
+  },
   "nixpkgs-unstable": {
     "lastModified": 1795371335,
     "narHash": "sha256-3Xq+XlDu5l+UJ0cc+Jigs84+tz7Qu92NgXVHgJwC52M=",
