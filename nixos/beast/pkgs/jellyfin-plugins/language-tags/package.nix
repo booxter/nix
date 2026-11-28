@@ -6,6 +6,7 @@
 buildPlugin {
   pname = "jellyfin-plugin-language-tags";
   version = "0.5.3.0";
+  localRevision = 2;
 
   src = fetchFromGitHub {
     owner = "TheXaman";
@@ -15,6 +16,7 @@ buildPlugin {
   };
 
   projectFile = "Jellyfin.Plugin.LanguageTags/Jellyfin.Plugin.LanguageTags.csproj";
+  patches = [ ../../../../../patches/jellyfin-language-tags-refresh-movies-on-change.patch ];
   nugetDeps = ./deps.json;
 
   pluginId = "e6ee25c2-d12c-4382-a48c-66ee9c1c33cb";

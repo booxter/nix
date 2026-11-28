@@ -1,0 +1,264 @@
+diff --git a/Jellyfin.Plugin.LanguageTags/Api/LanguageTagsController.cs b/Jellyfin.Plugin.LanguageTags/Api/LanguageTagsController.cs
+index 39744e2..5d54c3b 100644
+--- a/Jellyfin.Plugin.LanguageTags/Api/LanguageTagsController.cs
++++ b/Jellyfin.Plugin.LanguageTags/Api/LanguageTagsController.cs
+@@ -1,4 +1,3 @@
+-using System;
+ using System.Net.Mime;
+ using System.Threading.Tasks;
+ using MediaBrowser.Controller.Collections;
+@@ -18,7 +17,7 @@ namespace Jellyfin.Plugin.LanguageTags.Api;
+ [Authorize]
+ [Route("[controller]")]
+ [Produces(MediaTypeNames.Application.Json)]
+-public class LanguageTagsController : ControllerBase, IDisposable
++public class LanguageTagsController : ControllerBase
+ {
+     private readonly LanguageTagsManager _languageTagsManager;
+     private readonly ILogger<LanguageTagsController> _logger;
+@@ -96,23 +95,4 @@ public class LanguageTagsController : ControllerBase, IDisposable
+         _logger.LogInformation("Completed removal of non-media tags");
+         return NoContent();
+     }
+-
+-    /// <inheritdoc/>
+-    public void Dispose()
+-    {
+-        Dispose(true);
+-        GC.SuppressFinalize(this);
+-    }
+-
+-    /// <summary>
+-    /// Releases unmanaged and - optionally - managed resources.
+-    /// </summary>
+-    /// <param name="dispose"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+-    protected virtual void Dispose(bool dispose)
+-    {
+-        if (dispose)
+-        {
+-            _languageTagsManager.Dispose();
+-        }
+-    }
+ }
+diff --git a/Jellyfin.Plugin.LanguageTags/LanguageTagsManager.cs b/Jellyfin.Plugin.LanguageTags/LanguageTagsManager.cs
+index 63d9ab3..bf97d9e 100644
+--- a/Jellyfin.Plugin.LanguageTags/LanguageTagsManager.cs
++++ b/Jellyfin.Plugin.LanguageTags/LanguageTagsManager.cs
+@@ -1,7 +1,9 @@
+ using System;
++using System.Collections.Concurrent;
+ using System.Collections.Generic;
+ using System.Linq;
+ using System.Threading;
++using System.Threading.Channels;
+ using System.Threading.Tasks;
+ using Jellyfin.Data.Enums;
+ using Jellyfin.Extensions;
+@@ -18,7 +20,7 @@ namespace Jellyfin.Plugin.LanguageTags;
+ /// <summary>
+ /// Class LanguageTagsManager.
+ /// </summary>
+-public sealed class LanguageTagsManager : IHostedService, IDisposable
++public sealed class LanguageTagsManager : BackgroundService
+ {
+     private readonly ILibraryManager _libraryManager;
+     private readonly ILogger<LanguageTagsManager> _logger;
+@@ -27,6 +29,12 @@ public sealed class LanguageTagsManager : IHostedService, IDisposable
+     private readonly LanguageTagService _tagService;
+     private readonly LibraryQueryService _queryService;
+     private readonly SubtitleExtractionService _subtitleService;
++    private readonly SemaphoreSlim _refreshLock = new(1, 1);
++    private readonly ConcurrentDictionary<Guid, byte> _queuedMovies = new();
++    private readonly Channel<Guid> _movieRefreshes = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions
++    {
++        SingleReader = true
++    });
+ 
+     /// <summary>
+     /// Initializes a new instance of the <see cref="LanguageTagsManager"/> class.
+@@ -67,6 +75,19 @@ public sealed class LanguageTagsManager : IHostedService, IDisposable
+     /// <param name="type">The type of refresh to perform. Default is "everything".</param>
+     /// <returns>A <see cref="Task"/> representing the library scan progress.</returns>
+     public async Task ScanLibrary(bool fullScan = false, string type = "everything")
++    {
++        await _refreshLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
++        try
++        {
++            await ScanLibraryItems(fullScan, type).ConfigureAwait(false);
++        }
++        finally
++        {
++            _refreshLock.Release();
++        }
++    }
++
++    private async Task ScanLibraryItems(bool fullScan, string type)
+     {
+         // Get configuration values
+         fullScan = fullScan || _configService.AlwaysForceFullRefresh;
+@@ -74,11 +95,8 @@ public sealed class LanguageTagsManager : IHostedService, IDisposable
+         var subtitleTags = _configService.AddSubtitleTags;
+ 
+         // Get prefixes and whitelist once at the start to avoid repeated queries
+-        var audioPrefix = _configService.GetAudioLanguageTagPrefix();
+-        var subtitlePrefix = _configService.GetSubtitleLanguageTagPrefix();
+-        var whitelist = LanguageTagService.ParseWhitelist(_configService.WhitelistLanguageTags);
+-        var disableUndefinedTags = _configService.DisableUndefinedLanguageTags;
+-        var tagSeriesOnly = _configService.TagSeriesOnly;
++        var scanContext = CreateScanContext();
++        var (audioPrefix, subtitlePrefix, whitelist, _, tagSeriesOnly) = scanContext;
+ 
+         _logger.LogInformation(
+             "Scan configuration - Audio prefix: '{AudioPrefix}', Subtitle prefix: '{SubtitlePrefix}', Whitelist: {WhitelistCount} codes ({Whitelist}), Tag Series Only: {TagSeriesOnly}",
+@@ -90,9 +108,6 @@ public sealed class LanguageTagsManager : IHostedService, IDisposable
+ 
+         LogScanConfiguration(fullScan, synchronously, subtitleTags, tagSeriesOnly);
+ 
+-        // Create scan context to pass parameters
+-        var scanContext = (audioPrefix, subtitlePrefix, whitelist, disableUndefinedTags, tagSeriesOnly);
+-
+         // Process the libraries
+         switch (type.ToLowerInvariant())
+         {
+@@ -1032,21 +1047,95 @@ public sealed class LanguageTagsManager : IHostedService, IDisposable
+         _logger.LogInformation("{Border}", border);
+     }
+ 
+-    /// <inheritdoc/>
+-    public Task StartAsync(CancellationToken cancellationToken)
++    private (string AudioPrefix, string SubtitlePrefix, List<string> Whitelist, bool DisableUndefinedTags, bool TagSeriesOnly) CreateScanContext()
++    {
++        return (
++            _configService.GetAudioLanguageTagPrefix(),
++            _configService.GetSubtitleLanguageTagPrefix(),
++            LanguageTagService.ParseWhitelist(_configService.WhitelistLanguageTags),
++            _configService.DisableUndefinedLanguageTags,
++            _configService.TagSeriesOnly);
++    }
++
++    private void QueueMovie(BaseItem item)
++    {
++        if (item is Movie && !item.IsVirtualItem && _queuedMovies.TryAdd(item.Id, 0))
++        {
++            _movieRefreshes.Writer.TryWrite(item.Id);
++        }
++    }
++
++    private void OnItemAdded(object? sender, ItemChangeEventArgs args)
++    {
++        QueueMovie(args.Item);
++    }
++
++    private void OnItemUpdated(object? sender, ItemChangeEventArgs args)
++    {
++        // Tag saves use MetadataEdit. Ignoring them prevents a refresh loop.
++        if ((args.UpdateReason & (ItemUpdateType.MetadataImport | ItemUpdateType.MetadataDownload)) != 0)
++        {
++            QueueMovie(args.Item);
++        }
++    }
++
++    private async Task RefreshMovie(Guid itemId, CancellationToken cancellationToken)
+     {
+-        return Task.CompletedTask;
++        await _refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
++        try
++        {
++            // An item can be added before probing. The post-probe ItemUpdated event
++            // queues it again, so do not turn an empty stream list into undefined tags.
++            if (_libraryManager.GetItemById(itemId) is not Movie movie
++                || movie.IsVirtualItem
++                || movie.GetMediaStreams().Count == 0)
++            {
++                return;
++            }
++
++            await ProcessMovie(movie, true, _configService.AddSubtitleTags, CreateScanContext(), cancellationToken)
++                .ConfigureAwait(false);
++        }
++        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
++        {
++            throw;
++        }
++        catch (Exception ex)
++        {
++            _logger.LogError(ex, "Error refreshing language tags for movie {ItemId}", itemId);
++        }
++        finally
++        {
++            _refreshLock.Release();
++        }
+     }
+ 
+     /// <inheritdoc/>
+-    public Task StopAsync(CancellationToken cancellationToken)
++    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+     {
+-        return Task.CompletedTask;
++        _libraryManager.ItemAdded += OnItemAdded;
++        _libraryManager.ItemUpdated += OnItemUpdated;
++        try
++        {
++            await foreach (var itemId in _movieRefreshes.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false))
++            {
++                // Remove before processing so changes arriving during the refresh
++                // can queue another pass using the latest saved item and streams.
++                _queuedMovies.TryRemove(itemId, out _);
++                await RefreshMovie(itemId, stoppingToken).ConfigureAwait(false);
++            }
++        }
++        finally
++        {
++            _libraryManager.ItemAdded -= OnItemAdded;
++            _libraryManager.ItemUpdated -= OnItemUpdated;
++        }
+     }
+ 
+     /// <inheritdoc/>
+-    public void Dispose()
++    public override void Dispose()
+     {
+-        GC.SuppressFinalize(this);
++        base.Dispose();
++        _refreshLock.Dispose();
+     }
+ }
+diff --git a/Jellyfin.Plugin.LanguageTags/ScheduledTasks/RefreshLibraryTask.cs b/Jellyfin.Plugin.LanguageTags/ScheduledTasks/RefreshLibraryTask.cs
+index 770f820..8e2fe5a 100644
+--- a/Jellyfin.Plugin.LanguageTags/ScheduledTasks/RefreshLibraryTask.cs
++++ b/Jellyfin.Plugin.LanguageTags/ScheduledTasks/RefreshLibraryTask.cs
+@@ -14,7 +14,7 @@ namespace Jellyfin.Plugin.LanguageTags.ScheduledTasks;
+ /// <summary>
+ /// Class representing a task to refresh library for new language tags.
+ /// </summary>
+-public class RefreshLibraryTask : IScheduledTask, IDisposable
++public class RefreshLibraryTask : IScheduledTask
+ {
+     private readonly ILogger<RefreshLibraryTask> _logger;
+     private readonly LanguageTagsManager _languageTagsManager;
+@@ -58,23 +58,4 @@ public class RefreshLibraryTask : IScheduledTask, IDisposable
+         // Run this task every 24 hours
+         return [new TaskTriggerInfo { Type = TaskTriggerInfoType.IntervalTrigger, IntervalTicks = TimeSpan.FromHours(24).Ticks }];
+     }
+-
+-    /// <inheritdoc/>
+-    public void Dispose()
+-    {
+-        Dispose(true);
+-        GC.SuppressFinalize(this);
+-    }
+-
+-    /// <summary>
+-    /// Releases unmanaged and - optionally - managed resources.
+-    /// </summary>
+-    /// <param name="dispose"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+-    protected virtual void Dispose(bool dispose)
+-    {
+-        if (dispose)
+-        {
+-            _languageTagsManager.Dispose();
+-        }
+-    }
+-}
+\ No newline at end of file
++}

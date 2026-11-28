@@ -107,7 +107,8 @@ with subtest("the real plugin tags the original English audio"):
     scan_library()
     original = movie()
     assert audio_languages(original) == {"eng"}, original
-    # Establish known-good tags before testing replacement handling.
+    assert wait_for_tags({"language_English"}), movie()
+    # Manual refreshes must leave automatic tagging running for later replacements.
     api("LanguageTags/RefreshLanguageTags?type=movies", method="POST")
     assert language_tags(movie()) == {"language_English"}, movie()
 
