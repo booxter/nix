@@ -14,6 +14,7 @@ in
       libraryScanFanoutConcurrency = 4;
       parallelImageEncodingLimit = 2;
       enableMetrics = true;
+      inactiveSessionThreshold = 60;
       trickplayOptions = {
         enableHwAcceleration = qsvAvailable;
         enableHwEncoding = qsvAvailable;
