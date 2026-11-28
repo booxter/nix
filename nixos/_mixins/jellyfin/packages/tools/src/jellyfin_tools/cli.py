@@ -4,6 +4,7 @@ import argparse
 import sys
 import time
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -45,6 +46,7 @@ def run_wait(
     arguments: Sequence[str],
     unit_state: UnitState,
     *,
+    now: Callable[[], datetime],
     sleep: Callable[[float], None],
     stderr: TextIO,
 ) -> None:
@@ -56,6 +58,7 @@ def run_wait(
         lambda: api(base_url, api_key_file).sessions(),
         unit_name=str(args.unit),
         interval=float(args.interval),
+        now=now,
         sleep=sleep,
         stderr=stderr,
     )
@@ -79,6 +82,7 @@ def wait_main() -> None:
         run_wait(
             sys.argv[1:],
             PystemdUnitState(),
+            now=lambda: datetime.now(UTC),
             sleep=time.sleep,
             stderr=sys.stderr,
         )

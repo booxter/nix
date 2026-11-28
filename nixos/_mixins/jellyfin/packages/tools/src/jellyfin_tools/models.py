@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, RootModel, StrictBool
+from pydantic import (
+    AliasChoices,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    StrictBool,
+)
 
 
 class NowPlayingItem(BaseModel):
@@ -23,6 +31,7 @@ class Session(BaseModel):
     user_name: str = Field(default="unknown user", alias="UserName")
     now_playing_item: NowPlayingItem | None = Field(default=None, alias="NowPlayingItem")
     play_state: PlayState = Field(default_factory=PlayState, alias="PlayState")
+    last_paused_date: AwareDatetime | None = Field(default=None, alias="LastPausedDate")
 
 
 class Sessions(RootModel[tuple[Session, ...]]):

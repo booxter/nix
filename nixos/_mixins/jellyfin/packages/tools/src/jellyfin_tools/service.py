@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TextIO
 
@@ -26,8 +27,15 @@ def read_secret(path: Path) -> str:
     return path.read_text(encoding="utf-8").rstrip("\r\n")
 
 
-def active_sessions(sessions: tuple[Session, ...]) -> tuple[Session, ...]:
-    return tuple(session for session in sessions if session.now_playing_item is not None)
+def blocks_maintenance(session: Session, now: datetime) -> bool:
+    if session.now_playing_item is None:
+        return False
+
+    if not session.play_state.is_paused or session.last_paused_date is None:
+        return True
+
+    # Client check-ins can continue indefinitely while playback stays paused.
+    return now - session.last_paused_date < timedelta(minutes=60)
 
 
 def wait_for_idle(
@@ -36,12 +44,16 @@ def wait_for_idle(
     *,
     unit_name: str,
     interval: float,
+    now: Callable[[], datetime],
     sleep: Callable[[float], None],
     stderr: TextIO,
 ) -> None:
     while unit_state.is_active(unit_name):
         try:
-            sessions = active_sessions(load_sessions())
+            checked_at = now()
+            sessions = tuple(
+                session for session in load_sessions() if blocks_maintenance(session, checked_at)
+            )
         except JellyfinApiError:
             print(
                 f"Unable to query active Jellyfin sessions; retrying in {interval:g}s.",
@@ -51,7 +63,7 @@ def wait_for_idle(
             continue
 
         if not sessions:
-            print("No active Jellyfin playback; maintenance may proceed.")
+            print("No Jellyfin playback requires a maintenance hold.")
             return
 
         print(
