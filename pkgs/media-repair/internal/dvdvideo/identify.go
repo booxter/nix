@@ -31,8 +31,9 @@ type Title struct {
 	TitleSet     int
 	TitleInSet   int
 	Tracks       []Track
-	NextTitle    int `json:",omitempty"`
-	EquivalentTo int `json:",omitempty"`
+	NextTitle    int       `json:",omitempty"`
+	EquivalentTo int       `json:",omitempty"`
+	Overlaps     []Overlap `json:",omitempty"`
 }
 
 type Identifier interface {
@@ -99,6 +100,7 @@ type titleXML struct {
 	NextTitleInSet int           `xml:"next_ttn"`
 	NextTitle      int           `xml:"next_title"`
 	EquivalentTo   int           `xml:"equivalent_to"`
+	Cells          []cellXML     `xml:"cell"`
 }
 
 type audioXML struct {
@@ -167,7 +169,7 @@ func decodeTitles(data []byte) ([]Title, error) {
 			titles[index].NextTitle = next
 		}
 	}
-	return titles, nil
+	return withOverlaps(titles, disc.Titles), nil
 }
 
 func nextDVDTitle(titles []Title, titleSet, titleInSet int) int {

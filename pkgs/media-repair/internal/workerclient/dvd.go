@@ -69,6 +69,17 @@ func (client *Client) IdentifyDVD(
 		if wire.EquivalentTo != nil {
 			title.EquivalentTo = int(*wire.EquivalentTo)
 		}
+		for _, wireOverlap := range wire.Overlaps {
+			overlap := dvdvideo.Overlap{
+				Title: int(wireOverlap.Title), SharedDurationMS: wireOverlap.SharedDurationMS,
+			}
+			for _, part := range wireOverlap.Ranges {
+				overlap.Ranges = append(overlap.Ranges, dvdvideo.OverlapRange{
+					StartMS: part.StartMS, OtherStartMS: part.OtherStartMS, DurationMS: part.DurationMS,
+				})
+			}
+			title.Overlaps = append(title.Overlaps, overlap)
+		}
 		titles = append(titles, title)
 	}
 	return titles, nil

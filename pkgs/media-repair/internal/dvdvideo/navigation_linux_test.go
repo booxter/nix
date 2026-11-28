@@ -7,13 +7,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
 func TestIdentifyDVDCellContinuations(t *testing.T) {
-	mpeg := filepath.Join(t.TempDir(), "title.mpg")
-	runDVDFixtureCommand(t, "ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc2=s=720x576:r=25",
-		"-f", "lavfi", "-i", "sine=sample_rate=48000", "-t", "3", "-target", "pal-dvd", mpeg)
+	mpeg := dvdFixtureMPEG(t)
 	lsdvd, err := exec.LookPath("lsdvd")
 	if err != nil {
 		t.Fatal(err)
@@ -59,16 +58,7 @@ func TestIdentifyDVDCellContinuations(t *testing.T) {
 			}
 			// The manager must supply the register that selects chapter one.
 			disc.TitleSets[1].Titles.PGCs[0].Pre = "g0 = g6; g6 = 0; if (g0 == 1) break; jump chapter 2;"
-			data, err := xml.Marshal(disc)
-			if err != nil {
-				t.Fatal(err)
-			}
-			directory := t.TempDir()
-			configuration := filepath.Join(directory, "dvd.xml")
-			if err := os.WriteFile(configuration, data, 0o600); err != nil {
-				t.Fatal(err)
-			}
-			runDVDFixtureCommand(t, "dvdauthor", "-o", directory, "-x", configuration)
+			directory := authorDVDFixture(t, disc)
 			if test.noOpCells {
 				dvdFixtureNoOpCells(t, directory)
 			}
@@ -84,6 +74,68 @@ func TestIdentifyDVDCellContinuations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIdentifyDVDOverlappingTitles(t *testing.T) {
+	mpeg := dvdFixtureMPEG(t)
+	full := dvdFixturePGC{VOB: &dvdFixtureVOB{File: mpeg, Cells: []dvdFixtureCell{
+		{Start: "0", End: "0.6", Chapter: "yes"},
+		{Start: "0.6", End: "1.2", Chapter: "yes"},
+		{Start: "1.2", Chapter: "yes"},
+	}}, Post: "exit;"}
+	short := dvdFixturePGC{VOB: &dvdFixtureVOB{File: mpeg, Cells: []dvdFixtureCell{
+		full.VOB.Cells[0], full.VOB.Cells[2],
+	}}, Post: "exit;"}
+	disc := dvdAuthorFixture{
+		Menus: dvdFixtureGroup{Video: dvdFixtureVideo{Format: "pal"}, PGCs: []dvdFixturePGC{
+			{Entry: "title", Pre: "exit;"},
+		}},
+		TitleSets: []dvdFixtureTitleSet{{Titles: dvdFixtureGroup{
+			Video: dvdFixtureVideo{Format: "pal"}, PGCs: []dvdFixturePGC{full, short},
+		}}},
+	}
+	directory := authorDVDFixture(t, disc)
+	lsdvd, err := exec.LookPath("lsdvd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	titles, err := (Runner{Executable: lsdvd}).IdentifyDVD(context.Background(), Target{
+		NavigationPath: filepath.Join(directory, "VIDEO_TS", "VIDEO_TS.IFO"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Overlap{{Title: 2, SharedDurationMS: 2_400, Ranges: []OverlapRange{
+		{StartMS: 0, OtherStartMS: 0, DurationMS: 600},
+		{StartMS: 1_200, OtherStartMS: 600, DurationMS: 1_800},
+	}}}
+	if len(titles) != 2 || !reflect.DeepEqual(titles[0].Overlaps, want) ||
+		titles[0].EquivalentTo != 0 || titles[1].EquivalentTo != 0 {
+		t.Fatalf("authored DVD overlap: %+v", titles)
+	}
+}
+
+func dvdFixtureMPEG(t *testing.T) string {
+	t.Helper()
+	mpeg := filepath.Join(t.TempDir(), "title.mpg")
+	runDVDFixtureCommand(t, "ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc2=s=720x576:r=25",
+		"-f", "lavfi", "-i", "sine=sample_rate=48000", "-t", "3", "-target", "pal-dvd", mpeg)
+	return mpeg
+}
+
+func authorDVDFixture(t *testing.T, disc dvdAuthorFixture) string {
+	t.Helper()
+	data, err := xml.Marshal(disc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	configuration := filepath.Join(directory, "dvd.xml")
+	if err := os.WriteFile(configuration, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runDVDFixtureCommand(t, "dvdauthor", "-o", directory, "-x", configuration)
+	return directory
 }
 
 type dvdAuthorFixture struct {

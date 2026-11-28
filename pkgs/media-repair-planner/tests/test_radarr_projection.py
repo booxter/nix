@@ -68,6 +68,13 @@ def test_projects_authored_dvd_playback_links() -> None:
             "title_number": 1,
             "title_in_set": 1,
             "continues_to": "capability:second",
+            "overlaps": [
+                {
+                    "capability_id": "capability:second",
+                    "shared_duration_ms": 1100000,
+                    "ranges": [{"start_ms": 17200, "other_start_ms": 0, "duration_ms": 1100000}],
+                }
+            ],
         },
         {
             **title,
@@ -83,6 +90,13 @@ def test_projects_authored_dvd_playback_links() -> None:
 
     assert first["continues_to"] == second["capability_id"] == "capability:2"
     assert second["equivalent_title_numbers"] == [3]
+    assert first["overlaps"] == [
+        {
+            "capability_id": second["capability_id"],
+            "shared_duration_ms": 1100000,
+            "ranges": [{"start_ms": 17200, "other_start_ms": 0, "duration_ms": 1100000}],
+        }
+    ]
 
 
 def test_timestamp_units_do_not_change_model_evidence() -> None:

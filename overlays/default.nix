@@ -166,6 +166,7 @@
         patches = (old.patches or [ ]) ++ [
           ../patches/lsdvd-expose-title-continuations.patch
           ../patches/lsdvd-expose-equivalent-titles.patch
+          ../patches/lsdvd-expose-playback-cells.patch
         ];
       });
 

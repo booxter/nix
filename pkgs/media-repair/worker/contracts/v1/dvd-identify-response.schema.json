@@ -1,5 +1,60 @@
 {
   "$defs": {
+    "dvdOverlap": {
+      "additionalProperties": false,
+      "properties": {
+        "ranges": {
+          "items": {
+            "$ref": "#/$defs/dvdOverlapRange"
+          },
+          "maxItems": 255,
+          "minItems": 1,
+          "type": "array"
+        },
+        "shared_duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "title": {
+          "maximum": 128,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "title",
+        "shared_duration_ms",
+        "ranges"
+      ],
+      "type": "object"
+    },
+    "dvdOverlapRange": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "other_start_ms": {
+          "maximum": 604800000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "start_ms": {
+          "maximum": 604800000,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_ms",
+        "other_start_ms",
+        "duration_ms"
+      ],
+      "type": "object"
+    },
     "failure": {
       "additionalProperties": false,
       "properties": {
@@ -86,6 +141,14 @@
                 "maximum": 128,
                 "minimum": 1,
                 "type": "integer"
+              },
+              "overlaps": {
+                "items": {
+                  "$ref": "#/$defs/dvdOverlap"
+                },
+                "maxItems": 127,
+                "minItems": 1,
+                "type": "array"
               },
               "title_in_set": {
                 "maximum": 99,
